@@ -1,0 +1,61 @@
+{
+  "name": "AspNetCore.Lambda",
+  "version": "0.1.0-*",
+  "description": "An attempt to make ASP.NET Core more functional.",
+  "copyright": "Copyright 2017 Dustin Moris Gorski",
+  "authors": [
+    "Dustin Moris Gorski"
+  ],
+  "language": "en-GB",
+  "buildOptions": {
+    "emitEntryPoint": false,
+    "warningsAsErrors": false,
+    "optimize": true,
+    "debugType": "portable",
+    "compilerName": "fsc",
+    "compile": {
+      "includeFiles": [
+        "Common.fs",
+        "HttpHandlers.fs",
+        "Middleware.fs"
+      ]
+    }
+  },
+  "tools": {
+    "dotnet-compile-fsc": "1.0.0-preview2-*"
+  },
+  "frameworks": {
+    "netstandard1.6": {
+      "dependencies": {
+        "NETStandard.Library": "1.6.1",
+        "Microsoft.FSharp.Core.netcore": "1.0.0-alpha-*",
+        "Microsoft.AspNetCore.Hosting": "1.1.0",
+        "Newtonsoft.Json": "9.0.1",
+        "DotLiquid": "2.0.64"
+      }
+    }
+  },
+  "dependencies": {},
+  "packOptions": {
+    "summary": "An attempt to make ASP.NET Core more functional.",
+    "tags": [
+      "ASP.NET Core",
+      "Lambda",
+      "FSharp",
+      "Functional",
+      "Http"
+    ],
+    "owners": [
+      "Dustin Moris Gorski"
+    ],
+    "releaseNotes": "https://github.com/dustinmoris/aspnetcore.lambda/releases",
+    "iconUrl": "https://raw.githubusercontent.com/dustinmoris/aspnetcore.lambda/master/lambda.png",
+    "projectUrl": "https://github.com/dustinmoris/aspnetcore.lambda",
+    "licenseUrl": "https://raw.githubusercontent.com/dustinmoris/aspnetcore.lambda/master/LICENSE",
+    "requireLicenseAcceptance": true,
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/dustinmoris/aspnetcore.lambda"
+    }
+  }
+}
