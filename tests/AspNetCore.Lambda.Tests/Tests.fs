@@ -42,13 +42,18 @@ type Dummy =
         Age : int
     }
 
+let dotLiquidTemplate = "<html><head><title>DotLiquid</title></head>" + 
+                        "<body><p>{{ foo }} {{ bar }} is {{ age }} years old.</p>" +
+                        "</body></html>"
+
 let testApp =
     choose [
         GET >>=
             choose [
-                route "/"       >>= text "Hello World"
-                route "/foo"    >>= text "bar"
-                route "/json"   >>= json { Foo = "john"; Bar = "doe"; Age = 30 }
+                route "/"           >>= text "Hello World"
+                route "/foo"        >>= text "bar"
+                route "/json"       >>= json { Foo = "john"; Bar = "doe"; Age = 30 }
+                route "/dotLiquid"  >>= dotLiquid "text/html" dotLiquidTemplate { Foo = "John"; Bar = "Doe"; Age = 30 }
             ]
         POST >>=
             choose [
@@ -188,3 +193,22 @@ let ``POST "/post/3" returns 404 "Not found"`` () =
         let body = getBody ctx
         Assert.Equal(expected, body)
         Assert.Equal(404, ctx.Response.StatusCode)
+
+[<Fact>]
+let ``GET "/dotLiquid" returns rendered html view`` () =
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/dotLiquid")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "<html><head><title>DotLiquid</title></head><body><p>John Doe is 30 years old.</p></body></html>"
+
+    let result = 
+        (env, ctx)
+        |> testApp
+        |> Async.RunSynchronously
+
+    match result with
+    | None          -> assertFailf "Result was expected to be %s" expected
+    | Some (_, ctx) ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+        // Assert.Equal("text/html", ctx.Response.)
