@@ -23,6 +23,18 @@ let bind (handler : HttpHandler) (handler2 : HttpHandler) =
 
 let (>>=) = bind
 
+let rec choose (handlers : HttpHandler list) =
+    fun wctx ->
+        async {
+            match handlers with
+            | []                -> return None
+            | handler :: tail   ->
+                let! result = handler wctx
+                match result with
+                | Some c    -> return Some c
+                | None      -> return! choose tail wctx
+        }
+
 let httpVerb (verb : string) =
     fun (env : IHostingEnvironment, ctx : HttpContext) ->
         if ctx.Request.Method.Equals verb
@@ -36,24 +48,23 @@ let PUT     = httpVerb "PUT"    : HttpHandler
 let PATCH   = httpVerb "PATCH"  : HttpHandler
 let DELETE  = httpVerb "DELETE" : HttpHandler
 
+let mustAccept (mimeTypes : string list) =
+    fun (env : IHostingEnvironment, ctx : HttpContext) ->
+        let headers = ctx.Request.GetTypedHeaders()
+        headers.Accept
+        |> Seq.map    (fun h -> h.ToString())
+        |> Seq.exists (fun h -> mimeTypes |> Seq.contains h)
+        |> function
+            | true  -> Some (env, ctx)
+            | false -> None
+            |> async.Return
+
 let route (path : string) =
     fun (env : IHostingEnvironment, ctx : HttpContext) ->
         if ctx.Request.Path.ToString().Equals path 
         then Some (env, ctx)
         else None
         |> async.Return
-
-let rec choose (handlers : HttpHandler list) =
-    fun wctx ->
-        async {
-            match handlers with
-            | []                -> return None
-            | handler :: tail   ->
-                let! result = handler wctx
-                match result with
-                | Some c    -> return Some c
-                | None      -> return! choose tail wctx
-        }
 
 let setStatusCode (statusCode : int) =
     fun (env : IHostingEnvironment, ctx : HttpContext) ->
@@ -79,13 +90,17 @@ let setBody (bytes : byte array) =
             return Some (env, ctx)
         }
 
-let text (str : string) =
+let setBodyAsString (str : string) =
     Encoding.UTF8.GetBytes str
     |> setBody
 
+let text (str : string) =
+    setHttpHeader "Content-Type" "text/plain"
+    >>= setBodyAsString str
+
 let json (dataObj : obj) =
     setHttpHeader "Content-Type" "application/json"
-    >>= text (JsonConvert.SerializeObject dataObj)
+    >>= setBodyAsString (JsonConvert.SerializeObject dataObj)
 
 let dotLiquid (contentType : string) (template : string) (model : obj) =
     let view = Template.Parse template
@@ -93,7 +108,7 @@ let dotLiquid (contentType : string) (template : string) (model : obj) =
     >>= (model
         |> Hash.FromAnonymousObject
         |> view.Render
-        |> text)
+        |> setBodyAsString)
 
 let htmlTemplate (templatePath : string) (model : obj) = 
     fun wctx ->
@@ -110,5 +125,5 @@ let htmlFile (relativeFilePath : string) =
             return!
                 (env, ctx)
                 |> (setHttpHeader "Content-Type" "text/html"
-                >>= text html)
+                >>= setBodyAsString html)
         }

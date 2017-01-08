@@ -8,6 +8,7 @@ open NSubstitute
 open AspNetCore.Lambda.HttpHandlers
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
+open Microsoft.Extensions.Primitives
 
 // ---------------------------------
 // Helper functions
@@ -17,6 +18,9 @@ let getBody (ctx : HttpContext) =
     ctx.Response.Body.Position <- 0L
     use reader = new StreamReader(ctx.Response.Body, Encoding.UTF8)
     reader.ReadToEnd()
+
+let getContentType (response : HttpResponse) =
+    response.Headers.["Content-Type"].[0]
 
 let assertFail msg = Assert.True(false, msg)
 
@@ -59,6 +63,9 @@ let testApp =
             choose [
                 route "/post/1" >>= text "1"
                 route "/post/2" >>= text "2"
+                route "/text"   >>= mustAccept [ "text/plain" ] >>= text "text"
+                route "/json"   >>= mustAccept [ "application/json" ] >>= json "json"
+                route "/either" >>= mustAccept [ "text/plain"; "application/json" ] >>= text "either"
             ] 
         setStatusCode 404 >>= text "Not found" ] : HttpHandler
 
@@ -211,4 +218,92 @@ let ``GET "/dotLiquid" returns rendered html view`` () =
     | Some (_, ctx) ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        // Assert.Equal("text/html", ctx.Response.)
+        Assert.Equal("text/html", ctx.Response |> getContentType)
+
+[<Fact>]
+let ``POST "/text" with supported Accept header returns "good"`` () =
+    let headers = new HeaderDictionary()
+    headers.Add("Accept", new StringValues("text/plain"))
+    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/text")) |> ignore
+    ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "text"
+
+    let result = 
+        (env, ctx)
+        |> testApp
+        |> Async.RunSynchronously
+
+    match result with
+    | None          -> assertFailf "Result was expected to be %s" expected
+    | Some (_, ctx) ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+        Assert.Equal("text/plain", ctx.Response |> getContentType)
+
+[<Fact>]
+let ``POST "/json" with supported Accept header returns "json"`` () =
+    let headers = new HeaderDictionary()
+    headers.Add("Accept", new StringValues("application/json"))
+    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
+    ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "\"json\""
+
+    let result = 
+        (env, ctx)
+        |> testApp
+        |> Async.RunSynchronously
+
+    match result with
+    | None          -> assertFailf "Result was expected to be %s" expected
+    | Some (_, ctx) ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+        Assert.Equal("application/json", ctx.Response |> getContentType)
+
+[<Fact>]
+let ``POST "/either" with supported Accept header returns "either"`` () =
+    let headers = new HeaderDictionary()
+    headers.Add("Accept", new StringValues("application/json"))
+    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/either")) |> ignore
+    ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "either"
+
+    let result = 
+        (env, ctx)
+        |> testApp
+        |> Async.RunSynchronously
+
+    match result with
+    | None          -> assertFailf "Result was expected to be %s" expected
+    | Some (_, ctx) ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+        Assert.Equal("text/plain", ctx.Response |> getContentType)
+
+[<Fact>]
+let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` () =
+    let headers = new HeaderDictionary()
+    headers.Add("Accept", new StringValues("application/xml"))
+    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/either")) |> ignore
+    ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "Not found"
+
+    let result = 
+        (env, ctx)
+        |> testApp
+        |> Async.RunSynchronously
+
+    match result with
+    | None          -> assertFailf "Result was expected to be %s" expected
+    | Some (_, ctx) ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+        Assert.Equal(404, ctx.Response.StatusCode)
