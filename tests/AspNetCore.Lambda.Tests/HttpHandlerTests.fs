@@ -1,14 +1,14 @@
-module AspNetCore.Lambda.Tests
+module AspNetCore.Lambda.HttpHandlerTests
 
 open System
 open System.IO
 open System.Text
-open Xunit
-open NSubstitute
-open AspNetCore.Lambda.HttpHandlers
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
+open Xunit
+open NSubstitute
+open AspNetCore.Lambda.HttpHandlers
 
 // ---------------------------------
 // Helper functions

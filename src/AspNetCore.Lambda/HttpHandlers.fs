@@ -8,6 +8,7 @@ open Microsoft.Extensions.Primitives
 open Newtonsoft.Json
 open DotLiquid
 open AspNetCore.Lambda.Common
+open AspNetCore.Lambda.FormatExpressions
 
 type WebContext  = IHostingEnvironment * HttpContext
 type HttpHandler = WebContext -> Async<WebContext option>
@@ -127,3 +128,9 @@ let htmlFile (relativeFilePath : string) =
                 |> (setHttpHeader "Content-Type" "text/html"
                 >>= setBodyAsString html)
         }
+
+// let routef (route : StringFormat<_, 'T>) (urlPath : string) (func : 'T -> unit) =
+//     tryMatchInput route urlPath
+//     |> function
+//         | None -> None
+//         | Some t -> t |> func |> Some

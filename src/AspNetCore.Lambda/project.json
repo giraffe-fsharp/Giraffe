@@ -16,6 +16,7 @@
     "compile": {
       "includeFiles": [
         "Common.fs",
+        "FormatExpressions.fs",
         "HttpHandlers.fs",
         "Middleware.fs"
       ]
@@ -28,7 +29,8 @@
     "netstandard1.6": {
       "dependencies": {
         "NETStandard.Library": "1.6.1",
-        "Microsoft.FSharp.Core.netcore": "1.0.0-alpha-*",
+        "System.Text.RegularExpressions": "4.3.0",
+        "Microsoft.FSharp.Core.netcore": "1.0.0-alpha-*",        
         "Microsoft.AspNetCore.Hosting": "1.1.0",
         "Newtonsoft.Json": "9.0.1",
         "DotLiquid": "2.0.64"
