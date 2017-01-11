@@ -8,14 +8,14 @@ open FSharp.Core.Printf
 
 let formatStringMap =
     dict [
-    // Char    Regex                Parser
+    // Char    Regex                    Parser
     // ----------------------------------------------------------
-        'b', ("(true|false){1}",    bool.Parse   >> box)  // bool
-        'c', ("(.{1})",             Char.Parse   >> box)  // char
-        's', ("(.+)",                               box)  // string
-        'i', ("(\d+)",              Int32.Parse  >> box)  // int
-        'd', ("(\d+)",              Int32.Parse  >> box)  // int
-        'f', ("(\d+\.{1}\d+)",      Double.Parse >> box)  // float
+        'b', ("(?i:(true|false)){1}",   bool.Parse   >> box)  // bool
+        'c', ("(.{1})",                 Char.Parse   >> box)  // char
+        's', ("(.+)",                                   box)  // string
+        'i', ("(-?\d+)",                Int32.Parse  >> box)  // int
+        'd', ("(-?\d+)",                Int64.Parse  >> box)  // int64
+        'f', ("(-?\d+\.{1}\d+)",        Double.Parse >> box)  // float
     ]
    
 let convertToRegexPatternAndFormatChars (formatString : string) =
@@ -61,11 +61,15 @@ let tryMatchInput (format : StringFormat<_, 'T>) (input : string) =
                 value)
             |> Seq.toArray
 
-        let types =
-            values
-            |> Array.map (fun v -> v.GetType())
-
-        let tupleType = FSharpType.MakeTupleType types
-        let tuple     = FSharpValue.MakeTuple(values, tupleType)
-
-        Some (tuple :?> 'T)
+        let result =
+            match values.Length with
+            | 1 -> values.[0]
+            | _ ->
+                let types =
+                    values
+                    |> Array.map (fun v -> v.GetType())
+                let tupleType = FSharpType.MakeTupleType types
+                FSharpValue.MakeTuple(values, tupleType)
+        result
+        :?> 'T
+        |> Some
