@@ -58,6 +58,9 @@ let testApp =
                 route "/foo"        >>= text "bar"
                 route "/json"       >>= json { Foo = "john"; Bar = "doe"; Age = 30 }
                 route "/dotLiquid"  >>= dotLiquid "text/html" dotLiquidTemplate { Foo = "John"; Bar = "Doe"; Age = 30 }
+                routeci "/json"     >>= text "BaR"
+                routef "/foo/%s/bar" text
+                routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
             ]
         POST >>=
             choose [
@@ -66,6 +69,7 @@ let testApp =
                 route "/text"   >>= mustAccept [ "text/plain" ] >>= text "text"
                 route "/json"   >>= mustAccept [ "application/json" ] >>= json "json"
                 route "/either" >>= mustAccept [ "text/plain"; "application/json" ] >>= text "either"
+                routecif "/post/%i" json
             ] 
         setStatusCode 404 >>= text "Not found" ] : HttpHandler
 
@@ -183,9 +187,9 @@ let ``POST "/post/2" returns "2"`` () =
         Assert.Equal(expected, body)
 
 [<Fact>]
-let ``POST "/post/3" returns 404 "Not found"`` () =
-    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/post/3")) |> ignore
+let ``PUT "/post/2" returns 404 "Not found"`` () =
+    ctx.Request.Method.ReturnsForAnyArgs "PUT" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/post/2")) |> ignore
     ctx.Response.Body <- new MemoryStream()
     let expected = "Not found"
 
@@ -307,3 +311,93 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
         let body = getBody ctx
         Assert.Equal(expected, body)
         Assert.Equal(404, ctx.Response.StatusCode)
+
+[<Fact>]
+let ``GET "/JSON" returns "BaR"`` () =
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/JSON")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "BaR"
+
+    let result = 
+        (env, ctx)
+        |> testApp
+        |> Async.RunSynchronously
+
+    match result with
+    | None          -> assertFailf "Result was expected to be %s" expected
+    | Some (_, ctx) ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+
+[<Fact>]
+let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/blah blah/bar")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "blah%20blah"
+
+    let result = 
+        (env, ctx)
+        |> testApp
+        |> Async.RunSynchronously
+
+    match result with
+    | None          -> assertFailf "Result was expected to be %s" expected
+    | Some (_, ctx) ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+
+[<Fact>]
+let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/johndoe/59")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "Name: johndoe, Age: 59"
+
+    let result = 
+        (env, ctx)
+        |> testApp
+        |> Async.RunSynchronously
+
+    match result with
+    | None          -> assertFailf "Result was expected to be %s" expected
+    | Some (_, ctx) ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+
+[<Fact>]
+let ``POST "/POsT/1" returns "1"`` () =
+    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/POsT/1")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "1"
+
+    let result = 
+        (env, ctx)
+        |> testApp
+        |> Async.RunSynchronously
+
+    match result with
+    | None          -> assertFailf "Result was expected to be %s" expected
+    | Some (_, ctx) ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+
+[<Fact>]
+let ``POST "/POsT/523" returns "523"`` () =
+    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/POsT/523")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "523"
+
+    let result = 
+        (env, ctx)
+        |> testApp
+        |> Async.RunSynchronously
+
+    match result with
+    | None          -> assertFailf "Result was expected to be %s" expected
+    | Some (_, ctx) ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)

@@ -5,6 +5,7 @@ open System.Text
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
+open FSharp.Core.Printf
 open Newtonsoft.Json
 open DotLiquid
 open AspNetCore.Lambda.Common
@@ -67,6 +68,27 @@ let route (path : string) =
         else None
         |> async.Return
 
+let routef (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
+    fun (env : IHostingEnvironment, ctx : HttpContext) ->
+        tryMatchInput route (ctx.Request.Path.ToString()) false
+        |> function
+            | None      -> None |> async.Return
+            | Some args -> routeHandler args (env, ctx)
+
+let routeci (path : string) =
+    fun (env : IHostingEnvironment, ctx : HttpContext) ->
+        if String.Equals(ctx.Request.Path.ToString(), path, StringComparison.CurrentCultureIgnoreCase)
+        then Some (env, ctx)
+        else None
+        |> async.Return
+
+let routecif (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
+    fun (env : IHostingEnvironment, ctx : HttpContext) ->
+        tryMatchInput route (ctx.Request.Path.ToString()) true
+        |> function
+            | None      -> None |> async.Return
+            | Some args -> routeHandler args (env, ctx)
+
 let setStatusCode (statusCode : int) =
     fun (env : IHostingEnvironment, ctx : HttpContext) ->
         async {
@@ -128,9 +150,3 @@ let htmlFile (relativeFilePath : string) =
                 |> (setHttpHeader "Content-Type" "text/html"
                 >>= setBodyAsString html)
         }
-
-// let routef (route : StringFormat<_, 'T>) (urlPath : string) (func : 'T -> unit) =
-//     tryMatchInput route urlPath
-//     |> function
-//         | None -> None
-//         | Some t -> t |> func |> Some
