@@ -355,19 +355,22 @@ Defining a new `HttpHandler` is fairly easy. All you need to do is to create a n
 
 ### Example:
 
-```
-// Defining a custom HTTP handler to partially filter a route
+Defining a custom HTTP handler to partially filter a route:
 
+```
 let routeStartsWith (partOfPath : string) =
     fun (env : IHostingEnvironment, ctx : HttpContext) ->
         if ctx.Request.Path.ToString().StartsWith partOfPath 
         then Some (env, ctx)
         else None
         |> async.Return
+```
 
-// Defining another custom HTTP handler to validate a mandatory HTTP header
-// (This is only an extremly simmplified example of showing how to add custom authentication handlers)
+Defining another custom HTTP handler to validate a mandatory HTTP header:
 
+*(This is only an extremly simmplified example of showing how to add custom authentication handlers.)*
+
+```
 let requiresToken (expectedToken : string) (handler : HttpHandler) =
     fun (env : IHostingEnvironment, ctx : HttpContext) ->
         let token    = ctx.Request.Headers.["X-Token"].ToString()
@@ -376,9 +379,11 @@ let requiresToken (expectedToken : string) (handler : HttpHandler) =
             then handler
             else setStatusCode 401 >>= text "Token wrong or missing"
         response (env, ctx)
+```
 
-// Composing a web application from smaller HTTP handlers
+Composing a web application from smaller HTTP handlers:
 
+```
 let app = 
     choose [
         route "/"       >>= htmlFile "index.html"
