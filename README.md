@@ -47,12 +47,17 @@ ASP.NET Core Lambda is intended for developers who want to build web application
 The only building block in ASP.NET Core Lambda is a so called `HttpHandler`:
 
 ```
-type WebContext  = IHostingEnvironment * HttpContext
+type HttpHandlerContext =
+    {
+        HttpContext  : HttpContext
+        Environment  : IHostingEnvironment
+        Logger       : ILogger
+    }
 
-type HttpHandler = WebContext -> Async<WebContext option>
+type HttpHandler = HttpHandlerContext -> Async<HttpHandlerContext option>
 ```
 
-A `HttpHandler` is a simple function which takes in a tuple of `IHostingEnvironment` and `HttpContext` and returns a tuple of the same type when finished.
+A `HttpHandler` is a simple function which takes in a `HttpHandlerContext` and returns an object of the same type when finished.
 
 Inside that function it can process an incoming `HttpRequest` and make changes to the `HttpResponse` of the given `HttpContext`. By receiving and returning a `HttpContext` there's nothing which cannot be done from inside a `HttpHandler`.
 
@@ -66,24 +71,24 @@ The core combinator is the `bind` function which you might be familiar with:
 
 ```
 let bind (handler : HttpHandler) (handler2 : HttpHandler) =
-    fun wctx ->
+    fun ctx ->
         async {
-            let! result = handler wctx
+            let! result = handler ctx
             match result with
-            | None       -> return  None
-            | Some wctx2 -> return! handler2 wctx2
+            | None      -> return  None
+            | Some ctx2 -> return! handler2 ctx2
         }
 
 let (>>=) = bind
 ```
 
-The `bind` function takes in two different http handlers and a `WebContext` (wctx) object. It first invokes the first handler and checks its result. If there was a `WebContext` then it will pass it on to the second `HttpHandler` and return the overall result of that function. If there was nothing then it will short circuit after the first handler and return `None`.
+The `bind` function takes in two different http handlers and a `HttpHandlerContext` (ctx) object. It first invokes the first handler and checks its result. If there was a `HttpHandlerContext` returned then it will pass it on to the second `HttpHandler` and return the overall result of that function. If there was nothing then it will short circuit after the first handler and return `None`.
 
 This allows composing many smaller `HttpHandler` functions into a bigger web application.
 
 #### choose
 
-The `choose` combinator function iterates through a list of `HttpHandler`s and invokes each individual until the first handler returns a result.
+The `choose` combinator function iterates through a list of `HttpHandler` functions and invokes each individual until the first handler returns a result.
 
 #### Example:
 
@@ -351,7 +356,7 @@ let app =
 
 ## Custom HttpHandlers
 
-Defining a new `HttpHandler` is fairly easy. All you need to do is to create a new function which matches the signature of `WebContext -> Async<WebContext option>`. Through currying your custom `HttpHandler` can extend the original signature as long as the partial application of your function will still return a function of `WebContext -> Async<WebContext option>`.
+Defining a new `HttpHandler` is fairly easy. All you need to do is to create a new function which matches the signature of `HttpHandlerContext -> Async<HttpHandlerContext option>`. Through currying your custom `HttpHandler` can extend the original signature as long as the partial application of your function will still return a function of `HttpHandlerContext -> Async<HttpHandlerContext option>`.
 
 ### Example:
 
@@ -359,9 +364,9 @@ Defining a custom HTTP handler to partially filter a route:
 
 ```
 let routeStartsWith (partOfPath : string) =
-    fun (env : IHostingEnvironment, ctx : HttpContext) ->
-        if ctx.Request.Path.ToString().StartsWith partOfPath 
-        then Some (env, ctx)
+    fun ctx ->
+        if ctx.HttpContext.Request.Path.ToString().StartsWith partOfPath 
+        then Some ctx
         else None
         |> async.Return
 ```
@@ -372,13 +377,13 @@ Defining another custom HTTP handler to validate a mandatory HTTP header:
 
 ```
 let requiresToken (expectedToken : string) (handler : HttpHandler) =
-    fun (env : IHostingEnvironment, ctx : HttpContext) ->
-        let token    = ctx.Request.Headers.["X-Token"].ToString()
+    fun ctx ->
+        let token    = ctx.HttpContext.Request.Headers.["X-Token"].ToString()
         let response =
             if token.Equals(expectedToken)
             then handler
             else setStatusCode 401 >>= text "Token wrong or missing"
-        response (env, ctx)
+        response ctx
 ```
 
 Composing a web application from smaller HTTP handlers:
@@ -397,6 +402,32 @@ let app =
             )
         setStatusCode 404 >>= text "Not found"
     ] : HttpHandler
+```
+
+## Installation
+
+Install the `AspNetCore.Lambda` NuGet package:
+
+```
+PM> Install-Package AspNetCore.Lambda
+```
+
+Create a web application and plug it into the ASP.NET Core middleware:
+
+```
+open AspNetCore.Lambda.HttpHandlers
+
+let webApp = 
+    choose [
+        route "/ping"   >>= text "pong"
+        route "/"       >>= htmlFile "/pages/index.html" ]
+
+type Startup() =
+    member __.Configure (app : IApplicationBuilder)
+                        (env : IHostingEnvironment)
+                        (loggerFactory : ILoggerFactory) =
+        
+        app.UseLambda(webApp)
 ```
 
 ## License

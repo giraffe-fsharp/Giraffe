@@ -4,12 +4,26 @@ open System
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
-open AspNetCore.Lambda.HttpHandlers 
+open Microsoft.Extensions.Logging
+open AspNetCore.Lambda.HttpHandlers
 
-type HttpHandlerMiddleware (next : RequestDelegate, handler : HttpHandler) =
-    member __.Invoke (ctx : HttpContext, env : IHostingEnvironment) =
+type LambdaMiddleware (next          : RequestDelegate,
+                       handler       : HttpHandler,
+                       env           : IHostingEnvironment,
+                       loggerFactory : ILoggerFactory) =
+                       
+    member __.Invoke (ctx : HttpContext) =
         async {
-            let! result = handler (env, ctx)
+            let logger = loggerFactory.CreateLogger<LambdaMiddleware>()
+
+            let httpHandlerContext =
+                {
+                    HttpContext = ctx
+                    Environment = env
+                    Logger      = logger
+                }
+
+            let! result = handler httpHandlerContext
             if (result.IsNone) then
                 next.Invoke ctx
                 |> Async.AwaitTask
@@ -17,6 +31,6 @@ type HttpHandlerMiddleware (next : RequestDelegate, handler : HttpHandler) =
         } |> Async.StartAsTask
 
 type IApplicationBuilder with
-    member this.UseHttpHandler (handler : HttpHandler) =
-        this.UseMiddleware<HttpHandlerMiddleware>(handler)
+    member this.UseLambda (handler : HttpHandler) =
+        this.UseMiddleware<LambdaMiddleware>(handler)
         |> ignore

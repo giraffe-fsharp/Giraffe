@@ -6,6 +6,7 @@ open System.Text
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
+open Microsoft.Extensions.Logging
 open Xunit
 open NSubstitute
 open AspNetCore.Lambda.HttpHandlers
@@ -14,9 +15,9 @@ open AspNetCore.Lambda.HttpHandlers
 // Helper functions
 // ---------------------------------
 
-let getBody (ctx : HttpContext) =
-    ctx.Response.Body.Position <- 0L
-    use reader = new StreamReader(ctx.Response.Body, Encoding.UTF8)
+let getBody (ctx : HttpHandlerContext) =
+    ctx.HttpContext.Response.Body.Position <- 0L
+    use reader = new StreamReader(ctx.HttpContext.Response.Body, Encoding.UTF8)
     reader.ReadToEnd()
 
 let getContentType (response : HttpResponse) =
@@ -32,8 +33,9 @@ let assertFailf format args =
 // Mocks
 // ---------------------------------
 
-let env = Substitute.For<IHostingEnvironment>()
-let ctx = Substitute.For<HttpContext>()
+let logger  = Substitute.For<ILogger>()
+let env     = Substitute.For<IHostingEnvironment>()
+let ctx     = Substitute.For<HttpContext>()
 
 // ---------------------------------
 // HttpHandler application
@@ -85,13 +87,13 @@ let ``GET "/" returns "Hello World"`` () =
     let expected = "Hello World"
 
     let result = 
-        (env, ctx)
+        { HttpContext = ctx; Environment = env; Logger = logger }
         |> testApp
         |> Async.RunSynchronously
 
     match result with
     | None          -> assertFailf "Result was expected to be %s" expected
-    | Some (_, ctx) ->
+    | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
 
@@ -103,13 +105,13 @@ let ``GET "/foo" returns "bar"`` () =
     let expected = "bar"
 
     let result = 
-        (env, ctx)
+        { HttpContext = ctx; Environment = env; Logger = logger }
         |> testApp
         |> Async.RunSynchronously
 
     match result with
     | None          -> assertFailf "Result was expected to be %s" expected
-    | Some (_, ctx) ->
+    | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
 
@@ -121,16 +123,16 @@ let ``GET "/FOO" returns 404 "Not found"`` () =
     let expected = "Not found"
 
     let result = 
-        (env, ctx)
+        { HttpContext = ctx; Environment = env; Logger = logger }
         |> testApp
         |> Async.RunSynchronously
 
     match result with
     | None          -> assertFailf "Result was expected to be %s" expected
-    | Some (_, ctx) ->
+    | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal(404, ctx.Response.StatusCode)
+        Assert.Equal(404, ctx.HttpContext.Response.StatusCode)
 
 [<Fact>]
 let ``GET "/json" returns json object`` () =
@@ -140,13 +142,13 @@ let ``GET "/json" returns json object`` () =
     let expected = "{\"Foo\":\"john\",\"Bar\":\"doe\",\"Age\":30}"
 
     let result = 
-        (env, ctx)
+        { HttpContext = ctx; Environment = env; Logger = logger }
         |> testApp
         |> Async.RunSynchronously
 
     match result with
     | None          -> assertFailf "Result was expected to be %s" expected
-    | Some (_, ctx) ->
+    | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
 
@@ -158,13 +160,13 @@ let ``POST "/post/1" returns "1"`` () =
     let expected = "1"
 
     let result = 
-        (env, ctx)
+        { HttpContext = ctx; Environment = env; Logger = logger }
         |> testApp
         |> Async.RunSynchronously
 
     match result with
     | None          -> assertFailf "Result was expected to be %s" expected
-    | Some (_, ctx) ->
+    | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
 
@@ -176,13 +178,13 @@ let ``POST "/post/2" returns "2"`` () =
     let expected = "2"
 
     let result = 
-        (env, ctx)
+        { HttpContext = ctx; Environment = env; Logger = logger }
         |> testApp
         |> Async.RunSynchronously
 
     match result with
     | None          -> assertFailf "Result was expected to be %s" expected
-    | Some (_, ctx) ->
+    | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
 
@@ -194,16 +196,16 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
     let expected = "Not found"
 
     let result = 
-        (env, ctx)
+        { HttpContext = ctx; Environment = env; Logger = logger }
         |> testApp
         |> Async.RunSynchronously
 
     match result with
     | None          -> assertFailf "Result was expected to be %s" expected
-    | Some (_, ctx) ->
+    | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal(404, ctx.Response.StatusCode)
+        Assert.Equal(404, ctx.HttpContext.Response.StatusCode)
 
 [<Fact>]
 let ``GET "/dotLiquid" returns rendered html view`` () =
@@ -213,16 +215,16 @@ let ``GET "/dotLiquid" returns rendered html view`` () =
     let expected = "<html><head><title>DotLiquid</title></head><body><p>John Doe is 30 years old.</p></body></html>"
 
     let result = 
-        (env, ctx)
+        { HttpContext = ctx; Environment = env; Logger = logger }
         |> testApp
         |> Async.RunSynchronously
 
     match result with
     | None          -> assertFailf "Result was expected to be %s" expected
-    | Some (_, ctx) ->
+    | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("text/html", ctx.Response |> getContentType)
+        Assert.Equal("text/html", ctx.HttpContext.Response |> getContentType)
 
 [<Fact>]
 let ``POST "/text" with supported Accept header returns "good"`` () =
@@ -235,16 +237,16 @@ let ``POST "/text" with supported Accept header returns "good"`` () =
     let expected = "text"
 
     let result = 
-        (env, ctx)
+        { HttpContext = ctx; Environment = env; Logger = logger }
         |> testApp
         |> Async.RunSynchronously
 
     match result with
     | None          -> assertFailf "Result was expected to be %s" expected
-    | Some (_, ctx) ->
+    | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("text/plain", ctx.Response |> getContentType)
+        Assert.Equal("text/plain", ctx.HttpContext.Response |> getContentType)
 
 [<Fact>]
 let ``POST "/json" with supported Accept header returns "json"`` () =
@@ -257,16 +259,16 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
     let expected = "\"json\""
 
     let result = 
-        (env, ctx)
+        { HttpContext = ctx; Environment = env; Logger = logger }
         |> testApp
         |> Async.RunSynchronously
 
     match result with
     | None          -> assertFailf "Result was expected to be %s" expected
-    | Some (_, ctx) ->
+    | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("application/json", ctx.Response |> getContentType)
+        Assert.Equal("application/json", ctx.HttpContext.Response |> getContentType)
 
 [<Fact>]
 let ``POST "/either" with supported Accept header returns "either"`` () =
@@ -279,16 +281,16 @@ let ``POST "/either" with supported Accept header returns "either"`` () =
     let expected = "either"
 
     let result = 
-        (env, ctx)
+        { HttpContext = ctx; Environment = env; Logger = logger }
         |> testApp
         |> Async.RunSynchronously
 
     match result with
     | None          -> assertFailf "Result was expected to be %s" expected
-    | Some (_, ctx) ->
+    | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("text/plain", ctx.Response |> getContentType)
+        Assert.Equal("text/plain", ctx.HttpContext.Response |> getContentType)
 
 [<Fact>]
 let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` () =
@@ -301,16 +303,16 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
     let expected = "Not found"
 
     let result = 
-        (env, ctx)
+        { HttpContext = ctx; Environment = env; Logger = logger }
         |> testApp
         |> Async.RunSynchronously
 
     match result with
     | None          -> assertFailf "Result was expected to be %s" expected
-    | Some (_, ctx) ->
+    | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal(404, ctx.Response.StatusCode)
+        Assert.Equal(404, ctx.HttpContext.Response.StatusCode)
 
 [<Fact>]
 let ``GET "/JSON" returns "BaR"`` () =
@@ -320,13 +322,13 @@ let ``GET "/JSON" returns "BaR"`` () =
     let expected = "BaR"
 
     let result = 
-        (env, ctx)
+        { HttpContext = ctx; Environment = env; Logger = logger }
         |> testApp
         |> Async.RunSynchronously
 
     match result with
     | None          -> assertFailf "Result was expected to be %s" expected
-    | Some (_, ctx) ->
+    | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
 
@@ -338,13 +340,13 @@ let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
     let expected = "blah%20blah"
 
     let result = 
-        (env, ctx)
+        { HttpContext = ctx; Environment = env; Logger = logger }
         |> testApp
         |> Async.RunSynchronously
 
     match result with
     | None          -> assertFailf "Result was expected to be %s" expected
-    | Some (_, ctx) ->
+    | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
 
@@ -356,13 +358,13 @@ let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
     let expected = "Name: johndoe, Age: 59"
 
     let result = 
-        (env, ctx)
+        { HttpContext = ctx; Environment = env; Logger = logger }
         |> testApp
         |> Async.RunSynchronously
 
     match result with
     | None          -> assertFailf "Result was expected to be %s" expected
-    | Some (_, ctx) ->
+    | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
 
@@ -374,13 +376,13 @@ let ``POST "/POsT/1" returns "1"`` () =
     let expected = "1"
 
     let result = 
-        (env, ctx)
+        { HttpContext = ctx; Environment = env; Logger = logger }
         |> testApp
         |> Async.RunSynchronously
 
     match result with
     | None          -> assertFailf "Result was expected to be %s" expected
-    | Some (_, ctx) ->
+    | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
 
@@ -392,12 +394,12 @@ let ``POST "/POsT/523" returns "523"`` () =
     let expected = "523"
 
     let result = 
-        (env, ctx)
+        { HttpContext = ctx; Environment = env; Logger = logger }
         |> testApp
         |> Async.RunSynchronously
 
     match result with
     | None          -> assertFailf "Result was expected to be %s" expected
-    | Some (_, ctx) ->
+    | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)

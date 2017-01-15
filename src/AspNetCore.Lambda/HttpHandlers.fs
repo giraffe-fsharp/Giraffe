@@ -5,42 +5,49 @@ open System.Text
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
+open Microsoft.Extensions.Logging
 open FSharp.Core.Printf
 open Newtonsoft.Json
 open DotLiquid
 open AspNetCore.Lambda.Common
 open AspNetCore.Lambda.FormatExpressions
 
-type WebContext  = IHostingEnvironment * HttpContext
-type HttpHandler = WebContext -> Async<WebContext option>
+type HttpHandlerContext =
+    {
+        HttpContext  : HttpContext
+        Environment  : IHostingEnvironment
+        Logger       : ILogger
+    }
+
+type HttpHandler = HttpHandlerContext -> Async<HttpHandlerContext option>
 
 let bind (handler : HttpHandler) (handler2 : HttpHandler) =
-    fun wctx ->
+    fun ctx ->
         async {
-            let! result = handler wctx
+            let! result = handler ctx
             match result with
-            | None       -> return  None
-            | Some wctx2 -> return! handler2 wctx2
+            | None      -> return  None
+            | Some ctx2 -> return! handler2 ctx2
         }
 
 let (>>=) = bind
 
 let rec choose (handlers : HttpHandler list) =
-    fun wctx ->
+    fun ctx ->
         async {
             match handlers with
             | []                -> return None
             | handler :: tail   ->
-                let! result = handler wctx
+                let! result = handler ctx
                 match result with
                 | Some c    -> return Some c
-                | None      -> return! choose tail wctx
+                | None      -> return! choose tail ctx
         }
 
 let httpVerb (verb : string) =
-    fun (env : IHostingEnvironment, ctx : HttpContext) ->
-        if ctx.Request.Method.Equals verb
-        then Some (env, ctx)
+    fun ctx ->
+        if ctx.HttpContext.Request.Method.Equals verb
+        then Some ctx
         else None
         |> async.Return
 
@@ -51,66 +58,68 @@ let PATCH   = httpVerb "PATCH"  : HttpHandler
 let DELETE  = httpVerb "DELETE" : HttpHandler
 
 let mustAccept (mimeTypes : string list) =
-    fun (env : IHostingEnvironment, ctx : HttpContext) ->
-        let headers = ctx.Request.GetTypedHeaders()
+    fun ctx ->
+        let headers = ctx.HttpContext.Request.GetTypedHeaders()
         headers.Accept
         |> Seq.map    (fun h -> h.ToString())
         |> Seq.exists (fun h -> mimeTypes |> Seq.contains h)
         |> function
-            | true  -> Some (env, ctx)
+            | true  -> Some ctx
             | false -> None
             |> async.Return
 
 let route (path : string) =
-    fun (env : IHostingEnvironment, ctx : HttpContext) ->
-        if ctx.Request.Path.ToString().Equals path 
-        then Some (env, ctx)
+    fun ctx ->
+        if ctx.HttpContext.Request.Path.ToString().Equals path 
+        then Some ctx
         else None
         |> async.Return
 
 let routef (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
-    fun (env : IHostingEnvironment, ctx : HttpContext) ->
-        tryMatchInput route (ctx.Request.Path.ToString()) false
+    fun ctx ->
+        tryMatchInput route (ctx.HttpContext.Request.Path.ToString()) false
         |> function
-            | None      -> None |> async.Return
-            | Some args -> routeHandler args (env, ctx)
+            | None      -> async.Return None
+            | Some args -> routeHandler args ctx
 
 let routeci (path : string) =
-    fun (env : IHostingEnvironment, ctx : HttpContext) ->
-        if String.Equals(ctx.Request.Path.ToString(), path, StringComparison.CurrentCultureIgnoreCase)
-        then Some (env, ctx)
+    fun ctx ->
+        if String.Equals(ctx.HttpContext.Request.Path.ToString(),
+                         path,
+                         StringComparison.CurrentCultureIgnoreCase)
+        then Some ctx
         else None
         |> async.Return
 
 let routecif (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
-    fun (env : IHostingEnvironment, ctx : HttpContext) ->
-        tryMatchInput route (ctx.Request.Path.ToString()) true
+    fun ctx ->
+        tryMatchInput route (ctx.HttpContext.Request.Path.ToString()) true
         |> function
             | None      -> None |> async.Return
-            | Some args -> routeHandler args (env, ctx)
+            | Some args -> routeHandler args ctx
 
 let setStatusCode (statusCode : int) =
-    fun (env : IHostingEnvironment, ctx : HttpContext) ->
+    fun ctx ->
         async {
-            ctx.Response.StatusCode <- statusCode
-            return Some (env, ctx)
+            ctx.HttpContext.Response.StatusCode <- statusCode
+            return Some ctx
         }
 
 let setHttpHeader (key : string) (value : obj) =
-    fun (env : IHostingEnvironment, ctx : HttpContext) ->
+    fun ctx ->
         async {
-            ctx.Response.Headers.[key] <- new StringValues(value.ToString())
-            return Some (env, ctx)
+            ctx.HttpContext.Response.Headers.[key] <- new StringValues(value.ToString())
+            return Some ctx
         }
 
 let setBody (bytes : byte array) =
-    fun (env : IHostingEnvironment, ctx : HttpContext) ->
-        async {
-            ctx.Response.Headers.["Content-Length"] <- new StringValues(bytes.Length.ToString())
-            ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length)
+    fun ctx ->
+        async {            
+            ctx.HttpContext.Response.Headers.["Content-Length"] <- new StringValues(bytes.Length.ToString())
+            ctx.HttpContext.Response.Body.WriteAsync(bytes, 0, bytes.Length)
             |> Async.AwaitTask
             |> ignore
-            return Some (env, ctx)
+            return Some ctx
         }
 
 let setBodyAsString (str : string) =
@@ -134,20 +143,20 @@ let dotLiquid (contentType : string) (template : string) (model : obj) =
         |> setBodyAsString)
 
 let htmlTemplate (relativeTemplatePath : string) (model : obj) = 
-    fun (env : IHostingEnvironment, ctx : HttpContext) ->
+    fun ctx ->
         async {
-            let templatePath = env.ContentRootPath + relativeTemplatePath
+            let templatePath = ctx.Environment.ContentRootPath + relativeTemplatePath
             let! template = readFileAsString templatePath
-            return! dotLiquid "text/html" template model (env, ctx)
+            return! dotLiquid "text/html" template model ctx
         }
 
 let htmlFile (relativeFilePath : string) =
-    fun (env : IHostingEnvironment, ctx : HttpContext) ->
+    fun ctx ->
         async {
-            let filePath = env.ContentRootPath + relativeFilePath
+            let filePath = ctx.Environment.ContentRootPath + relativeFilePath
             let! html = readFileAsString filePath
             return!
-                (env, ctx)
+                ctx
                 |> (setHttpHeader "Content-Type" "text/html"
                 >>= setBodyAsString html)
         }
