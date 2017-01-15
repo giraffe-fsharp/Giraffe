@@ -1,6 +1,6 @@
 {
   "name": "AspNetCore.Lambda",
-  "version": "0.1.0-*",
+  "version": "0.1.0-alpha-*",
   "description": "An attempt to make ASP.NET Core more functional.",
   "copyright": "Copyright 2017 Dustin Moris Gorski",
   "authors": [

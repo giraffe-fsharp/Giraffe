@@ -1,0 +1,26 @@
+version: 0.1.0-alpha-{build}
+configuration:
+  - Release
+platform: Any CPU
+environment:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+before_build:
+  - appveyor-retry dotnet restore
+build_script:
+  - dotnet build "src\AspNetCore.Lambda" -c %CONFIGURATION% --no-dependencies --version-suffix %APPVEYOR_BUILD_ID%
+after_build:
+  - dotnet pack "src\AspNetCore.Lambda" -c %CONFIGURATION% --no-build
+artifacts:
+  - path: '**\AspNetCore.Lambda.*.nupkg'
+    name: AspNetCore.Lambda
+nuget:
+  account_feed: false
+  project_feed: false
+deploy:
+  provider: NuGet
+  api_key:
+    secure: +XDgIu4Tmln7LKedNmQgMFnyKTxxuCKFRK3V5oKEfwZiakPXRd5C7OueEGBL50oh
+  skip_symbols: false
+  artifact: /.*AspNetCore.Lambda\..*\.nupkg/
+  on:
+    appveyor_repo_tag: true
