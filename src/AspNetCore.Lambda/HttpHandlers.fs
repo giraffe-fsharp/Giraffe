@@ -133,11 +133,12 @@ let dotLiquid (contentType : string) (template : string) (model : obj) =
         |> view.Render
         |> setBodyAsString)
 
-let htmlTemplate (templatePath : string) (model : obj) = 
-    fun wctx ->
+let htmlTemplate (relativeTemplatePath : string) (model : obj) = 
+    fun (env : IHostingEnvironment, ctx : HttpContext) ->
         async {
+            let templatePath = env.ContentRootPath + relativeTemplatePath
             let! template = readFileAsString templatePath
-            return! dotLiquid "text/html" template model wctx
+            return! dotLiquid "text/html" template model (env, ctx)
         }
 
 let htmlFile (relativeFilePath : string) =

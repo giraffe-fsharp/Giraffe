@@ -231,14 +231,121 @@ let app =
 
 ### setBody
 
+`setBody` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers which attempt to modify the HTTP headers of the response cannot be executed afterwards anymore.
+
+#### Example:
+
+```
+let app = 
+    choose [
+        route  "/foo" >>= setBody (Encoding.UTF8.GetBytes "Some string")
+    ]
+```
+
 ### setBodyAsString
+
+`setBodyAsString` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers which attempt to modify the HTTP headers of the response cannot be executed afterwards anymore.
+
+#### Example:
+
+```
+let app = 
+    choose [
+        route  "/foo" >>= setBodyAsString "Some string"
+    ]
+```
 
 ### text
 
+`text` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers which attempt to modify the HTTP headers of the response cannot be executed afterwards anymore.
+
+The different between `text` an `setBodyAsString` is that this http handler also sets the `Content-Type` HTTP header to `text/plain`.
+
+#### Example:
+
+```
+let app = 
+    choose [
+        route  "/foo" >>= text "Some string"
+    ]
+```
+
 ### json
+
+`json` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers which attempt to modify the HTTP headers of the response cannot be executed afterwards anymore.
+
+The different between `json` an `setBodyAsString` or `setBody` is that this http handler also sets the `Content-Type` HTTP header to `application/json`.
+
+#### Example:
+
+```
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let app = 
+    choose [
+        route  "/foo" >>= json { FirstName = "Foo"; LastName = "Bar" }
+    ]
+```
 
 ### dotLiquid
 
+`dotLiquid` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers which attempt to modify the HTTP headers of the response cannot be executed afterwards anymore.
+
+The `dotLiquid` handler requires the content type and the actual template of the response as two string values together with a model. This handler is supposed to be used as the base handler for more http handlers being build on the DotLiquid template engine (e.g. you could create an SVG handler on top of it).
+
+#### Example:
+
+```
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let template = "<html><head><title>DotLiquid</title></head><body><p>First name: {{ firstName }}<br />Last name: {{ lastName }}</p></body></html>
+
+let app = 
+    choose [
+        route  "/foo" >>= dotLiquid "text/html" template { FirstName = "Foo"; LastName = "Bar" }
+    ]
+```
+
 ### htmlTemplate
 
+`htmlTemplate` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers which attempt to modify the HTTP headers of the response cannot be executed afterwards anymore.
+
+This http handler takes a relative path of a template file and the associated model to set a HTTP response with a `Content-Type` of `text/html`.
+
+#### Example:
+
+```
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let app = 
+    choose [
+        route  "/foo" >>= htmlTemplate "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
+    ]
+```
+
 ### htmlFile
+
+`htmlFile` sets or modifies the body of the `HttpResponse` with the contents of a physical html file. This http handler triggers the response being sent to the client and other http handlers which attempt to modify the HTTP headers of the response cannot be executed afterwards anymore.
+
+This http handler takes a relative path of a html file and sets the HTTP response with the `Content-Type` of `text/html`.
+
+#### Example:
+
+```
+let app = 
+    choose [
+        route  "/" >>= htmlFile "index.html"
+    ]
+```
