@@ -11,7 +11,7 @@ type LambdaMiddleware (next          : RequestDelegate,
                        handler       : HttpHandler,
                        env           : IHostingEnvironment,
                        loggerFactory : ILoggerFactory) =
-                       
+
     member __.Invoke (ctx : HttpContext) =
         async {
             let logger = loggerFactory.CreateLogger<LambdaMiddleware>()

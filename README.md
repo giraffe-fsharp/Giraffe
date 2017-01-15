@@ -42,9 +42,9 @@ ASP.NET Core Lambda is an F# web framework similar to Suave, but has been design
 
 ### Who is it for?
 
-ASP.NET Core Lambda is intended for developers who want to build rich web applications on top of ASP.NET Core in a functional first approach. ASP.NET Core is a powerfull web platform with a huge community behind it and ASP.NET Core Lambda is designed for F# developers who want to benefit from that eco system.
+ASP.NET Core Lambda is intended for developers who want to build rich web applications on top of ASP.NET Core in a functional first approach. ASP.NET Core is a powerfull web platform with Microsoft and a big community behind it and ASP.NET Core Lambda is designed for F# developers who want to benefit from that eco system.
 
-It is designed to be as lean as possible and only to extend ASP.NET Core where there's a lack for functional programmers instead of re-inventing the whole platform from scratch. The main mentality is to stand on top of the shoulders of a strong platform and re-use the existing ASP.NET Core building blocks where possible.
+It is designed to be as lean as possible and to extend ASP.NET Core only where there's a lack for functional programmers instead of re-inventing the entire platform from scratch. It's mentality is to stand on top of the shoulders of a strong platform and re-use the existing ASP.NET Core building blocks where possible.
 
 ## Basics
 
@@ -454,6 +454,7 @@ Create a web application and plug it into the ASP.NET Core middleware:
 
 ```
 open AspNetCore.Lambda.HttpHandlers
+open AspNetCore.Lambda.Middleware
 
 let webApp = 
     choose [
