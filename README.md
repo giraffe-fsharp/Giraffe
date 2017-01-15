@@ -6,32 +6,32 @@ THIS PROJECT IS STILL WORK IN PROGRESS
 
 ## Table of contents
 
-- [About](#About)
-- [Basics](#Basics)
-    - [HttpHandler](#HttpHandler)
-    - [Combinators](#Combinators)
-- Default HttpHandlers
-    - choose
-    - GET, POST, PUT, PATCH, DELETE
-    - mustAccept
-    - route
-    - routef
-    - routeci
-    - routecif
-    - setStatusCode
-    - setHttpHeader
-    - setBody
-    - setBodyAsString
-    - text
-    - json
-    - dotLiquid
-    - htmlTemplate
-    - htmlFile
-- Custom HttpHandlers
-- Installation
-- Examples
-- License
-- Contribution
+- [About](#about)
+- [Basics](#basics)
+    - [HttpHandler](#httphandler)
+    - [Combinators](#combinators)
+- [Default HttpHandlers](#default-httphandlers)
+    - [choose](#choose)
+    - [GET, POST, PUT, PATCH, DELETE](#get-post-put-patch-delete)
+    - [mustAccept](#mustaccept)
+    - [route](#route)
+    - [routef](#routef)
+    - [routeci](#routeci)
+    - [routecif](#routecif)
+    - [setStatusCode](#setstatuscode)
+    - [setHttpHeader](#sethttpheader)
+    - [setBody](#setbody)
+    - [setBodyAsString](#setbodyasstring)
+    - [text](#text)
+    - [json](#json)
+    - [dotLiquid](#dotliquid)
+    - [htmlTemplate](#htmltemplate)
+    - [htmlFile](#htmlfile)
+- [Custom HttpHandlers](#custom-httphandlers)
+- [Installation](#installation)
+- [Examples](#examples)
+- [License](#license)
+- [Contribution](#contribution)
 
 ## About
 
@@ -51,13 +51,15 @@ type WebContext  = IHostingEnvironment * HttpContext
 type HttpHandler = WebContext -> Async<WebContext option>
 ```
 
-A `HttpHandler` is a simple function which takes in a tuple of `IHostingEnvironment` and `HttpContext` and returns a tuple of the same type in the end.
+A `HttpHandler` is a simple function which takes in a tuple of `IHostingEnvironment` and `HttpContext` and returns a tuple of the same type when finished.
 
-Inside that function it can process an incoming `HttpRequest` and make changes to the `HttpResponse` of the given `HttpContext`. By receiving and returning a `HttpContext` there's nothing which cannot be done from inside such an `HttpHandler`.
+Inside that function it can process an incoming `HttpRequest` and make changes to the `HttpResponse` of the given `HttpContext`. By receiving and returning a `HttpContext` there's nothing which cannot be done from inside a `HttpHandler`.
 
 A `HttpHandler` can decide to not further process an incoming request and return `None` instead. In this case another `HttpHandler` might continue processing the request or the middleware will simply defer to the next `RequestDelegate` in the ASP.NET Core pipeline.
 
 ### Combinators
+
+#### bind (>>=)
 
 The core combinator is the `bind` function which you might be familiar with:
 
@@ -74,15 +76,13 @@ let bind (handler : HttpHandler) (handler2 : HttpHandler) =
 let (>>=) = bind
 ```
 
-The `bind` function takes in two different http handlers and a `WebContext` (wctx) object. It first invokes the first handler and checks its result. If it returned a new `WebContext` then it will pass it on to the second `HttpHandler` and return the overall result of that function. If there was nothing then it will short circuit after the first handler and return `None`.
+The `bind` function takes in two different http handlers and a `WebContext` (wctx) object. It first invokes the first handler and checks its result. If there was a `WebContext` then it will pass it on to the second `HttpHandler` and return the overall result of that function. If there was nothing then it will short circuit after the first handler and return `None`.
 
-With this in mind one can compose many smaller `HttpHandler` functions into a bigger web application.
+This allows composing many smaller `HttpHandler` functions into a bigger web application.
 
-## Default HttpHandlers
+#### choose
 
-### choose
-
-`choose` iterates through a list of `HttpHandler` and invokes them until the first handler returns a result.
+The `choose` combinator function iterates through a list of `HttpHandler`s and invokes each individual until the first handler returns a result.
 
 #### Example:
 
@@ -93,6 +93,8 @@ let app =
         route "/bar" >>= text "Bar"
     ]
 ```
+
+## Default HttpHandlers
 
 ### GET, POST, PUT, PATCH, DELETE
 
