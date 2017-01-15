@@ -10,6 +10,8 @@ THIS PROJECT IS STILL WORK IN PROGRESS
 - [Basics](#basics)
     - [HttpHandler](#httphandler)
     - [Combinators](#combinators)
+        - [bind (>>=)](#bind-)
+        - [choose](#choose)
 - [Default HttpHandlers](#default-httphandlers)
     - [choose](#choose)
     - [GET, POST, PUT, PATCH, DELETE](#get-post-put-patch-delete)
@@ -143,7 +145,7 @@ let app =
 
 ### routef
 
-`routef` matches a given format string with the actual request path and invokes a given `HttpHandler` with automatically resolved arguments on success.
+`routef` matches a given format string with the actual request path. On success it will resolve the arguments from the format string and invoke the given `HttpHandler` with them.
 
 The following format placeholders are currently supported:
 
@@ -201,7 +203,31 @@ let app =
 
 ### setStatusCode
 
+`setStatusCode` changes the status code of the `HttpResponse`.
+
+#### Example:
+
+```
+let app = 
+    choose [
+        route  "/foo" >>= text "Foo"
+        setStatusCode 404 >>= text "Not found"
+    ]
+```
+
 ### setHttpHeader
+
+`setHttpHeader` sets or modifies a HTTP header of the `HttpResponse`.
+
+#### Example:
+
+```
+let app = 
+    choose [
+        route  "/foo" >>= text "Foo"
+        setStatusCode 404 >>= setHttpHeader "X-CustomHeader" "something" >>= text "Not found"
+    ]
+```
 
 ### setBody
 
