@@ -20,6 +20,8 @@ THIS PROJECT IS STILL WORK IN PROGRESS
     - [routef](#routef)
     - [routeci](#routeci)
     - [routecif](#routecif)
+    - [routeStartsWith](#routestartswith)
+    - [routeStartsWithCi](#routestartswithci)
     - [setStatusCode](#setstatuscode)
     - [setHttpHeader](#sethttpheader)
     - [setBody](#setbody)
@@ -205,6 +207,36 @@ let app =
     ]
 ```
 
+### routeStartsWith
+
+`routeStartsWith` checks if the current request path starts with the given string. This can be a useful filter when a subset of routes require an additional step of verifiation (e.g. admin or api routes).
+
+#### Example:
+
+```
+let app = 
+    routeStartsWith "/api/v1/" >>=
+        choose [
+            route "/api/v1/foo" >>= text "Foo"
+            route "/api/v1/bar" >>= text "Bar"
+        ]
+```
+
+### routeStartsWithCi
+
+`routeStartsWithCi` is the case insensitive version of `routeStartsWith`.
+
+#### Example:
+
+```
+let app = 
+    routeStartsWithCi "/api/v1/" >>=
+        choose [
+            route "/api/v1/foo" >>= text "Foo"
+            route "/api/v1/bar" >>= text "Bar"
+        ]
+```
+
 ### setStatusCode
 
 `setStatusCode` changes the status code of the `HttpResponse`.
@@ -362,6 +394,8 @@ Defining a new `HttpHandler` is fairly easy. All you need to do is to create a n
 
 Defining a custom HTTP handler to partially filter a route:
 
+*(After creating this example HTTP handler I added it to the list of default handlers as it turns out to be quite useful)*
+
 ```
 let routeStartsWith (partOfPath : string) =
     fun ctx ->
@@ -406,7 +440,7 @@ let app =
 
 ## Installation
 
-Install the `AspNetCore.Lambda` NuGet package:
+Install the [AspNetCore.Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) NuGet package:
 
 ```
 PM> Install-Package AspNetCore.Lambda

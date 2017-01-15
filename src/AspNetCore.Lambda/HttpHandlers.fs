@@ -84,9 +84,7 @@ let routef (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
 
 let routeci (path : string) =
     fun ctx ->
-        if String.Equals(ctx.HttpContext.Request.Path.ToString(),
-                         path,
-                         StringComparison.CurrentCultureIgnoreCase)
+        if String.Equals(ctx.HttpContext.Request.Path.ToString(), path, StringComparison.CurrentCultureIgnoreCase)
         then Some ctx
         else None
         |> async.Return
@@ -97,6 +95,20 @@ let routecif (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
         |> function
             | None      -> None |> async.Return
             | Some args -> routeHandler args ctx
+
+let routeStartsWith (partOfPath : string) =
+    fun ctx ->
+        if ctx.HttpContext.Request.Path.ToString().StartsWith partOfPath 
+        then Some ctx
+        else None
+        |> async.Return
+
+let routeStartsWithCi (partOfPath : string) =
+    fun ctx ->
+        if ctx.HttpContext.Request.Path.ToString().StartsWith(partOfPath, StringComparison.CurrentCultureIgnoreCase) 
+        then Some ctx
+        else None
+        |> async.Return
 
 let setStatusCode (statusCode : int) =
     fun ctx ->
