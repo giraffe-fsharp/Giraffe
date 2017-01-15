@@ -23,8 +23,8 @@ A functional ASP.NET Core micro framework for building rich web applications.
     - [mustAccept](#mustaccept)
     - [route](#route)
     - [routef](#routef)
-    - [routeci](#routeci)
-    - [routecif](#routecif)
+    - [routeCi](#routeci)
+    - [routeCif](#routecif)
     - [routeStartsWith](#routestartswith)
     - [routeStartsWithCi](#routestartswithci)
     - [setStatusCode](#setstatuscode)
@@ -186,9 +186,9 @@ let app =
     ]
 ```
 
-### routeci
+### routeCi
 
-`routeci` is the case insensitive version of `route`.
+`routeCi` is the case insensitive version of `route`.
 
 #### Example:
 
@@ -197,15 +197,15 @@ let app =
 
 let app = 
     choose [
-        routeci "/"    >>= text "Index path"
-        routeci "/foo" >>= text "Foo"
-        routeci "/bar" >>= text "Bar"
+        routeCi "/"    >>= text "Index path"
+        routeCi "/foo" >>= text "Foo"
+        routeCi "/bar" >>= text "Bar"
     ]
 ```
 
-### routecif
+### routeCif
 
-`routecif` is the case insensitive version of `routef`.
+`routeCif` is the case insensitive version of `routef`.
 
 #### Example:
 
@@ -213,7 +213,7 @@ let app =
 let app = 
     choose [
         route  "/foo" >>= text "Foo"
-        routecif "/bar/%s/%i" (fun (name, age) ->
+        routeCif "/bar/%s/%i" (fun (name, age) ->
             text (sprintf "Name: %s, Age: %i" name age))
     ]
 ```

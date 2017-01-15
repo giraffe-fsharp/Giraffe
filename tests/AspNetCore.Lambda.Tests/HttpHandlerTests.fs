@@ -60,7 +60,7 @@ let testApp =
                 route "/foo"        >>= text "bar"
                 route "/json"       >>= json { Foo = "john"; Bar = "doe"; Age = 30 }
                 route "/dotLiquid"  >>= dotLiquid "text/html" dotLiquidTemplate { Foo = "John"; Bar = "Doe"; Age = 30 }
-                routeci "/json"     >>= text "BaR"
+                routeCi "/json"     >>= text "BaR"
                 routef "/foo/%s/bar" text
                 routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
             ]
@@ -71,7 +71,7 @@ let testApp =
                 route "/text"   >>= mustAccept [ "text/plain" ] >>= text "text"
                 route "/json"   >>= mustAccept [ "application/json" ] >>= json "json"
                 route "/either" >>= mustAccept [ "text/plain"; "application/json" ] >>= text "either"
-                routecif "/post/%i" json
+                routeCif "/post/%i" json
             ] 
         setStatusCode 404 >>= text "Not found" ] : HttpHandler
 
