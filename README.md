@@ -31,7 +31,6 @@ THIS PROJECT IS STILL WORK IN PROGRESS
     - [htmlFile](#htmlfile)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Installation](#installation)
-- [Examples](#examples)
 - [License](#license)
 - [Contribution](#contribution)
 
@@ -349,3 +348,58 @@ let app =
         route  "/" >>= htmlFile "index.html"
     ]
 ```
+
+## Custom HttpHandlers
+
+Defining a new `HttpHandler` is fairly easy. All you need to do is to create a new function which matches the signature of `WebContext -> Async<WebContext option>`. Through currying your custom `HttpHandler` can extend the original signature as long as the partial application of your function will still return a function of `WebContext -> Async<WebContext option>`.
+
+### Example:
+
+```
+// Defining a custom HTTP handler to partially filter a route
+
+let routeStartsWith (partOfPath : string) =
+    fun (env : IHostingEnvironment, ctx : HttpContext) ->
+        if ctx.Request.Path.ToString().StartsWith partOfPath 
+        then Some (env, ctx)
+        else None
+        |> async.Return
+
+// Defining another custom HTTP handler to validate a mandatory HTTP header
+// (This is only an extremly simmplified example of showing how to add custom authentication handlers)
+
+let requiresToken (expectedToken : string) (handler : HttpHandler) =
+    fun (env : IHostingEnvironment, ctx : HttpContext) ->
+        let token    = ctx.Request.Headers.["X-Token"].ToString()
+        let response =
+            if token.Equals(expectedToken)
+            then handler
+            else setStatusCode 401 >>= text "Token wrong or missing"
+        response (env, ctx)
+
+// Composing a web application from smaller HTTP handlers
+
+let app = 
+    choose [
+        route "/"       >>= htmlFile "index.html"
+        route "/about"  >>= htmlFile "about.html"
+        routeStartsWith "/api/v1/" >>=
+            requiresToken "secretToken" (
+                choose [
+                    route "/api/v1/foo" >>= text "something"
+                    route "/api/v1/bar" >>= text "bar"
+                ]
+            )
+        setStatusCode 404 >>= text "Not found"
+    ] : HttpHandler
+```
+
+## License
+
+[Apache 2.0](https://raw.githubusercontent.com/dustinmoris/AspNetCore.Lambda/master/LICENSE)
+
+## Contribution
+
+Feedback is more than welcome and pull requests get accepted!
+
+File an [issue on GitHub](https://github.com/dustinmoris/AspNetCore.Lambda/issues/new) or contact me via [https://dusted.codes/about](https://dusted.codes/about).
