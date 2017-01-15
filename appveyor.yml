@@ -8,7 +8,7 @@ before_build:
   - appveyor-retry dotnet restore
 build_script:
   - dotnet build "src\AspNetCore.Lambda" -c %CONFIGURATION% --no-dependencies --version-suffix %APPVEYOR_BUILD_ID%
-    dotnet test "tests\AspNetCore.Lambda.Tests"
+  - dotnet test "tests\AspNetCore.Lambda.Tests"
 after_build:
   - dotnet pack "src\AspNetCore.Lambda" -c %CONFIGURATION% --no-build
 artifacts:
