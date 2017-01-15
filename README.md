@@ -2,7 +2,12 @@
 
 A functional ASP.NET Core micro framework for building rich web applications.
 
-THIS PROJECT IS STILL WORK IN PROGRESS
+[![Build status](https://ci.appveyor.com/api/projects/status/0ft2427dflip7wti/branch/master?svg=true)](https://ci.appveyor.com/project/dustinmoris/aspnetcore-lambda/branch/master)
+[![NuGet Info](https://buildstats.info/nuget/AspNetCore.Lambda?includePreReleases=true)](https://www.nuget.org/packages/AspNetCore.Lambda/)
+
+[![Build history](https://buildstats.info/appveyor/chart/dustinmoris/aspnetcore-lambda)](https://ci.appveyor.com/project/dustinmoris/aspnetcore-lambda/history)
+
+**ATTENTION: THIS PROJECT IS STILL WORK IN PROGRESS**
 
 ## Table of contents
 
