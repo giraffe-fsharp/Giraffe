@@ -2,12 +2,14 @@
 
 A functional ASP.NET Core micro framework for building rich web applications.
 
+THIS PROJECT IS STILL WORK IN PROGRESS
+
 ## Table of contents
 
-- About
-- Basics
-    - HttpHandler
-    - Combinators
+- [About](#About)
+- [Basics](#Basics)
+    - [HttpHandler](#HttpHandler)
+    - [Combinators](#Combinators)
 - Default HttpHandlers
     - choose
     - GET, POST, PUT, PATCH, DELETE
