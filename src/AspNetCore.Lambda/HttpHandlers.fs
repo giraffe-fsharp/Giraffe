@@ -21,13 +21,18 @@ type HttpHandlerContext =
 
 type HttpHandler = HttpHandlerContext -> Async<HttpHandlerContext option>
 
+type ErrorHandler = exn -> HttpHandler
+
 let bind (handler : HttpHandler) (handler2 : HttpHandler) =
     fun ctx ->
         async {
             let! result = handler ctx
             match result with
-            | None      -> return  None
-            | Some ctx2 -> return! handler2 ctx2
+            | None      -> return None
+            | Some ctx2 ->
+                match ctx2.HttpContext.Response.HasStarted with
+                | true  -> return  Some ctx2
+                | false -> return! handler2 ctx2
         }
 
 let (>>=) = bind

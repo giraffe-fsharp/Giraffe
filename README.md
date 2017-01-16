@@ -43,11 +43,11 @@ A functional ASP.NET Core micro framework for building rich web applications.
 
 ## About
 
-ASP.NET Core Lambda is an F# web framework similar to Suave, but has been designed with [ASP.NET Core](https://www.asp.net/core) in mind and can be plugged into the ASP.NET Core pipeline via [middleware](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware). ASP.NET Core Lambda has been heavily inspired by [Suave](https://suave.io/) and its concept of web parts and the ability to compose many smaller web parts into a large web application.
+[ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) is an F# web framework similar to Suave, but has been designed with [ASP.NET Core](https://www.asp.net/core) in mind and can be plugged into the ASP.NET Core pipeline via [middleware](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware). [ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) has been heavily inspired by [Suave](https://suave.io/) and its concept of web parts and the ability to compose many smaller web parts into a large web application.
 
 ### Who is it for?
 
-ASP.NET Core Lambda is intended for developers who want to build rich web applications on top of ASP.NET Core in a functional first approach. ASP.NET Core is a powerful web platform, which has Microsoft and a huge developer community behind it and ASP.NET Core Lambda is designed for F# developers who want to benefit from that eco system.
+[ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) is intended for developers who want to build rich web applications on top of ASP.NET Core in a functional first approach. ASP.NET Core is a powerful web platform, which has Microsoft and a huge developer community behind it and ASP.NET Core Lambda is designed for F# developers who want to benefit from that eco system.
 
 It is designed to be as lean as possible and to extend ASP.NET Core only where there's a lack for functional programmers today instead of re-inventing the entire platform from scratch. It's mentality is to stand on top of the shoulders of a giant and re-use the existing ASP.NET Core building blocks as much as possible.
 
@@ -88,8 +88,11 @@ let bind (handler : HttpHandler) (handler2 : HttpHandler) =
         async {
             let! result = handler ctx
             match result with
-            | None      -> return  None
-            | Some ctx2 -> return! handler2 ctx2
+            | None      -> return None
+            | Some ctx2 ->
+                match ctx2.HttpContext.Response.HasStarted with
+                | true  -> return  Some ctx2
+                | false -> return! handler2 ctx2
         }
 
 let (>>=) = bind
