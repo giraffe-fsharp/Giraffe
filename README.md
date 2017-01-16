@@ -43,15 +43,15 @@ A functional ASP.NET Core micro framework for building rich web applications.
 
 ## About
 
-[ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) is an F# web framework similar to Suave, but has been designed with [ASP.NET Core](https://www.asp.net/core) in mind and can be plugged into the ASP.NET Core pipeline via [middleware](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware). [ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) has been heavily inspired by [Suave](https://suave.io/) and its concept of web parts and the ability to compose many smaller web parts into a large web application.
+[ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) is an F# web framework similar to Suave, but has been designed with [ASP.NET Core](https://www.asp.net/core) in mind and can be plugged into the ASP.NET Core pipeline via [middleware](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware). [ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) has been heavily inspired by [Suave](https://suave.io/) and its concept of web parts and the ability to compose many smaller web parts into a larger web application.
 
 ### Who is it for?
 
-[ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) is intended for developers who want to build rich web applications on top of ASP.NET Core in a functional first approach. ASP.NET Core is a powerful web platform, which has Microsoft and a huge developer community behind it and ASP.NET Core Lambda is designed for F# developers who want to benefit from that eco system.
+[ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) is intended for developers who want to build rich web applications on top of ASP.NET Core in a functional first approach. ASP.NET Core is a powerful web platform which has support by Microsoft and a huge developer community behind it and ASP.NET Core Lambda is aimed at F# developers who want to benefit from that eco system.
 
-It is designed to be as lean as possible and to extend ASP.NET Core only where there's a lack for functional programmers today instead of re-inventing the entire platform from scratch. It's mentality is to stand on top of the shoulders of a giant and re-use the existing ASP.NET Core building blocks as much as possible.
+It is not designed to be a competing web product which can be run standalone like NancyFx or Suave, but rather a lean micro framework which aims to complement ASP.NET Core where it comes short for functional developers at the moment. The fundamental idea is to build on top of the strong foundation of ASP.NET Core and re-use existing ASP.NET Core building blocks so F# developers can benefit from both worlds.
 
-You can think of it as an equivalent of the MVC framework, but for functional developers.
+You can think of [ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) as the functional counter part of the ASP.NET Core MVC framework.
 
 ## Basics
 
