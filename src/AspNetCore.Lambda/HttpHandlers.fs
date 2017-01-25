@@ -6,6 +6,7 @@ open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
+open Microsoft.Extensions.DependencyInjection
 open FSharp.Core.Printf
 open Newtonsoft.Json
 open DotLiquid
@@ -14,9 +15,8 @@ open AspNetCore.Lambda.FormatExpressions
 
 type HttpHandlerContext =
     {
-        HttpContext  : HttpContext
-        Environment  : IHostingEnvironment
-        Logger       : ILogger
+        HttpContext : HttpContext
+        Services    : IServiceProvider
     }
 
 type HttpHandler = HttpHandlerContext -> Async<HttpHandlerContext option>
@@ -24,7 +24,7 @@ type HttpHandler = HttpHandlerContext -> Async<HttpHandlerContext option>
 type ErrorHandler = exn -> HttpHandler
 
 let bind (handler : HttpHandler) (handler2 : HttpHandler) =
-    fun ctx ->
+    fun (ctx : HttpHandlerContext) ->
         async {
             let! result = handler ctx
             match result with
@@ -38,7 +38,7 @@ let bind (handler : HttpHandler) (handler2 : HttpHandler) =
 let (>>=) = bind
 
 let rec choose (handlers : HttpHandler list) =
-    fun ctx ->
+    fun (ctx : HttpHandlerContext) ->
         async {
             match handlers with
             | []                -> return None
@@ -50,7 +50,7 @@ let rec choose (handlers : HttpHandler list) =
         }
 
 let httpVerb (verb : string) =
-    fun ctx ->
+    fun (ctx : HttpHandlerContext) ->
         if ctx.HttpContext.Request.Method.Equals verb
         then Some ctx
         else None
@@ -63,7 +63,7 @@ let PATCH   = httpVerb "PATCH"  : HttpHandler
 let DELETE  = httpVerb "DELETE" : HttpHandler
 
 let mustAccept (mimeTypes : string list) =
-    fun ctx ->
+    fun (ctx : HttpHandlerContext) ->
         let headers = ctx.HttpContext.Request.GetTypedHeaders()
         headers.Accept
         |> Seq.map    (fun h -> h.ToString())
@@ -71,66 +71,110 @@ let mustAccept (mimeTypes : string list) =
         |> function
             | true  -> Some ctx
             | false -> None
-            |> async.Return
+            |> async.Return          
+
+let challenge (authScheme : string) =
+    fun (ctx : HttpHandlerContext) ->
+        async {
+            let auth = ctx.HttpContext.Authentication
+            do! auth.ChallengeAsync authScheme |> Async.AwaitTask
+            return Some ctx
+        }
+
+let signOff (authScheme : string) =
+    fun (ctx : HttpHandlerContext) ->
+        async {
+            let auth = ctx.HttpContext.Authentication
+            do! auth.SignOutAsync authScheme |> Async.AwaitTask
+            return Some ctx
+        }
+
+let requiresAuthentication (authFailedHandler : HttpHandler) =
+    fun (ctx : HttpHandlerContext) ->
+        let user = ctx.HttpContext.User
+        if isNotNull user && user.Identity.IsAuthenticated
+        then async.Return (Some ctx)
+        else authFailedHandler ctx
+
+let requiresRole (role : string) (authFailedHandler : HttpHandler) =
+    fun (ctx : HttpHandlerContext) ->
+        let user = ctx.HttpContext.User
+        if user.IsInRole role
+        then async.Return (Some ctx)
+        else authFailedHandler ctx
+
+let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) =
+    fun (ctx : HttpHandlerContext) ->
+        let user = ctx.HttpContext.User
+        roles
+        |> List.exists user.IsInRole 
+        |> function
+            | true  -> async.Return (Some ctx)
+            | false -> authFailedHandler ctx
+
+let clearResponse =
+    fun (ctx : HttpHandlerContext) ->
+        ctx.HttpContext.Response.Clear()
+        async.Return (Some ctx)
 
 let route (path : string) =
-    fun ctx ->
+    fun (ctx : HttpHandlerContext) ->
         if ctx.HttpContext.Request.Path.ToString().Equals path 
         then Some ctx
         else None
         |> async.Return
 
 let routef (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
-    fun ctx ->
+    fun (ctx : HttpHandlerContext) ->
         tryMatchInput route (ctx.HttpContext.Request.Path.ToString()) false
         |> function
             | None      -> async.Return None
             | Some args -> routeHandler args ctx
 
 let routeCi (path : string) =
-    fun ctx ->
+    fun (ctx : HttpHandlerContext) ->
         if String.Equals(ctx.HttpContext.Request.Path.ToString(), path, StringComparison.CurrentCultureIgnoreCase)
         then Some ctx
         else None
         |> async.Return
 
 let routeCif (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
-    fun ctx ->
+    fun (ctx : HttpHandlerContext) ->
         tryMatchInput route (ctx.HttpContext.Request.Path.ToString()) true
         |> function
             | None      -> None |> async.Return
             | Some args -> routeHandler args ctx
 
 let routeStartsWith (partOfPath : string) =
-    fun ctx ->
+    fun (ctx : HttpHandlerContext) ->
         if ctx.HttpContext.Request.Path.ToString().StartsWith partOfPath 
         then Some ctx
         else None
         |> async.Return
 
 let routeStartsWithCi (partOfPath : string) =
-    fun ctx ->
+    fun (ctx : HttpHandlerContext) ->
         if ctx.HttpContext.Request.Path.ToString().StartsWith(partOfPath, StringComparison.CurrentCultureIgnoreCase) 
         then Some ctx
         else None
         |> async.Return
 
 let setStatusCode (statusCode : int) =
-    fun ctx ->
+    fun (ctx : HttpHandlerContext) ->
         async {
             ctx.HttpContext.Response.StatusCode <- statusCode
             return Some ctx
         }
 
 let setHttpHeader (key : string) (value : obj) =
-    fun ctx ->
+    fun (ctx : HttpHandlerContext) ->
         async {
             ctx.HttpContext.Response.Headers.[key] <- new StringValues(value.ToString())
             return Some ctx
         }
 
 let setBody (bytes : byte array) =
-    fun ctx ->
+    fun (ctx : HttpHandlerContext) ->
         async {            
             ctx.HttpContext.Response.Headers.["Content-Length"] <- new StringValues(bytes.Length.ToString())
             ctx.HttpContext.Response.Body.WriteAsync(bytes, 0, bytes.Length)
@@ -160,17 +204,19 @@ let dotLiquid (contentType : string) (template : string) (model : obj) =
         |> setBodyAsString)
 
 let htmlTemplate (relativeTemplatePath : string) (model : obj) = 
-    fun ctx ->
+    fun (ctx : HttpHandlerContext) ->
         async {
-            let templatePath = ctx.Environment.ContentRootPath + relativeTemplatePath
+            let env = ctx.Services.GetService<IHostingEnvironment>()
+            let templatePath = env.ContentRootPath + relativeTemplatePath
             let! template = readFileAsString templatePath
             return! dotLiquid "text/html" template model ctx
         }
 
 let htmlFile (relativeFilePath : string) =
-    fun ctx ->
+    fun (ctx : HttpHandlerContext) ->
         async {
-            let filePath = ctx.Environment.ContentRootPath + relativeFilePath
+            let env = ctx.Services.GetService<IHostingEnvironment>()
+            let filePath = env.ContentRootPath + relativeFilePath
             let! html = readFileAsString filePath
             return!
                 ctx
