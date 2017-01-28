@@ -28,9 +28,9 @@ type LambdaMiddleware (next     : RequestDelegate,
                     |> Async.AwaitTask
         } |> Async.StartAsTask
 
-type ErrorHandlerMiddleware (next          : RequestDelegate,
-                             errorHandler  : ErrorHandler,
-                             services      : IServiceProvider) =
+type LambdaErrorHandlerMiddleware (next          : RequestDelegate,
+                                   errorHandler  : ErrorHandler,
+                                   services      : IServiceProvider) =
 
     do if isNull next then raise (ArgumentNullException("next"))
 
@@ -51,7 +51,7 @@ type ErrorHandlerMiddleware (next          : RequestDelegate,
                         errorHandler ex httpHandlerContext
                         |> Async.Ignore
                 with ex2 ->
-                    let logger = services.GetService<ILogger<ErrorHandlerMiddleware>>()
+                    let logger = services.GetService<ILogger<LambdaErrorHandlerMiddleware>>()
                     logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
                     logger.LogError(EventId(0), ex2, "An exception was thrown attempting to handle the original exception.")
         } |> Async.StartAsTask
@@ -61,6 +61,6 @@ type IApplicationBuilder with
         this.UseMiddleware<LambdaMiddleware>(handler)
         |> ignore
 
-    member this.UseErrorHandler (handler : ErrorHandler) =
-        this.UseMiddleware<ErrorHandlerMiddleware>(handler)
+    member this.UseLambdaErrorHandler (handler : ErrorHandler) =
+        this.UseMiddleware<LambdaErrorHandlerMiddleware>(handler)
         |> ignore

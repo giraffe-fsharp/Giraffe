@@ -83,7 +83,7 @@ type Startup() =
                         (env : IHostingEnvironment)
                         (loggerFactory : ILoggerFactory) =
         loggerFactory.AddConsole().AddDebug() |> ignore
-        app.UseErrorHandler(errorHandler)
+        app.UseLambdaErrorHandler(errorHandler)
         app.UseCookieAuthentication(
             new CookieAuthenticationOptions(
                 AuthenticationScheme    = authScheme,

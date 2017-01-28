@@ -526,7 +526,7 @@ Defining a new `HttpHandler` is fairly easy. All you need to do is to create a n
 
 Defining a custom HTTP handler to partially filter a route:
 
-*(After creating this example HTTP handler I added it to the list of default handlers as it turns out to be quite useful)*
+*(After creating this example I added the `routeStartsWith` HttpHandler to the list of default handlers as it turned out to be quite useful)*
 
 ```
 let routeStartsWith (partOfPath : string) =
@@ -538,8 +538,6 @@ let routeStartsWith (partOfPath : string) =
 ```
 
 Defining another custom HTTP handler to validate a mandatory HTTP header:
-
-*(This is only an extremly simmplified example of showing how to add custom authentication handlers.)*
 
 ```
 let requiresToken (expectedToken : string) (handler : HttpHandler) =
