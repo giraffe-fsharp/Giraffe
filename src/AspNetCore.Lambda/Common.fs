@@ -12,5 +12,4 @@ let readFileAsString (filePath : string) =
             |> Async.AwaitTask
     }
 
-let toOption value = 
-    if obj.ReferenceEquals(value, null) then None else Some value
+let inline isNotNull x = isNull x |> not

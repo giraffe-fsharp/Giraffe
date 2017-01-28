@@ -21,6 +21,12 @@ A functional ASP.NET Core micro framework for building rich web applications.
     - [choose](#choose)
     - [GET, POST, PUT, PATCH, DELETE](#get-post-put-patch-delete)
     - [mustAccept](#mustaccept)
+    - [challenge](#challenge)
+    - [signOff](#signoff)
+    - [requiresAuthentication](#requiresauthentication)
+    - [requiresRole](#requiresrole)
+    - [requiresRoleOf](#requiresroleof)
+    - [clearResponse](#clearResponse)
     - [route](#route)
     - [routef](#routef)
     - [routeCi](#routeci)
@@ -146,6 +152,118 @@ let app =
             route "/foo" >>= text "Foo"
             route "/bar" >>= json "Bar"
         ]
+```
+
+### challenge
+
+`challenge` challenges an authentication with a specified authentication scheme (`authScheme`).
+
+#### Example:
+
+```
+let mustBeLoggedIn =
+    requiresAuthentication (challenge "Cookie")
+
+let app = 
+    choose [
+        route "/ping" >>= text "pong"
+        route "/admin" >>= mustBeLoggedIn >>= text "You're an admin"
+    ]
+```
+
+### signOff
+
+`signOff` signs off the currently logged in user.
+
+#### Example:
+
+```
+let app = 
+    choose [
+        route "/ping" >>= text "pong"
+        route "/logout" >>= signOff "Cookie" >>= text "You have successfully logged out."
+    ]
+```
+
+### requiresAuthentication
+
+`requiresAuthentication` validates if a user is authenticated/logged in. If the user is not authenticated then the handler will execute the `authFailedHandler` function.
+
+#### Example:
+
+```
+let mustBeLoggedIn =
+    requiresAuthentication (challenge "Cookie")
+
+let app = 
+    choose [
+        route "/ping" >>= text "pong"
+        route "/user" >>= mustBeLoggedIn >>= text "You're a logged in user."
+    ]
+```
+
+### requiresRole
+
+`requiresRole` validates if an authenticated user is in a specified role. If the user fails to be in the required role then the handler will execute the `authFailedHandler` function.
+
+#### Example:
+
+```
+let accessDenied = setStatusCode 401 >>= text "Access Denied"
+
+let mustBeAdmin = 
+    requiresAuthentication accessDenied 
+    >>= requiresRole "Admin" accessDenied
+
+let app = 
+    choose [
+        route "/ping" >>= text "pong"
+        route "/admin" >>= mustBeAdmin >>= text "You're an admin."
+    ]
+```
+
+### requiresRoleOf
+
+`requiresRoleOf` validates if an authenticated user is in one of the supplied roles. If the user fails to be in one of the required roles then the handler will execute the `authFailedHandler` function.
+
+#### Example:
+
+```
+let accessDenied = setStatusCode 401 >>= text "Access Denied"
+
+let mustBeSomeAdmin = 
+    requiresAuthentication accessDenied 
+    >>= requiresRoleOf [ "Admin"; "SuperAdmin"; "RootAdmin" ] accessDenied
+
+let app = 
+    choose [
+        route "/ping" >>= text "pong"
+        route "/admin" >>= mustBeSomeAdmin >>= text "You're an admin."
+    ]
+```
+
+### clearResponse
+
+`clearResponse` tries to clear the current response. This can be useful inside an error handler to reset the response before writing an error message to the body of the HTTP response object.
+
+#### Example:
+
+```
+let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
+    ctx |> (clearResponse >>= setStatusCode 500 >>= text ex.Message)
+
+let app = 
+    choose [
+        route "/foo" >>= text "Foo"
+        route "/bar" >>= text "Bar"
+    ]
+
+type Startup() =
+    member __.Configure (app : IApplicationBuilder)
+                        (env : IHostingEnvironment)
+                        (loggerFactory : ILoggerFactory) =
+        app.UseErrorHandler(errorHandler)
+        app.UseLambda(webApp)
 ```
 
 ### route

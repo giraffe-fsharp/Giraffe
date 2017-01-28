@@ -30,7 +30,7 @@
           "type": "platform",
           "version": "1.1.0"
         },
-        "Microsoft.FSharp.Core.netcore": "1.0.0-alpha-*"
+        "Microsoft.FSharp.Core.netcore": "1.0.0-rc-*"
       }
     }
   }
