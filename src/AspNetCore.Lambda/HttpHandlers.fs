@@ -236,6 +236,12 @@ let json (dataObj : obj) =
     setHttpHeader "Content-Type" "application/json"
     >>= setBodyAsString (JsonConvert.SerializeObject dataObj)
 
+/// Serializes an object to XML and writes it to the body of the HTTP response.
+/// It also sets the HTTP header Content-Type: application/xml and sets the Content-Length header accordingly.
+let xml (dataObj : obj) =
+    setHttpHeader "Content-Type" "application/xml"
+    >>= setBody (serializeXml dataObj)
+
 /// Renders a model and a template with the DotLiquid template engine and sets the HTTP response
 /// with the compiled output as well as the Content-Type HTTP header to the given value.
 let dotLiquid (contentType : string) (template : string) (model : obj) =

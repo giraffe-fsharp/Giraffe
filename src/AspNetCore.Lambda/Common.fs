@@ -2,6 +2,9 @@ module AspNetCore.Lambda.Common
 
 open System
 open System.IO
+open System.Xml.Serialization
+
+let inline isNotNull x = isNull x |> not
 
 let readFileAsString (filePath : string) =
     async {
@@ -12,4 +15,8 @@ let readFileAsString (filePath : string) =
             |> Async.AwaitTask
     }
 
-let inline isNotNull x = isNull x |> not
+let serializeXml x =
+    let serializer = new XmlSerializer(x.GetType())
+    use stream = new MemoryStream()
+    serializer.Serialize(stream, x)
+    stream.ToArray()

@@ -39,6 +39,7 @@ A functional ASP.NET Core micro framework for building rich web applications.
     - [setBodyAsString](#setbodyasstring)
     - [text](#text)
     - [json](#json)
+    - [xml](#xml)
     - [dotLiquid](#dotliquid)
     - [htmlTemplate](#htmltemplate)
     - [htmlFile](#htmlfile)
@@ -68,9 +69,8 @@ The only building block in ASP.NET Core Lambda is a so called `HttpHandler`:
 ```
 type HttpHandlerContext =
     {
-        HttpContext  : HttpContext
-        Environment  : IHostingEnvironment
-        Logger       : ILogger
+        HttpContext : HttpContext
+        Services    : IServiceProvider
     }
 
 type HttpHandler = HttpHandlerContext -> Async<HttpHandlerContext option>
@@ -110,7 +110,7 @@ This allows composing many smaller `HttpHandler` functions into a bigger web app
 
 #### choose
 
-The `choose` combinator function iterates through a list of `HttpHandler` functions and invokes each individual until the first handler returns a result.
+The `choose` combinator function iterates through a list of `HttpHandler` functions and invokes each individual until the first `HttpHandler` returns a result.
 
 #### Example:
 
@@ -126,7 +126,7 @@ let app =
 
 ### GET, POST, PUT, PATCH, DELETE
 
-`GET`, `POST`, `PUT`, `PATCH`, `DELETE` filters a request by the given HTTP verb.
+`GET`, `POST`, `PUT`, `PATCH`, `DELETE` filters a request by the specified HTTP verb.
 
 #### Example:
 
@@ -341,17 +341,18 @@ let app =
 
 ### routeStartsWith
 
-`routeStartsWith` checks if the current request path starts with the given string. This can be a useful filter when a subset of routes require an additional step of verifiation (e.g. admin or api routes).
+`routeStartsWith` checks if the current request path starts with the given string. This can be useful when combining with other http handlers, e.g. to validate a subset of routes for authentication.
 
 #### Example:
 
 ```
 let app = 
-    routeStartsWith "/api/v1/" >>=
-        choose [
-            route "/api/v1/foo" >>= text "Foo"
-            route "/api/v1/bar" >>= text "Bar"
-        ]
+    routeStartsWith "/api/" >>=
+        requiresAuthentication (challenge "Cookie") >>=
+            choose [
+                route "/api/v1/foo" >>= text "Foo"
+                route "/api/v1/bar" >>= text "Bar"
+            ]
 ```
 
 ### routeStartsWithCi
@@ -399,7 +400,7 @@ let app =
 
 ### setBody
 
-`setBody` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers which attempt to modify the HTTP headers of the response cannot be executed afterwards anymore.
+`setBody` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
 
 #### Example:
 
@@ -412,7 +413,7 @@ let app =
 
 ### setBodyAsString
 
-`setBodyAsString` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers which attempt to modify the HTTP headers of the response cannot be executed afterwards anymore.
+`setBodyAsString` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
 
 #### Example:
 
@@ -425,9 +426,9 @@ let app =
 
 ### text
 
-`text` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers which attempt to modify the HTTP headers of the response cannot be executed afterwards anymore.
+`text` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
 
-The different between `text` an `setBodyAsString` is that this http handler also sets the `Content-Type` HTTP header to `text/plain`.
+The different between `text` and `setBodyAsString` is that this http handler also sets the `Content-Type` HTTP header to `text/plain`.
 
 #### Example:
 
@@ -440,9 +441,7 @@ let app =
 
 ### json
 
-`json` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers which attempt to modify the HTTP headers of the response cannot be executed afterwards anymore.
-
-The different between `json` an `setBodyAsString` or `setBody` is that this http handler also sets the `Content-Type` HTTP header to `application/json`.
+`json` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore. It also sets the `Content-Type` HTTP header to `application/json`.
 
 #### Example:
 
@@ -459,11 +458,31 @@ let app =
     ]
 ```
 
+### xml
+
+`xml` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore. It also sets the `Content-Type` HTTP header to `application/xml`.
+
+#### Example:
+
+```
+[<CLIMutable>]
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let app = 
+    choose [
+        route  "/foo" >>= xml { FirstName = "Foo"; LastName = "Bar" }
+    ]
+```
+
 ### dotLiquid
 
-`dotLiquid` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers which attempt to modify the HTTP headers of the response cannot be executed afterwards anymore.
+`dotLiquid` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
 
-The `dotLiquid` handler requires the content type and the actual template of the response as two string values together with a model. This handler is supposed to be used as the base handler for more http handlers being build on the DotLiquid template engine (e.g. you could create an SVG handler on top of it).
+The `dotLiquid` handler requires the content type and the actual template to be passed in as two string values together with an object model. This handler is supposed to be used as the base handler for other http handlers which want to utilize the DotLiquid template engine (e.g. you could create an SVG handler on top of it).
 
 #### Example:
 
@@ -484,9 +503,9 @@ let app =
 
 ### htmlTemplate
 
-`htmlTemplate` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers which attempt to modify the HTTP headers of the response cannot be executed afterwards anymore.
+`htmlTemplate` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
 
-This http handler takes a relative path of a template file and the associated model to set a HTTP response with a `Content-Type` of `text/html`.
+This http handler takes a relative path of a template file and the associated model as parameters. It also sets the HTTP header `Content-Type` to `text/html`.
 
 #### Example:
 
@@ -505,9 +524,9 @@ let app =
 
 ### htmlFile
 
-`htmlFile` sets or modifies the body of the `HttpResponse` with the contents of a physical html file. This http handler triggers the response being sent to the client and other http handlers which attempt to modify the HTTP headers of the response cannot be executed afterwards anymore.
+`htmlFile` sets or modifies the body of the `HttpResponse` with the contents of a physical html file. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
 
-This http handler takes a relative path of a html file and sets the HTTP response with the `Content-Type` of `text/html`.
+This http handler takes a relative path of a html file as input parameter and sets the HTTP header `Content-Type` to `text/html`.
 
 #### Example:
 
