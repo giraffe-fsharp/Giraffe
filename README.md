@@ -2,6 +2,8 @@
 
 A functional ASP.NET Core micro framework for building rich web applications.
 
+Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) for more information.
+
 [![Build status](https://ci.appveyor.com/api/projects/status/0ft2427dflip7wti/branch/master?svg=true)](https://ci.appveyor.com/project/dustinmoris/aspnetcore-lambda/branch/master)
 [![NuGet Info](https://buildstats.info/nuget/AspNetCore.Lambda?includePreReleases=true)](https://www.nuget.org/packages/AspNetCore.Lambda/)
 
@@ -51,6 +53,8 @@ A functional ASP.NET Core micro framework for building rich web applications.
 ## About
 
 [ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) is an F# web framework similar to Suave, but has been designed with [ASP.NET Core](https://www.asp.net/core) in mind and can be plugged into the ASP.NET Core pipeline via [middleware](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware). [ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) has been heavily inspired by [Suave](https://suave.io/) and its concept of web parts and the ability to compose many smaller web parts into a larger web application.
+
+If you'd like to learn more about the motivation of this project please read this [blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core).
 
 ### Who is it for?
 
