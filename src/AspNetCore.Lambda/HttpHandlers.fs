@@ -12,6 +12,8 @@ open Newtonsoft.Json
 open DotLiquid
 open AspNetCore.Lambda.Common
 open AspNetCore.Lambda.FormatExpressions
+open RazorLight
+open System.IO
 
 type HttpHandlerContext =
     {
@@ -276,3 +278,14 @@ let htmlFile (relativeFilePath : string) =
                 |> (setHttpHeader "Content-Type" "text/html"
                 >>= setBodyAsString html)
         }
+
+let razor (engine : RazorLightEngine) (view : string) (model : obj) =
+    let view = engine.Parse(view, model)
+    setHttpHeader "Content-Type" "text/html"
+    >>= setBodyAsString view
+
+let configureRazor (viewsFolder : string)  = 
+    let views = combinePaths (Directory.GetCurrentDirectory()) viewsFolder
+    razor (EngineFactory.CreatePhysical(views))
+
+let defaultRazor () = configureRazor ""

@@ -6,9 +6,12 @@
     "compilerName": "fsc",
     "compile": {
       "includeFiles": [
+        "Person.fs",        
         "Program.fs"
       ]
-    }
+    },
+    "embed": [ "**/*.cshtml" ],
+    "preserveCompilationContext": true
   },
   "tools": {
     "dotnet-compile-fsc": "1.0.0-preview2-*"

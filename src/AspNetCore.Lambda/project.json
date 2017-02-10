@@ -35,7 +35,8 @@
         "Microsoft.AspNetCore.Hosting": "1.1.0",
         "Microsoft.AspNetCore.Diagnostics": "1.1.0",
         "Newtonsoft.Json": "9.0.1",
-        "DotLiquid": "2.0.64"
+        "DotLiquid": "2.0.64",
+        "RazorLight": "1.0.0-rc1",
       }
     }
   },

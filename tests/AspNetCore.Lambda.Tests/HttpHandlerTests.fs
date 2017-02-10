@@ -10,7 +10,7 @@ open Microsoft.Extensions.Logging
 open Xunit
 open NSubstitute
 open AspNetCore.Lambda.HttpHandlers
-
+open AspNetCore.Lambda.Tests
 // ---------------------------------
 // Helper functions
 // ---------------------------------
@@ -28,6 +28,8 @@ let assertFail msg = Assert.True(false, msg)
 let assertFailf format args = 
     let msg = sprintf format args
     Assert.True(false, msg)
+
+let view = defaultRazor ()
 
 // ---------------------------------
 // Mocks
@@ -62,6 +64,7 @@ let testApp =
                 routeCi "/json"     >>= text "BaR"
                 routef "/foo/%s/bar" text
                 routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
+                route  "/razor"     >>= view "Person.cshtml" {Name = "razor"}
             ]
         POST >>=
             choose [
@@ -402,3 +405,23 @@ let ``POST "/POsT/523" returns "523"`` () =
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+
+
+[<Fact>]
+let ``GET "/razor" returns rendered html view`` () =
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/razor")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "<html><head><title>Hello, razor</title></head><body><h3>Hello, razor</h3></body></html>"
+
+    let result = 
+        { HttpContext = ctx; Services = services }
+        |> testApp
+        |> Async.RunSynchronously
+
+    match result with
+    | None          -> assertFailf "Result was expected to be %s" expected
+    | Some ctx ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+        Assert.Equal("text/html", ctx.HttpContext.Response |> getContentType)

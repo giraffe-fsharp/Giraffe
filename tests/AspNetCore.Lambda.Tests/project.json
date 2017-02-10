@@ -6,9 +6,12 @@
     "compile": {
       "includeFiles": [
         "FormatExpressionTests.fs",
+        "Models.fs",
         "HttpHandlerTests.fs"
       ]
-    }
+    },
+    "preserveCompilationContext": true,
+    "embed": [ "Person.cshtml" ]
   },
   "tools": {
     "dotnet-compile-fsc": "1.0.0-preview2-*"
