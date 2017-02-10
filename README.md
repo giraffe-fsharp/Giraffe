@@ -266,7 +266,7 @@ type Startup() =
     member __.Configure (app : IApplicationBuilder)
                         (env : IHostingEnvironment)
                         (loggerFactory : ILoggerFactory) =
-        app.UseErrorHandler(errorHandler)
+        app.UseLambdaErrorHandler(errorHandler)
         app.UseLambda(webApp)
 ```
 
