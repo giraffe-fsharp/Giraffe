@@ -143,22 +143,24 @@ let clearResponse =
         ctx.HttpContext.Response.Clear()
         async.Return (Some ctx)
 
-let private getRoute (ctx:HttpContext) =
+let private strOption (str : string) =
+    if String.IsNullOrEmpty str then None else Some str 
+
+let private getSavedSubPath (ctx : HttpContext) =
     if ctx.Items.ContainsKey RouteKey
-    then
-        let x = ctx.Items.Item RouteKey |> string 
-        if String.IsNullOrEmpty x then None else Some x 
+    then ctx.Items.Item RouteKey |> string |> strOption 
     else None
 
-let private getRalativePath (ctx:HttpContext) =
-    match getRoute ctx with
-    | Some route -> ctx.Request.Path.ToString().[route.Length..]
-    | None -> ctx.Request.Path.ToString()
+
+let private getPath (ctx : HttpContext) =
+    match getSavedSubPath ctx with
+    | Some p -> ctx.Request.Path.ToString().[p.Length..]
+    | None   -> ctx.Request.Path.ToString()
 
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 let route (path : string) =
     fun (ctx : HttpHandlerContext) ->
-        if (getRalativePath ctx.HttpContext).Equals path
+        if (getPath ctx.HttpContext).Equals path
         then Some ctx
         else None
         |> async.Return
@@ -176,7 +178,7 @@ let routef (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 let routeCi (path : string) =
     fun (ctx : HttpHandlerContext) ->
-        if String.Equals(getRalativePath ctx.HttpContext, path, StringComparison.CurrentCultureIgnoreCase)
+        if String.Equals(getPath ctx.HttpContext, path, StringComparison.CurrentCultureIgnoreCase)
         then Some ctx
         else None
         |> async.Return
@@ -186,7 +188,7 @@ let routeCi (path : string) =
 /// route matches and subsequently passed into the supplied routeHandler.
 let routeCif (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
     fun (ctx : HttpHandlerContext) ->
-        tryMatchInput route (getRalativePath ctx.HttpContext) true
+        tryMatchInput route (getPath ctx.HttpContext) true
         |> function
             | None      -> None |> async.Return
             | Some args -> routeHandler args ctx
@@ -194,7 +196,7 @@ let routeCif (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
 let routeStartsWith (partOfPath : string) =
     fun (ctx : HttpHandlerContext) ->
-        if (getRalativePath ctx.HttpContext).StartsWith partOfPath 
+        if (getPath ctx.HttpContext).StartsWith partOfPath 
         then Some ctx
         else None
         |> async.Return
@@ -202,7 +204,7 @@ let routeStartsWith (partOfPath : string) =
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
 let routeStartsWithCi (partOfPath : string) =
     fun (ctx : HttpHandlerContext) ->
-        if (getRalativePath ctx.HttpContext).StartsWith(partOfPath, StringComparison.CurrentCultureIgnoreCase) 
+        if (getPath ctx.HttpContext).StartsWith(partOfPath, StringComparison.CurrentCultureIgnoreCase) 
         then Some ctx
         else None
         |> async.Return
@@ -295,20 +297,20 @@ let htmlFile (relativeFilePath : string) =
 let private handlerWithRootedPath (path:string) (handler : HttpHandler) = 
     fun (ctx : HttpHandlerContext) ->
         async {
-            let route = getRoute ctx.HttpContext
+            let savedSubPath = getSavedSubPath ctx.HttpContext
             try
-                ctx.HttpContext.Items.Item RouteKey <- ((route |> Option.defaultValue "") + path)
+                ctx.HttpContext.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
                 return! handler ctx
             finally
-                match route with
-                | Some route -> ctx.HttpContext.Items.Item RouteKey <- route
-                | None       -> ctx.HttpContext.Items.Remove RouteKey |> ignore
+                match savedSubPath with
+                | Some savedSubPath -> ctx.HttpContext.Items.Item RouteKey <- savedSubPath
+                | None              -> ctx.HttpContext.Items.Remove RouteKey |> ignore
         }
 
 let subPath (path:string) (handler : HttpHandler) =
-    route path >>=
+    routeStartsWith path >>=
     handlerWithRootedPath path handler
 
 let subCiPath (path:string) (handler : HttpHandler) =
-    routeCi path >>=
+    routeStartsWithCi path >>=
     handlerWithRootedPath path handler
