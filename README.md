@@ -378,7 +378,7 @@ let app =
 
 ### subRoute
 
-`subRoute` checks the current path begins with the `path` string, all `route*` and `subRoute*` handlers within the `handler` parameter will now be rooted to, and relative in respect to this path.
+`subRoute` checks the current path begins with the `path` string, all `route*` and `subRoute*` handlers within the `handler` parameter will now be rooted to, and relative with respect to this path.
 
 #### Example:
 
