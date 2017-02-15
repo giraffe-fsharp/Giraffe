@@ -156,6 +156,19 @@ let private getPath (ctx : HttpContext) =
     | Some p -> ctx.Request.Path.ToString().[p.Length..]
     | None   -> ctx.Request.Path.ToString()
 
+let private handlerWithRootedPath (path:string) (handler : HttpHandler) = 
+    fun (ctx : HttpHandlerContext) ->
+        async {
+            let savedSubPath = getSavedSubPath ctx.HttpContext
+            try
+                ctx.HttpContext.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
+                return! handler ctx
+            finally
+                match savedSubPath with
+                | Some savedSubPath -> ctx.HttpContext.Items.Item RouteKey <- savedSubPath
+                | None              -> ctx.HttpContext.Items.Remove RouteKey |> ignore
+        }
+
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 let route (path : string) =
     fun (ctx : HttpHandlerContext) ->
@@ -207,6 +220,19 @@ let routeStartsWithCi (partOfPath : string) =
         then Some ctx
         else None
         |> async.Return
+
+/// Filters an incoming HTTP request based on the a part of the request path (case sensitive).
+/// Subsequent route handlers inside the given handler function should omit the already validated subPath.
+let subRoute (path : string) (handler : HttpHandler) =
+    routeStartsWith path >>=
+    handlerWithRootedPath path handler
+
+/// Filters an incoming HTTP request based on the a part of the request path (case insensitive).
+/// Subsequent route handlers inside the given handler function should omit the already validated subPath.
+let subRouteCi (path : string) (handler : HttpHandler) =
+    routeStartsWithCi path >>=
+    handlerWithRootedPath path handler
+
 
 /// Sets the HTTP response status code.
 let setStatusCode (statusCode : int) =
@@ -292,24 +318,3 @@ let htmlFile (relativeFilePath : string) =
                 |> (setHttpHeader "Content-Type" "text/html"
                 >>= setBodyAsString html)
         }
-
-let private handlerWithRootedPath (path:string) (handler : HttpHandler) = 
-    fun (ctx : HttpHandlerContext) ->
-        async {
-            let savedSubPath = getSavedSubPath ctx.HttpContext
-            try
-                ctx.HttpContext.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
-                return! handler ctx
-            finally
-                match savedSubPath with
-                | Some savedSubPath -> ctx.HttpContext.Items.Item RouteKey <- savedSubPath
-                | None              -> ctx.HttpContext.Items.Remove RouteKey |> ignore
-        }
-
-let subRoute (path:string) (handler : HttpHandler) =
-    routeStartsWith path >>=
-    handlerWithRootedPath path handler
-
-let subRouteCi (path:string) (handler : HttpHandler) =
-    routeStartsWithCi path >>=
-    handlerWithRootedPath path handler
