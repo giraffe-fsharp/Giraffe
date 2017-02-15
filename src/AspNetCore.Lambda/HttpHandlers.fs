@@ -73,7 +73,7 @@ let PATCH   = httpVerb "PATCH"  : HttpHandler
 let DELETE  = httpVerb "DELETE" : HttpHandler
 
 [<Literal>]
-let private RouteKey = "route"
+let private RouteKey = "aspnet_lambda_route"
 
 /// Filters an incoming HTTP request based on the accepted
 /// mime types of the client.
