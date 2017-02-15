@@ -72,6 +72,9 @@ let PUT     = httpVerb "PUT"    : HttpHandler
 let PATCH   = httpVerb "PATCH"  : HttpHandler
 let DELETE  = httpVerb "DELETE" : HttpHandler
 
+[<Literal>]
+let private RouteKey = "route"
+
 /// Filters an incoming HTTP request based on the accepted
 /// mime types of the client.
 let mustAccept (mimeTypes : string list) =
@@ -140,10 +143,22 @@ let clearResponse =
         ctx.HttpContext.Response.Clear()
         async.Return (Some ctx)
 
+let private getRoute (ctx:HttpContext) =
+    if ctx.Items.ContainsKey RouteKey
+    then
+        let x = ctx.Items.Item RouteKey |> string 
+        if String.IsNullOrEmpty x then None else Some x 
+    else None
+
+let private getRalativePath (ctx:HttpContext) =
+    match getRoute ctx with
+    | Some route -> ctx.Request.Path.ToString().[route.Length..]
+    | None -> ctx.Request.Path.ToString()
+
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 let route (path : string) =
     fun (ctx : HttpHandlerContext) ->
-        if ctx.HttpContext.Request.Path.ToString().Equals path 
+        if (getRalativePath ctx.HttpContext).Equals path
         then Some ctx
         else None
         |> async.Return
@@ -161,7 +176,7 @@ let routef (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 let routeCi (path : string) =
     fun (ctx : HttpHandlerContext) ->
-        if String.Equals(ctx.HttpContext.Request.Path.ToString(), path, StringComparison.CurrentCultureIgnoreCase)
+        if String.Equals(getRalativePath ctx.HttpContext, path, StringComparison.CurrentCultureIgnoreCase)
         then Some ctx
         else None
         |> async.Return
@@ -171,7 +186,7 @@ let routeCi (path : string) =
 /// route matches and subsequently passed into the supplied routeHandler.
 let routeCif (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
     fun (ctx : HttpHandlerContext) ->
-        tryMatchInput route (ctx.HttpContext.Request.Path.ToString()) true
+        tryMatchInput route (getRalativePath ctx.HttpContext) true
         |> function
             | None      -> None |> async.Return
             | Some args -> routeHandler args ctx
@@ -179,7 +194,7 @@ let routeCif (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
 let routeStartsWith (partOfPath : string) =
     fun (ctx : HttpHandlerContext) ->
-        if ctx.HttpContext.Request.Path.ToString().StartsWith partOfPath 
+        if (getRalativePath ctx.HttpContext).StartsWith partOfPath 
         then Some ctx
         else None
         |> async.Return
@@ -187,7 +202,7 @@ let routeStartsWith (partOfPath : string) =
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
 let routeStartsWithCi (partOfPath : string) =
     fun (ctx : HttpHandlerContext) ->
-        if ctx.HttpContext.Request.Path.ToString().StartsWith(partOfPath, StringComparison.CurrentCultureIgnoreCase) 
+        if (getRalativePath ctx.HttpContext).StartsWith(partOfPath, StringComparison.CurrentCultureIgnoreCase) 
         then Some ctx
         else None
         |> async.Return
@@ -276,3 +291,24 @@ let htmlFile (relativeFilePath : string) =
                 |> (setHttpHeader "Content-Type" "text/html"
                 >>= setBodyAsString html)
         }
+
+let private handlerWithRootedPath (path:string) (handler : HttpHandler) = 
+    fun (ctx : HttpHandlerContext) ->
+        async {
+            let route = getRoute ctx.HttpContext
+            try
+                ctx.HttpContext.Items.Item RouteKey <- ((route |> Option.defaultValue "") + path)
+                return! handler ctx
+            finally
+                match route with
+                | Some route -> ctx.HttpContext.Items.Item RouteKey <- route
+                | None       -> ctx.HttpContext.Items.Remove RouteKey |> ignore
+        }
+
+let subPath (path:string) (handler : HttpHandler) =
+    route path >>=
+    handlerWithRootedPath path handler
+
+let subCiPath (path:string) (handler : HttpHandler) =
+    routeCi path >>=
+    handlerWithRootedPath path handler
