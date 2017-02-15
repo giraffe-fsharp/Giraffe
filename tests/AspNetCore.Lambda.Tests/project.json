@@ -21,8 +21,6 @@
     "xunit": "2.1.0",
     "dotnet-test-xunit": "1.0.0-rc2-*",
     "NSubstitute": "2.0.1-rc",
-    "Microsoft.AspNetCore.Hosting": "1.1.0",
-    "Microsoft.AspNetCore.Diagnostics": "1.1.0",
     "AspNetCore.Lambda": {"target": "project"}
   },
   "testRunner": "xunit",
