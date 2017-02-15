@@ -31,7 +31,7 @@
         "NETStandard.Library": "1.6.1",
         "System.Text.RegularExpressions": "4.3.0",
         "System.Xml.XmlSerializer": "4.3.0",
-        "Microsoft.FSharp.Core.netcore": "1.0.0-rc-*",        
+        "FSharp.Core": "4.1.0",
         "Microsoft.AspNetCore.Hosting": "1.1.0",
         "Microsoft.AspNetCore.Diagnostics": "1.1.0",
         "Newtonsoft.Json": "9.0.1",
