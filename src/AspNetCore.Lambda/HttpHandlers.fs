@@ -221,13 +221,13 @@ let routeStartsWithCi (partOfPath : string) =
         else None
         |> async.Return
 
-/// Filters an incoming HTTP request based on the a part of the request path (case sensitive).
+/// Filters an incoming HTTP request based on a part of the request path (case sensitive).
 /// Subsequent route handlers inside the given handler function should omit the already validated subPath.
 let subRoute (path : string) (handler : HttpHandler) =
     routeStartsWith path >>=
     handlerWithRootedPath path handler
 
-/// Filters an incoming HTTP request based on the a part of the request path (case insensitive).
+/// Filters an incoming HTTP request based on a part of the request path (case insensitive).
 /// Subsequent route handlers inside the given handler function should omit the already validated subPath.
 let subRouteCi (path : string) (handler : HttpHandler) =
     routeStartsWithCi path >>=

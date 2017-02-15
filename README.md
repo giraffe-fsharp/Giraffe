@@ -384,11 +384,16 @@ let app =
 
 ```fsharp
 let app = 
-    subRoute "/api" >>=
+    subRoute "/api"
         choose [
-            route "/v1/foo" >>= text "Foo"
-            route "/v1/bar" >>= text "Bar"
-        ]
+            subRoute "/v1"
+                choose [
+                    route "/foo" >>= text "Foo 1"
+                    route "/bar" >>= text "Bar 1" ]
+            subRoute "/v2"
+                choose [
+                    route "/foo" >>= text "Foo 2"
+                    route "/bar" >>= text "Bar 2" ] ]
 ```
 
 ### subRouteCi
@@ -399,11 +404,16 @@ let app =
 
 ```fsharp
 let app = 
-    subRouteCi "/api" >>=
+    subRouteCi "/api"
         choose [
-            route "/v1/foo" >>= text "Foo"
-            route "/v1/bar" >>= text "Bar"
-        ]
+            subRouteCi "/v1"
+                choose [
+                    route "/foo" >>= text "Foo 1"
+                    route "/bar" >>= text "Bar 1" ]
+            subRouteCi "/v2"
+                choose [
+                    route "/foo" >>= text "Foo 2"
+                    route "/bar" >>= text "Bar 2" ] ]
 ```
 
 ### setStatusCode
