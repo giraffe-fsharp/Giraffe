@@ -48,7 +48,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Installation](#installation)
 - [License](#license)
-- [Contribution](#contribution)
+- [Contributing](#contributing)
 
 ## About
 

@@ -80,5 +80,5 @@ let tryMatchInput (format : StringFormat<_, 'T>) (input : string) (ignoreCase : 
             result
             :?> 'T
             |> Some
-        with
-        | ex -> None
+    with
+    | ex -> None
