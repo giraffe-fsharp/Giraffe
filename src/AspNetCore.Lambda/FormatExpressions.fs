@@ -10,12 +10,12 @@ let formatStringMap =
     dict [
     // Char    Regex                    Parser
     // ----------------------------------------------------------
-        'b', ("(?i:(true|false)){1}",   bool.Parse   >> box)  // bool
-        'c', ("(.{1})",                 Char.Parse   >> box)  // char
-        's', ("(.+)",                                   box)  // string
-        'i', ("(-?\d+)",                Int32.Parse  >> box)  // int
-        'd', ("(-?\d+)",                Int64.Parse  >> box)  // int64
-        'f', ("(-?\d+\.{1}\d+)",        Double.Parse >> box)  // float
+        'b', ("(?i:(true|false)){1}",   bool.Parse >> box)  // bool
+        'c', ("(.{1})",                 char       >> box)  // char
+        's', ("(.+)",                                 box)  // string
+        'i', ("(-?\d+)",                int32      >> box)  // int
+        'd', ("(-?\d+)",                int64      >> box)  // int64
+        'f', ("(-?\d+\.{1}\d+)",        float      >> box)  // float
     ]
 
 let convertToRegexPatternAndFormatChars (formatString : string) =
@@ -80,5 +80,5 @@ let tryMatchInput (format : StringFormat<_, 'T>) (input : string) (ignoreCase : 
             result
             :?> 'T
             |> Some
-        with
-        | ex -> None
+    with
+    | ex -> None

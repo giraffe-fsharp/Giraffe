@@ -7,7 +7,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 [![Build status](https://ci.appveyor.com/api/projects/status/0ft2427dflip7wti/branch/master?svg=true)](https://ci.appveyor.com/project/dustinmoris/aspnetcore-lambda/branch/master)
 [![NuGet Info](https://buildstats.info/nuget/AspNetCore.Lambda?includePreReleases=true)](https://www.nuget.org/packages/AspNetCore.Lambda/)
 
-[![Build history](https://buildstats.info/appveyor/chart/dustinmoris/aspnetcore-lambda)](https://ci.appveyor.com/project/dustinmoris/aspnetcore-lambda/history)
+[![Build history](https://buildstats.info/appveyor/chart/dustinmoris/aspnetcore-lambda?includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/aspnetcore-lambda/history)
 
 **ATTENTION: THIS PROJECT IS STILL IN AN EARLY ALPHA STAGE**
 
@@ -48,7 +48,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Installation](#installation)
 - [License](#license)
-- [Contribution](#contribution)
+- [Contributing](#contributing)
 
 ## About
 
@@ -622,8 +622,16 @@ type Startup() =
 
 [Apache 2.0](https://raw.githubusercontent.com/dustinmoris/AspNetCore.Lambda/master/LICENSE)
 
-## Contribution
+## Contributing
 
-Feedback is more than welcome and pull requests get accepted!
+Help and feedback is always welcome and pull requests get accepted.
 
-File an [issue on GitHub](https://github.com/dustinmoris/AspNetCore.Lambda/issues/new) or contact me via [https://dusted.codes/about](https://dusted.codes/about).
+When contributing to this repository, please first discuss the change you wish to make via an open issue before submitting a pull request. For new feature requests please describe your idea in more detail and how it could benefit other users as well.
+
+Please be aware that ASP.NET Core Lambda strictly aims to remain as light as possible while providing generic functionality for building functional web applications. New feature work must be applicable to a broader user base and if this requirement cannot be met sufficiently then a pull request might get rejected. In the case of doubt the maintainer will rather reject a potentially useful feature than adding one too many. This measure is to protect the repository from feature bloat over time and shall not be taken personally.
+
+When making changes please use existing code as a guideline for coding style and documentation. If you intend to add or change an existing `HttpHandler` then please update the README.md file to reflect these changes there as well. If applicable unit tests must be be added or updated and the project must successfully build before a pull request can be accepted.
+
+If you have any further questions please let me know.
+
+You can file an [issue on GitHub](https://github.com/dustinmoris/AspNetCore.Lambda/issues/new) or contact me via [https://dusted.codes/about](https://dusted.codes/about).

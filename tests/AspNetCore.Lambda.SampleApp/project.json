@@ -17,6 +17,7 @@
     "dotnet-compile-fsc": "1.0.0-preview2-*"
   },
   "dependencies": {
+    "FSharp.Core": "4.1.0",
     "AspNetCore.Lambda": "0.1.0-*",
     "Microsoft.AspNetCore.Hosting": "1.1.0",
     "Microsoft.AspNetCore.Diagnostics": "1.1.0",
@@ -32,8 +33,7 @@
         "Microsoft.NETCore.App": {
           "type": "platform",
           "version": "1.1.0"
-        },
-        "Microsoft.FSharp.Core.netcore": "1.0.0-rc-*"
+        }
       }
     }
   }
