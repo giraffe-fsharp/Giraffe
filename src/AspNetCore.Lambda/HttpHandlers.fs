@@ -151,7 +151,6 @@ let private getSavedSubPath (ctx : HttpContext) =
     then ctx.Items.Item RouteKey |> string |> strOption 
     else None
 
-
 let private getPath (ctx : HttpContext) =
     match getSavedSubPath ctx with
     | Some p -> ctx.Request.Path.ToString().[p.Length..]
@@ -307,10 +306,10 @@ let private handlerWithRootedPath (path:string) (handler : HttpHandler) =
                 | None              -> ctx.HttpContext.Items.Remove RouteKey |> ignore
         }
 
-let subPath (path:string) (handler : HttpHandler) =
+let subRoute (path:string) (handler : HttpHandler) =
     routeStartsWith path >>=
     handlerWithRootedPath path handler
 
-let subPathCi (path:string) (handler : HttpHandler) =
+let subRouteCi (path:string) (handler : HttpHandler) =
     routeStartsWithCi path >>=
     handlerWithRootedPath path handler

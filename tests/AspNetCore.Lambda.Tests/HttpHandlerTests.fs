@@ -540,7 +540,7 @@ let ``GET "/api" returns "api root"`` () =
         GET >>= choose [
             route "/"    >>= text "Hello World"
             route "/foo" >>= text "bar"
-            subPath "/api" (
+            subRoute "/api" (
                 choose [
                     route ""       >>= text "api root"
                     route "/admin" >>= text "admin"
@@ -571,7 +571,7 @@ let ``GET "/api/users" returns "users"`` () =
         GET >>= choose [
             route "/"    >>= text "Hello World"
             route "/foo" >>= text "bar"
-            subPath "/api" (
+            subRoute "/api" (
                 choose [
                     route ""       >>= text "api root"
                     route "/admin" >>= text "admin"
@@ -602,7 +602,7 @@ let ``GET "/api/test" returns "test"`` () =
         GET >>= choose [
             route "/"    >>= text "Hello World"
             route "/foo" >>= text "bar"
-            subPath "/api" (
+            subRoute "/api" (
                 choose [
                     route ""       >>= text "api root"
                     route "/admin" >>= text "admin"
@@ -615,6 +615,46 @@ let ``GET "/api/test" returns "test"`` () =
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/test")) |> ignore
     ctx.Response.Body <- new MemoryStream()
     let expected = "test"
+
+    let result = 
+        { HttpContext = ctx; Services = services }
+        |> app
+        |> Async.RunSynchronously
+
+    match result with
+    | None          -> assertFailf "Result was expected to be %s" expected
+    | Some ctx ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+
+[<Fact>]
+let ``GET "/api/v2/users" returns "users v2"`` () =
+    let app = 
+        GET >>= choose [
+            route "/"    >>= text "Hello World"
+            route "/foo" >>= text "bar"
+            subRoute "/api" (
+                choose [
+                    route ""       >>= text "api root"
+                    route "/admin" >>= text "admin"
+                    route "/users" >>= text "users"
+                    subRoute "/v2" (
+                        choose [
+                            route ""       >>= text "api root v2"
+                            route "/admin" >>= text "admin v2"
+                            route "/users" >>= text "users v2"
+                        ]
+                    )
+                ]
+            )
+            route "/api/test" >>= text "test"
+            setStatusCode 404 >>= text "Not found" ]
+    
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/v2/users")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "users v2"
 
     let result = 
         { HttpContext = ctx; Services = services }
