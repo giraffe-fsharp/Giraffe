@@ -192,6 +192,22 @@ let routeStartsWithCi (partOfPath : string) =
         else None
         |> async.Return
 
+/// Filters an incoming HTTP request based on the end of the request path (case sensitive).
+let routeEndsWith (partOfPath : string) =
+    fun (ctx : HttpHandlerContext) ->
+        if ctx.HttpContext.Request.Path.ToString().EndsWith partOfPath 
+        then Some ctx
+        else None
+        |> async.Return
+
+/// Filters an incoming HTTP request based on the end of the request path (case insensitive).
+let routeEndsWithCi (partOfPath : string) =
+    fun (ctx : HttpHandlerContext) ->
+        if ctx.HttpContext.Request.Path.ToString().EndsWith(partOfPath, StringComparison.CurrentCultureIgnoreCase) 
+        then Some ctx
+        else None
+        |> async.Return
+
 /// Sets the HTTP response status code.
 let setStatusCode (statusCode : int) =
     fun (ctx : HttpHandlerContext) ->
