@@ -311,6 +311,6 @@ let subPath (path:string) (handler : HttpHandler) =
     routeStartsWith path >>=
     handlerWithRootedPath path handler
 
-let subCiPath (path:string) (handler : HttpHandler) =
+let subPathCi (path:string) (handler : HttpHandler) =
     routeStartsWithCi path >>=
     handlerWithRootedPath path handler

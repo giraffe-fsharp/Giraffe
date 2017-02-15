@@ -14,7 +14,7 @@
     "dotnet-compile-fsc": "1.0.0-preview2-*"
   },
   "dependencies": {
-    "AspNetCore.Lambda": "0.1.0-*",
+    "AspNetCore.Lambda": {"target": "project"},
     "Microsoft.AspNetCore.Hosting": "1.1.0",
     "Microsoft.AspNetCore.Diagnostics": "1.1.0",
     "Microsoft.AspNetCore.Server.Kestrel": "1.1.0",
