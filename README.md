@@ -594,9 +594,9 @@ Defining a custom HTTP handler to partially filter a route:
 *(After creating this example I added the `routeStartsWith` HttpHandler to the list of default handlers as it turned out to be quite useful)*
 
 ```fsharp
-let routeStartsWith (partOfPath : string) =
+let routeStartsWith (subPath : string) =
     fun ctx ->
-        if ctx.HttpContext.Request.Path.ToString().StartsWith partOfPath 
+        if ctx.HttpContext.Request.Path.ToString().StartsWith subPath 
         then Some ctx
         else None
         |> async.Return

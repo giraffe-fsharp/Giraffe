@@ -72,9 +72,6 @@ let PUT     = httpVerb "PUT"    : HttpHandler
 let PATCH   = httpVerb "PATCH"  : HttpHandler
 let DELETE  = httpVerb "DELETE" : HttpHandler
 
-[<Literal>]
-let private RouteKey = "aspnet_lambda_route"
-
 /// Filters an incoming HTTP request based on the accepted
 /// mime types of the client.
 let mustAccept (mimeTypes : string list) =
@@ -144,7 +141,10 @@ let clearResponse =
         async.Return (Some ctx)
 
 let private strOption (str : string) =
-    if String.IsNullOrEmpty str then None else Some str 
+    if String.IsNullOrEmpty str then None else Some str
+
+[<Literal>]
+let private RouteKey = "aspnet_lambda_route"
 
 let private getSavedSubPath (ctx : HttpContext) =
     if ctx.Items.ContainsKey RouteKey
@@ -180,9 +180,9 @@ let route (path : string) =
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 /// The arguments from the format string will be automatically resolved when the
 /// route matches and subsequently passed into the supplied routeHandler.
-let routef (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
+let routef (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
     fun (ctx : HttpHandlerContext) ->
-        tryMatchInput route (ctx.HttpContext.Request.Path.ToString()) false
+        tryMatchInput path (ctx.HttpContext.Request.Path.ToString()) false
         |> function
             | None      -> async.Return None
             | Some args -> routeHandler args ctx
@@ -198,31 +198,31 @@ let routeCi (path : string) =
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 /// The arguments from the format string will be automatically resolved when the
 /// route matches and subsequently passed into the supplied routeHandler.
-let routeCif (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
+let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
     fun (ctx : HttpHandlerContext) ->
-        tryMatchInput route (getPath ctx.HttpContext) true
+        tryMatchInput path (getPath ctx.HttpContext) true
         |> function
             | None      -> None |> async.Return
             | Some args -> routeHandler args ctx
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
-let routeStartsWith (partOfPath : string) =
+let routeStartsWith (subPath : string) =
     fun (ctx : HttpHandlerContext) ->
-        if (getPath ctx.HttpContext).StartsWith partOfPath 
+        if (getPath ctx.HttpContext).StartsWith subPath 
         then Some ctx
         else None
         |> async.Return
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
-let routeStartsWithCi (partOfPath : string) =
+let routeStartsWithCi (subPath : string) =
     fun (ctx : HttpHandlerContext) ->
-        if (getPath ctx.HttpContext).StartsWith(partOfPath, StringComparison.CurrentCultureIgnoreCase) 
+        if (getPath ctx.HttpContext).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase) 
         then Some ctx
         else None
         |> async.Return
 
 /// Filters an incoming HTTP request based on a part of the request path (case sensitive).
-/// Subsequent route handlers inside the given handler function should omit the already validated subPath.
+/// Subsequent route handlers inside the given handler function should omit the already validated path.
 let subRoute (path : string) (handler : HttpHandler) =
     routeStartsWith path >>=
     handlerWithRootedPath path handler
