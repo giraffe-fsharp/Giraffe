@@ -156,7 +156,7 @@ let private getPath (ctx : HttpContext) =
     | Some p -> ctx.Request.Path.ToString().[p.Length..]
     | None   -> ctx.Request.Path.ToString()
 
-let private handlerWithRootedPath (path:string) (handler : HttpHandler) = 
+let private handlerWithRootedPath (path : string) (handler : HttpHandler) = 
     fun (ctx : HttpHandlerContext) ->
         async {
             let savedSubPath = getSavedSubPath ctx.HttpContext
@@ -228,7 +228,7 @@ let subRoute (path : string) (handler : HttpHandler) =
     handlerWithRootedPath path handler
 
 /// Filters an incoming HTTP request based on a part of the request path (case insensitive).
-/// Subsequent route handlers inside the given handler function should omit the already validated subPath.
+/// Subsequent route handlers inside the given handler function should omit the already validated path.
 let subRouteCi (path : string) (handler : HttpHandler) =
     routeStartsWithCi path >>=
     handlerWithRootedPath path handler

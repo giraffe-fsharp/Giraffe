@@ -378,22 +378,22 @@ let app =
 
 ### subRoute
 
-`subRoute` checks the current path begins with the `path` string, all `route*` and `subRoute*` handlers within the `handler` parameter will now be rooted to, and relative with respect to this path.
+`subRoute` checks if the current path begins with the given `path` and will invoke the passed in `handler` if it was a match. The given `handler` (and any nested handlers within it) should omit the already applied `path` for subsequent route evaluations.
 
 #### Example:
 
 ```fsharp
 let app = 
     subRoute "/api"
-        choose [
+        (choose [
             subRoute "/v1"
-                choose [
+                (choose [
                     route "/foo" >>= text "Foo 1"
-                    route "/bar" >>= text "Bar 1" ]
+                    route "/bar" >>= text "Bar 1" ])
             subRoute "/v2"
-                choose [
+                (choose [
                     route "/foo" >>= text "Foo 2"
-                    route "/bar" >>= text "Bar 2" ] ]
+                    route "/bar" >>= text "Bar 2" ]) ])
 ```
 
 ### subRouteCi
@@ -405,15 +405,15 @@ let app =
 ```fsharp
 let app = 
     subRouteCi "/api"
-        choose [
+        (choose [
             subRouteCi "/v1"
-                choose [
+                (choose [
                     route "/foo" >>= text "Foo 1"
-                    route "/bar" >>= text "Bar 1" ]
+                    route "/bar" >>= text "Bar 1" ])
             subRouteCi "/v2"
-                choose [
+                (choose [
                     route "/foo" >>= text "Foo 2"
-                    route "/bar" >>= text "Bar 2" ] ]
+                    route "/bar" >>= text "Bar 2" ]) ])
 ```
 
 ### setStatusCode
