@@ -23,6 +23,43 @@ type HttpHandler = HttpHandlerContext -> Async<HttpHandlerContext option>
 
 type ErrorHandler = exn -> HttpHandler
 
+/// ---------------------------
+/// Private helper functions
+/// ---------------------------
+
+let private strOption (str : string) =
+    if String.IsNullOrEmpty str then None else Some str
+
+[<Literal>]
+let private RouteKey = "aspnet_lambda_route"
+
+let private getSavedSubPath (ctx : HttpContext) =
+    if ctx.Items.ContainsKey RouteKey
+    then ctx.Items.Item RouteKey |> string |> strOption 
+    else None
+
+let private getPath (ctx : HttpContext) =
+    match getSavedSubPath ctx with
+    | Some p -> ctx.Request.Path.ToString().[p.Length..]
+    | None   -> ctx.Request.Path.ToString()
+
+let private handlerWithRootedPath (path : string) (handler : HttpHandler) = 
+    fun (ctx : HttpHandlerContext) ->
+        async {
+            let savedSubPath = getSavedSubPath ctx.HttpContext
+            try
+                ctx.HttpContext.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
+                return! handler ctx
+            finally
+                match savedSubPath with
+                | Some savedSubPath -> ctx.HttpContext.Items.Item RouteKey <- savedSubPath
+                | None              -> ctx.HttpContext.Items.Remove RouteKey |> ignore
+        }
+
+/// ---------------------------
+/// Default HttpHandlers
+/// ---------------------------
+
 /// Combines two HttpHandler functions into one.
 /// If the first HttpHandler returns Some HttpContext, then it will proceed to
 /// the second handler, otherwise short circuit and return None as the final result.
@@ -139,35 +176,6 @@ let clearResponse =
     fun (ctx : HttpHandlerContext) ->
         ctx.HttpContext.Response.Clear()
         async.Return (Some ctx)
-
-let private strOption (str : string) =
-    if String.IsNullOrEmpty str then None else Some str
-
-[<Literal>]
-let private RouteKey = "aspnet_lambda_route"
-
-let private getSavedSubPath (ctx : HttpContext) =
-    if ctx.Items.ContainsKey RouteKey
-    then ctx.Items.Item RouteKey |> string |> strOption 
-    else None
-
-let private getPath (ctx : HttpContext) =
-    match getSavedSubPath ctx with
-    | Some p -> ctx.Request.Path.ToString().[p.Length..]
-    | None   -> ctx.Request.Path.ToString()
-
-let private handlerWithRootedPath (path : string) (handler : HttpHandler) = 
-    fun (ctx : HttpHandlerContext) ->
-        async {
-            let savedSubPath = getSavedSubPath ctx.HttpContext
-            try
-                ctx.HttpContext.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
-                return! handler ctx
-            finally
-                match savedSubPath with
-                | Some savedSubPath -> ctx.HttpContext.Items.Item RouteKey <- savedSubPath
-                | None              -> ctx.HttpContext.Items.Remove RouteKey |> ignore
-        }
 
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 let route (path : string) =

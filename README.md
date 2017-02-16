@@ -9,7 +9,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 [![Build history](https://buildstats.info/appveyor/chart/dustinmoris/aspnetcore-lambda?includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/aspnetcore-lambda/history)
 
-**ATTENTION: THIS PROJECT IS STILL IN AN EARLY ALPHA STAGE**
+**ATTENTION: THIS PROJECT IS STILL IN ALPHA STAGE**
 
 ## Table of contents
 

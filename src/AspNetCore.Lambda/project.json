@@ -1,7 +1,7 @@
 {
   "name": "AspNetCore.Lambda",
-  "version": "0.1.0-alpha002-*",
-  "description": "An attempt to make ASP.NET Core more functional.",
+  "version": "0.1.0-alpha003-*",
+  "description": "A native functional ASP.NET Core web framework for F# developers.",
   "copyright": "Copyright 2017 Dustin Moris Gorski",
   "authors": [
     "Dustin Moris Gorski"
@@ -41,13 +41,15 @@
   },
   "dependencies": {},
   "packOptions": {
-    "summary": "An attempt to make ASP.NET Core more functional.",
+    "summary": "A native functional ASP.NET Core web framework for F# developers.",
     "tags": [
       "ASP.NET Core",
       "Lambda",
       "FSharp",
       "Functional",
-      "Http"
+      "Http",
+      "Web",
+      "Framework"
     ],
     "owners": [
       "Dustin Moris Gorski"
