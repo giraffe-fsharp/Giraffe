@@ -182,7 +182,7 @@ let route (path : string) =
 /// route matches and subsequently passed into the supplied routeHandler.
 let routef (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
     fun (ctx : HttpHandlerContext) ->
-        tryMatchInput path (ctx.HttpContext.Request.Path.ToString()) false
+        tryMatchInput path (getPath ctx.HttpContext) false
         |> function
             | None      -> async.Return None
             | Some args -> routeHandler args ctx

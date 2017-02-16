@@ -666,3 +666,33 @@ let ``GET "/api/v2/users" returns "users v2"`` () =
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+
+[<Fact>]
+let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
+    let app = 
+        GET >>= choose [
+            route "/"    >>= text "Hello World"
+            route "/foo" >>= text "bar"
+            subRoute "/api" (
+                choose [
+                    route  "" >>= text "api root"
+                    routef "/foo/bar/%s" text ] )
+            route "/api/test" >>= text "test"
+            setStatusCode 404 >>= text "Not found" ]
+
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/foo/bar/yadayada")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "yadayada"
+
+    let result = 
+        { HttpContext = ctx; Services = services }
+        |> app
+        |> Async.RunSynchronously
+
+    match result with
+    | None          -> assertFailf "Result was expected to be %s" expected
+    | Some ctx ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
