@@ -35,6 +35,8 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
     - [routeCif](#routecif)
     - [routeStartsWith](#routestartswith)
     - [routeStartsWithCi](#routestartswithci)
+    - [subRoute](#subroute)
+    - [subRouteCi](#subrouteci)
     - [setStatusCode](#setstatuscode)
     - [setHttpHeader](#sethttpheader)
     - [setBody](#setbody)
@@ -70,7 +72,7 @@ You can think of [ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore
 
 The only building block in ASP.NET Core Lambda is a so called `HttpHandler`:
 
-```
+```fsharp
 type HttpHandlerContext =
     {
         HttpContext : HttpContext
@@ -92,7 +94,7 @@ A `HttpHandler` can decide to not further process an incoming request and return
 
 The core combinator is the `bind` function which you might be familiar with:
 
-```
+```fsharp
 let bind (handler : HttpHandler) (handler2 : HttpHandler) =
     fun ctx ->
         async {
@@ -118,7 +120,7 @@ The `choose` combinator function iterates through a list of `HttpHandler` functi
 
 #### Example:
 
-```
+```fsharp
 let app = 
     choose [
         route "/foo" >>= text "Foo"
@@ -134,7 +136,7 @@ let app =
 
 #### Example:
 
-```
+```fsharp
 let app = 
     choose [
         GET  >>= route "/foo" >>= text "GET Foo"
@@ -149,7 +151,7 @@ let app =
 
 #### Example:
 
-```
+```fsharp
 let app = 
     mustAccept [ "text/plain"; "application/json" ] >>=
         choose [
@@ -164,7 +166,7 @@ let app =
 
 #### Example:
 
-```
+```fsharp
 let mustBeLoggedIn =
     requiresAuthentication (challenge "Cookie")
 
@@ -181,7 +183,7 @@ let app =
 
 #### Example:
 
-```
+```fsharp
 let app = 
     choose [
         route "/ping" >>= text "pong"
@@ -195,7 +197,7 @@ let app =
 
 #### Example:
 
-```
+```fsharp
 let mustBeLoggedIn =
     requiresAuthentication (challenge "Cookie")
 
@@ -212,7 +214,7 @@ let app =
 
 #### Example:
 
-```
+```fsharp
 let accessDenied = setStatusCode 401 >>= text "Access Denied"
 
 let mustBeAdmin = 
@@ -232,7 +234,7 @@ let app =
 
 #### Example:
 
-```
+```fsharp
 let accessDenied = setStatusCode 401 >>= text "Access Denied"
 
 let mustBeSomeAdmin = 
@@ -252,7 +254,7 @@ let app =
 
 #### Example:
 
-```
+```fsharp
 let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
     ctx |> (clearResponse >>= setStatusCode 500 >>= text ex.Message)
 
@@ -276,7 +278,7 @@ type Startup() =
 
 #### Example:
 
-```
+```fsharp
 let app = 
     choose [
         route "/"    >>= text "Index path"
@@ -300,7 +302,7 @@ The following format placeholders are currently supported:
 
 #### Example:
 
-```
+```fsharp
 let app = 
     choose [
         route  "/foo" >>= text "Foo"
@@ -317,7 +319,7 @@ let app =
 
 #### Example:
 
-```
+```fsharp
 // "/FoO", "/fOO", "/bAr", etc. will match as well
 
 let app = 
@@ -334,7 +336,7 @@ let app =
 
 #### Example:
 
-```
+```fsharp
 let app = 
     choose [
         route  "/foo" >>= text "Foo"
@@ -349,7 +351,7 @@ let app =
 
 #### Example:
 
-```
+```fsharp
 let app = 
     routeStartsWith "/api/" >>=
         requiresAuthentication (challenge "Cookie") >>=
@@ -365,7 +367,7 @@ let app =
 
 #### Example:
 
-```
+```fsharp
 let app = 
     routeStartsWithCi "/api/v1/" >>=
         choose [
@@ -374,13 +376,53 @@ let app =
         ]
 ```
 
+### subRoute
+
+`subRoute` checks if the current path begins with the given `path` and will invoke the passed in `handler` if it was a match. The given `handler` (and any nested handlers within it) should omit the already applied `path` for subsequent route evaluations.
+
+#### Example:
+
+```fsharp
+let app = 
+    subRoute "/api"
+        (choose [
+            subRoute "/v1"
+                (choose [
+                    route "/foo" >>= text "Foo 1"
+                    route "/bar" >>= text "Bar 1" ])
+            subRoute "/v2"
+                (choose [
+                    route "/foo" >>= text "Foo 2"
+                    route "/bar" >>= text "Bar 2" ]) ])
+```
+
+### subRouteCi
+
+`subRouteCi` is the case insensitive version of `subRoute`.
+
+#### Example:
+
+```fsharp
+let app = 
+    subRouteCi "/api"
+        (choose [
+            subRouteCi "/v1"
+                (choose [
+                    route "/foo" >>= text "Foo 1"
+                    route "/bar" >>= text "Bar 1" ])
+            subRouteCi "/v2"
+                (choose [
+                    route "/foo" >>= text "Foo 2"
+                    route "/bar" >>= text "Bar 2" ]) ])
+```
+
 ### setStatusCode
 
 `setStatusCode` changes the status code of the `HttpResponse`.
 
 #### Example:
 
-```
+```fsharp
 let app = 
     choose [
         route  "/foo" >>= text "Foo"
@@ -394,7 +436,7 @@ let app =
 
 #### Example:
 
-```
+```fsharp
 let app = 
     choose [
         route  "/foo" >>= text "Foo"
@@ -408,7 +450,7 @@ let app =
 
 #### Example:
 
-```
+```fsharp
 let app = 
     choose [
         route  "/foo" >>= setBody (Encoding.UTF8.GetBytes "Some string")
@@ -421,7 +463,7 @@ let app =
 
 #### Example:
 
-```
+```fsharp
 let app = 
     choose [
         route  "/foo" >>= setBodyAsString "Some string"
@@ -436,7 +478,7 @@ The different between `text` and `setBodyAsString` is that this http handler als
 
 #### Example:
 
-```
+```fsharp
 let app = 
     choose [
         route  "/foo" >>= text "Some string"
@@ -449,7 +491,7 @@ let app =
 
 #### Example:
 
-```
+```fsharp
 type Person =
     {
         FirstName : string
@@ -468,7 +510,7 @@ let app =
 
 #### Example:
 
-```
+```fsharp
 [<CLIMutable>]
 type Person =
     {
@@ -490,7 +532,7 @@ The `dotLiquid` handler requires the content type and the actual template to be 
 
 #### Example:
 
-```
+```fsharp
 type Person =
     {
         FirstName : string
@@ -513,7 +555,7 @@ This http handler takes a relative path of a template file and the associated mo
 
 #### Example:
 
-```
+```fsharp
 type Person =
     {
         FirstName : string
@@ -534,7 +576,7 @@ This http handler takes a relative path of a html file as input parameter and se
 
 #### Example:
 
-```
+```fsharp
 let app = 
     choose [
         route  "/" >>= htmlFile "index.html"
@@ -551,7 +593,7 @@ Defining a custom HTTP handler to partially filter a route:
 
 *(After creating this example I added the `routeStartsWith` HttpHandler to the list of default handlers as it turned out to be quite useful)*
 
-```
+```fsharp
 let routeStartsWith (partOfPath : string) =
     fun ctx ->
         if ctx.HttpContext.Request.Path.ToString().StartsWith partOfPath 
@@ -562,7 +604,7 @@ let routeStartsWith (partOfPath : string) =
 
 Defining another custom HTTP handler to validate a mandatory HTTP header:
 
-```
+```fsharp
 let requiresToken (expectedToken : string) (handler : HttpHandler) =
     fun ctx ->
         let token    = ctx.HttpContext.Request.Headers.["X-Token"].ToString()
@@ -575,7 +617,7 @@ let requiresToken (expectedToken : string) (handler : HttpHandler) =
 
 Composing a web application from smaller HTTP handlers:
 
-```
+```fsharp
 let app = 
     choose [
         route "/"       >>= htmlFile "index.html"
@@ -601,7 +643,7 @@ PM> Install-Package AspNetCore.Lambda
 
 Create a web application and plug it into the ASP.NET Core middleware:
 
-```
+```fsharp
 open AspNetCore.Lambda.HttpHandlers
 open AspNetCore.Lambda.Middleware
 

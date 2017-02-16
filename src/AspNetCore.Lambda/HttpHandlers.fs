@@ -72,6 +72,9 @@ let PUT     = httpVerb "PUT"    : HttpHandler
 let PATCH   = httpVerb "PATCH"  : HttpHandler
 let DELETE  = httpVerb "DELETE" : HttpHandler
 
+[<Literal>]
+let private RouteKey = "aspnet_lambda_route"
+
 /// Filters an incoming HTTP request based on the accepted
 /// mime types of the client.
 let mustAccept (mimeTypes : string list) =
@@ -140,10 +143,36 @@ let clearResponse =
         ctx.HttpContext.Response.Clear()
         async.Return (Some ctx)
 
+let private strOption (str : string) =
+    if String.IsNullOrEmpty str then None else Some str 
+
+let private getSavedSubPath (ctx : HttpContext) =
+    if ctx.Items.ContainsKey RouteKey
+    then ctx.Items.Item RouteKey |> string |> strOption 
+    else None
+
+let private getPath (ctx : HttpContext) =
+    match getSavedSubPath ctx with
+    | Some p -> ctx.Request.Path.ToString().[p.Length..]
+    | None   -> ctx.Request.Path.ToString()
+
+let private handlerWithRootedPath (path : string) (handler : HttpHandler) = 
+    fun (ctx : HttpHandlerContext) ->
+        async {
+            let savedSubPath = getSavedSubPath ctx.HttpContext
+            try
+                ctx.HttpContext.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
+                return! handler ctx
+            finally
+                match savedSubPath with
+                | Some savedSubPath -> ctx.HttpContext.Items.Item RouteKey <- savedSubPath
+                | None              -> ctx.HttpContext.Items.Remove RouteKey |> ignore
+        }
+
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 let route (path : string) =
     fun (ctx : HttpHandlerContext) ->
-        if ctx.HttpContext.Request.Path.ToString().Equals path 
+        if (getPath ctx.HttpContext).Equals path
         then Some ctx
         else None
         |> async.Return
@@ -161,7 +190,7 @@ let routef (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 let routeCi (path : string) =
     fun (ctx : HttpHandlerContext) ->
-        if String.Equals(ctx.HttpContext.Request.Path.ToString(), path, StringComparison.CurrentCultureIgnoreCase)
+        if String.Equals(getPath ctx.HttpContext, path, StringComparison.CurrentCultureIgnoreCase)
         then Some ctx
         else None
         |> async.Return
@@ -171,7 +200,7 @@ let routeCi (path : string) =
 /// route matches and subsequently passed into the supplied routeHandler.
 let routeCif (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
     fun (ctx : HttpHandlerContext) ->
-        tryMatchInput route (ctx.HttpContext.Request.Path.ToString()) true
+        tryMatchInput route (getPath ctx.HttpContext) true
         |> function
             | None      -> None |> async.Return
             | Some args -> routeHandler args ctx
@@ -179,7 +208,7 @@ let routeCif (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
 let routeStartsWith (partOfPath : string) =
     fun (ctx : HttpHandlerContext) ->
-        if ctx.HttpContext.Request.Path.ToString().StartsWith partOfPath 
+        if (getPath ctx.HttpContext).StartsWith partOfPath 
         then Some ctx
         else None
         |> async.Return
@@ -187,10 +216,23 @@ let routeStartsWith (partOfPath : string) =
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
 let routeStartsWithCi (partOfPath : string) =
     fun (ctx : HttpHandlerContext) ->
-        if ctx.HttpContext.Request.Path.ToString().StartsWith(partOfPath, StringComparison.CurrentCultureIgnoreCase) 
+        if (getPath ctx.HttpContext).StartsWith(partOfPath, StringComparison.CurrentCultureIgnoreCase) 
         then Some ctx
         else None
         |> async.Return
+
+/// Filters an incoming HTTP request based on a part of the request path (case sensitive).
+/// Subsequent route handlers inside the given handler function should omit the already validated subPath.
+let subRoute (path : string) (handler : HttpHandler) =
+    routeStartsWith path >>=
+    handlerWithRootedPath path handler
+
+/// Filters an incoming HTTP request based on a part of the request path (case insensitive).
+/// Subsequent route handlers inside the given handler function should omit the already validated path.
+let subRouteCi (path : string) (handler : HttpHandler) =
+    routeStartsWithCi path >>=
+    handlerWithRootedPath path handler
+
 
 /// Sets the HTTP response status code.
 let setStatusCode (statusCode : int) =

@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "FSharp.Core": "4.1.0",
-    "AspNetCore.Lambda": "0.1.0-*",
+    "AspNetCore.Lambda": {"target": "project"},
     "Microsoft.AspNetCore.Hosting": "1.1.0",
     "Microsoft.AspNetCore.Diagnostics": "1.1.0",
     "Microsoft.AspNetCore.Server.Kestrel": "1.1.0",
