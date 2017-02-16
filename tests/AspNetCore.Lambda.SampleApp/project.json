@@ -9,8 +9,7 @@
         "Person.fs",        
         "Program.fs"
       ]
-    },
-    "embed": [ "**/*.cshtml" ],
+    },    
     "preserveCompilationContext": true
   },
   "tools": {

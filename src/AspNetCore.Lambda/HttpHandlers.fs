@@ -279,13 +279,10 @@ let htmlFile (relativeFilePath : string) =
                 >>= setBodyAsString html)
         }
 
-let razor (engine : RazorLightEngine) (view : string) (model : obj) =
-    let view = engine.Parse(view, model)
-    setHttpHeader "Content-Type" "text/html"
-    >>= setBodyAsString view
-
-let configureRazor (viewsFolder : string)  = 
-    let views = combinePaths (Directory.GetCurrentDirectory()) viewsFolder
-    razor (EngineFactory.CreatePhysical(views))
-
-let defaultRazor () = configureRazor ""
+let razorView (viewName : string) (model : obj) =
+    fun (ctx : HttpHandlerContext) ->
+        let engine = ctx.Services.GetService<IRazorLightEngine>()
+        let view = engine.Parse(viewName, model)
+        setHttpHeader "Content-Type" "text/html"
+        >>= setBodyAsString view
+        <| ctx

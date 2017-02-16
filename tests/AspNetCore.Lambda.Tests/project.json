@@ -10,8 +10,7 @@
         "HttpHandlerTests.fs"
       ]
     },
-    "preserveCompilationContext": true,
-    "embed": [ "Person.cshtml" ]
+    "preserveCompilationContext": true    
   },
   "tools": {
     "dotnet-compile-fsc": "1.0.0-preview2-*"
@@ -24,7 +23,8 @@
     "xunit": "2.1.0",
     "dotnet-test-xunit": "1.0.0-rc2-*",
     "NSubstitute": "2.0.1-rc",
-    "AspNetCore.Lambda": "0.1.0-*"
+    "AspNetCore.Lambda": "0.1.0-*",
+    "RazorLight": "1.0.0-rc1"
   },
   "testRunner": "xunit",
   "frameworks": {

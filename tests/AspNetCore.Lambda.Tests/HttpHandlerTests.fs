@@ -11,6 +11,8 @@ open Xunit
 open NSubstitute
 open AspNetCore.Lambda.HttpHandlers
 open AspNetCore.Lambda.Tests
+open AspNetCore.Lambda.Services
+open RazorLight
 // ---------------------------------
 // Helper functions
 // ---------------------------------
@@ -29,14 +31,13 @@ let assertFailf format args =
     let msg = sprintf format args
     Assert.True(false, msg)
 
-let view = defaultRazor ()
-
 // ---------------------------------
 // Mocks
 // ---------------------------------
 
 let ctx      = Substitute.For<HttpContext>()
 let services = Substitute.For<IServiceProvider>()
+services.GetService(typeof<IRazorLightEngine>).Returns(EngineFactory.CreatePhysical(Directory.GetCurrentDirectory()))
 
 // ---------------------------------
 // Test Types
@@ -542,17 +543,17 @@ let ``GET "/razor" returns rendered html view`` () =
         GET >>= choose [ 
             route "/"      >>= text "Hello World"
             route "/foo"   >>= text "bar"
-            route "/razor" >>= view "Person.cshtml" { Name = "razor" }
+            route "/razor" >>= razorView "Person.cshtml" { Name = "razor" }
             setStatusCode 404 >>= text "Not found" ]
-            
+    
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/razor")) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "<html><head><title>Hello, razor</title></head><body><h3>Hello, razor</h3></body></html>"
+    let expected = "<html><head><title>Hello, razor</title></head><body><h3>Hello, razor</h3></body></html>"    
 
     let result = 
         { HttpContext = ctx; Services = services }
-        |> testApp
+        |> app
         |> Async.RunSynchronously
 
     match result with
