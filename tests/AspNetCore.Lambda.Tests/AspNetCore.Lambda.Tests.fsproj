@@ -1,0 +1,32 @@
+﻿<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp1.1</TargetFramework>
+    <DebugType>portable</DebugType>
+    <AssemblyName>AspNetCore.Lambda.Tests</AssemblyName>
+    <PackageId>AspNetCore.Lambda.Tests</PackageId>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <PackageTargetFallback>$(PackageTargetFallback);dotnet5.4;portable-net451+win8</PackageTargetFallback>
+    <RuntimeFrameworkVersion>1.1.0</RuntimeFrameworkVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" Version="4.1.*" />
+    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0-preview-*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.2.0-rc4-*" />
+    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.*" />
+    <PackageReference Include="xunit" Version="2.2.0-rc4-*" />
+    <PackageReference Include="NSubstitute" Version="2.0.1-rc" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AspNetCore.Lambda\AspNetCore.Lambda.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="FormatExpressionTests.fs" />
+    <Compile Include="HttpHandlerTests.fs" />
+  </ItemGroup>
+
+</Project>

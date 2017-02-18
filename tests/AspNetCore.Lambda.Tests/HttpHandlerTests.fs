@@ -31,13 +31,6 @@ let assertFailf format args =
     Assert.True(false, msg)
 
 // ---------------------------------
-// Mocks
-// ---------------------------------
-
-let ctx      = Substitute.For<HttpContext>()
-let services = Substitute.For<IServiceProvider>()
-
-// ---------------------------------
 // Test Types
 // ---------------------------------
 
@@ -54,6 +47,9 @@ type Dummy =
 
 [<Fact>]
 let ``GET "/" returns "Hello World"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+
     let app = 
         GET >>= choose [ 
             route "/"    >>= text "Hello World"
@@ -78,6 +74,9 @@ let ``GET "/" returns "Hello World"`` () =
 
 [<Fact>]
 let ``GET "/foo" returns "bar"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         GET >>= choose [ 
             route "/"    >>= text "Hello World"
@@ -102,6 +101,9 @@ let ``GET "/foo" returns "bar"`` () =
 
 [<Fact>]
 let ``GET "/FOO" returns 404 "Not found"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         GET >>= choose [ 
             route "/"    >>= text "Hello World"
@@ -127,6 +129,9 @@ let ``GET "/FOO" returns 404 "Not found"`` () =
 
 [<Fact>]
 let ``GET "/json" returns json object`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         GET >>= choose [ 
             route "/"     >>= text "Hello World"
@@ -152,6 +157,9 @@ let ``GET "/json" returns json object`` () =
 
 [<Fact>]
 let ``POST "/post/1" returns "1"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         choose [
             GET >>= choose [ 
@@ -180,6 +188,9 @@ let ``POST "/post/1" returns "1"`` () =
 
 [<Fact>]
 let ``POST "/post/2" returns "2"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         choose [
             GET >>= choose [ 
@@ -208,6 +219,9 @@ let ``POST "/post/2" returns "2"`` () =
 
 [<Fact>]
 let ``PUT "/post/2" returns 404 "Not found"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         choose [
             GET >>= choose [ 
@@ -237,6 +251,9 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
 
 [<Fact>]
 let ``GET "/dotLiquid" returns rendered html view`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let dotLiquidTemplate =
         "<html><head><title>DotLiquid</title></head>" + 
         "<body><p>{{ foo }} {{ bar }} is {{ age }} years old.</p>" +
@@ -272,6 +289,9 @@ let ``GET "/dotLiquid" returns rendered html view`` () =
 
 [<Fact>]
 let ``POST "/text" with supported Accept header returns "good"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         choose [
             GET >>= choose [ 
@@ -305,6 +325,9 @@ let ``POST "/text" with supported Accept header returns "good"`` () =
 
 [<Fact>]
 let ``POST "/json" with supported Accept header returns "json"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         choose [
             GET >>= choose [ 
@@ -338,6 +361,9 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
 
 [<Fact>]
 let ``POST "/either" with supported Accept header returns "either"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         choose [
             GET >>= choose [ 
@@ -371,6 +397,9 @@ let ``POST "/either" with supported Accept header returns "either"`` () =
 
 [<Fact>]
 let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         choose [
             GET >>= choose [ 
@@ -404,6 +433,9 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
 
 [<Fact>]
 let ``GET "/JSON" returns "BaR"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app =
         GET >>= choose [ 
             route   "/"       >>= text "Hello World"
@@ -430,6 +462,9 @@ let ``GET "/JSON" returns "BaR"`` () =
 
 [<Fact>]
 let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app =
         GET >>= choose [ 
             route   "/"       >>= text "Hello World"
@@ -456,6 +491,9 @@ let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
 
 [<Fact>]
 let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app =
         GET >>= choose [ 
             route   "/"       >>= text "Hello World"
@@ -482,6 +520,9 @@ let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
 
 [<Fact>]
 let ``POST "/POsT/1" returns "1"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app =
         choose [
             GET >>= choose [ 
@@ -509,6 +550,9 @@ let ``POST "/POsT/1" returns "1"`` () =
 
 [<Fact>]
 let ``POST "/POsT/523" returns "523"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app =
         choose [
             GET >>= choose [ 
@@ -536,6 +580,9 @@ let ``POST "/POsT/523" returns "523"`` () =
 
 [<Fact>]
 let ``GET "/api" returns "api root"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         GET >>= choose [
             route "/"    >>= text "Hello World"
@@ -567,6 +614,9 @@ let ``GET "/api" returns "api root"`` () =
 
 [<Fact>]
 let ``GET "/api/users" returns "users"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         GET >>= choose [
             route "/"    >>= text "Hello World"
@@ -598,6 +648,9 @@ let ``GET "/api/users" returns "users"`` () =
 
 [<Fact>]
 let ``GET "/api/test" returns "test"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         GET >>= choose [
             route "/"    >>= text "Hello World"
@@ -629,6 +682,9 @@ let ``GET "/api/test" returns "test"`` () =
 
 [<Fact>]
 let ``GET "/api/v2/users" returns "users v2"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         GET >>= choose [
             route "/"    >>= text "Hello World"
@@ -669,6 +725,9 @@ let ``GET "/api/v2/users" returns "users v2"`` () =
 
 [<Fact>]
 let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         GET >>= choose [
             route "/"    >>= text "Hello World"
