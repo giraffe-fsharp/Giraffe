@@ -1,14 +1,16 @@
 ﻿<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <AssemblyName>AspNetCore.Lambda</AssemblyName>
+    <VersionPrefix>0.1.0-alpha003</VersionPrefix>
     <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
     <Copyright>Copyright 2017 Dustin Moris Gorski</Copyright>
     <NeutralLanguage>en-GB</NeutralLanguage>
-    <VersionPrefix>0.1.0-alpha003</VersionPrefix>
     <Authors>Dustin Moris Gorski</Authors>
     <TargetFramework>netstandard1.6</TargetFramework>
     <DebugType>portable</DebugType>
-    <AssemblyName>AspNetCore.Lambda</AssemblyName>
+    <WarningsAsErrors>1</WarningsAsErrors>
+    <Optimize>True</Optimize>
     <OutputType>Library</OutputType>
     <PackageId>AspNetCore.Lambda</PackageId>
     <PackageTags>ASP.NET Core;Lambda;FSharp;Functional;Http;Web;Framework</PackageTags>

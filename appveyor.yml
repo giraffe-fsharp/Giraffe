@@ -1,4 +1,4 @@
-version: 0.1.0-alpha001-{build}
+version: 0.1.0-alpha003-{build}
 configuration:
   - Release
 platform: Any CPU
