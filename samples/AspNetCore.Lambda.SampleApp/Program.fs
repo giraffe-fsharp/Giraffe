@@ -74,15 +74,9 @@ let webApp =
             ]
         setStatusCode 404 >>= text "Not Found" ]
 
-type Startup() =
-    member __.ConfigureServices (services : IServiceCollection) =
-        services.AddAuthentication() |> ignore
-        services.AddDataProtection() |> ignore
-
-    member __.Configure (app : IApplicationBuilder)
-                        (env : IHostingEnvironment)
-                        (loggerFactory : ILoggerFactory) =
-        loggerFactory.AddConsole().AddDebug() |> ignore
+[<EntryPoint>]
+let main argv = 
+    let configureApp (app : IApplicationBuilder) = 
         app.UseLambdaErrorHandler(errorHandler)
         app.UseCookieAuthentication(
             new CookieAuthenticationOptions(
@@ -95,15 +89,20 @@ type Startup() =
                 ExpireTimeSpan          = TimeSpan.FromDays 7.0
         )) |> ignore
         app.UseLambda(webApp)
+                           
+    let configureServices (services : IServiceCollection) =
+        services.AddAuthentication() |> ignore
+        services.AddDataProtection() |> ignore
+    
+    let configureLogging (loggerFactory : ILoggerFactory) = loggerFactory.AddConsole().AddDebug() |> ignore
 
-
-[<EntryPoint>]
-let main argv = 
     let host =
         WebHostBuilder()
             .UseKestrel()
             .UseContentRoot(Directory.GetCurrentDirectory())
-            .UseStartup<Startup>()
+            .Configure(Action<IApplicationBuilder> configureApp)
+            .ConfigureServices(Action<IServiceCollection> configureServices)
+            .ConfigureLogging(Action<ILoggerFactory> configureLogging)
             .Build()
     host.Run()
     0
