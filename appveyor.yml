@@ -1,18 +1,13 @@
-version: 0.1.0-alpha001-{build}
+version: 0.1.0-{build}
 configuration:
   - Release
 platform: Any CPU
 environment:
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
-before_build:
-  - appveyor-retry dotnet restore
+build: off
 build_script:
-  - dotnet build "src\AspNetCore.Lambda" -c %CONFIGURATION% --no-dependencies --version-suffix %APPVEYOR_BUILD_ID%
-test_script:
-  - dotnet build "tests\AspNetCore.Lambda.Tests" -c %CONFIGURATION%
-  - dotnet test "tests\AspNetCore.Lambda.Tests" -c %CONFIGURATION%
-after_build:
-  - dotnet pack "src\AspNetCore.Lambda" -c %CONFIGURATION% --no-build
+  - ps: .\appveyor.ps1
+test: off
 artifacts:
   - path: '**\AspNetCore.Lambda.*.nupkg'
     name: AspNetCore.Lambda

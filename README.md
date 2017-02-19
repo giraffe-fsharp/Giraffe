@@ -49,6 +49,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
     - [htmlFile](#htmlfile)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Installation](#installation)
+- [Building and developing](building-and-developing)
 - [License](#license)
 - [Contributing](#contributing)
 
@@ -659,6 +660,16 @@ type Startup() =
         
         app.UseLambda(webApp)
 ```
+
+## Building and developing
+
+ASP.NET Core Lambda is using the new MSBuild driven `.fsproj` project system that comes with [.NET Core SDK RC4](https://github.com/dotnet/netcorecli-fsc/wiki/.NET-Core-SDK-rc4).
+
+You can either install [Visual Studio 2017 RC](https://www.visualstudio.com/vs/visual-studio-2017-rc/) which comes with the latest SDK or manually download and install the [.NET SDK RC4](https://github.com/dotnet/core/blob/master/release-notes/rc4-download.md).
+
+After installation you should be able to run `build.cmd` to successfully build, test and package the library.
+
+Currently the best way to work with F# on .NET Core is to use [Visual Studio Code](https://code.visualstudio.com/) with the [Ionide](http://ionide.io/) extension.
 
 ## License
 
