@@ -5,14 +5,14 @@
 
 Write-Host "Downloading latest .NET Core SDK..."
 
-(New-Object System.Net.WebClient).DownloadFile("https://download.microsoft.com/download/5/F/E/5FEB7E95-C643-48D5-8329-9D2C63676CE8/dotnet-dev-win-x64.1.0.0-rc4-004771.exe","dotnet-core-sdk.exe")
-# Invoke-WebRequest "https://go.microsoft.com/fwlink/?linkid=841686" -OutFile "dotnet-core-sdk.exe"
+#(New-Object System.Net.WebClient).DownloadFile("https://download.microsoft.com/download/5/F/E/5FEB7E95-C643-48D5-8329-9D2C63676CE8/dotnet-dev-win-x64.1.0.0-rc4-004771.exe","dotnet-core-sdk.exe")
+Invoke-WebRequest "https://go.microsoft.com/fwlink/?linkid=841695" -OutFile "dotnet-core-sdk.exe"
 
 Write-Host "Installing .NET Core SDK..."
 
-# Invoke-Command -ScriptBlock { ./dotnet-core-sdk.exe /S /v/qn }
+Invoke-Command -ScriptBlock { ./dotnet-core-sdk.exe /S /v/qn }
 
-./dotnet-core-sdk.exe /install /quiet /norestart
+#./dotnet-core-sdk.exe /install /quiet /norestart
 
 Write-Host "Installation succeeded." -ForegroundColor Green
 
