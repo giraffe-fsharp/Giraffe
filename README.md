@@ -50,7 +50,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
     - [htmlFile](#htmlfile)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Installation](#installation)
-- [Building and developing](building-and-developing)
+- [Building and developing](#building-and-developing)
 - [License](#license)
 - [Contributing](#contributing)
 
