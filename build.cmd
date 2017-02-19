@@ -5,7 +5,7 @@ dotnet --version
 dotnet restore src/AspNetCore.Lambda
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-dotnet build src/AspNetCore.Lambda -c Release
+dotnet build src/AspNetCore.Lambda
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 

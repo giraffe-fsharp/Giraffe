@@ -18,6 +18,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
     - [HttpHandler](#httphandler)
     - [Combinators](#combinators)
         - [bind (>>=)](#bind-)
+        - [compose (>=>)](#compose-)
         - [choose](#choose)
 - [Default HttpHandlers](#default-httphandlers)
     - [choose](#choose)
@@ -80,10 +81,12 @@ type HttpHandlerContext =
         Services    : IServiceProvider
     }
 
-type HttpHandler = HttpHandlerContext -> Async<HttpHandlerContext option>
+type HttpHandlerResult = Async<HttpHandlerContext option>
+
+type HttpHandler = HttpHandlerContext -> HttpHandlerResult
 ```
 
-A `HttpHandler` is a simple function which takes in a `HttpHandlerContext` and returns an object of the same type when finished.
+A `HttpHandler` is a simple function which takes in a `HttpHandlerContext` and returns an object of the same type (wrapped in an option and async workflow) when finished.
 
 Inside that function it can process an incoming `HttpRequest` and make changes to the `HttpResponse` of the given `HttpContext`. By receiving and returning a `HttpContext` there's nothing which cannot be done from inside a `HttpHandler`.
 
@@ -96,28 +99,40 @@ A `HttpHandler` can decide to not further process an incoming request and return
 The core combinator is the `bind` function which you might be familiar with:
 
 ```fsharp
-let bind (handler : HttpHandler) (handler2 : HttpHandler) =
-    fun ctx ->
+let bind (handler : HttpHandler) =
+    fun (result : HttpHandlerResult) ->
         async {
-            let! result = handler ctx
-            match result with
-            | None      -> return None
-            | Some ctx2 ->
-                match ctx2.HttpContext.Response.HasStarted with
-                | true  -> return  Some ctx2
-                | false -> return! handler2 ctx2
+            let! ctx = result
+            match ctx with
+            | None   -> return None
+            | Some c ->
+                match c.HttpContext.Response.HasStarted with
+                | true  -> return  Some c
+                | false -> return! handler c
         }
 
 let (>>=) = bind
 ```
 
-The `bind` function takes in two different http handlers and a `HttpHandlerContext` (ctx) object. It first invokes the first handler and checks its result. If there was a `HttpHandlerContext` returned then it will pass it on to the second `HttpHandler` and return the overall result of that function. If there was nothing then it will short circuit after the first handler and return `None`.
+The `bind` function takes in a `HttpHandler` function and a `HttpHandlerResult`. It first evaluates the `HttpHandlerResult` and checks its return value. If there was `Some HttpHandlerContext` then it will pass it on to the `HttpHandler` function otherwise it will return `None`. If the response object inside the `HttpHandlerContext` has already been written, then it will skip the `HttpHandler` function as well and return the current `HttpHandlerContext` as the final result.
 
-This allows composing many smaller `HttpHandler` functions into a bigger web application.
+#### compose (>=>)
+
+The `compose` combinator combines two `HttpHandler` functions into one:
+
+```fsharp
+let compose (handler : HttpHandler) (handler2 : HttpHandler) =
+    fun (ctx : HttpHandlerContext) ->
+        handler ctx |> bind handler2
+```
+
+It is probably the more useful combinator as it allows composing many smaller `HttpHandler` functions into a bigger web application.
+
+If you would like to learn more about the difference between `>>=` and `>=>` then please check out [Scott Wlaschin's blog post on Railway oriented programming](http://fsharpforfunandprofit.com/posts/recipe-part2/).
 
 #### choose
 
-The `choose` combinator function iterates through a list of `HttpHandler` functions and invokes each individual until the first `HttpHandler` returns a result.
+The `choose` combinator function iterates through a list of `HttpHandler` functions and invokes each individual handler until the first `HttpHandler` returns a result.
 
 #### Example:
 

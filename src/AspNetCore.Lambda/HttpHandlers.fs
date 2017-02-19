@@ -19,7 +19,9 @@ type HttpHandlerContext =
         Services    : IServiceProvider
     }
 
-type HttpHandler = HttpHandlerContext -> Async<HttpHandlerContext option>
+type HttpHandlerResult = Async<HttpHandlerContext option>
+
+type HttpHandler = HttpHandlerContext -> HttpHandlerResult
 
 type ErrorHandler = exn -> HttpHandler
 
@@ -60,26 +62,35 @@ let private handlerWithRootedPath (path : string) (handler : HttpHandler) =
 /// Default HttpHandlers
 /// ---------------------------
 
-/// Combines two HttpHandler functions into one.
-/// If the first HttpHandler returns Some HttpContext, then it will proceed to
-/// the second handler, otherwise short circuit and return None as the final result.
-/// If the first HttpHandler returned Some HttpResult, but the response has already 
-/// been written, then it will return its result and skip the second HttpHandler as well.
-let bind (handler : HttpHandler) (handler2 : HttpHandler) =
-    fun (ctx : HttpHandlerContext) ->
+/// Adapts a HttpHandler function to accept a HttpHandlerResult.
+/// If the HttpHandlerResult returns Some HttpContext, then it will proceed
+/// to the handler, otherwise short circuit and return None as the result.
+/// If the response has already been written in the resulting HttpContext,
+/// then it will skip the HttpHandler as well.
+let bind (handler : HttpHandler) =
+    fun (result : HttpHandlerResult) ->
         async {
-            let! result = handler ctx
-            match result with
-            | None      -> return None
-            | Some ctx2 ->
-                match ctx2.HttpContext.Response.HasStarted with
-                | true  -> return  Some ctx2
-                | false -> return! handler2 ctx2
+            let! ctx = result
+            match ctx with
+            | None   -> return None
+            | Some c ->
+                match c.HttpContext.Response.HasStarted with
+                | true  -> return  Some c
+                | false -> return! handler c
         }
 
 /// Combines two HttpHandler functions into one.
+let compose (handler : HttpHandler) (handler2 : HttpHandler) =
+    fun (ctx : HttpHandlerContext) ->
+        handler ctx |> bind handler2
+
+/// Adapts a HttpHandler function to accept a HttpHandlerResult.
 /// See bind for more information.
 let (>>=) = bind
+
+/// Combines two HttpHandler functions into one.
+/// See bind for more information.
+let (>=>) = compose
 
 /// Iterates through a list of HttpHandler functions and returns the
 /// result of the first HttpHandler which outcome is Some HttpContext
@@ -232,13 +243,13 @@ let routeStartsWithCi (subPath : string) =
 /// Filters an incoming HTTP request based on a part of the request path (case sensitive).
 /// Subsequent route handlers inside the given handler function should omit the already validated path.
 let subRoute (path : string) (handler : HttpHandler) =
-    routeStartsWith path >>=
+    routeStartsWith path >=>
     handlerWithRootedPath path handler
 
 /// Filters an incoming HTTP request based on a part of the request path (case insensitive).
 /// Subsequent route handlers inside the given handler function should omit the already validated path.
 let subRouteCi (path : string) (handler : HttpHandler) =
-    routeStartsWithCi path >>=
+    routeStartsWithCi path >=>
     handlerWithRootedPath path handler
 
 
@@ -278,26 +289,26 @@ let setBodyAsString (str : string) =
 /// It also sets the HTTP header Content-Type: text/plain and sets the Content-Length header accordingly.
 let text (str : string) =
     setHttpHeader "Content-Type" "text/plain"
-    >>= setBodyAsString str
+    >=> setBodyAsString str
 
 /// Serializes an object to JSON and writes it to the body of the HTTP response.
 /// It also sets the HTTP header Content-Type: application/json and sets the Content-Length header accordingly.
 let json (dataObj : obj) =
     setHttpHeader "Content-Type" "application/json"
-    >>= setBodyAsString (JsonConvert.SerializeObject dataObj)
+    >=> setBodyAsString (JsonConvert.SerializeObject dataObj)
 
 /// Serializes an object to XML and writes it to the body of the HTTP response.
 /// It also sets the HTTP header Content-Type: application/xml and sets the Content-Length header accordingly.
 let xml (dataObj : obj) =
     setHttpHeader "Content-Type" "application/xml"
-    >>= setBody (serializeXml dataObj)
+    >=> setBody (serializeXml dataObj)
 
 /// Renders a model and a template with the DotLiquid template engine and sets the HTTP response
 /// with the compiled output as well as the Content-Type HTTP header to the given value.
 let dotLiquid (contentType : string) (template : string) (model : obj) =
     let view = Template.Parse template
     setHttpHeader "Content-Type" contentType
-    >>= (model
+    >=> (model
         |> Hash.FromAnonymousObject
         |> view.Render
         |> setBodyAsString)
@@ -324,5 +335,5 @@ let htmlFile (relativeFilePath : string) =
             return!
                 ctx
                 |> (setHttpHeader "Content-Type" "text/html"
-                >>= setBodyAsString html)
+                >=> setBodyAsString html)
         }

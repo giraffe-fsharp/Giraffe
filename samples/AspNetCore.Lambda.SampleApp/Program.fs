@@ -18,19 +18,19 @@ let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
     let loggerFactory = ctx.Services.GetService<ILoggerFactory>()
     let logger = loggerFactory.CreateLogger "ErrorHandlerLogger"
     logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request")
-    ctx |> (clearResponse >>= setStatusCode 500 >>= text ex.Message)
+    ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
 
 
 // Web application    
 let authScheme = "Cookie"
 
-let accessDenied = setStatusCode 401 >>= text "Access Denied"
+let accessDenied = setStatusCode 401 >=> text "Access Denied"
 
 let mustBeUser = requiresAuthentication accessDenied
 
 let mustBeAdmin = 
     requiresAuthentication accessDenied 
-    >>= requiresRole "Admin" accessDenied
+    >=> requiresRole "Admin" accessDenied
 
 let loginHandler =
     fun ctx ->
@@ -56,23 +56,23 @@ let userHandler =
 
 let showUserHandler id =
     fun ctx ->
-        mustBeAdmin >>=
+        mustBeAdmin >=>
         text (sprintf "User ID: %i" id)
         <| ctx
 
 let webApp = 
     choose [
-        GET >>=
+        GET >=>
             choose [
-                route  "/"           >>= text "index"
-                route  "/ping"       >>= text "pong"
-                route  "/error"      >>= (fun _ -> failwith "Something went wrong!")
-                route  "/login"      >>= loginHandler
-                route  "/logout"     >>= signOff authScheme >>= text "Successfully logged out."
-                route  "/user"       >>= mustBeUser >>= userHandler
+                route  "/"           >=> text "index"
+                route  "/ping"       >=> text "pong"
+                route  "/error"      >=> (fun _ -> failwith "Something went wrong!")
+                route  "/login"      >=> loginHandler
+                route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
+                route  "/user"       >=> mustBeUser >=> userHandler
                 routef "/user/%i"    showUserHandler
             ]
-        setStatusCode 404 >>= text "Not Found" ]
+        setStatusCode 404 >=> text "Not Found" ]
 
 type Startup() =
     member __.ConfigureServices (services : IServiceCollection) =
