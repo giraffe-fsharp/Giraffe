@@ -3,28 +3,21 @@
 # Installation
 #-------------------------------
 
+Write-Host "Downloading latest .NET Core SDK..."
 
 $url = "https://dotnetcli.blob.core.windows.net/dotnet/Sdk/rel-1.0.0/dotnet-dev-win-x64.latest.zip"
-$env:DOTNET_INSTALL_DIR = "$pwd\.dotnetsdk"
-mkdir $env:DOTNET_INSTALL_DIR -Force | Out-Null
 $tempFile = [System.IO.Path]::GetTempFileName()
 (New-Object System.Net.WebClient).DownloadFile($url, $tempFile)
+
+Write-Host "Installing .NET Core SDK..."
+
+$env:DOTNET_INSTALL_DIR = "$pwd\.dotnetsdk"
+mkdir $env:DOTNET_INSTALL_DIR -Force | Out-Null
+
 Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory($tempFile, $env:DOTNET_INSTALL_DIR)
 $env:Path = "$env:DOTNET_INSTALL_DIR;$env:Path"
 
-
-#Write-Host "Downloading latest .NET Core SDK..."
-
-#(New-Object System.Net.WebClient).DownloadFile("https://download.microsoft.com/download/5/F/E/5FEB7E95-C643-48D5-8329-9D2C63676CE8/dotnet-dev-win-x64.1.0.0-rc4-004771.exe","dotnet-core-sdk.exe")
-#Invoke-WebRequest "https://go.microsoft.com/fwlink/?linkid=841695" -OutFile "dotnet-core-sdk.exe"
-
-#Write-Host "Installing .NET Core SDK..."
-
-#Invoke-Command -ScriptBlock { ./dotnet-core-sdk.exe /S /v/qn }
-
-#./dotnet-core-sdk.exe /install /quiet /norestart
-
-#Write-Host "Installation succeeded." -ForegroundColor Green
+Write-Host "Installation succeeded." -ForegroundColor Green
 
 #-------------------------------
 # Update AppVeyor Build version
