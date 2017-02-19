@@ -7,7 +7,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 [![Build status](https://ci.appveyor.com/api/projects/status/0ft2427dflip7wti/branch/master?svg=true)](https://ci.appveyor.com/project/dustinmoris/aspnetcore-lambda/branch/master)
 [![NuGet Info](https://buildstats.info/nuget/AspNetCore.Lambda?includePreReleases=true)](https://www.nuget.org/packages/AspNetCore.Lambda/)
 
-[![Build history](https://buildstats.info/appveyor/chart/dustinmoris/aspnetcore-lambda?includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/aspnetcore-lambda/history)
+[![Build history](https://buildstats.info/appveyor/chart/dustinmoris/aspnetcore-lambda?branch=master&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/aspnetcore-lambda/history)
 
 **ATTENTION: THIS PROJECT IS STILL IN ALPHA STAGE**
 
