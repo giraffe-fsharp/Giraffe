@@ -5,7 +5,8 @@
 
 Write-Host "Downloading latest .NET Core SDK..."
 
-Invoke-WebRequest "https://go.microsoft.com/fwlink/?linkid=841686" -OutFile "dotnet-core-sdk.exe"
+(New-Object System.Net.WebClient).DownloadFile('https://go.microsoft.com/fwlink/?linkid=841686','dotnet-core-sdk.exe')
+# Invoke-WebRequest "https://go.microsoft.com/fwlink/?linkid=841686" -OutFile "dotnet-core-sdk.exe"
 
 Write-Host "Installing .NET Core SDK..."
 
