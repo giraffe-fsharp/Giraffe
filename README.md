@@ -139,8 +139,8 @@ The `choose` combinator function iterates through a list of `HttpHandler` functi
 ```fsharp
 let app = 
     choose [
-        route "/foo" >>= text "Foo"
-        route "/bar" >>= text "Bar"
+        route "/foo" >=> text "Foo"
+        route "/bar" >=> text "Bar"
     ]
 ```
 
@@ -155,9 +155,9 @@ let app =
 ```fsharp
 let app = 
     choose [
-        GET  >>= route "/foo" >>= text "GET Foo"
-        POST >>= route "/foo" >>= text "POST Foo"
-        route "/bar" >>= text "Always Bar"
+        GET  >=> route "/foo" >=> text "GET Foo"
+        POST >=> route "/foo" >=> text "POST Foo"
+        route "/bar" >=> text "Always Bar"
     ]
 ```
 
@@ -169,10 +169,10 @@ let app =
 
 ```fsharp
 let app = 
-    mustAccept [ "text/plain"; "application/json" ] >>=
+    mustAccept [ "text/plain"; "application/json" ] >=>
         choose [
-            route "/foo" >>= text "Foo"
-            route "/bar" >>= json "Bar"
+            route "/foo" >=> text "Foo"
+            route "/bar" >=> json "Bar"
         ]
 ```
 
@@ -188,8 +188,8 @@ let mustBeLoggedIn =
 
 let app = 
     choose [
-        route "/ping" >>= text "pong"
-        route "/admin" >>= mustBeLoggedIn >>= text "You're an admin"
+        route "/ping" >=> text "pong"
+        route "/admin" >=> mustBeLoggedIn >=> text "You're an admin"
     ]
 ```
 
@@ -202,8 +202,8 @@ let app =
 ```fsharp
 let app = 
     choose [
-        route "/ping" >>= text "pong"
-        route "/logout" >>= signOff "Cookie" >>= text "You have successfully logged out."
+        route "/ping" >=> text "pong"
+        route "/logout" >=> signOff "Cookie" >=> text "You have successfully logged out."
     ]
 ```
 
@@ -219,8 +219,8 @@ let mustBeLoggedIn =
 
 let app = 
     choose [
-        route "/ping" >>= text "pong"
-        route "/user" >>= mustBeLoggedIn >>= text "You're a logged in user."
+        route "/ping" >=> text "pong"
+        route "/user" >=> mustBeLoggedIn >=> text "You're a logged in user."
     ]
 ```
 
@@ -231,16 +231,16 @@ let app =
 #### Example:
 
 ```fsharp
-let accessDenied = setStatusCode 401 >>= text "Access Denied"
+let accessDenied = setStatusCode 401 >=> text "Access Denied"
 
 let mustBeAdmin = 
     requiresAuthentication accessDenied 
-    >>= requiresRole "Admin" accessDenied
+    >=> requiresRole "Admin" accessDenied
 
 let app = 
     choose [
-        route "/ping" >>= text "pong"
-        route "/admin" >>= mustBeAdmin >>= text "You're an admin."
+        route "/ping" >=> text "pong"
+        route "/admin" >=> mustBeAdmin >=> text "You're an admin."
     ]
 ```
 
@@ -251,16 +251,16 @@ let app =
 #### Example:
 
 ```fsharp
-let accessDenied = setStatusCode 401 >>= text "Access Denied"
+let accessDenied = setStatusCode 401 >=> text "Access Denied"
 
 let mustBeSomeAdmin = 
     requiresAuthentication accessDenied 
-    >>= requiresRoleOf [ "Admin"; "SuperAdmin"; "RootAdmin" ] accessDenied
+    >=> requiresRoleOf [ "Admin"; "SuperAdmin"; "RootAdmin" ] accessDenied
 
 let app = 
     choose [
-        route "/ping" >>= text "pong"
-        route "/admin" >>= mustBeSomeAdmin >>= text "You're an admin."
+        route "/ping" >=> text "pong"
+        route "/admin" >=> mustBeSomeAdmin >=> text "You're an admin."
     ]
 ```
 
@@ -272,12 +272,12 @@ let app =
 
 ```fsharp
 let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
-    ctx |> (clearResponse >>= setStatusCode 500 >>= text ex.Message)
+    ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
 
 let app = 
     choose [
-        route "/foo" >>= text "Foo"
-        route "/bar" >>= text "Bar"
+        route "/foo" >=> text "Foo"
+        route "/bar" >=> text "Bar"
     ]
 
 type Startup() =
@@ -297,9 +297,9 @@ type Startup() =
 ```fsharp
 let app = 
     choose [
-        route "/"    >>= text "Index path"
-        route "/foo" >>= text "Foo"
-        route "/bar" >>= text "Bar"
+        route "/"    >=> text "Index path"
+        route "/foo" >=> text "Foo"
+        route "/bar" >=> text "Bar"
     ]
 ```
 
@@ -321,7 +321,7 @@ The following format placeholders are currently supported:
 ```fsharp
 let app = 
     choose [
-        route  "/foo" >>= text "Foo"
+        route  "/foo" >=> text "Foo"
         routef "/bar/%s/%i" (fun (name, age) ->
             // name is of type string
             // age is of type int
@@ -340,9 +340,9 @@ let app =
 
 let app = 
     choose [
-        routeCi "/"    >>= text "Index path"
-        routeCi "/foo" >>= text "Foo"
-        routeCi "/bar" >>= text "Bar"
+        routeCi "/"    >=> text "Index path"
+        routeCi "/foo" >=> text "Foo"
+        routeCi "/bar" >=> text "Bar"
     ]
 ```
 
@@ -355,7 +355,7 @@ let app =
 ```fsharp
 let app = 
     choose [
-        route  "/foo" >>= text "Foo"
+        route  "/foo" >=> text "Foo"
         routeCif "/bar/%s/%i" (fun (name, age) ->
             text (sprintf "Name: %s, Age: %i" name age))
     ]
@@ -369,11 +369,11 @@ let app =
 
 ```fsharp
 let app = 
-    routeStartsWith "/api/" >>=
-        requiresAuthentication (challenge "Cookie") >>=
+    routeStartsWith "/api/" >=>
+        requiresAuthentication (challenge "Cookie") >=>
             choose [
-                route "/api/v1/foo" >>= text "Foo"
-                route "/api/v1/bar" >>= text "Bar"
+                route "/api/v1/foo" >=> text "Foo"
+                route "/api/v1/bar" >=> text "Bar"
             ]
 ```
 
@@ -385,10 +385,10 @@ let app =
 
 ```fsharp
 let app = 
-    routeStartsWithCi "/api/v1/" >>=
+    routeStartsWithCi "/api/v1/" >=>
         choose [
-            route "/api/v1/foo" >>= text "Foo"
-            route "/api/v1/bar" >>= text "Bar"
+            route "/api/v1/foo" >=> text "Foo"
+            route "/api/v1/bar" >=> text "Bar"
         ]
 ```
 
@@ -404,12 +404,12 @@ let app =
         (choose [
             subRoute "/v1"
                 (choose [
-                    route "/foo" >>= text "Foo 1"
-                    route "/bar" >>= text "Bar 1" ])
+                    route "/foo" >=> text "Foo 1"
+                    route "/bar" >=> text "Bar 1" ])
             subRoute "/v2"
                 (choose [
-                    route "/foo" >>= text "Foo 2"
-                    route "/bar" >>= text "Bar 2" ]) ])
+                    route "/foo" >=> text "Foo 2"
+                    route "/bar" >=> text "Bar 2" ]) ])
 ```
 
 ### subRouteCi
@@ -424,12 +424,12 @@ let app =
         (choose [
             subRouteCi "/v1"
                 (choose [
-                    route "/foo" >>= text "Foo 1"
-                    route "/bar" >>= text "Bar 1" ])
+                    route "/foo" >=> text "Foo 1"
+                    route "/bar" >=> text "Bar 1" ])
             subRouteCi "/v2"
                 (choose [
-                    route "/foo" >>= text "Foo 2"
-                    route "/bar" >>= text "Bar 2" ]) ])
+                    route "/foo" >=> text "Foo 2"
+                    route "/bar" >=> text "Bar 2" ]) ])
 ```
 
 ### setStatusCode
@@ -441,8 +441,8 @@ let app =
 ```fsharp
 let app = 
     choose [
-        route  "/foo" >>= text "Foo"
-        setStatusCode 404 >>= text "Not found"
+        route  "/foo" >=> text "Foo"
+        setStatusCode 404 >=> text "Not found"
     ]
 ```
 
@@ -455,8 +455,8 @@ let app =
 ```fsharp
 let app = 
     choose [
-        route  "/foo" >>= text "Foo"
-        setStatusCode 404 >>= setHttpHeader "X-CustomHeader" "something" >>= text "Not found"
+        route  "/foo" >=> text "Foo"
+        setStatusCode 404 >=> setHttpHeader "X-CustomHeader" "something" >=> text "Not found"
     ]
 ```
 
@@ -469,7 +469,7 @@ let app =
 ```fsharp
 let app = 
     choose [
-        route  "/foo" >>= setBody (Encoding.UTF8.GetBytes "Some string")
+        route  "/foo" >=> setBody (Encoding.UTF8.GetBytes "Some string")
     ]
 ```
 
@@ -482,7 +482,7 @@ let app =
 ```fsharp
 let app = 
     choose [
-        route  "/foo" >>= setBodyAsString "Some string"
+        route  "/foo" >=> setBodyAsString "Some string"
     ]
 ```
 
@@ -497,7 +497,7 @@ The different between `text` and `setBodyAsString` is that this http handler als
 ```fsharp
 let app = 
     choose [
-        route  "/foo" >>= text "Some string"
+        route  "/foo" >=> text "Some string"
     ]
 ```
 
@@ -516,7 +516,7 @@ type Person =
 
 let app = 
     choose [
-        route  "/foo" >>= json { FirstName = "Foo"; LastName = "Bar" }
+        route  "/foo" >=> json { FirstName = "Foo"; LastName = "Bar" }
     ]
 ```
 
@@ -536,7 +536,7 @@ type Person =
 
 let app = 
     choose [
-        route  "/foo" >>= xml { FirstName = "Foo"; LastName = "Bar" }
+        route  "/foo" >=> xml { FirstName = "Foo"; LastName = "Bar" }
     ]
 ```
 
@@ -559,7 +559,7 @@ let template = "<html><head><title>DotLiquid</title></head><body><p>First name: 
 
 let app = 
     choose [
-        route  "/foo" >>= dotLiquid "text/html" template { FirstName = "Foo"; LastName = "Bar" }
+        route  "/foo" >=> dotLiquid "text/html" template { FirstName = "Foo"; LastName = "Bar" }
     ]
 ```
 
@@ -580,7 +580,7 @@ type Person =
 
 let app = 
     choose [
-        route  "/foo" >>= htmlTemplate "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
+        route  "/foo" >=> htmlTemplate "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
     ]
 ```
 
@@ -595,7 +595,7 @@ This http handler takes a relative path of a html file as input parameter and se
 ```fsharp
 let app = 
     choose [
-        route  "/" >>= htmlFile "index.html"
+        route  "/" >=> htmlFile "index.html"
     ]
 ```
 
@@ -627,7 +627,7 @@ let requiresToken (expectedToken : string) (handler : HttpHandler) =
         let response =
             if token.Equals(expectedToken)
             then handler
-            else setStatusCode 401 >>= text "Token wrong or missing"
+            else setStatusCode 401 >=> text "Token wrong or missing"
         response ctx
 ```
 
@@ -636,16 +636,16 @@ Composing a web application from smaller HTTP handlers:
 ```fsharp
 let app = 
     choose [
-        route "/"       >>= htmlFile "index.html"
-        route "/about"  >>= htmlFile "about.html"
-        routeStartsWith "/api/v1/" >>=
+        route "/"       >=> htmlFile "index.html"
+        route "/about"  >=> htmlFile "about.html"
+        routeStartsWith "/api/v1/" >=>
             requiresToken "secretToken" (
                 choose [
-                    route "/api/v1/foo" >>= text "something"
-                    route "/api/v1/bar" >>= text "bar"
+                    route "/api/v1/foo" >=> text "something"
+                    route "/api/v1/bar" >=> text "bar"
                 ]
             )
-        setStatusCode 404 >>= text "Not found"
+        setStatusCode 404 >=> text "Not found"
     ] : HttpHandler
 ```
 
@@ -665,8 +665,8 @@ open AspNetCore.Lambda.Middleware
 
 let webApp = 
     choose [
-        route "/ping"   >>= text "pong"
-        route "/"       >>= htmlFile "/pages/index.html" ]
+        route "/ping"   >=> text "pong"
+        route "/"       >=> htmlFile "/pages/index.html" ]
 
 type Startup() =
     member __.Configure (app : IApplicationBuilder)
