@@ -94,7 +94,8 @@ let main argv =
         services.AddAuthentication() |> ignore
         services.AddDataProtection() |> ignore
     
-    let configureLogging (loggerFactory : ILoggerFactory) = loggerFactory.AddConsole().AddDebug() |> ignore
+    let configureLogging (loggerFactory : ILoggerFactory) =
+        loggerFactory.AddConsole().AddDebug() |> ignore
 
     let host =
         WebHostBuilder()
