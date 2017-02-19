@@ -5,7 +5,7 @@ dotnet --version
 dotnet restore src/AspNetCore.Lambda
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-dotnet build src/AspNetCore.Lambda
+dotnet build src/AspNetCore.Lambda -c Release
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 
@@ -22,9 +22,9 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 dotnet restore samples/AspNetCore.Lambda.SampleApp
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-dotnet build samples/AspNetCore.Lambda.SampleApp
+dotnet build samples/AspNetCore.Lambda.SampleApp -c Release
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 
-dotnet pack src/AspNetCore.Lambda
+dotnet pack src/AspNetCore.Lambda -c Release
 if %errorlevel% neq 0 exit /b %errorlevel%
