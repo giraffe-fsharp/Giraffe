@@ -1,5 +1,7 @@
 cls
 
+dotnet --version
+
 dotnet restore src/AspNetCore.Lambda
 if %errorlevel% neq 0 exit /b %errorlevel%
 
