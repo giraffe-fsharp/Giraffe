@@ -10,7 +10,9 @@ Write-Host "Downloading latest .NET Core SDK..."
 
 Write-Host "Installing .NET Core SDK..."
 
-Invoke-Command -ScriptBlock { ./dotnet-core-sdk.exe /S /v/qn }
+# Invoke-Command -ScriptBlock { ./dotnet-core-sdk.exe /S /v/qn }
+
+./dotnet-core-sdk.exe /install /quiet /norestart
 
 Write-Host "Installation succeeded." -ForegroundColor Green
 
