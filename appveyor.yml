@@ -6,7 +6,7 @@ environment:
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
 install: >-
     (new-object net.webclient).DownloadFile('https://download.microsoft.com/download/5/F/E/5FEB7E95-C643-48D5-8329-9D2C63676CE8/dotnet-dev-win-x64.1.0.0-rc4-004771.exe', 'dotnet-core-sdk.exe')
-    dotnet-core-sdk.exe /install /quiet /norestart
+    ./dotnet-core-sdk.exe /install /quiet /norestart
 build_script:
   - build.cmd
 artifacts:
