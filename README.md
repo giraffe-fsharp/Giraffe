@@ -50,9 +50,10 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
     - [htmlFile](#htmlfile)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Installation](#installation)
+- [Sample applications](#sample-applications)
 - [Building and developing](#building-and-developing)
-- [License](#license)
 - [Contributing](#contributing)
+- [License](#license)
 
 ## About
 
@@ -676,6 +677,12 @@ type Startup() =
         app.UseLambda(webApp)
 ```
 
+## Sample applications
+
+There is a basic sample application in the `/samples/SampleApp` folder.
+
+More sample applications will be added in the future.
+
 ## Building and developing
 
 ASP.NET Core Lambda is using the new MSBuild driven `.fsproj` project system that comes with [.NET Core SDK RC4](https://github.com/dotnet/netcorecli-fsc/wiki/.NET-Core-SDK-rc4).
@@ -685,10 +692,6 @@ You can either install [Visual Studio 2017 RC](https://www.visualstudio.com/vs/v
 After installation you should be able to run `build.cmd` to successfully build, test and package the library.
 
 Currently the best way to work with F# on .NET Core is to use [Visual Studio Code](https://code.visualstudio.com/) with the [Ionide](http://ionide.io/) extension.
-
-## License
-
-[Apache 2.0](https://raw.githubusercontent.com/dustinmoris/AspNetCore.Lambda/master/LICENSE)
 
 ## Contributing
 
@@ -703,3 +706,7 @@ When making changes please use existing code as a guideline for coding style and
 If you have any further questions please let me know.
 
 You can file an [issue on GitHub](https://github.com/dustinmoris/AspNetCore.Lambda/issues/new) or contact me via [https://dusted.codes/about](https://dusted.codes/about).
+
+## License
+
+[Apache 2.0](https://raw.githubusercontent.com/dustinmoris/AspNetCore.Lambda/master/LICENSE)
