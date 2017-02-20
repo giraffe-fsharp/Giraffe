@@ -30,12 +30,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <DotNetCliToolReference Include="dotnet-compile-fsc">
-      <Version>1.0.0-preview2-020000</Version>
-    </DotNetCliToolReference>
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\SampleApp\SampleApp.fsproj" />
     <ProjectReference Include="..\..\..\src\AspNetCore.Lambda\AspNetCore.Lambda.fsproj" />
   </ItemGroup>
