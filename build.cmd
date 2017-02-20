@@ -19,10 +19,10 @@ dotnet test tests/AspNetCore.Lambda.Tests/AspNetCore.Lambda.Tests.fsproj
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 
-dotnet restore samples/AspNetCore.Lambda.SampleApp
+dotnet restore samples/SampleApp/SampleApp
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-dotnet build samples/AspNetCore.Lambda.SampleApp -c Release
+dotnet build samples/SampleApp/SampleApp -c Release
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 
