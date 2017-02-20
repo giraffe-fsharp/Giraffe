@@ -1,4 +1,4 @@
-﻿// Learn more about F# at http://fsharp.org
+﻿module SampleApp
 
 open System
 open System.IO
@@ -74,29 +74,30 @@ let webApp =
             ]
         setStatusCode 404 >=> text "Not Found" ]
 
-[<EntryPoint>]
-let main argv = 
-    let configureApp (app : IApplicationBuilder) = 
-        app.UseLambdaErrorHandler(errorHandler)
-        app.UseCookieAuthentication(
-            new CookieAuthenticationOptions(
-                AuthenticationScheme    = authScheme,
-                AutomaticAuthenticate   = true,
-                AutomaticChallenge      = false,
-                CookieHttpOnly          = true,
-                CookieSecure            = CookieSecurePolicy.SameAsRequest,
-                SlidingExpiration       = true,
-                ExpireTimeSpan          = TimeSpan.FromDays 7.0
-        )) |> ignore
-        app.UseLambda(webApp)
-                           
-    let configureServices (services : IServiceCollection) =
-        services.AddAuthentication() |> ignore
-        services.AddDataProtection() |> ignore
-    
-    let configureLogging (loggerFactory : ILoggerFactory) =
-        loggerFactory.AddConsole().AddDebug() |> ignore
+let configureApp (app : IApplicationBuilder) = 
+    app.UseLambdaErrorHandler(errorHandler)
+    app.UseCookieAuthentication(
+        new CookieAuthenticationOptions(
+            AuthenticationScheme    = authScheme,
+            AutomaticAuthenticate   = true,
+            AutomaticChallenge      = false,
+            CookieHttpOnly          = true,
+            CookieSecure            = CookieSecurePolicy.SameAsRequest,
+            SlidingExpiration       = true,
+            ExpireTimeSpan          = TimeSpan.FromDays 7.0
+    )) |> ignore
+    app.UseLambda(webApp)
 
+let configureServices (services : IServiceCollection) =
+    services.AddAuthentication() |> ignore
+    services.AddDataProtection() |> ignore
+
+let configureLogging (loggerFactory : ILoggerFactory) =
+    loggerFactory.AddConsole().AddDebug() |> ignore
+
+
+[<EntryPoint>]
+let main argv =                                
     let host =
         WebHostBuilder()
             .UseKestrel()

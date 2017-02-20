@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp1.1</TargetFramework>
     <DebugType>portable</DebugType>
-    <AssemblyName>AspNetCore.Lambda.SampleApp</AssemblyName>
+    <AssemblyName>SampleApp</AssemblyName>
     <OutputType>Exe</OutputType>
-    <PackageId>AspNetCore.Lambda.SampleApp</PackageId>
+    <PackageId>SampleApp</PackageId>
     <RuntimeFrameworkVersion>1.1.0</RuntimeFrameworkVersion>
   </PropertyGroup>
 
@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\AspNetCore.Lambda\AspNetCore.Lambda.fsproj" />
+    <ProjectReference Include="..\..\..\src\AspNetCore.Lambda\AspNetCore.Lambda.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
