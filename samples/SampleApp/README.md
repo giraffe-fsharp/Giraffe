@@ -7,4 +7,4 @@ Very small, only contains the basics:
 - Routing.
 - Cookie authentication.
 - Error handling.
-- Intergration Testing.
+- Integration Testing.
