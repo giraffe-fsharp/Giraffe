@@ -3,21 +3,21 @@
 # Installation
 #-------------------------------
 
-Write-Host "Downloading latest .NET Core SDK..."
+# Write-Host "Downloading latest .NET Core SDK..."
 
-$url = "https://dotnetcli.blob.core.windows.net/dotnet/Sdk/rel-1.0.0/dotnet-dev-win-x64.latest.zip"
-$tempFile = [System.IO.Path]::GetTempFileName()
-(New-Object System.Net.WebClient).DownloadFile($url, $tempFile)
+# $url = "https://dotnetcli.blob.core.windows.net/dotnet/Sdk/rel-1.0.0/dotnet-dev-win-x64.latest.zip"
+# $tempFile = [System.IO.Path]::GetTempFileName()
+# (New-Object System.Net.WebClient).DownloadFile($url, $tempFile)
 
-Write-Host "Installing .NET Core SDK..."
+# Write-Host "Installing .NET Core SDK..."
 
-$env:DOTNET_INSTALL_DIR = "$pwd\.dotnetsdk"
-mkdir $env:DOTNET_INSTALL_DIR -Force | Out-Null
+# $env:DOTNET_INSTALL_DIR = "$pwd\.dotnetsdk"
+# mkdir $env:DOTNET_INSTALL_DIR -Force | Out-Null
 
-Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory($tempFile, $env:DOTNET_INSTALL_DIR)
-$env:Path = "$env:DOTNET_INSTALL_DIR;$env:Path"
+# Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory($tempFile, $env:DOTNET_INSTALL_DIR)
+# $env:Path = "$env:DOTNET_INSTALL_DIR;$env:Path"
 
-Write-Host "Installation succeeded." -ForegroundColor Green
+# Write-Host "Installation succeeded." -ForegroundColor Green
 
 #-------------------------------
 # Update AppVeyor Build version
