@@ -93,7 +93,7 @@ let configureServices (services : IServiceCollection) =
     services.AddDataProtection() |> ignore
 
 let configureLogging (loggerFactory : ILoggerFactory) =
-    loggerFactory.AddConsole().AddDebug() |> ignore
+    loggerFactory.AddConsole(LogLevel.Trace).AddDebug() |> ignore
 
 
 [<EntryPoint>]

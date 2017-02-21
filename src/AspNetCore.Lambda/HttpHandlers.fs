@@ -35,6 +35,19 @@ type ErrorHandler = exn -> HttpHandler
 /// Private helper functions
 /// ---------------------------
 
+let private getRequestInfo ctx =
+    (ctx.HttpContext.Request.Protocol,
+     ctx.HttpContext.Request.Method,
+     ctx.HttpContext.Request.Path.ToString())
+    |||> sprintf "%s %s %s" 
+
+let private logDebug ctx msg =
+    (getRequestInfo ctx, msg)
+    ||> sprintf "%s %s"
+    |> ctx.Logger.LogDebug
+
+
+
 let private strOption (str : string) =
     if String.IsNullOrEmpty str then None else Some str
 
@@ -116,15 +129,19 @@ let rec choose (handlers : HttpHandler list) =
 let httpVerb (verb : string) =
     fun (ctx : HttpHandlerContext) ->
         if ctx.HttpContext.Request.Method.Equals verb
-        then Some ctx
-        else None
+        then
+            sprintf "matched the HTTP verb %s" verb |> logDebug ctx
+            Some ctx
+        else
+            sprintf "did not match the HTTP verb %s" verb |> logDebug ctx
+            None
         |> async.Return
 
-let GET     = httpVerb "GET"    : HttpHandler
-let POST    = httpVerb "POST"   : HttpHandler
-let PUT     = httpVerb "PUT"    : HttpHandler
-let PATCH   = httpVerb "PATCH"  : HttpHandler
-let DELETE  = httpVerb "DELETE" : HttpHandler
+let GET     = httpVerb "GET"
+let POST    = httpVerb "POST"
+let PUT     = httpVerb "PUT"
+let PATCH   = httpVerb "PATCH"
+let DELETE  = httpVerb "DELETE"
 
 /// Filters an incoming HTTP request based on the accepted
 /// mime types of the client.

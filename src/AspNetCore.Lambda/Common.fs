@@ -6,6 +6,9 @@ open System.Xml.Serialization
 
 let inline isNotNull x = isNull x |> not
 
+let strOption (str : string) =
+    if String.IsNullOrEmpty str then None else Some str
+
 let readFileAsString (filePath : string) =
     async {
         use stream = new FileStream(filePath, FileMode.Open)
