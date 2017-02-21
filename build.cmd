@@ -22,7 +22,17 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 dotnet restore samples/SampleApp/SampleApp
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-dotnet build samples/SampleApp/SampleApp -c Release
+dotnet build samples/SampleApp/SampleApp
+if %errorlevel% neq 0 exit /b %errorlevel%
+
+
+dotnet restore samples/SampleApp/SampleApp.Tests
+if %errorlevel% neq 0 exit /b %errorlevel%
+
+dotnet build samples/SampleApp/SampleApp.Tests
+if %errorlevel% neq 0 exit /b %errorlevel%
+
+dotnet test samples/SampleApp/SampleApp.Tests/SampleApp.Tests.fsproj
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 
