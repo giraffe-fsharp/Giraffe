@@ -8,18 +8,25 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open AspNetCore.Lambda.HttpHandlers
 
-type LambdaMiddleware (next     : RequestDelegate,
-                       handler  : HttpHandler,
-                       services : IServiceProvider) =
+/// ---------------------------
+/// Default middleware
+/// ---------------------------
+
+type LambdaMiddleware (next          : RequestDelegate,
+                       handler       : HttpHandler,
+                       services      : IServiceProvider,
+                       loggerFactory : ILoggerFactory) =
     
     do if isNull next then raise (ArgumentNullException("next"))
 
     member __.Invoke (ctx : HttpContext) =
         async {
+            let logger = loggerFactory.CreateLogger<LambdaMiddleware>()
             let httpHandlerContext =
                 {
                     HttpContext = ctx
                     Services    = services
+                    Logger      = logger
                 }
             let! result = handler httpHandlerContext
             if (result.IsNone) then
@@ -28,14 +35,20 @@ type LambdaMiddleware (next     : RequestDelegate,
                     |> Async.AwaitTask
         } |> Async.StartAsTask
 
+/// ---------------------------
+/// Error Handling middleware
+/// ---------------------------
+
 type LambdaErrorHandlerMiddleware (next          : RequestDelegate,
                                    errorHandler  : ErrorHandler,
-                                   services      : IServiceProvider) =
+                                   services      : IServiceProvider,
+                                   loggerFactory : ILoggerFactory) =
 
     do if isNull next then raise (ArgumentNullException("next"))
 
     member __.Invoke (ctx : HttpContext) =
         async {
+            let logger = loggerFactory.CreateLogger<LambdaErrorHandlerMiddleware>()
             try
                 return!
                     next.Invoke ctx
@@ -46,15 +59,19 @@ type LambdaErrorHandlerMiddleware (next          : RequestDelegate,
                         {
                             HttpContext = ctx
                             Services    = services
+                            Logger      = logger
                         }
                     return!
                         errorHandler ex httpHandlerContext
                         |> Async.Ignore
                 with ex2 ->
-                    let logger = services.GetService<ILogger<LambdaErrorHandlerMiddleware>>()
-                    logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
+                    logger.LogError(EventId(0), ex,  "An unhandled exception has occurred while executing the request.")
                     logger.LogError(EventId(0), ex2, "An exception was thrown attempting to handle the original exception.")
         } |> Async.StartAsTask
+
+/// ---------------------------
+/// Extension methods for convenience
+/// ---------------------------
 
 type IApplicationBuilder with
     member this.UseLambda (handler : HttpHandler) =
