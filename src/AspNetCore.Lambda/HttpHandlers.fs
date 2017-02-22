@@ -35,6 +35,9 @@ type ErrorHandler = exn -> HttpHandler
 /// Private helper functions
 /// ---------------------------
 
+/// Logging
+/// ---------------------------
+
 let private getRequestInfo ctx =
     (ctx.HttpContext.Request.Protocol,
      ctx.HttpContext.Request.Method,
@@ -46,10 +49,8 @@ let private logDebug ctx msg =
     ||> sprintf "%s %s"
     |> ctx.Logger.LogDebug
 
-
-
-let private strOption (str : string) =
-    if String.IsNullOrEmpty str then None else Some str
+/// Sub route handling
+/// ---------------------------
 
 [<Literal>]
 let private RouteKey = "aspnet_lambda_route"
@@ -160,6 +161,7 @@ let mustAccept (mimeTypes : string list) =
 let challenge (authScheme : string) =
     fun (ctx : HttpHandlerContext) ->
         async {
+            sprintf "challenged by %s" authScheme |> logDebug ctx
             let auth = ctx.HttpContext.Authentication
             do! auth.ChallengeAsync authScheme |> Async.AwaitTask
             return Some ctx
@@ -169,6 +171,7 @@ let challenge (authScheme : string) =
 let signOff (authScheme : string) =
     fun (ctx : HttpHandlerContext) ->
         async {
+            sprintf "signing off from %s" authScheme |> logDebug ctx
             let auth = ctx.HttpContext.Authentication
             do! auth.SignOutAsync authScheme |> Async.AwaitTask
             return Some ctx
@@ -180,8 +183,12 @@ let requiresAuthentication (authFailedHandler : HttpHandler) =
     fun (ctx : HttpHandlerContext) ->
         let user = ctx.HttpContext.User
         if isNotNull user && user.Identity.IsAuthenticated
-        then async.Return (Some ctx)
-        else authFailedHandler ctx
+        then
+            "passed authentication" |> logDebug ctx
+            async.Return (Some ctx)
+        else
+            "failed authentication" |> logDebug ctx
+            authFailedHandler ctx
 
 /// Validates if a user is in a specific role.
 /// If not it will proceed with the authFailedHandler.
