@@ -20,6 +20,3 @@ let serializeXml x =
     use stream = new MemoryStream()
     serializer.Serialize(stream, x)
     stream.ToArray()
-
-let combinePaths (path1 : string) (path2 : string) =
-    Path.GetFullPath(Path.Combine(path1, path2))

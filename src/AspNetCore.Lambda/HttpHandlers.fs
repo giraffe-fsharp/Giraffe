@@ -279,6 +279,8 @@ let htmlFile (relativeFilePath : string) =
                 >>= setBodyAsString html)
         }
 
+/// Parses and compiles a Razor view with the associated model and writes its content to the response body.
+/// It also sets the HTTP header Content-Type to text/html.
 let razorView (viewName : string) (model : obj) =
     fun (ctx : HttpHandlerContext) ->
         let engine = ctx.Services.GetService<IRazorLightEngine>()
