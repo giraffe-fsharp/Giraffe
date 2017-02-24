@@ -344,7 +344,11 @@ let htmlFile (relativeFilePath : string) =
 /// It also sets the HTTP header Content-Type to text/html.
 let razorView (viewName : string) (model : obj) =
     fun (ctx : HttpHandlerContext) ->
-        let engine = ctx.Services.GetService<IRazorLightEngine>()
-        let view = engine.Parse(viewName, model)
-        setHttpHeader "Content-Type" "text/html"
-        >>= setBodyAsString view
+        async {
+            let engine = ctx.Services.GetService<IRazorLightEngine>()
+            let view = engine.Parse(viewName, model)
+            return!
+                ctx
+                |> (setHttpHeader "Content-Type" "text/html"
+                >=> setBodyAsString view)
+        }

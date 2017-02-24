@@ -2,7 +2,7 @@ namespace AspNetCore.Lambda.Tests
 
 //Model
 [<CLIMutable>]
-type Person = 
+type Person =  
     {
         Name : string
     }
