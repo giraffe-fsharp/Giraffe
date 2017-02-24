@@ -57,6 +57,9 @@ let readStatusAndText (response: Http.HttpResponseMessage) =
     let text = readText response
     (status, text)
 
+let getContentType (response : Http.HttpResponseMessage) =
+    response.Content.Headers.ContentType.MediaType 
+
 [<Fact>]
 let ``Test / is routed to index`` () =
     let response = 
@@ -105,3 +108,20 @@ let ``Test /user/{id} returns success when logged in as user`` () =
 
     Assert.Equal(HttpStatusCode.OK, status)
     Assert.Equal("User ID: 1", text)
+
+
+[<Fact>]
+let ``Test /razor returns html content`` () = 
+
+    use client = server.CreateClient()    
+    let get = getWith client
+    
+    let response = get "/razor"
+
+    let expected = "<html><head><title>Hello, razor</title></head><body><h3>Hello, razor</h3></body></html>"
+
+    Assert.Equal(HttpStatusCode.OK, response.StatusCode)
+
+    Assert.Equal("text/html", response |> getContentType)
+
+    Assert.Equal(expected, response |> readText)
