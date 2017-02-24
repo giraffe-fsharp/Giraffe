@@ -21,30 +21,78 @@ type HttpHandlerContext =
         Services    : IServiceProvider
     }
 
-type HttpHandler = HttpHandlerContext -> Async<HttpHandlerContext option>
+type HttpHandlerResult = Async<HttpHandlerContext option>
+
+type HttpHandler = HttpHandlerContext -> HttpHandlerResult
 
 type ErrorHandler = exn -> HttpHandler
 
-/// Combines two HttpHandler functions into one.
-/// If the first HttpHandler returns Some HttpContext, then it will proceed to
-/// the second handler, otherwise short circuit and return None as the final result.
-/// If the first HttpHandler returned Some HttpResult, but the response has already 
-/// been written, then it will return its result and skip the second HttpHandler as well.
-let bind (handler : HttpHandler) (handler2 : HttpHandler) =
+/// ---------------------------
+/// Private helper functions
+/// ---------------------------
+
+let private strOption (str : string) =
+    if String.IsNullOrEmpty str then None else Some str
+
+[<Literal>]
+let private RouteKey = "aspnet_lambda_route"
+
+let private getSavedSubPath (ctx : HttpContext) =
+    if ctx.Items.ContainsKey RouteKey
+    then ctx.Items.Item RouteKey |> string |> strOption 
+    else None
+
+let private getPath (ctx : HttpContext) =
+    match getSavedSubPath ctx with
+    | Some p -> ctx.Request.Path.ToString().[p.Length..]
+    | None   -> ctx.Request.Path.ToString()
+
+let private handlerWithRootedPath (path : string) (handler : HttpHandler) = 
     fun (ctx : HttpHandlerContext) ->
         async {
-            let! result = handler ctx
-            match result with
-            | None      -> return None
-            | Some ctx2 ->
-                match ctx2.HttpContext.Response.HasStarted with
-                | true  -> return  Some ctx2
-                | false -> return! handler2 ctx2
+            let savedSubPath = getSavedSubPath ctx.HttpContext
+            try
+                ctx.HttpContext.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
+                return! handler ctx
+            finally
+                match savedSubPath with
+                | Some savedSubPath -> ctx.HttpContext.Items.Item RouteKey <- savedSubPath
+                | None              -> ctx.HttpContext.Items.Remove RouteKey |> ignore
+        }
+
+/// ---------------------------
+/// Default HttpHandlers
+/// ---------------------------
+
+/// Adapts a HttpHandler function to accept a HttpHandlerResult.
+/// If the HttpHandlerResult returns Some HttpContext, then it will proceed
+/// to the handler, otherwise short circuit and return None as the result.
+/// If the response has already been written in the resulting HttpContext,
+/// then it will skip the HttpHandler as well.
+let bind (handler : HttpHandler) =
+    fun (result : HttpHandlerResult) ->
+        async {
+            let! ctx = result
+            match ctx with
+            | None   -> return None
+            | Some c ->
+                match c.HttpContext.Response.HasStarted with
+                | true  -> return  Some c
+                | false -> return! handler c
         }
 
 /// Combines two HttpHandler functions into one.
+let compose (handler : HttpHandler) (handler2 : HttpHandler) =
+    fun (ctx : HttpHandlerContext) ->
+        handler ctx |> bind handler2
+
+/// Adapts a HttpHandler function to accept a HttpHandlerResult.
 /// See bind for more information.
 let (>>=) = bind
+
+/// Combines two HttpHandler functions into one.
+/// See bind for more information.
+let (>=>) = compose
 
 /// Iterates through a list of HttpHandler functions and returns the
 /// result of the first HttpHandler which outcome is Some HttpContext
@@ -145,7 +193,7 @@ let clearResponse =
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 let route (path : string) =
     fun (ctx : HttpHandlerContext) ->
-        if ctx.HttpContext.Request.Path.ToString().Equals path 
+        if (getPath ctx.HttpContext).Equals path
         then Some ctx
         else None
         |> async.Return
@@ -153,9 +201,9 @@ let route (path : string) =
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 /// The arguments from the format string will be automatically resolved when the
 /// route matches and subsequently passed into the supplied routeHandler.
-let routef (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
+let routef (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
     fun (ctx : HttpHandlerContext) ->
-        tryMatchInput route (ctx.HttpContext.Request.Path.ToString()) false
+        tryMatchInput path (getPath ctx.HttpContext) false
         |> function
             | None      -> async.Return None
             | Some args -> routeHandler args ctx
@@ -163,7 +211,7 @@ let routef (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 let routeCi (path : string) =
     fun (ctx : HttpHandlerContext) ->
-        if String.Equals(ctx.HttpContext.Request.Path.ToString(), path, StringComparison.CurrentCultureIgnoreCase)
+        if String.Equals(getPath ctx.HttpContext, path, StringComparison.CurrentCultureIgnoreCase)
         then Some ctx
         else None
         |> async.Return
@@ -171,28 +219,41 @@ let routeCi (path : string) =
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 /// The arguments from the format string will be automatically resolved when the
 /// route matches and subsequently passed into the supplied routeHandler.
-let routeCif (route : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
+let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
     fun (ctx : HttpHandlerContext) ->
-        tryMatchInput route (ctx.HttpContext.Request.Path.ToString()) true
+        tryMatchInput path (getPath ctx.HttpContext) true
         |> function
             | None      -> None |> async.Return
             | Some args -> routeHandler args ctx
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
-let routeStartsWith (partOfPath : string) =
+let routeStartsWith (subPath : string) =
     fun (ctx : HttpHandlerContext) ->
-        if ctx.HttpContext.Request.Path.ToString().StartsWith partOfPath 
+        if (getPath ctx.HttpContext).StartsWith subPath 
         then Some ctx
         else None
         |> async.Return
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
-let routeStartsWithCi (partOfPath : string) =
+let routeStartsWithCi (subPath : string) =
     fun (ctx : HttpHandlerContext) ->
-        if ctx.HttpContext.Request.Path.ToString().StartsWith(partOfPath, StringComparison.CurrentCultureIgnoreCase) 
+        if (getPath ctx.HttpContext).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase) 
         then Some ctx
         else None
         |> async.Return
+
+/// Filters an incoming HTTP request based on a part of the request path (case sensitive).
+/// Subsequent route handlers inside the given handler function should omit the already validated path.
+let subRoute (path : string) (handler : HttpHandler) =
+    routeStartsWith path >=>
+    handlerWithRootedPath path handler
+
+/// Filters an incoming HTTP request based on a part of the request path (case insensitive).
+/// Subsequent route handlers inside the given handler function should omit the already validated path.
+let subRouteCi (path : string) (handler : HttpHandler) =
+    routeStartsWithCi path >=>
+    handlerWithRootedPath path handler
+
 
 /// Sets the HTTP response status code.
 let setStatusCode (statusCode : int) =
@@ -230,26 +291,26 @@ let setBodyAsString (str : string) =
 /// It also sets the HTTP header Content-Type: text/plain and sets the Content-Length header accordingly.
 let text (str : string) =
     setHttpHeader "Content-Type" "text/plain"
-    >>= setBodyAsString str
+    >=> setBodyAsString str
 
 /// Serializes an object to JSON and writes it to the body of the HTTP response.
 /// It also sets the HTTP header Content-Type: application/json and sets the Content-Length header accordingly.
 let json (dataObj : obj) =
     setHttpHeader "Content-Type" "application/json"
-    >>= setBodyAsString (JsonConvert.SerializeObject dataObj)
+    >=> setBodyAsString (JsonConvert.SerializeObject dataObj)
 
 /// Serializes an object to XML and writes it to the body of the HTTP response.
 /// It also sets the HTTP header Content-Type: application/xml and sets the Content-Length header accordingly.
 let xml (dataObj : obj) =
     setHttpHeader "Content-Type" "application/xml"
-    >>= setBody (serializeXml dataObj)
+    >=> setBody (serializeXml dataObj)
 
 /// Renders a model and a template with the DotLiquid template engine and sets the HTTP response
 /// with the compiled output as well as the Content-Type HTTP header to the given value.
 let dotLiquid (contentType : string) (template : string) (model : obj) =
     let view = Template.Parse template
     setHttpHeader "Content-Type" contentType
-    >>= (model
+    >=> (model
         |> Hash.FromAnonymousObject
         |> view.Render
         |> setBodyAsString)
@@ -276,7 +337,7 @@ let htmlFile (relativeFilePath : string) =
             return!
                 ctx
                 |> (setHttpHeader "Content-Type" "text/html"
-                >>= setBodyAsString html)
+                >=> setBodyAsString html)
         }
 
 /// Parses and compiles a Razor view with the associated model and writes its content to the response body.
@@ -287,4 +348,3 @@ let razorView (viewName : string) (model : obj) =
         let view = engine.Parse(viewName, model)
         setHttpHeader "Content-Type" "text/html"
         >>= setBodyAsString view
-        <| ctx

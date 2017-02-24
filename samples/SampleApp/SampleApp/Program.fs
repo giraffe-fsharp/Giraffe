@@ -1,4 +1,4 @@
-﻿// Learn more about F# at http://fsharp.org
+﻿module SampleApp
 
 open System
 open System.IO
@@ -11,26 +11,26 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open AspNetCore.Lambda.HttpHandlers
 open AspNetCore.Lambda.Middleware
-open AspNetCore.Lambda.SampleApp
-open AspNetCore.Lambda.Services
+
 // Error Handler
 
 let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
     let loggerFactory = ctx.Services.GetService<ILoggerFactory>()
     let logger = loggerFactory.CreateLogger "ErrorHandlerLogger"
     logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request")
-    ctx |> (clearResponse >>= setStatusCode 500 >>= text ex.Message)
+    ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
+
 
 // Web application    
 let authScheme = "Cookie"
 
-let accessDenied = setStatusCode 401 >>= text "Access Denied"
+let accessDenied = setStatusCode 401 >=> text "Access Denied"
 
 let mustBeUser = requiresAuthentication accessDenied
 
 let mustBeAdmin = 
     requiresAuthentication accessDenied 
-    >>= requiresRole "Admin" accessDenied
+    >=> requiresRole "Admin" accessDenied
 
 let loginHandler =
     fun ctx ->
@@ -56,58 +56,58 @@ let userHandler =
 
 let showUserHandler id =
     fun ctx ->
-        mustBeAdmin >>=
+        mustBeAdmin >=>
         text (sprintf "User ID: %i" id)
         <| ctx
 
 let webApp = 
     choose [
-        GET >>=
+        GET >=>
             choose [
-                route  "/"           >>= text "index"
-                route  "/ping"       >>= text "pong"
-                route  "/error"      >>= (fun _ -> failwith "Something went wrong!")
-                route  "/login"      >>= loginHandler
-                route  "/logout"     >>= signOff authScheme >>= text "Successfully logged out."
-                route  "/user"       >>= mustBeUser >>= userHandler
+                route  "/"           >=> text "index"
+                route  "/ping"       >=> text "pong"
+                route  "/error"      >=> (fun _ -> failwith "Something went wrong!")
+                route  "/login"      >=> loginHandler
+                route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
+                route  "/user"       >=> mustBeUser >=> userHandler
                 routef "/user/%i"    showUserHandler
                 route  "/razor"      >>= razorView "Person.cshtml" {Name = "Razor"}
             ]
-        setStatusCode 404 >>= text "Not Found" ]
+        setStatusCode 404 >=> text "Not Found" ]
 
-type Startup() =
-    member __.ConfigureServices (services : IServiceCollection) =
-        services.AddAuthentication() |> ignore
-        services.AddDataProtection() |> ignore
-        let viewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "views")
-        services.AddRazorEngine(viewsFolder) |> ignore
+let configureApp (app : IApplicationBuilder) = 
+    app.UseLambdaErrorHandler(errorHandler)
+    app.UseCookieAuthentication(
+        new CookieAuthenticationOptions(
+            AuthenticationScheme    = authScheme,
+            AutomaticAuthenticate   = true,
+            AutomaticChallenge      = false,
+            CookieHttpOnly          = true,
+            CookieSecure            = CookieSecurePolicy.SameAsRequest,
+            SlidingExpiration       = true,
+            ExpireTimeSpan          = TimeSpan.FromDays 7.0
+    )) |> ignore
+    app.UseLambda(webApp)
 
+let configureServices (services : IServiceCollection) =
+    services.AddAuthentication() |> ignore
+    services.AddDataProtection() |> ignore
+    let viewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "views")
+    services.AddRazorEngine(viewsFolder) |> ignore
 
-    member __.Configure (app : IApplicationBuilder)
-                        (env : IHostingEnvironment)
-                        (loggerFactory : ILoggerFactory) =
-        loggerFactory.AddConsole().AddDebug() |> ignore
-        app.UseLambdaErrorHandler(errorHandler)
-        app.UseCookieAuthentication(
-            new CookieAuthenticationOptions(
-                AuthenticationScheme    = authScheme,
-                AutomaticAuthenticate   = true,
-                AutomaticChallenge      = false,
-                CookieHttpOnly          = true,
-                CookieSecure            = CookieSecurePolicy.SameAsRequest,
-                SlidingExpiration       = true,
-                ExpireTimeSpan          = TimeSpan.FromDays 7.0
-        )) |> ignore
-        app.UseLambda(webApp)
+let configureLogging (loggerFactory : ILoggerFactory) =
+    loggerFactory.AddConsole().AddDebug() |> ignore
 
 
 [<EntryPoint>]
-let main argv = 
+let main argv =                                
     let host =
         WebHostBuilder()
             .UseKestrel()
             .UseContentRoot(Directory.GetCurrentDirectory())
-            .UseStartup<Startup>()
+            .Configure(Action<IApplicationBuilder> configureApp)
+            .ConfigureServices(Action<IServiceCollection> configureServices)
+            .ConfigureLogging(Action<ILoggerFactory> configureLogging)
             .Build()
     host.Run()
     0

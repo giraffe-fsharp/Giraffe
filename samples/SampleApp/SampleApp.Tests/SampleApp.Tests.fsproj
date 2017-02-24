@@ -1,0 +1,37 @@
+﻿<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp1.1</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="**\*.fs" Exclude="**\Program.fs" />
+    <Compile Include="Program.fs" />
+    <EmbeddedResource Include="**\*.resx" />
+  </ItemGroup>
+
+  <ItemGroup>
+   <PackageReference Include="FSharp.Core" Version="4.1.*" />
+    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.FSharp.Core.netcore" Version="1.0.0-alpha-161205" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0-preview-20170123-02" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="1.1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="1.1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="1.1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="1.1.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="1.1.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="1.1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="1.1.*" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="1.1.*" />
+    <PackageReference Include="xunit" Version="2.2.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SampleApp\SampleApp.fsproj" />
+    <ProjectReference Include="..\..\..\src\AspNetCore.Lambda\AspNetCore.Lambda.fsproj" />
+  </ItemGroup>
+
+</Project>

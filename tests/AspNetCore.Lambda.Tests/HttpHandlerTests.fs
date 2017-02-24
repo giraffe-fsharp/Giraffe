@@ -1,6 +1,7 @@
 module AspNetCore.Lambda.HttpHandlerTests
 
 open System
+open System.Collections.Generic
 open System.IO
 open System.Text
 open Microsoft.AspNetCore.Http
@@ -10,9 +11,7 @@ open Microsoft.Extensions.Logging
 open Xunit
 open NSubstitute
 open AspNetCore.Lambda.HttpHandlers
-open AspNetCore.Lambda.Tests
-open AspNetCore.Lambda.Services
-open RazorLight
+
 // ---------------------------------
 // Helper functions
 // ---------------------------------
@@ -32,14 +31,6 @@ let assertFailf format args =
     Assert.True(false, msg)
 
 // ---------------------------------
-// Mocks
-// ---------------------------------
-
-let ctx      = Substitute.For<HttpContext>()
-let services = Substitute.For<IServiceProvider>()
-services.GetService(typeof<IRazorLightEngine>).Returns(EngineFactory.CreatePhysical(Directory.GetCurrentDirectory()))
-
-// ---------------------------------
 // Test Types
 // ---------------------------------
 
@@ -56,11 +47,14 @@ type Dummy =
 
 [<Fact>]
 let ``GET "/" returns "Hello World"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+
     let app = 
-        GET >>= choose [ 
-            route "/"    >>= text "Hello World"
-            route "/foo" >>= text "bar"
-            setStatusCode 404 >>= text "Not found" ]
+        GET >=> choose [ 
+            route "/"    >=> text "Hello World"
+            route "/foo" >=> text "bar"
+            setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
@@ -80,11 +74,14 @@ let ``GET "/" returns "Hello World"`` () =
 
 [<Fact>]
 let ``GET "/foo" returns "bar"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
-        GET >>= choose [ 
-            route "/"    >>= text "Hello World"
-            route "/foo" >>= text "bar"
-            setStatusCode 404 >>= text "Not found" ]
+        GET >=> choose [ 
+            route "/"    >=> text "Hello World"
+            route "/foo" >=> text "bar"
+            setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo")) |> ignore
@@ -104,11 +101,14 @@ let ``GET "/foo" returns "bar"`` () =
 
 [<Fact>]
 let ``GET "/FOO" returns 404 "Not found"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
-        GET >>= choose [ 
-            route "/"    >>= text "Hello World"
-            route "/foo" >>= text "bar"
-            setStatusCode 404 >>= text "Not found" ]
+        GET >=> choose [ 
+            route "/"    >=> text "Hello World"
+            route "/foo" >=> text "bar"
+            setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/FOO")) |> ignore
@@ -129,12 +129,15 @@ let ``GET "/FOO" returns 404 "Not found"`` () =
 
 [<Fact>]
 let ``GET "/json" returns json object`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
-        GET >>= choose [ 
-            route "/"     >>= text "Hello World"
-            route "/foo"  >>= text "bar"
-            route "/json" >>= json { Foo = "john"; Bar = "doe"; Age = 30 }
-            setStatusCode 404 >>= text "Not found" ]
+        GET >=> choose [ 
+            route "/"     >=> text "Hello World"
+            route "/foo"  >=> text "bar"
+            route "/json" >=> json { Foo = "john"; Bar = "doe"; Age = 30 }
+            setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
@@ -154,15 +157,18 @@ let ``GET "/json" returns json object`` () =
 
 [<Fact>]
 let ``POST "/post/1" returns "1"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         choose [
-            GET >>= choose [ 
-                route "/"     >>= text "Hello World"
-                route "/foo"  >>= text "bar" ]
-            POST >>= choose [
-                route "/post/1" >>= text "1"
-                route "/post/2" >>= text "2" ]
-            setStatusCode 404 >>= text "Not found" ]
+            GET >=> choose [ 
+                route "/"     >=> text "Hello World"
+                route "/foo"  >=> text "bar" ]
+            POST >=> choose [
+                route "/post/1" >=> text "1"
+                route "/post/2" >=> text "2" ]
+            setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/post/1")) |> ignore
@@ -182,15 +188,18 @@ let ``POST "/post/1" returns "1"`` () =
 
 [<Fact>]
 let ``POST "/post/2" returns "2"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         choose [
-            GET >>= choose [ 
-                route "/"     >>= text "Hello World"
-                route "/foo"  >>= text "bar" ]
-            POST >>= choose [
-                route "/post/1" >>= text "1"
-                route "/post/2" >>= text "2" ]
-            setStatusCode 404 >>= text "Not found" ]
+            GET >=> choose [ 
+                route "/"     >=> text "Hello World"
+                route "/foo"  >=> text "bar" ]
+            POST >=> choose [
+                route "/post/1" >=> text "1"
+                route "/post/2" >=> text "2" ]
+            setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/post/2")) |> ignore
@@ -210,15 +219,18 @@ let ``POST "/post/2" returns "2"`` () =
 
 [<Fact>]
 let ``PUT "/post/2" returns 404 "Not found"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         choose [
-            GET >>= choose [ 
-                route "/"     >>= text "Hello World"
-                route "/foo"  >>= text "bar" ]
-            POST >>= choose [
-                route "/post/1" >>= text "1"
-                route "/post/2" >>= text "2" ]
-            setStatusCode 404 >>= text "Not found" ]
+            GET >=> choose [ 
+                route "/"     >=> text "Hello World"
+                route "/foo"  >=> text "bar" ]
+            POST >=> choose [
+                route "/post/1" >=> text "1"
+                route "/post/2" >=> text "2" ]
+            setStatusCode 404 >=> text "Not found" ]
     
     ctx.Request.Method.ReturnsForAnyArgs "PUT" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/post/2")) |> ignore
@@ -239,6 +251,9 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
 
 [<Fact>]
 let ``GET "/dotLiquid" returns rendered html view`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let dotLiquidTemplate =
         "<html><head><title>DotLiquid</title></head>" + 
         "<body><p>{{ foo }} {{ bar }} is {{ age }} years old.</p>" +
@@ -248,12 +263,12 @@ let ``GET "/dotLiquid" returns rendered html view`` () =
 
     let app = 
         choose [
-            GET >>= choose [ 
-                route "/"          >>= text "Hello World"
-                route "/dotLiquid" >>= dotLiquid "text/html" dotLiquidTemplate obj ]
-            POST >>= choose [
-                route "/post/1" >>= text "1" ]
-            setStatusCode 404 >>= text "Not found" ]
+            GET >=> choose [ 
+                route "/"          >=> text "Hello World"
+                route "/dotLiquid" >=> dotLiquid "text/html" dotLiquidTemplate obj ]
+            POST >=> choose [
+                route "/post/1" >=> text "1" ]
+            setStatusCode 404 >=> text "Not found" ]
     
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/dotLiquid")) |> ignore
@@ -274,16 +289,19 @@ let ``GET "/dotLiquid" returns rendered html view`` () =
 
 [<Fact>]
 let ``POST "/text" with supported Accept header returns "good"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         choose [
-            GET >>= choose [ 
-                route "/"     >>= text "Hello World"
-                route "/foo"  >>= text "bar" ]
-            POST >>= choose [
-                route "/text"   >>= mustAccept [ "text/plain" ] >>= text "text"
-                route "/json"   >>= mustAccept [ "application/json" ] >>= json "json"
-                route "/either" >>= mustAccept [ "text/plain"; "application/json" ] >>= text "either" ]
-            setStatusCode 404 >>= text "Not found" ]
+            GET >=> choose [ 
+                route "/"     >=> text "Hello World"
+                route "/foo"  >=> text "bar" ]
+            POST >=> choose [
+                route "/text"   >=> mustAccept [ "text/plain" ] >=> text "text"
+                route "/json"   >=> mustAccept [ "application/json" ] >=> json "json"
+                route "/either" >=> mustAccept [ "text/plain"; "application/json" ] >=> text "either" ]
+            setStatusCode 404 >=> text "Not found" ]
     
     let headers = new HeaderDictionary()
     headers.Add("Accept", new StringValues("text/plain"))
@@ -307,16 +325,19 @@ let ``POST "/text" with supported Accept header returns "good"`` () =
 
 [<Fact>]
 let ``POST "/json" with supported Accept header returns "json"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         choose [
-            GET >>= choose [ 
-                route "/"     >>= text "Hello World"
-                route "/foo"  >>= text "bar" ]
-            POST >>= choose [
-                route "/text"   >>= mustAccept [ "text/plain" ] >>= text "text"
-                route "/json"   >>= mustAccept [ "application/json" ] >>= json "json"
-                route "/either" >>= mustAccept [ "text/plain"; "application/json" ] >>= text "either" ]
-            setStatusCode 404 >>= text "Not found" ]
+            GET >=> choose [ 
+                route "/"     >=> text "Hello World"
+                route "/foo"  >=> text "bar" ]
+            POST >=> choose [
+                route "/text"   >=> mustAccept [ "text/plain" ] >=> text "text"
+                route "/json"   >=> mustAccept [ "application/json" ] >=> json "json"
+                route "/either" >=> mustAccept [ "text/plain"; "application/json" ] >=> text "either" ]
+            setStatusCode 404 >=> text "Not found" ]
 
     let headers = new HeaderDictionary()
     headers.Add("Accept", new StringValues("application/json"))
@@ -340,16 +361,19 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
 
 [<Fact>]
 let ``POST "/either" with supported Accept header returns "either"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         choose [
-            GET >>= choose [ 
-                route "/"     >>= text "Hello World"
-                route "/foo"  >>= text "bar" ]
-            POST >>= choose [
-                route "/text"   >>= mustAccept [ "text/plain" ] >>= text "text"
-                route "/json"   >>= mustAccept [ "application/json" ] >>= json "json"
-                route "/either" >>= mustAccept [ "text/plain"; "application/json" ] >>= text "either" ]
-            setStatusCode 404 >>= text "Not found" ]
+            GET >=> choose [ 
+                route "/"     >=> text "Hello World"
+                route "/foo"  >=> text "bar" ]
+            POST >=> choose [
+                route "/text"   >=> mustAccept [ "text/plain" ] >=> text "text"
+                route "/json"   >=> mustAccept [ "application/json" ] >=> json "json"
+                route "/either" >=> mustAccept [ "text/plain"; "application/json" ] >=> text "either" ]
+            setStatusCode 404 >=> text "Not found" ]
 
     let headers = new HeaderDictionary()
     headers.Add("Accept", new StringValues("application/json"))
@@ -373,16 +397,19 @@ let ``POST "/either" with supported Accept header returns "either"`` () =
 
 [<Fact>]
 let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app = 
         choose [
-            GET >>= choose [ 
-                route "/"     >>= text "Hello World"
-                route "/foo"  >>= text "bar" ]
-            POST >>= choose [
-                route "/text"   >>= mustAccept [ "text/plain" ] >>= text "text"
-                route "/json"   >>= mustAccept [ "application/json" ] >>= json "json"
-                route "/either" >>= mustAccept [ "text/plain"; "application/json" ] >>= text "either" ]
-            setStatusCode 404 >>= text "Not found" ]
+            GET >=> choose [ 
+                route "/"     >=> text "Hello World"
+                route "/foo"  >=> text "bar" ]
+            POST >=> choose [
+                route "/text"   >=> mustAccept [ "text/plain" ] >=> text "text"
+                route "/json"   >=> mustAccept [ "application/json" ] >=> json "json"
+                route "/either" >=> mustAccept [ "text/plain"; "application/json" ] >=> text "either" ]
+            setStatusCode 404 >=> text "Not found" ]
 
     let headers = new HeaderDictionary()
     headers.Add("Accept", new StringValues("application/xml"))
@@ -406,13 +433,16 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
 
 [<Fact>]
 let ``GET "/JSON" returns "BaR"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app =
-        GET >>= choose [ 
-            route   "/"       >>= text "Hello World"
-            route   "/foo"    >>= text "bar"
-            route   "/json"   >>= json { Foo = "john"; Bar = "doe"; Age = 30 }
-            routeCi "/json"   >>= text "BaR"
-            setStatusCode 404 >>= text "Not found" ]
+        GET >=> choose [ 
+            route   "/"       >=> text "Hello World"
+            route   "/foo"    >=> text "bar"
+            route   "/json"   >=> json { Foo = "john"; Bar = "doe"; Age = 30 }
+            routeCi "/json"   >=> text "BaR"
+            setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/JSON")) |> ignore
@@ -432,13 +462,16 @@ let ``GET "/JSON" returns "BaR"`` () =
 
 [<Fact>]
 let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app =
-        GET >>= choose [ 
-            route   "/"       >>= text "Hello World"
-            route   "/foo"    >>= text "bar"
+        GET >=> choose [ 
+            route   "/"       >=> text "Hello World"
+            route   "/foo"    >=> text "bar"
             routef "/foo/%s/bar" text
             routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
-            setStatusCode 404 >>= text "Not found" ]
+            setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/blah blah/bar")) |> ignore
@@ -458,13 +491,16 @@ let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
 
 [<Fact>]
 let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app =
-        GET >>= choose [ 
-            route   "/"       >>= text "Hello World"
-            route   "/foo"    >>= text "bar"
+        GET >=> choose [ 
+            route   "/"       >=> text "Hello World"
+            route   "/foo"    >=> text "bar"
             routef "/foo/%s/bar" text
             routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
-            setStatusCode 404 >>= text "Not found" ]
+            setStatusCode 404 >=> text "Not found" ]
     
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/johndoe/59")) |> ignore
@@ -484,14 +520,17 @@ let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
 
 [<Fact>]
 let ``POST "/POsT/1" returns "1"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app =
         choose [
-            GET >>= choose [ 
-                route "/"          >>= text "Hello World" ]
-            POST >>= choose [
-                route    "/post/1" >>= text "1"
+            GET >=> choose [ 
+                route "/"          >=> text "Hello World" ]
+            POST >=> choose [
+                route    "/post/1" >=> text "1"
                 routeCif "/post/%i" json ]
-            setStatusCode 404 >>= text "Not found" ]
+            setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/POsT/1")) |> ignore
@@ -511,14 +550,17 @@ let ``POST "/POsT/1" returns "1"`` () =
 
 [<Fact>]
 let ``POST "/POsT/523" returns "523"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
     let app =
         choose [
-            GET >>= choose [ 
-                route "/"          >>= text "Hello World" ]
-            POST >>= choose [
-                route    "/post/1" >>= text "1"
+            GET >=> choose [ 
+                route "/"          >=> text "Hello World" ]
+            POST >=> choose [
+                route    "/post/1" >=> text "1"
                 routeCif "/post/%i" json ]
-            setStatusCode 404 >>= text "Not found" ]
+            setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/POsT/523")) |> ignore
@@ -536,20 +578,28 @@ let ``POST "/POsT/523" returns "523"`` () =
         let body = getBody ctx
         Assert.Equal(expected, body)
 
-
 [<Fact>]
-let ``GET "/razor" returns rendered html view`` () =
-    let app = 
-        GET >>= choose [ 
-            route "/"      >>= text "Hello World"
-            route "/foo"   >>= text "bar"
-            route "/razor" >>= razorView "Person.cshtml" { Name = "razor" }
-            setStatusCode 404 >>= text "Not found" ]
+let ``GET "/api" returns "api root"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
     
+    let app = 
+        GET >=> choose [
+            route "/"    >=> text "Hello World"
+            route "/foo" >=> text "bar"
+            subRoute "/api" (
+                choose [
+                    route ""       >=> text "api root"
+                    route "/admin" >=> text "admin"
+                    route "/users" >=> text "users" ] )
+            route "/api/test" >=> text "test"
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/razor")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api")) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "<html><head><title>Hello, razor</title></head><body><h3>Hello, razor</h3></body></html>"    
+    let expected = "api root"
 
     let result = 
         { HttpContext = ctx; Services = services }
@@ -561,4 +611,167 @@ let ``GET "/razor" returns rendered html view`` () =
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("text/html", ctx.HttpContext.Response |> getContentType)
+
+[<Fact>]
+let ``GET "/api/users" returns "users"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
+    let app = 
+        GET >=> choose [
+            route "/"    >=> text "Hello World"
+            route "/foo" >=> text "bar"
+            subRoute "/api" (
+                choose [
+                    route ""       >=> text "api root"
+                    route "/admin" >=> text "admin"
+                    route "/users" >=> text "users" ] )
+            route "/api/test" >=> text "test"
+            setStatusCode 404 >=> text "Not found" ]
+    
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/users")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "users"
+
+    let result = 
+        { HttpContext = ctx; Services = services }
+        |> app
+        |> Async.RunSynchronously
+
+    match result with
+    | None          -> assertFailf "Result was expected to be %s" expected
+    | Some ctx ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+
+[<Fact>]
+let ``GET "/api/test" returns "test"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
+    let app = 
+        GET >=> choose [
+            route "/"    >=> text "Hello World"
+            route "/foo" >=> text "bar"
+            subRoute "/api" (
+                choose [
+                    route ""       >=> text "api root"
+                    route "/admin" >=> text "admin"
+                    route "/users" >=> text "users" ] )
+            route "/api/test" >=> text "test"
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/test")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "test"
+
+    let result = 
+        { HttpContext = ctx; Services = services }
+        |> app
+        |> Async.RunSynchronously
+
+    match result with
+    | None          -> assertFailf "Result was expected to be %s" expected
+    | Some ctx ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+
+[<Fact>]
+let ``GET "/api/v2/users" returns "users v2"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
+    let app = 
+        GET >=> choose [
+            route "/"    >=> text "Hello World"
+            route "/foo" >=> text "bar"
+            subRoute "/api" (
+                choose [
+                    route ""       >=> text "api root"
+                    route "/admin" >=> text "admin"
+                    route "/users" >=> text "users"
+                    subRoute "/v2" (
+                        choose [
+                            route ""       >=> text "api root v2"
+                            route "/admin" >=> text "admin v2"
+                            route "/users" >=> text "users v2"
+                        ]
+                    )
+                ]
+            )
+            route "/api/test" >=> text "test"
+            setStatusCode 404 >=> text "Not found" ]
+    
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/v2/users")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "users v2"
+
+    let result = 
+        { HttpContext = ctx; Services = services }
+        |> app
+        |> Async.RunSynchronously
+
+    match result with
+    | None          -> assertFailf "Result was expected to be %s" expected
+    | Some ctx ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+
+[<Fact>]
+let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    
+    let app = 
+        GET >=> choose [
+            route "/"    >=> text "Hello World"
+            route "/foo" >=> text "bar"
+            subRoute "/api" (
+                choose [
+                    route  "" >=> text "api root"
+                    routef "/foo/bar/%s" text ] )
+            route "/api/test" >=> text "test"
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/foo/bar/yadayada")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "yadayada"
+
+    let result = 
+        { HttpContext = ctx; Services = services }
+        |> app
+        |> Async.RunSynchronously
+
+    match result with
+    | None          -> assertFailf "Result was expected to be %s" expected
+    | Some ctx ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+
+
+[<Fact>]
+let ``GET "/razor" returns rendered html view`` () =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    services.GetService(typeof<IRazorLightEngine>).Returns(EngineFactory.CreatePhysical(Directory.GetCurrentDirectory()))	
+    
+    let app = 
+        GET >>= choose [ 
+            route "/"      >>= text "Hello World"
+            route "/foo"   >>= text "bar"
+            route "/razor" >>= razorView "Person.cshtml" { Name = "razor" }
+            setStatusCode 404 >>= text "Not found" ]
+    
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/razor")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "<html><head><title>Hello, razor</title></head><body><h3>Hello, razor</h3></body></html>"  
+
