@@ -11,6 +11,8 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open AspNetCore.Lambda.HttpHandlers
 open AspNetCore.Lambda.Middleware
+open AspNetCore.Lambda.Services
+open ViewModels
 
 // Error Handler
 
@@ -71,6 +73,7 @@ let webApp =
                 route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
                 route  "/user"       >=> mustBeUser >=> userHandler
                 routef "/user/%i"    showUserHandler
+                route  "/razor"      >=> razorView "Person.cshtml" {Name = "Razor"}
             ]
         setStatusCode 404 >=> text "Not Found" ]
 
@@ -91,6 +94,9 @@ let configureApp (app : IApplicationBuilder) =
 let configureServices (services : IServiceCollection) =
     services.AddAuthentication() |> ignore
     services.AddDataProtection() |> ignore
+    //TODO: how to load this path from the context of test and app? test is falling on this
+    let viewsFolder = Path.Combine(@"D:\Dev\AspNetCore.Lambda\samples\SampleApp\SampleApp\views")
+    services.AddRazorEngine(viewsFolder) |> ignore
 
 let configureLogging (loggerFactory : ILoggerFactory) =
     loggerFactory.AddConsole().AddDebug() |> ignore

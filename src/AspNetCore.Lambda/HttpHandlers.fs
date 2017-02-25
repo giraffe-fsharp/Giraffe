@@ -12,6 +12,8 @@ open Newtonsoft.Json
 open DotLiquid
 open AspNetCore.Lambda.Common
 open AspNetCore.Lambda.FormatExpressions
+open RazorLight
+open System.IO
 
 type HttpHandlerContext =
     {
@@ -336,4 +338,17 @@ let htmlFile (relativeFilePath : string) =
                 ctx
                 |> (setHttpHeader "Content-Type" "text/html"
                 >=> setBodyAsString html)
+        }
+
+/// Parses and compiles a Razor view with the associated model and writes its content to the response body.
+/// It also sets the HTTP header Content-Type to text/html.
+let razorView (viewName : string) (model : obj) =
+    fun (ctx : HttpHandlerContext) ->
+        async {
+            let engine = ctx.Services.GetService<IRazorLightEngine>()
+            let view = engine.Parse(viewName, model)
+            return!
+                ctx
+                |> (setHttpHeader "Content-Type" "text/html"
+                >=> setBodyAsString view)
         }

@@ -48,6 +48,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
     - [dotLiquid](#dotliquid)
     - [htmlTemplate](#htmltemplate)
     - [htmlFile](#htmlfile)
+    - [razorView](#razorView)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Installation](#installation)
 - [Sample applications](#sample-applications)
@@ -597,6 +598,31 @@ This http handler takes a relative path of a html file as input parameter and se
 let app = 
     choose [
         route  "/" >=> htmlFile "index.html"
+    ]
+```
+### razorView
+
+`razorView` uses the [RazorLight](https://github.com/toddams/RazorLight) template engine through a service added with `AddRazorEngine` to compile Razor views and writes its content to the body of the `HttpResponse`.
+
+This http handler takes a relative path of a Razor view and the associated model as parameters and sets the HTTP header `Content-Type` to `text/html`.
+
+#### Example:
+
+Register the `RazorEngine` service through the `AddRazorEngine` method:
+
+```
+type Startup() =
+    member __.ConfigureServices (services : IServiceCollection) =        
+        let viewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "views")
+        services.AddRazorEngine(viewsFolder) |> ignore
+```
+
+Use the razorView function:
+
+```
+let app = 
+    choose [
+        route  "/" >>= razorView "index.cshtml" model
     ]
 ```
 
