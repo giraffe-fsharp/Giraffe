@@ -54,6 +54,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 - [Sample applications](#sample-applications)
 - [Building and developing](#building-and-developing)
 - [Contributing](#contributing)
+- [Contributors](#contributors)
 - [License](#license)
 
 ## About
@@ -740,6 +741,8 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Nicolás Herrera](https://github.com/nicolocodev) (Added razor engine feature)
 - [Dave Shaw](https://github.com/xdaDaveShaw) (Extended sample application and general help to keep things in good shape)
 - [Tobias Burger](https://github.com/toburger) (Fixed issues with culture specific parsers in routef handler)
+
+If you submit a pull request please feel free to add yourself to this list as part of the PR.
 
 ## License
 
