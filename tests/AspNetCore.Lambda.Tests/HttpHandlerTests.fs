@@ -11,7 +11,7 @@ open Microsoft.Extensions.Logging
 open Xunit
 open NSubstitute
 open AspNetCore.Lambda.HttpHandlers
-open AspNetCore.Lambda.Services
+open AspNetCore.Lambda.Middleware
 open AspNetCore.Lambda.Tests
 open RazorLight
 

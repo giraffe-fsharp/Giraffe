@@ -11,7 +11,6 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open AspNetCore.Lambda.HttpHandlers
 open AspNetCore.Lambda.Middleware
-open AspNetCore.Lambda.Services
 open ViewModels
 
 // Error Handler

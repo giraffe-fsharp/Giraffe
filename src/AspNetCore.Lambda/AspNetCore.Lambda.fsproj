@@ -43,7 +43,6 @@
     <Compile Include="FormatExpressions.fs" />
     <Compile Include="HttpHandlers.fs" />
     <Compile Include="Middleware.fs" />
-    <Compile Include="Services.fs" />
   </ItemGroup>
 
 </Project>
