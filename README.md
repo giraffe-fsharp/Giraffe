@@ -607,10 +607,9 @@ let app =
 This http handler takes a relative path of a Razor view and the associated model as parameters and sets the HTTP header `Content-Type` to `text/html`.
 
 #### Example:
-
 Register the `RazorEngine` service through the `AddRazorEngine` method:
 
-```
+```fsharp
 type Startup() =
     member __.ConfigureServices (services : IServiceCollection) =        
         let viewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "views")
@@ -619,10 +618,10 @@ type Startup() =
 
 Use the razorView function:
 
-```
+```fsharp
 let app = 
     choose [
-        route  "/" >>= razorView "index.cshtml" model
+        route  "/" >=> razorView "index.cshtml" model
     ]
 ```
 
