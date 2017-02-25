@@ -10,10 +10,10 @@ open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Xunit
 open NSubstitute
+open RazorLight
 open AspNetCore.Lambda.HttpHandlers
 open AspNetCore.Lambda.Middleware
-open AspNetCore.Lambda.Tests
-open RazorLight
+open AspNetCore.Lambda.Tests.Models
 
 // ---------------------------------
 // Helper functions
@@ -780,7 +780,7 @@ let ``GET "/razor" returns rendered html view`` () =
         |> Async.RunSynchronously
 
     match result with
-    | None          -> assertFailf "Result was expected to be %s" expected
+    | None     -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)

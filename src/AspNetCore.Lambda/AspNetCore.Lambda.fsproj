@@ -35,7 +35,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="1.1.*" />
     <PackageReference Include="Newtonsoft.Json" Version="9.0.*" />
     <PackageReference Include="DotLiquid" Version="2.0.*" />
-    <PackageReference Include="RazorLight" Version="1.0.0-rc1" />
+    <PackageReference Include="RazorLight" Version="1.0.0-rc2" />
   </ItemGroup>
 
   <ItemGroup>

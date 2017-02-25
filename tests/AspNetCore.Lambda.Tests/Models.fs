@@ -1,6 +1,5 @@
-namespace AspNetCore.Lambda.Tests
+namespace AspNetCore.Lambda.Tests.Models
 
-//Model
 [<CLIMutable>]
 type Person =  
     {
