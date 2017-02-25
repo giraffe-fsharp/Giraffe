@@ -732,6 +732,15 @@ If you have any further questions please let me know.
 
 You can file an [issue on GitHub](https://github.com/dustinmoris/AspNetCore.Lambda/issues/new) or contact me via [https://dusted.codes/about](https://dusted.codes/about).
 
+## Contributors
+
+Special thanks to all developers who helped me by submitting pull requests with new feature work, bug fixes and other improvements to keep the project in good shape (in no particular order):
+
+- [slang25](https://github.com/slang25) (Added subRoute feature and general help to keep things in good shape)
+- [Nicolás Herrera](https://github.com/nicolocodev) (Added razor engine feature)
+- [Dave Shaw](https://github.com/xdaDaveShaw) (Extended sample application and general help to keep things in good shape)
+- [Tobias Burger](https://github.com/toburger) (Fixed issues with culture specific parsers in routef handler)
+
 ## License
 
 [Apache 2.0](https://raw.githubusercontent.com/dustinmoris/AspNetCore.Lambda/master/LICENSE)
