@@ -6,7 +6,7 @@
     <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
     <Copyright>Copyright 2017 Dustin Moris Gorski</Copyright>
     <NeutralLanguage>en-GB</NeutralLanguage>
-    <Authors>Dustin Moris Gorski</Authors>
+    <Authors>Dustin Moris Gorski and contributors</Authors>
     <TargetFramework>netstandard1.6</TargetFramework>
     <DebugType>portable</DebugType>
     <WarningsAsErrors>1</WarningsAsErrors>
