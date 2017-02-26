@@ -1,7 +1,6 @@
 ﻿<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp1.1</TargetFramework>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <PreserveCompilationContext>true</PreserveCompilationContext>
