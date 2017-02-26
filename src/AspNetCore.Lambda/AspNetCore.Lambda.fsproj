@@ -2,11 +2,11 @@
 
   <PropertyGroup>
     <AssemblyName>AspNetCore.Lambda</AssemblyName>
-    <VersionPrefix>0.1.0-alpha004</VersionPrefix>
+    <VersionPrefix>0.1.0-alpha005</VersionPrefix>
     <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
     <Copyright>Copyright 2017 Dustin Moris Gorski</Copyright>
     <NeutralLanguage>en-GB</NeutralLanguage>
-    <Authors>Dustin Moris Gorski</Authors>
+    <Authors>Dustin Moris Gorski and contributors</Authors>
     <TargetFramework>netstandard1.6</TargetFramework>
     <DebugType>portable</DebugType>
     <WarningsAsErrors>1</WarningsAsErrors>
@@ -21,10 +21,12 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/dustinmoris/aspnetcore.lambda</RepositoryUrl>
-    <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>    
+    <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
+    <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netstandard1.6' ">$(PackageTargetFallback);portable-net45+win8;</PackageTargetFallback>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.6' ">
+  <ItemGroup>
     <PackageReference Include="FSharp.Core" Version="4.1.*" />
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.*" />
@@ -33,6 +35,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="1.1.*" />
     <PackageReference Include="Newtonsoft.Json" Version="9.0.*" />
     <PackageReference Include="DotLiquid" Version="2.0.*" />
+    <PackageReference Include="RazorLight" Version="1.0.0-rc2" />
   </ItemGroup>
 
   <ItemGroup>

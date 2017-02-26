@@ -1,4 +1,4 @@
-﻿module SampleApp
+﻿module SampleApp.App
 
 open System
 open System.IO
@@ -11,8 +11,11 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open AspNetCore.Lambda.HttpHandlers
 open AspNetCore.Lambda.Middleware
+open SampleApp.Models
 
-// Error Handler
+// ---------------------------------
+// Error handler
+// ---------------------------------
 
 let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
     let loggerFactory = ctx.Services.GetService<ILoggerFactory>()
@@ -21,7 +24,10 @@ let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
     ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
 
 
-// Web application    
+// ---------------------------------
+// Web app
+// ---------------------------------
+
 let authScheme = "Cookie"
 
 let accessDenied = setStatusCode 401 >=> text "Access Denied"
@@ -71,8 +77,13 @@ let webApp =
                 route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
                 route  "/user"       >=> mustBeUser >=> userHandler
                 routef "/user/%i"    showUserHandler
+                route  "/razor"      >=> razorView "Person.cshtml" { Name = "Razor" }
             ]
         setStatusCode 404 >=> text "Not Found" ]
+
+// ---------------------------------
+// Main
+// ---------------------------------
 
 let configureApp (app : IApplicationBuilder) = 
     app.UseLambdaErrorHandler(errorHandler)
@@ -89,8 +100,13 @@ let configureApp (app : IApplicationBuilder) =
     app.UseLambda(webApp)
 
 let configureServices (services : IServiceCollection) =
+    let sp  = services.BuildServiceProvider()
+    let env = sp.GetService<IHostingEnvironment>()
+    let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
+
     services.AddAuthentication() |> ignore
     services.AddDataProtection() |> ignore
+    services.AddRazorEngine(viewsFolderPath) |> ignore
 
 let configureLogging (loggerFactory : ILoggerFactory) =
     loggerFactory.AddConsole(LogLevel.Trace).AddDebug() |> ignore

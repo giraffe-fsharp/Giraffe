@@ -3,105 +3,141 @@ module Tests
 open System
 open System.Net
 open System.Net.Http
+open System.IO
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.Http
-open Microsoft.Extensions.Logging
+open Microsoft.AspNetCore.TestHost
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.AspNetCore.TestHost;
-open AspNetCore.Lambda.HttpHandlers
-open AspNetCore.Lambda.Middleware
 open Xunit
+open AspNetCore.Lambda.Middleware
 
-let runTask fa = 
-    fa 
+// ---------------------------------
+// Test server/client setup
+// ---------------------------------
+
+let createHost() =
+    WebHostBuilder()
+        .UseContentRoot(Directory.GetCurrentDirectory())
+        .Configure(Action<IApplicationBuilder> SampleApp.App.configureApp)
+        .ConfigureServices(Action<IServiceCollection> SampleApp.App.configureServices)
+
+// ---------------------------------
+// Helper functions
+// ---------------------------------
+
+let runTask task = 
+    task 
     |> Async.AwaitTask
     |> Async.RunSynchronously
 
-let host = 
-    WebHostBuilder()
-        .UseContentRoot(System.IO.Directory.GetCurrentDirectory())
-        .Configure(Action<IApplicationBuilder> SampleApp.configureApp)
-        .ConfigureServices(Action<IServiceCollection> SampleApp.configureServices)
-
-let uri = Uri("http://127.0.0.1:5000")
-
-let server = new TestServer(host)
-
-let createClient = 
-    let client = server.CreateClient()
-    client.BaseAddress <- uri
-    client
-
-let getWith (client: HttpClient) (path: string) =
-    client.GetAsync(path)
+let get (client : HttpClient) (path : string) =
+    path
+    |> client.GetAsync
     |> runTask
 
-let req (client: HttpClient) (request: HttpRequestMessage) =
-    client.SendAsync(request)
-    |> runTask
+let createRequest (method : HttpMethod) (path : string) =
+    let url = "http://127.0.0.1" + path
+    new HttpRequestMessage(method, url)
 
-let get (path: string) = 
+let addCookiesFromResponse (response : HttpResponseMessage)
+                           (request  : HttpRequestMessage) =
+    request.Headers.Add("Cookie", response.Headers.GetValues("Set-Cookie"))
+    request
+
+let makeRequest (client : HttpClient) (request : HttpRequestMessage) =
+    use server = new TestServer(createHost())
     use client = server.CreateClient()
-    getWith client path
+    request
+    |> client.SendAsync
+    |> runTask
 
-let readText (response: Http.HttpResponseMessage) = 
+let ensureSuccess (response : HttpResponseMessage) =
+    response.EnsureSuccessStatusCode() |> ignore
+    response
+
+let isStatus (code : HttpStatusCode) (response : HttpResponseMessage) =
+    Assert.Equal(code, response.StatusCode)
+    response
+
+let isOfType (contentType : string) (response : HttpResponseMessage) =
+    Assert.Equal(contentType, response.Content.Headers.ContentType.MediaType)
+    response
+
+let readText (response : HttpResponseMessage) =
     response.Content.ReadAsStringAsync()
     |> runTask
 
-let readStatus (response: Http.HttpResponseMessage) = 
-    response.StatusCode
+let shouldEqual expected actual =
+    Assert.Equal(expected, actual)
 
-let readStatusAndText (response: Http.HttpResponseMessage) = 
-    let status = readStatus response
-    let text = readText response
-    (status, text)
+// ---------------------------------
+// Tests
+// ---------------------------------
 
 [<Fact>]
 let ``Test / is routed to index`` () =
-    let response = 
-        get "/"
-        |> readText
+    use server = new TestServer(createHost())
+    use client = server.CreateClient()
 
-    Assert.Equal("index", response)
-
-[<Fact>]
-let ``Test /error returns status code 500`` () = 
-    let (status, text) = 
-        get "/error"
-        |> readStatusAndText
-
-    Assert.Equal(HttpStatusCode.InternalServerError, status)
-    Assert.Equal("One or more errors occurred. (Something went wrong!)", text)
+    get client "/"
+    |> ensureSuccess
+    |> readText
+    |> shouldEqual "index"
 
 [<Fact>]
-let ``Test /user returns error when not logged in`` () = 
-    let (status, text) = 
-        get "/user"
-        |> readStatusAndText
+let ``Test /error returns status code 500`` () =
+    use server = new TestServer(createHost())
+    use client = server.CreateClient()
 
-    Assert.Equal(HttpStatusCode.Unauthorized, status)
-    Assert.Equal("Access Denied", text)
+    get client "/error"
+    |> isStatus HttpStatusCode.InternalServerError
+    |> readText
+    |> shouldEqual "One or more errors occurred. (Something went wrong!)"
+
+[<Fact>]
+let ``Test /user returns error when not logged in`` () =
+    use server = new TestServer(createHost())
+    use client = server.CreateClient()
+
+    get client "/user"
+    |> isStatus HttpStatusCode.Unauthorized
+    |> readText
+    |> shouldEqual "Access Denied"
 
 [<Fact>]
 let ``Test /user/{id} returns success when logged in as user`` () = 
-    
+    use server = new TestServer(createHost())
     use client = server.CreateClient()
-    let get = getWith client
 
-    let loginResult = 
-        get "/login"
+    let loginResponse =
+        get client "/login"
+        |> ensureSuccess
 
-    Assert.Equal(HttpStatusCode.OK, loginResult.StatusCode)
+    loginResponse
+    |> readText
+    |> shouldEqual "Successfully logged in"
 
-    //https://github.com/aspnet/Hosting/issues/191
-    //The session cookie is not automatically forwarded to the next request. To overcome this we have to manually do:
-    let request = new HttpRequestMessage(HttpMethod.Get, "http://127.0.0.1/user/1");
-    request.Headers.Add("Cookie", loginResult.Headers.GetValues("Set-Cookie"));
+    // https://github.com/aspnet/Hosting/issues/191
+    // The session cookie is not automatically forwarded to the next request.
+    // To overcome this we have to manually do:
+    "/user/1"
+    |> createRequest HttpMethod.Get
+    |> addCookiesFromResponse loginResponse
+    |> makeRequest client
+    |> ensureSuccess
+    |> readText
+    |> shouldEqual "User ID: 1"
 
-    let (status, text) = 
-        req client request
-        |> readStatusAndText
+[<Fact>]
+let ``Test /razor returns html content`` () = 
+    use server = new TestServer(createHost())
+    use client = server.CreateClient()
 
-    Assert.Equal(HttpStatusCode.OK, status)
-    Assert.Equal("User ID: 1", text)
+    let nl = Environment.NewLine
+    let expected = "<!DOCTYPE html>" + nl + nl + "<html>" + nl + "<head>" + nl + "    <title>Hello, Razor</title>" + nl + "</head>" + nl + "<body>" + nl + "    <div>" + nl + "        <h3>Hello, Razor</h3>" + nl + "    </div>" + nl + "</body>" + nl + "</html>"
+
+    get client "/razor"
+    |> ensureSuccess
+    |> isOfType "text/html"
+    |> readText
+    |> shouldEqual expected

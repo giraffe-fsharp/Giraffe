@@ -7,6 +7,7 @@
     <OutputType>Exe</OutputType>
     <PackageId>SampleApp</PackageId>
     <RuntimeFrameworkVersion>1.1.0</RuntimeFrameworkVersion>
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +20,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="1.1.*" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="1.1.*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="1.1.*" />
+    <PackageReference Include="RazorLight" Version="1.0.0-rc2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,7 +28,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Models.fs" />
     <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="views\Person.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

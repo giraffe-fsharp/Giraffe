@@ -25,7 +25,6 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 dotnet build samples/SampleApp/SampleApp
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-
 dotnet restore samples/SampleApp/SampleApp.Tests
 if %errorlevel% neq 0 exit /b %errorlevel%
 

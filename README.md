@@ -48,11 +48,13 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
     - [dotLiquid](#dotliquid)
     - [htmlTemplate](#htmltemplate)
     - [htmlFile](#htmlfile)
+    - [razorView](#razorview)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Installation](#installation)
 - [Sample applications](#sample-applications)
 - [Building and developing](#building-and-developing)
 - [Contributing](#contributing)
+- [Contributors](#contributors)
 - [License](#license)
 
 ## About
@@ -599,6 +601,32 @@ let app =
         route  "/" >=> htmlFile "index.html"
     ]
 ```
+### razorView
+
+`razorView` uses the [RazorLight](https://github.com/toddams/RazorLight) view engine to set or modify the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
+
+The `razorView` handler requires the view name and an object model to be passed in and must be enabled through the `AddRazorEngine` function during start-up.
+
+#### Example:
+Add the razor engine service during start-up:
+
+```fsharp
+type Startup() =
+    member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =    
+        let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
+        services.AddRazorEngine(viewsFolderPath) |> ignore
+```
+
+Use the razorView function:
+
+```fsharp
+let model = { WelcomeText = "Hello World" }
+
+let app = 
+    choose [
+        route  "/" >=> razorView "Index.cshtml" model
+    ]
+```
 
 ## Custom HttpHandlers
 
@@ -706,6 +734,17 @@ When making changes please use existing code as a guideline for coding style and
 If you have any further questions please let me know.
 
 You can file an [issue on GitHub](https://github.com/dustinmoris/AspNetCore.Lambda/issues/new) or contact me via [https://dusted.codes/about](https://dusted.codes/about).
+
+## Contributors
+
+Special thanks to all developers who helped me by submitting pull requests with new feature work, bug fixes and other improvements to keep the project in good shape (in no particular order):
+
+- [slang25](https://github.com/slang25) (Added subRoute feature and general help to keep things in good shape)
+- [Nicolás Herrera](https://github.com/nicolocodev) (Added razor engine feature)
+- [Dave Shaw](https://github.com/xdaDaveShaw) (Extended sample application and general help to keep things in good shape)
+- [Tobias Burger](https://github.com/toburger) (Fixed issues with culture specific parsers in routef handler)
+
+If you submit a pull request please feel free to add yourself to this list as part of the PR.
 
 ## License
 
