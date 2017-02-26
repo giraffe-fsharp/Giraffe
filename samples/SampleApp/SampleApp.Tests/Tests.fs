@@ -14,6 +14,7 @@ open AspNetCore.Lambda.Middleware
 // ---------------------------------
 // Test server/client setup
 // ---------------------------------
+
 let createHost() =
     WebHostBuilder()
         .UseContentRoot(Directory.GetCurrentDirectory())

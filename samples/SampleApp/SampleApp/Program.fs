@@ -13,8 +13,9 @@ open AspNetCore.Lambda.HttpHandlers
 open AspNetCore.Lambda.Middleware
 open SampleApp.Models
 
-// Error Handler
-// ------------------
+// ---------------------------------
+// Error handler
+// ---------------------------------
 
 let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
     let loggerFactory = ctx.Services.GetService<ILoggerFactory>()
@@ -23,8 +24,9 @@ let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
     ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
 
 
-// Web application  
-// ------------------
+// ---------------------------------
+// Web app
+// ---------------------------------
 
 let authScheme = "Cookie"
 
@@ -78,6 +80,10 @@ let webApp =
                 route  "/razor"      >=> razorView "Person.cshtml" { Name = "Razor" }
             ]
         setStatusCode 404 >=> text "Not Found" ]
+
+// ---------------------------------
+// Main
+// ---------------------------------
 
 let configureApp (app : IApplicationBuilder) = 
     app.UseLambdaErrorHandler(errorHandler)

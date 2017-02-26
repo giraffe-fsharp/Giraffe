@@ -48,7 +48,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
     - [dotLiquid](#dotliquid)
     - [htmlTemplate](#htmltemplate)
     - [htmlFile](#htmlfile)
-    - [razorView](#razorView)
+    - [razorView](#razorview)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Installation](#installation)
 - [Sample applications](#sample-applications)
@@ -603,26 +603,28 @@ let app =
 ```
 ### razorView
 
-`razorView` uses the [RazorLight](https://github.com/toddams/RazorLight) template engine through a service added with `AddRazorEngine` to compile Razor views and writes its content to the body of the `HttpResponse`.
+`razorView` uses the [RazorLight](https://github.com/toddams/RazorLight) view engine to set or modify the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
 
-This http handler takes a relative path of a Razor view and the associated model as parameters and sets the HTTP header `Content-Type` to `text/html`.
+The `razorView` handler requires the view name and an object model to be passed in and must be enabled through the `AddRazorEngine` function during start-up.
 
 #### Example:
-Register the `RazorEngine` service through the `AddRazorEngine` method:
+Add the razor engine service during start-up:
 
 ```fsharp
 type Startup() =
-    member __.ConfigureServices (services : IServiceCollection) =        
-        let viewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "views")
-        services.AddRazorEngine(viewsFolder) |> ignore
+    member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =    
+        let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
+        services.AddRazorEngine(viewsFolderPath) |> ignore
 ```
 
 Use the razorView function:
 
 ```fsharp
+let model = { WelcomeText = "Hello World" }
+
 let app = 
     choose [
-        route  "/" >=> razorView "index.cshtml" model
+        route  "/" >=> razorView "Index.cshtml" model
     ]
 ```
 
