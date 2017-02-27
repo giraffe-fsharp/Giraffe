@@ -37,7 +37,6 @@ type ErrorHandler = exn -> HttpHandler
 /// ---------------------------
 
 /// Logging
-/// ---------------------------
 
 let private getRequestInfo ctx =
     (ctx.HttpContext.Request.Protocol,
@@ -51,7 +50,6 @@ let private logDebug ctx msg =
     |> ctx.Logger.LogDebug
 
 /// Sub route handling
-/// ---------------------------
 
 [<Literal>]
 let private RouteKey = "aspnet_lambda_route"

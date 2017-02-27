@@ -727,12 +727,10 @@ let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
         let body = getBody ctx
         Assert.Equal(expected, body)
 
-
 [<Fact>]
 let ``GET "/razor" returns rendered html view`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    services.GetService(typeof<IRazorLightEngine>).Returns(EngineFactory.CreatePhysical(Directory.GetCurrentDirectory())) 
+    let ctx, hctx = initNewContext()
+    hctx.Services.GetService(typeof<IRazorLightEngine>).Returns(EngineFactory.CreatePhysical(Directory.GetCurrentDirectory())) 
     |> ignore
 
     let app = GET >=> route "/razor" >=> razorView "Person.cshtml" { Name = "razor" }
@@ -743,7 +741,7 @@ let ``GET "/razor" returns rendered html view`` () =
     let expected = "<html><head><title>Hello, razor</title></head><body><h3>Hello, razor</h3></body></html>"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
