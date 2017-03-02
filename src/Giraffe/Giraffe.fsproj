@@ -1,8 +1,8 @@
 ﻿<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>AspNetCore.Lambda</AssemblyName>
-    <VersionPrefix>0.1.0-alpha005</VersionPrefix>
+    <AssemblyName>Giraffe</AssemblyName>
+    <VersionPrefix>0.1.0-alpha006</VersionPrefix>
     <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
     <Copyright>Copyright 2017 Dustin Moris Gorski</Copyright>
     <NeutralLanguage>en-GB</NeutralLanguage>
@@ -12,15 +12,15 @@
     <WarningsAsErrors>1</WarningsAsErrors>
     <Optimize>True</Optimize>
     <OutputType>Library</OutputType>
-    <PackageId>AspNetCore.Lambda</PackageId>
-    <PackageTags>ASP.NET Core;Lambda;FSharp;Functional;Http;Web;Framework</PackageTags>
-    <PackageReleaseNotes>https://github.com/dustinmoris/aspnetcore.lambda/releases</PackageReleaseNotes>
-    <PackageIconUrl>https://raw.githubusercontent.com/dustinmoris/aspnetcore.lambda/master/lambda.png</PackageIconUrl>
-    <PackageProjectUrl>https://github.com/dustinmoris/aspnetcore.lambda</PackageProjectUrl>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/dustinmoris/aspnetcore.lambda/master/LICENSE</PackageLicenseUrl>
+    <PackageId>Giraffe</PackageId>
+    <PackageTags>Giraffe;ASP.NET Core;Lambda;FSharp;Functional;Http;Web;Framework;Micro;Service</PackageTags>
+    <PackageReleaseNotes>https://github.com/dustinmoris/giraffe/releases</PackageReleaseNotes>
+    <PackageIconUrl>https://raw.githubusercontent.com/dustinmoris/giraffe/master/giraffe.png</PackageIconUrl>
+    <PackageProjectUrl>https://github.com/dustinmoris/giraffe</PackageProjectUrl>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/dustinmoris/giraffe/master/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/dustinmoris/aspnetcore.lambda</RepositoryUrl>
+    <RepositoryUrl>https://github.com/dustinmoris/giraffe</RepositoryUrl>
     <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
     <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netstandard1.6' ">$(PackageTargetFallback);portable-net45+win8;</PackageTargetFallback>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>

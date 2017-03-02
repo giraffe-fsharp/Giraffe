@@ -12,8 +12,8 @@ build_script:
   - ps: .\appveyor.ps1
 test: off
 artifacts:
-  - path: '**\AspNetCore.Lambda.*.nupkg'
-    name: AspNetCore.Lambda
+  - path: '**\Giraffe.*.nupkg'
+    name: Giraffe
 nuget:
   account_feed: false
   project_feed: false
@@ -22,6 +22,6 @@ deploy:
   api_key:
     secure: +XDgIu4Tmln7LKedNmQgMFnyKTxxuCKFRK3V5oKEfwZiakPXRd5C7OueEGBL50oh
   skip_symbols: false
-  artifact: /.*AspNetCore.Lambda\..*\.nupkg/
+  artifact: /.*Giraffe\..*\.nupkg/
   on:
     appveyor_repo_tag: true

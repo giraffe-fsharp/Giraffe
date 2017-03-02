@@ -9,8 +9,8 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
-open AspNetCore.Lambda.HttpHandlers
-open AspNetCore.Lambda.Middleware
+open Giraffe.HttpHandlers
+open Giraffe.Middleware
 open SampleApp.Models
 
 // ---------------------------------
@@ -86,7 +86,7 @@ let webApp =
 // ---------------------------------
 
 let configureApp (app : IApplicationBuilder) = 
-    app.UseLambdaErrorHandler(errorHandler)
+    app.UseGiraffeErrorHandler(errorHandler)
     app.UseCookieAuthentication(
         new CookieAuthenticationOptions(
             AuthenticationScheme    = authScheme,
@@ -97,7 +97,7 @@ let configureApp (app : IApplicationBuilder) =
             SlidingExpiration       = true,
             ExpireTimeSpan          = TimeSpan.FromDays 7.0
     )) |> ignore
-    app.UseLambda(webApp)
+    app.UseGiraffe(webApp)
 
 let configureServices (services : IServiceCollection) =
     let sp  = services.BuildServiceProvider()

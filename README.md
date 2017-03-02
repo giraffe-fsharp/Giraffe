@@ -1,13 +1,13 @@
-# ASP.NET Core Lambda
+# Giraffe
 
 A functional ASP.NET Core micro framework for building rich web applications.
 
 Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) for more information.
 
-[![Build status](https://ci.appveyor.com/api/projects/status/0ft2427dflip7wti/branch/master?svg=true)](https://ci.appveyor.com/project/dustinmoris/aspnetcore-lambda/branch/master)
-[![NuGet Info](https://buildstats.info/nuget/AspNetCore.Lambda?includePreReleases=true)](https://www.nuget.org/packages/AspNetCore.Lambda/)
+[![Build status](https://ci.appveyor.com/api/projects/status/0ft2427dflip7wti/branch/master?svg=true)](https://ci.appveyor.com/project/dustinmoris/giraffe/branch/master)
+[![NuGet Info](https://buildstats.info/nuget/Giraffe?includePreReleases=true)](https://www.nuget.org/packages/Giraffe/)
 
-[![Build history](https://buildstats.info/appveyor/chart/dustinmoris/aspnetcore-lambda?branch=master&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/aspnetcore-lambda/history)
+[![Build history](https://buildstats.info/appveyor/chart/dustinmoris/giraffe?branch=master&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/giraffe/history)
 
 **ATTENTION: THIS PROJECT IS STILL IN ALPHA STAGE**
 
@@ -59,23 +59,23 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 ## About
 
-[ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) is an F# web framework similar to Suave, but has been designed with [ASP.NET Core](https://www.asp.net/core) in mind and can be plugged into the ASP.NET Core pipeline via [middleware](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware). [ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) has been heavily inspired by [Suave](https://suave.io/) and its concept of web parts and the ability to compose many smaller web parts into a larger web application.
+[Giraffe](https://www.nuget.org/packages/Giraffe) is an F# web framework similar to Suave, but has been designed with [ASP.NET Core](https://www.asp.net/core) in mind and can be plugged into the ASP.NET Core pipeline via [middleware](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware). [Giraffe](https://www.nuget.org/packages/Giraffe) has been heavily inspired by [Suave](https://suave.io/) and its concept of web parts and the ability to compose many smaller web parts into a larger web application.
 
 If you'd like to learn more about the motivation of this project please read this [blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core).
 
 ### Who is it for?
 
-[ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) is intended for developers who want to build rich web applications on top of ASP.NET Core in a functional first approach. ASP.NET Core is a powerful web platform which has support by Microsoft and a huge developer community behind it and ASP.NET Core Lambda is aimed at F# developers who want to benefit from that eco system.
+[Giraffe](https://www.nuget.org/packages/Giraffe) is intended for developers who want to build rich web applications on top of ASP.NET Core in a functional first approach. ASP.NET Core is a powerful web platform which has support by Microsoft and a huge developer community behind it and Giraffe is aimed at F# developers who want to benefit from that eco system.
 
 It is not designed to be a competing web product which can be run standalone like NancyFx or Suave, but rather a lean micro framework which aims to complement ASP.NET Core where it comes short for functional developers at the moment. The fundamental idea is to build on top of the strong foundation of ASP.NET Core and re-use existing ASP.NET Core building blocks so F# developers can benefit from both worlds.
 
-You can think of [ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) as the functional counter part of the ASP.NET Core MVC framework.
+You can think of [Giraffe](https://www.nuget.org/packages/Giraffe) as the functional counter part of the ASP.NET Core MVC framework.
 
 ## Basics
 
 ### HttpHandler
 
-The only building block in ASP.NET Core Lambda is a so called `HttpHandler`:
+The only building block in Giraffe is a so called `HttpHandler`:
 
 ```fsharp
 type HttpHandlerContext =
@@ -293,8 +293,8 @@ type Startup() =
     member __.Configure (app : IApplicationBuilder)
                         (env : IHostingEnvironment)
                         (loggerFactory : ILoggerFactory) =
-        app.UseLambdaErrorHandler(errorHandler)
-        app.UseLambda(webApp)
+        app.UseGiraffeErrorHandler(errorHandler)
+        app.UseGiraffe(webApp)
 ```
 
 ### route
@@ -322,7 +322,7 @@ The following format placeholders are currently supported:
 - `%c` for char
 - `%s` for string
 - `%i` for int32
-- `%d` for int64 (this is custom to ASP.NET Core Lambda)
+- `%d` for int64 (this is custom to Giraffe)
 - `%f` for float/double
 
 #### Example:
@@ -686,17 +686,17 @@ let app =
 
 ## Installation
 
-Install the [AspNetCore.Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) NuGet package:
+Install the [Giraffe](https://www.nuget.org/packages/Giraffe) NuGet package:
 
 ```
-PM> Install-Package AspNetCore.Lambda
+PM> Install-Package Giraffe
 ```
 
 Create a web application and plug it into the ASP.NET Core middleware:
 
 ```fsharp
-open AspNetCore.Lambda.HttpHandlers
-open AspNetCore.Lambda.Middleware
+open Giraffe.HttpHandlers
+open Giraffe.Middleware
 
 let webApp = 
     choose [
@@ -708,7 +708,7 @@ type Startup() =
                         (env : IHostingEnvironment)
                         (loggerFactory : ILoggerFactory) =
         
-        app.UseLambda(webApp)
+        app.UseGiraffe(webApp)
 ```
 
 ## Sample applications
@@ -719,7 +719,7 @@ More sample applications will be added in the future.
 
 ## Building and developing
 
-ASP.NET Core Lambda is using the new MSBuild driven `.fsproj` project system that comes with [.NET Core SDK RC4](https://github.com/dotnet/netcorecli-fsc/wiki/.NET-Core-SDK-rc4).
+Giraffe is using the new MSBuild driven `.fsproj` project system that comes with [.NET Core SDK RC4](https://github.com/dotnet/netcorecli-fsc/wiki/.NET-Core-SDK-rc4).
 
 You can either install [Visual Studio 2017 RC](https://www.visualstudio.com/vs/visual-studio-2017-rc/) which comes with the latest SDK or manually download and install the [.NET SDK RC4](https://github.com/dotnet/core/blob/master/release-notes/rc4-download.md).
 
@@ -733,13 +733,13 @@ Help and feedback is always welcome and pull requests get accepted.
 
 When contributing to this repository, please first discuss the change you wish to make via an open issue before submitting a pull request. For new feature requests please describe your idea in more detail and how it could benefit other users as well.
 
-Please be aware that ASP.NET Core Lambda strictly aims to remain as light as possible while providing generic functionality for building functional web applications. New feature work must be applicable to a broader user base and if this requirement cannot be met sufficiently then a pull request might get rejected. In the case of doubt the maintainer will rather reject a potentially useful feature than adding one too many. This measure is to protect the repository from feature bloat over time and shall not be taken personally.
+Please be aware that Giraffe strictly aims to remain as light as possible while providing generic functionality for building functional web applications. New feature work must be applicable to a broader user base and if this requirement cannot be met sufficiently then a pull request might get rejected. In the case of doubt the maintainer will rather reject a potentially useful feature than adding one too many. This measure is to protect the repository from feature bloat over time and shall not be taken personally.
 
 When making changes please use existing code as a guideline for coding style and documentation. If you intend to add or change an existing `HttpHandler` then please update the README.md file to reflect these changes there as well. If applicable unit tests must be be added or updated and the project must successfully build before a pull request can be accepted.
 
 If you have any further questions please let me know.
 
-You can file an [issue on GitHub](https://github.com/dustinmoris/AspNetCore.Lambda/issues/new) or contact me via [https://dusted.codes/about](https://dusted.codes/about).
+You can file an [issue on GitHub](https://github.com/dustinmoris/Giraffe/issues/new) or contact me via [https://dusted.codes/about](https://dusted.codes/about).
 
 ## Contributors
 
@@ -754,4 +754,4 @@ If you submit a pull request please feel free to add yourself to this list as pa
 
 ## License
 
-[Apache 2.0](https://raw.githubusercontent.com/dustinmoris/AspNetCore.Lambda/master/LICENSE)
+[Apache 2.0](https://raw.githubusercontent.com/dustinmoris/Giraffe/master/LICENSE)

@@ -1,4 +1,4 @@
-module AspNetCore.Lambda.FormatExpressions
+module Giraffe.FormatExpressions
 
 open System
 open System.Text.RegularExpressions

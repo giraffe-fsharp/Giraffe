@@ -1,4 +1,4 @@
-module AspNetCore.Lambda.Middleware
+module Giraffe.Middleware
 
 open System
 open Microsoft.AspNetCore.Builder
@@ -7,7 +7,7 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open RazorLight
-open AspNetCore.Lambda.HttpHandlers
+open Giraffe.HttpHandlers
 
 /// ---------------------------
 /// Logging helper functions
@@ -23,16 +23,16 @@ let private getRequestInfo (ctx : HttpContext) =
 /// Default middleware
 /// ---------------------------
 
-type LambdaMiddleware (next          : RequestDelegate,
-                       handler       : HttpHandler,
-                       services      : IServiceProvider,
-                       loggerFactory : ILoggerFactory) =
+type GiraffeMiddleware (next          : RequestDelegate,
+                        handler       : HttpHandler,
+                        services      : IServiceProvider,
+                        loggerFactory : ILoggerFactory) =
     
     do if isNull next then raise (ArgumentNullException("next"))
 
     member __.Invoke (ctx : HttpContext) =
         async {
-            let logger = loggerFactory.CreateLogger<LambdaMiddleware>()
+            let logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
             let httpHandlerContext =
                 {
                     HttpContext = ctx
@@ -43,8 +43,8 @@ type LambdaMiddleware (next          : RequestDelegate,
 
             if logger.IsEnabled LogLevel.Debug then
                 match result with
-                | Some _ -> sprintf "LambdaMiddleware returned Some for %s" (getRequestInfo ctx)
-                | None   -> sprintf "LambdaMiddleware returned None for %s" (getRequestInfo ctx)
+                | Some _ -> sprintf "Giraffe returned Some for %s" (getRequestInfo ctx)
+                | None   -> sprintf "Giraffe returned None for %s" (getRequestInfo ctx)
                 |> logger.LogDebug
 
             if (result.IsNone) then
@@ -57,16 +57,16 @@ type LambdaMiddleware (next          : RequestDelegate,
 /// Error Handling middleware
 /// ---------------------------
 
-type LambdaErrorHandlerMiddleware (next          : RequestDelegate,
-                                   errorHandler  : ErrorHandler,
-                                   services      : IServiceProvider,
-                                   loggerFactory : ILoggerFactory) =
+type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
+                                    errorHandler  : ErrorHandler,
+                                    services      : IServiceProvider,
+                                    loggerFactory : ILoggerFactory) =
 
     do if isNull next then raise (ArgumentNullException("next"))
 
     member __.Invoke (ctx : HttpContext) =
         async {
-            let logger = loggerFactory.CreateLogger<LambdaErrorHandlerMiddleware>()
+            let logger = loggerFactory.CreateLogger<GiraffeErrorHandlerMiddleware>()
             try
                 return!
                     next.Invoke ctx
@@ -92,12 +92,12 @@ type LambdaErrorHandlerMiddleware (next          : RequestDelegate,
 /// ---------------------------
 
 type IApplicationBuilder with
-    member this.UseLambda (handler : HttpHandler) =
-        this.UseMiddleware<LambdaMiddleware>(handler)
+    member this.UseGiraffe (handler : HttpHandler) =
+        this.UseMiddleware<GiraffeMiddleware>(handler)
         |> ignore
 
-    member this.UseLambdaErrorHandler (handler : ErrorHandler) =
-        this.UseMiddleware<LambdaErrorHandlerMiddleware>(handler)
+    member this.UseGiraffeErrorHandler (handler : ErrorHandler) =
+        this.UseMiddleware<GiraffeErrorHandlerMiddleware>(handler)
         |> ignore
 
 type IServiceCollection with

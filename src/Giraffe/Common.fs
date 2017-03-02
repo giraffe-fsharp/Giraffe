@@ -1,4 +1,4 @@
-module AspNetCore.Lambda.Common
+module Giraffe.Common
 
 open System
 open System.IO

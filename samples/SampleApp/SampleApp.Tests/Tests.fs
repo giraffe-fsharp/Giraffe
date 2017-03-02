@@ -9,7 +9,7 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.TestHost
 open Microsoft.Extensions.DependencyInjection
 open Xunit
-open AspNetCore.Lambda.Middleware
+open Giraffe.Middleware
 
 // ---------------------------------
 // Test server/client setup

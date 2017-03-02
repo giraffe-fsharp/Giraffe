@@ -1,8 +1,8 @@
-module AspNetCore.Lambda.FormatExpressionTests
+module Giraffe.FormatExpressionTests
 
 open System
 open Xunit
-open AspNetCore.Lambda.FormatExpressions
+open Giraffe.FormatExpressions
 
 let assertFail msg = Assert.True(false, msg)
 

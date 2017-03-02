@@ -2,20 +2,20 @@ cls
 
 dotnet --version
 
-dotnet restore src/AspNetCore.Lambda
+dotnet restore src/Giraffe
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-dotnet build src/AspNetCore.Lambda
+dotnet build src/Giraffe
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 
-dotnet restore tests/AspNetCore.Lambda.Tests
+dotnet restore tests/Giraffe.Tests
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-dotnet build tests/AspNetCore.Lambda.Tests
+dotnet build tests/Giraffe.Tests
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-dotnet test tests/AspNetCore.Lambda.Tests/AspNetCore.Lambda.Tests.fsproj
+dotnet test tests/Giraffe.Tests/Giraffe.Tests.fsproj
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 
@@ -35,5 +35,5 @@ dotnet test samples/SampleApp/SampleApp.Tests/SampleApp.Tests.fsproj
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 
-dotnet pack src/AspNetCore.Lambda -c Release
+dotnet pack src/Giraffe -c Release
 if %errorlevel% neq 0 exit /b %errorlevel%

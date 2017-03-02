@@ -1,4 +1,4 @@
-module AspNetCore.Lambda.HttpHandlerTests
+module Giraffe.HttpHandlerTests
 
 open System
 open System.Collections.Generic
@@ -11,9 +11,9 @@ open Microsoft.Extensions.Logging
 open Xunit
 open NSubstitute
 open RazorLight
-open AspNetCore.Lambda.HttpHandlers
-open AspNetCore.Lambda.Middleware
-open AspNetCore.Lambda.Tests.Models
+open Giraffe.HttpHandlers
+open Giraffe.Middleware
+open Giraffe.Tests.Models
 
 // ---------------------------------
 // Helper functions

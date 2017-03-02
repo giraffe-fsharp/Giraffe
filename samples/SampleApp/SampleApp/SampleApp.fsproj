@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\AspNetCore.Lambda\AspNetCore.Lambda.fsproj" />
+    <ProjectReference Include="..\..\..\src\Giraffe\Giraffe.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
