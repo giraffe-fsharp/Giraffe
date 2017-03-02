@@ -10,6 +10,16 @@ open RazorLight
 open AspNetCore.Lambda.HttpHandlers
 
 /// ---------------------------
+/// Logging helper functions
+/// ---------------------------
+
+let private getRequestInfo (ctx : HttpContext) =
+    (ctx.Request.Protocol,
+     ctx.Request.Method,
+     ctx.Request.Path.ToString())
+    |||> sprintf "%s %s %s"
+
+/// ---------------------------
 /// Default middleware
 /// ---------------------------
 
@@ -30,6 +40,13 @@ type LambdaMiddleware (next          : RequestDelegate,
                     Logger      = logger
                 }
             let! result = handler httpHandlerContext
+
+            if logger.IsEnabled LogLevel.Debug then
+                match result with
+                | Some _ -> sprintf "LambdaMiddleware returned Some for %s" (getRequestInfo ctx)
+                | None   -> sprintf "LambdaMiddleware returned None for %s" (getRequestInfo ctx)
+                |> logger.LogDebug
+
             if (result.IsNone) then
                 return!
                     next.Invoke ctx

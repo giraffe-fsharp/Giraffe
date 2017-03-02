@@ -33,33 +33,6 @@ type HttpHandler = HttpHandlerContext -> HttpHandlerResult
 type ErrorHandler = exn -> HttpHandler
 
 /// ---------------------------
-/// Logging helper functions
-/// ---------------------------
-
-let private getRequestInfo ctx =
-    (ctx.HttpContext.Request.Protocol,
-     ctx.HttpContext.Request.Method,
-     ctx.HttpContext.Request.Path.ToString())
-    |||> sprintf "%s %s %s"
-// let private logResult (msg    : string)
-//                       (ctx    : HttpHandlerContext)
-//                       (result : HttpHandlerContext option) =
-//     if ctx.Logger.IsEnabled LogLevel.Debug then
-//         match result with
-//         | Some ctx  -> sprintf "passed %s" msg
-//         | None      -> sprintf "failed %s" msg
-//         |> sprintf "%s %s" (getRequestInfo ctx)
-//         |> ctx.Logger.LogDebug
-//     result
-
-let private logDebug (ctx : HttpHandlerContext)
-                (msg : string) =
-    
-    if ctx.Logger.IsEnabled LogLevel.Debug then
-        sprintf "%s %s" (getRequestInfo ctx) msg
-        |> ctx.Logger.LogDebug
-
-/// ---------------------------
 /// Sub route helper functions
 /// ---------------------------
 
@@ -141,9 +114,7 @@ let rec choose (handlers : HttpHandler list) =
 let httpVerb (verb : string) =
     fun (ctx : HttpHandlerContext) ->
         if ctx.HttpContext.Request.Method.Equals verb
-        then
-            sprintf "matched HTTP verb '%s'" verb |> logDebug ctx
-            Some ctx
+        then Some ctx
         else None
         |> async.Return
 
@@ -162,9 +133,7 @@ let mustAccept (mimeTypes : string list) =
         |> Seq.map    (fun h -> h.ToString())
         |> Seq.exists (fun h -> mimeTypes |> Seq.contains h)
         |> function
-            | true  ->
-                logDebug ctx "passed mustAccept handler"
-                Some ctx
+            | true  -> Some ctx
             | false -> None
             |> async.Return
 
@@ -172,7 +141,6 @@ let mustAccept (mimeTypes : string list) =
 let challenge (authScheme : string) =
     fun (ctx : HttpHandlerContext) ->
         async {
-            sprintf "challenged by %s" authScheme |> logDebug ctx
             let auth = ctx.HttpContext.Authentication
             do! auth.ChallengeAsync authScheme |> Async.AwaitTask
             return Some ctx
@@ -182,7 +150,6 @@ let challenge (authScheme : string) =
 let signOff (authScheme : string) =
     fun (ctx : HttpHandlerContext) ->
         async {
-            sprintf "signing off from %s" authScheme |> logDebug ctx
             let auth = ctx.HttpContext.Authentication
             do! auth.SignOutAsync authScheme |> Async.AwaitTask
             return Some ctx
@@ -194,9 +161,7 @@ let requiresAuthentication (authFailedHandler : HttpHandler) =
     fun (ctx : HttpHandlerContext) ->
         let user = ctx.HttpContext.User
         if isNotNull user && user.Identity.IsAuthenticated
-        then
-            logDebug ctx "passed authentication check"
-            async.Return (Some ctx)
+        then async.Return (Some ctx)
         else authFailedHandler ctx
 
 /// Validates if a user is in a specific role.
@@ -205,9 +170,7 @@ let requiresRole (role : string) (authFailedHandler : HttpHandler) =
     fun (ctx : HttpHandlerContext) ->
         let user = ctx.HttpContext.User
         if user.IsInRole role
-        then
-            logDebug ctx "passed role requirement"
-            async.Return (Some ctx)
+        then async.Return (Some ctx)
         else authFailedHandler ctx
 
 /// Validates if a user has at least one of the specified roles.
@@ -218,9 +181,7 @@ let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) =
         roles
         |> List.exists user.IsInRole 
         |> function
-            | true ->
-                logDebug ctx "passed role requirement"
-                async.Return (Some ctx)
+            | true  -> async.Return (Some ctx)
             | false -> authFailedHandler ctx
 
 /// Attempts to clear the current HttpResponse object.
@@ -235,9 +196,7 @@ let clearResponse =
 let route (path : string) =
     fun (ctx : HttpHandlerContext) ->
         if (getPath ctx.HttpContext).Equals path
-        then
-            (sprintf "matched route '%s'" path) |> logDebug ctx
-            Some ctx
+        then Some ctx
         else None
         |> async.Return
 
@@ -249,17 +208,13 @@ let routef (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
         tryMatchInput path (getPath ctx.HttpContext) false
         |> function
             | None      -> async.Return None
-            | Some args ->
-                sprintf "matched routef '%s'" path.Value |> logDebug ctx
-                routeHandler args ctx
+            | Some args -> routeHandler args ctx
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 let routeCi (path : string) =
     fun (ctx : HttpHandlerContext) ->
         if String.Equals(getPath ctx.HttpContext, path, StringComparison.CurrentCultureIgnoreCase)
-        then
-            sprintf "matched routeCi '%s'" path |> logDebug ctx
-            Some ctx
+        then Some ctx
         else None
         |> async.Return
 
@@ -271,17 +226,13 @@ let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
         tryMatchInput path (getPath ctx.HttpContext) true
         |> function
             | None      -> async.Return None
-            | Some args ->
-                sprintf "matched routeCif '%s'" path.Value |> logDebug ctx
-                routeHandler args ctx
+            | Some args -> routeHandler args ctx
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
 let routeStartsWith (subPath : string) =
     fun (ctx : HttpHandlerContext) ->
         if (getPath ctx.HttpContext).StartsWith subPath 
-        then
-            sprintf "matched routeStartsWith '%s'" subPath |> logDebug ctx
-            Some ctx
+        then Some ctx
         else None
         |> async.Return
 
@@ -289,9 +240,7 @@ let routeStartsWith (subPath : string) =
 let routeStartsWithCi (subPath : string) =
     fun (ctx : HttpHandlerContext) ->
         if (getPath ctx.HttpContext).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase) 
-        then
-            sprintf "matched routeStartsWithCi '%s'" subPath |> logDebug ctx
-            Some ctx
+        then Some ctx
         else None
         |> async.Return
 
