@@ -1,4 +1,4 @@
-namespace AspNetCore.Lambda.Tests.Models
+namespace Giraffe.Tests.Models
 
 [<CLIMutable>]
 type Person =  

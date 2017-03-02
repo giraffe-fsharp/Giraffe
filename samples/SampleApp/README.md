@@ -1,6 +1,6 @@
 # Sample Application
 
-A sample application for AspNetCore.Lambda.
+A sample application for Giraffe.
 
 This is a small sample app which only contains some basics:
 

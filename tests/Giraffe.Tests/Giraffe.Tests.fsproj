@@ -4,8 +4,8 @@
     <TargetFramework>netcoreapp1.1</TargetFramework>
     <PreserveCompilationContext>true</PreserveCompilationContext>
     <DebugType>portable</DebugType>
-    <AssemblyName>AspNetCore.Lambda.Tests</AssemblyName>
-    <PackageId>AspNetCore.Lambda.Tests</PackageId>
+    <AssemblyName>Giraffe.Tests</AssemblyName>
+    <PackageId>Giraffe.Tests</PackageId>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     <PackageTargetFallback>$(PackageTargetFallback);dotnet5.4;portable-net451+win8</PackageTargetFallback>
     <RuntimeFrameworkVersion>1.1.0</RuntimeFrameworkVersion>
@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\AspNetCore.Lambda\AspNetCore.Lambda.fsproj" />
+    <ProjectReference Include="..\..\src\Giraffe\Giraffe.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

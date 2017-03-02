@@ -5,7 +5,7 @@
 
 Write-Host "Parsing project file..."
 
-[xml]$proj = Get-Content -Path "./src/AspNetCore.Lambda/AspNetCore.Lambda.fsproj"
+[xml]$proj = Get-Content -Path "./src/Giraffe/Giraffe.fsproj"
 
 $versionPrefix = $proj.Project.PropertyGroup.VersionPrefix
 

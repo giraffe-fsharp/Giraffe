@@ -1,4 +1,4 @@
-module AspNetCore.Lambda.HttpHandlers
+module Giraffe.HttpHandlers
 
 open System
 open System.Text
@@ -11,8 +11,8 @@ open FSharp.Core.Printf
 open Newtonsoft.Json
 open DotLiquid
 open RazorLight
-open AspNetCore.Lambda.Common
-open AspNetCore.Lambda.FormatExpressions
+open Giraffe.Common
+open Giraffe.FormatExpressions
 
 type HttpHandlerContext =
     {
