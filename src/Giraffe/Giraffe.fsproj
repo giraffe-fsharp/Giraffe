@@ -15,7 +15,7 @@
     <PackageId>Giraffe</PackageId>
     <PackageTags>Giraffe;ASP.NET Core;Lambda;FSharp;Functional;Http;Web;Framework;Micro;Service</PackageTags>
     <PackageReleaseNotes>https://github.com/dustinmoris/giraffe/releases</PackageReleaseNotes>
-    <PackageIconUrl>https://raw.githubusercontent.com/dustinmoris/giraffe/master/giraffe.png</PackageIconUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/dustinmoris/giraffe/master/giraffe-64x64.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/dustinmoris/giraffe</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/dustinmoris/giraffe/master/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
