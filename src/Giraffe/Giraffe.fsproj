@@ -13,7 +13,7 @@
     <Optimize>True</Optimize>
     <OutputType>Library</OutputType>
     <PackageId>Giraffe</PackageId>
-    <PackageTags>Giraffe;ASP.NET Core;Lambda;FSharp;Functional;Http;Web;Framework</PackageTags>
+    <PackageTags>Giraffe;ASP.NET Core;Lambda;FSharp;Functional;Http;Web;Framework;Micro;Service</PackageTags>
     <PackageReleaseNotes>https://github.com/dustinmoris/giraffe/releases</PackageReleaseNotes>
     <PackageIconUrl>https://raw.githubusercontent.com/dustinmoris/giraffe/master/giraffe.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/dustinmoris/giraffe</PackageProjectUrl>
