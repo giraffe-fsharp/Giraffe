@@ -80,8 +80,14 @@ The only building block in ASP.NET Core Lambda is a so called `HttpHandler`:
 ```fsharp
 type HttpHandlerContext =
     {
+        /// ASP.NET Core HttpContext
         HttpContext : HttpContext
+
+        /// Service Locator to retrieve registered services on demand
         Services    : IServiceProvider
+
+        /// Default logger
+        Logger      : ILogger
     }
 
 type HttpHandlerResult = Async<HttpHandlerContext option>

@@ -33,6 +33,18 @@ let assertFailf format args =
     let msg = sprintf format args
     Assert.True(false, msg)
 
+let initNewContext() =
+    let ctx      = Substitute.For<HttpContext>()
+    let services = Substitute.For<IServiceProvider>()
+    let logger   = Substitute.For<ILogger>()
+    let handlerCtx =
+        {
+            HttpContext = ctx
+            Services    = services
+            Logger      = logger
+        }
+    ctx, handlerCtx
+
 // ---------------------------------
 // Test Types
 // ---------------------------------
@@ -50,9 +62,7 @@ type Dummy =
 
 [<Fact>]
 let ``GET "/" returns "Hello World"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-
+    let ctx, hctx = initNewContext()
     let app = 
         GET >=> choose [ 
             route "/"    >=> text "Hello World"
@@ -65,7 +75,7 @@ let ``GET "/" returns "Hello World"`` () =
     let expected = "Hello World"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -77,9 +87,7 @@ let ``GET "/" returns "Hello World"`` () =
 
 [<Fact>]
 let ``GET "/foo" returns "bar"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app = 
         GET >=> choose [ 
             route "/"    >=> text "Hello World"
@@ -92,7 +100,7 @@ let ``GET "/foo" returns "bar"`` () =
     let expected = "bar"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -104,9 +112,7 @@ let ``GET "/foo" returns "bar"`` () =
 
 [<Fact>]
 let ``GET "/FOO" returns 404 "Not found"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app = 
         GET >=> choose [ 
             route "/"    >=> text "Hello World"
@@ -119,7 +125,7 @@ let ``GET "/FOO" returns 404 "Not found"`` () =
     let expected = "Not found"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -132,9 +138,7 @@ let ``GET "/FOO" returns 404 "Not found"`` () =
 
 [<Fact>]
 let ``GET "/json" returns json object`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app = 
         GET >=> choose [ 
             route "/"     >=> text "Hello World"
@@ -148,7 +152,7 @@ let ``GET "/json" returns json object`` () =
     let expected = "{\"Foo\":\"john\",\"Bar\":\"doe\",\"Age\":30}"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -160,9 +164,7 @@ let ``GET "/json" returns json object`` () =
 
 [<Fact>]
 let ``POST "/post/1" returns "1"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app = 
         choose [
             GET >=> choose [ 
@@ -179,7 +181,7 @@ let ``POST "/post/1" returns "1"`` () =
     let expected = "1"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -191,9 +193,7 @@ let ``POST "/post/1" returns "1"`` () =
 
 [<Fact>]
 let ``POST "/post/2" returns "2"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app = 
         choose [
             GET >=> choose [ 
@@ -210,7 +210,7 @@ let ``POST "/post/2" returns "2"`` () =
     let expected = "2"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -222,9 +222,7 @@ let ``POST "/post/2" returns "2"`` () =
 
 [<Fact>]
 let ``PUT "/post/2" returns 404 "Not found"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app = 
         choose [
             GET >=> choose [ 
@@ -241,7 +239,7 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
     let expected = "Not found"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -254,9 +252,7 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
 
 [<Fact>]
 let ``GET "/dotLiquid" returns rendered html view`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let dotLiquidTemplate =
         "<html><head><title>DotLiquid</title></head>" + 
         "<body><p>{{ foo }} {{ bar }} is {{ age }} years old.</p>" +
@@ -279,7 +275,7 @@ let ``GET "/dotLiquid" returns rendered html view`` () =
     let expected = "<html><head><title>DotLiquid</title></head><body><p>John Doe is 30 years old.</p></body></html>"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -292,9 +288,7 @@ let ``GET "/dotLiquid" returns rendered html view`` () =
 
 [<Fact>]
 let ``POST "/text" with supported Accept header returns "good"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app = 
         choose [
             GET >=> choose [ 
@@ -315,7 +309,7 @@ let ``POST "/text" with supported Accept header returns "good"`` () =
     let expected = "text"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -328,9 +322,7 @@ let ``POST "/text" with supported Accept header returns "good"`` () =
 
 [<Fact>]
 let ``POST "/json" with supported Accept header returns "json"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app = 
         choose [
             GET >=> choose [ 
@@ -351,7 +343,7 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
     let expected = "\"json\""
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -364,9 +356,7 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
 
 [<Fact>]
 let ``POST "/either" with supported Accept header returns "either"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app = 
         choose [
             GET >=> choose [ 
@@ -387,7 +377,7 @@ let ``POST "/either" with supported Accept header returns "either"`` () =
     let expected = "either"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -400,9 +390,7 @@ let ``POST "/either" with supported Accept header returns "either"`` () =
 
 [<Fact>]
 let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app = 
         choose [
             GET >=> choose [ 
@@ -423,7 +411,7 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
     let expected = "Not found"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -436,9 +424,7 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
 
 [<Fact>]
 let ``GET "/JSON" returns "BaR"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app =
         GET >=> choose [ 
             route   "/"       >=> text "Hello World"
@@ -453,7 +439,7 @@ let ``GET "/JSON" returns "BaR"`` () =
     let expected = "BaR"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -465,9 +451,7 @@ let ``GET "/JSON" returns "BaR"`` () =
 
 [<Fact>]
 let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app =
         GET >=> choose [ 
             route   "/"       >=> text "Hello World"
@@ -482,7 +466,7 @@ let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
     let expected = "blah%20blah"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -494,9 +478,7 @@ let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
 
 [<Fact>]
 let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app =
         GET >=> choose [ 
             route   "/"       >=> text "Hello World"
@@ -511,7 +493,7 @@ let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
     let expected = "Name: johndoe, Age: 59"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -523,9 +505,7 @@ let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
 
 [<Fact>]
 let ``POST "/POsT/1" returns "1"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app =
         choose [
             GET >=> choose [ 
@@ -541,7 +521,7 @@ let ``POST "/POsT/1" returns "1"`` () =
     let expected = "1"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -553,9 +533,7 @@ let ``POST "/POsT/1" returns "1"`` () =
 
 [<Fact>]
 let ``POST "/POsT/523" returns "523"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app =
         choose [
             GET >=> choose [ 
@@ -571,7 +549,7 @@ let ``POST "/POsT/523" returns "523"`` () =
     let expected = "523"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -583,9 +561,7 @@ let ``POST "/POsT/523" returns "523"`` () =
 
 [<Fact>]
 let ``GET "/api" returns "api root"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app = 
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -605,7 +581,7 @@ let ``GET "/api" returns "api root"`` () =
     let expected = "api root"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -617,9 +593,7 @@ let ``GET "/api" returns "api root"`` () =
 
 [<Fact>]
 let ``GET "/api/users" returns "users"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app = 
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -639,7 +613,7 @@ let ``GET "/api/users" returns "users"`` () =
     let expected = "users"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -651,9 +625,7 @@ let ``GET "/api/users" returns "users"`` () =
 
 [<Fact>]
 let ``GET "/api/test" returns "test"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app = 
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -673,7 +645,7 @@ let ``GET "/api/test" returns "test"`` () =
     let expected = "test"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -685,9 +657,7 @@ let ``GET "/api/test" returns "test"`` () =
 
 [<Fact>]
 let ``GET "/api/v2/users" returns "users v2"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app = 
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -716,7 +686,7 @@ let ``GET "/api/v2/users" returns "users v2"`` () =
     let expected = "users v2"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -728,9 +698,7 @@ let ``GET "/api/v2/users" returns "users v2"`` () =
 
 [<Fact>]
 let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    
+    let ctx, hctx = initNewContext()
     let app = 
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -749,7 +717,7 @@ let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
     let expected = "yadayada"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 
@@ -759,12 +727,10 @@ let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
         let body = getBody ctx
         Assert.Equal(expected, body)
 
-
 [<Fact>]
 let ``GET "/razor" returns rendered html view`` () =
-    let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
-    services.GetService(typeof<IRazorLightEngine>).Returns(EngineFactory.CreatePhysical(Directory.GetCurrentDirectory())) 
+    let ctx, hctx = initNewContext()
+    hctx.Services.GetService(typeof<IRazorLightEngine>).Returns(EngineFactory.CreatePhysical(Directory.GetCurrentDirectory())) 
     |> ignore
 
     let app = GET >=> route "/razor" >=> razorView "Person.cshtml" { Name = "razor" }
@@ -775,7 +741,7 @@ let ``GET "/razor" returns rendered html view`` () =
     let expected = "<html><head><title>Hello, razor</title></head><body><h3>Hello, razor</h3></body></html>"
 
     let result = 
-        { HttpContext = ctx; Services = services }
+        hctx
         |> app
         |> Async.RunSynchronously
 

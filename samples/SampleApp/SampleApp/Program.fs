@@ -109,7 +109,7 @@ let configureServices (services : IServiceCollection) =
     services.AddRazorEngine(viewsFolderPath) |> ignore
 
 let configureLogging (loggerFactory : ILoggerFactory) =
-    loggerFactory.AddConsole().AddDebug() |> ignore
+    loggerFactory.AddConsole(LogLevel.Trace).AddDebug() |> ignore
 
 
 [<EntryPoint>]

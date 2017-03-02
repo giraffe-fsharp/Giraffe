@@ -16,8 +16,14 @@ open AspNetCore.Lambda.FormatExpressions
 
 type HttpHandlerContext =
     {
+        /// ASP.NET Core HttpContext
         HttpContext : HttpContext
+
+        /// Service Locator to retrieve registered services on demand
         Services    : IServiceProvider
+
+        /// Default logger
+        Logger      : ILogger
     }
 
 type HttpHandlerResult = Async<HttpHandlerContext option>
@@ -27,11 +33,8 @@ type HttpHandler = HttpHandlerContext -> HttpHandlerResult
 type ErrorHandler = exn -> HttpHandler
 
 /// ---------------------------
-/// Private helper functions
+/// Sub route helper functions
 /// ---------------------------
-
-let private strOption (str : string) =
-    if String.IsNullOrEmpty str then None else Some str
 
 [<Literal>]
 let private RouteKey = "aspnet_lambda_route"
@@ -99,12 +102,12 @@ let rec choose (handlers : HttpHandler list) =
     fun (ctx : HttpHandlerContext) ->
         async {
             match handlers with
-            | []                -> return None
-            | handler :: tail   ->
+            | []              -> return None
+            | handler :: tail ->
                 let! result = handler ctx
                 match result with
-                | Some c    -> return Some c
-                | None      -> return! choose tail ctx
+                | Some c -> return Some c
+                | None   -> return! choose tail ctx
         }
 
 /// Filters an incoming HTTP request based on the HTTP verb
@@ -115,11 +118,11 @@ let httpVerb (verb : string) =
         else None
         |> async.Return
 
-let GET     = httpVerb "GET"    : HttpHandler
-let POST    = httpVerb "POST"   : HttpHandler
-let PUT     = httpVerb "PUT"    : HttpHandler
-let PATCH   = httpVerb "PATCH"  : HttpHandler
-let DELETE  = httpVerb "DELETE" : HttpHandler
+let GET     = httpVerb "GET"
+let POST    = httpVerb "POST"
+let PUT     = httpVerb "PUT"
+let PATCH   = httpVerb "PATCH"
+let DELETE  = httpVerb "DELETE"
 
 /// Filters an incoming HTTP request based on the accepted
 /// mime types of the client.
@@ -132,7 +135,7 @@ let mustAccept (mimeTypes : string list) =
         |> function
             | true  -> Some ctx
             | false -> None
-            |> async.Return          
+            |> async.Return
 
 /// Challenges the client to authenticate with a given authentication scheme.
 let challenge (authScheme : string) =
@@ -222,7 +225,7 @@ let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
     fun (ctx : HttpHandlerContext) ->
         tryMatchInput path (getPath ctx.HttpContext) true
         |> function
-            | None      -> None |> async.Return
+            | None      -> async.Return None
             | Some args -> routeHandler args ctx
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
