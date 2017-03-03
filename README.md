@@ -1,4 +1,6 @@
-# ![Giraffe](https://raw.githubusercontent.com/dustinmoris/AspNetCore.Lambda/master/giraffe-64x64.png) Giraffe (formerly known as ASP.NET Core Lambda)
+# ![Giraffe](https://raw.githubusercontent.com/dustinmoris/AspNetCore.Lambda/master/giraffe-64x64.png) Giraffe
+
+(formerly known as ASP.NET Core Lambda)
 
 A functional ASP.NET Core micro framework for building rich web applications.
 
