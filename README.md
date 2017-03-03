@@ -1,4 +1,4 @@
-# ![Giraffe](https://raw.githubusercontent.com/dustinmoris/AspNetCore.Lambda/master/giraffe-64x64.png) Giraffe
+# ![Giraffe](https://raw.githubusercontent.com/dustinmoris/AspNetCore.Lambda/master/giraffe-64x64.png) Giraffe (formerly known as ASP.NET Core Lambda)
 
 A functional ASP.NET Core micro framework for building rich web applications.
 
@@ -9,7 +9,13 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 [![Build history](https://buildstats.info/appveyor/chart/dustinmoris/aspnetcore-lambda?branch=master&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/aspnetcore-lambda/history)
 
-**ATTENTION: THIS PROJECT IS STILL IN ALPHA STAGE**
+#### ATTENTION:
+
+This project is still in alpha stage.
+
+Giraffe was formerly known as [ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) and has been recently [renamed to better distinguish from AWS Lambda](https://github.com/dustinmoris/Giraffe/issues/15) as well as establish a more unique brand.
+
+The old NuGet package has been unlisted and and will not receive any updates any more. Please use the new NuGet package [Giraffe](https://www.nuget.org/packages/Giraffe) going forward.
 
 ## Table of contents
 
@@ -52,6 +58,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Installation](#installation)
 - [Sample applications](#sample-applications)
+- [Benchmarks](#benchmarks)
 - [Building and developing](#building-and-developing)
 - [Contributing](#contributing)
 - [Contributors](#contributors)
@@ -716,6 +723,12 @@ type Startup() =
 There is a basic sample application in the `/samples/SampleApp` folder.
 
 More sample applications will be added in the future.
+
+## Benchmarks
+
+Currently Giraffe has only been tested against a simple plain text route and measured the total amount of handled requests per second. The latest result yielded an average of 79093 req/s over a period of 10 seconds, which was only closely after plain Kestrel which was capable of handling 79399 req/s on average.
+
+Please check out [Jimmy Byrd](https://github.com/TheAngryByrd)'s [dotnet-web-benchmarks](https://github.com/TheAngryByrd/dotnet-web-benchmarks) for more details.
 
 ## Building and developing
 
