@@ -1,7 +1,5 @@
 # ![Giraffe](https://raw.githubusercontent.com/dustinmoris/AspNetCore.Lambda/master/giraffe-64x64.png) Giraffe
 
-*(formerly known as ASP.NET Core Lambda)*
-
 A functional ASP.NET Core micro framework for building rich web applications.
 
 Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) for more information.
@@ -17,7 +15,7 @@ This project is still in alpha stage.
 
 Giraffe was formerly known as [ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) and has been recently [renamed to better distinguish from AWS Lambda](https://github.com/dustinmoris/Giraffe/issues/15) as well as establish a more unique brand.
 
-The old NuGet package has been unlisted and and will not receive any updates any more. Please use the new NuGet package [Giraffe](https://www.nuget.org/packages/Giraffe) going forward.
+The old NuGet package has been unlisted and will not receive any updates any more. Please use the new NuGet package [Giraffe](https://www.nuget.org/packages/Giraffe) going forward.
 
 ## Table of contents
 
