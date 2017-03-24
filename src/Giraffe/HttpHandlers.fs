@@ -37,7 +37,7 @@ type ErrorHandler = exn -> HttpHandler
 /// ---------------------------
 
 [<Literal>]
-let private RouteKey = "aspnet_lambda_route"
+let private RouteKey = "giraffe_route"
 
 let private getSavedSubPath (ctx : HttpContext) =
     if ctx.Items.ContainsKey RouteKey

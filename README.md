@@ -1,13 +1,13 @@
-# ![Giraffe](https://raw.githubusercontent.com/dustinmoris/AspNetCore.Lambda/master/giraffe-64x64.png) Giraffe
+# ![Giraffe](https://raw.githubusercontent.com/dustinmoris/Giraffe/master/giraffe-64x64.png) Giraffe
 
 A functional ASP.NET Core micro framework for building rich web applications.
 
 Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) for more information.
 
-[![Build status](https://ci.appveyor.com/api/projects/status/0ft2427dflip7wti/branch/master?svg=true)](https://ci.appveyor.com/project/dustinmoris/aspnetcore-lambda/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/0ft2427dflip7wti/branch/master?svg=true)](https://ci.appveyor.com/project/dustinmoris/giraffe/branch/master)
 [![NuGet Info](https://buildstats.info/nuget/Giraffe?includePreReleases=true)](https://www.nuget.org/packages/Giraffe/)
 
-[![Build history](https://buildstats.info/appveyor/chart/dustinmoris/aspnetcore-lambda?branch=master&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/aspnetcore-lambda/history)
+[![Build history](https://buildstats.info/appveyor/chart/dustinmoris/giraffe?branch=master&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/giraffe/history)
 
 #### ATTENTION:
 
@@ -734,11 +734,11 @@ Please check out [Jimmy Byrd](https://github.com/TheAngryByrd)'s [dotnet-web-ben
 
 Giraffe is using the new MSBuild driven `.fsproj` project system that comes with [.NET Core SDK RC4](https://github.com/dotnet/netcorecli-fsc/wiki/.NET-Core-SDK-rc4).
 
-You can either install [Visual Studio 2017 RC](https://www.visualstudio.com/vs/visual-studio-2017-rc/) which comes with the latest SDK or manually download and install the [.NET SDK RC4](https://github.com/dotnet/core/blob/master/release-notes/rc4-download.md).
+You can either install [Visual Studio 2017](https://www.visualstudio.com/vs/) which comes with the latest SDK or manually download and install the [.NET SDK 1.1](https://www.microsoft.com/net/download/core).
 
 After installation you should be able to run `build.cmd` to successfully build, test and package the library.
 
-Currently the best way to work with F# on .NET Core is to use [Visual Studio Code](https://code.visualstudio.com/) with the [Ionide](http://ionide.io/) extension.
+Currently the best way to work with F# on .NET Core is to use [Visual Studio Code](https://code.visualstudio.com/) with the [Ionide](http://ionide.io/) extension. Intellisense and debugging is supported with the latest version of both.
 
 ## Contributing
 
