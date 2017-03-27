@@ -18,9 +18,7 @@ open SampleApp.Models
 // ---------------------------------
 
 let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
-    let loggerFactory = ctx.Services.GetService<ILoggerFactory>()
-    let logger = loggerFactory.CreateLogger "ErrorHandlerLogger"
-    logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request")
+    ctx.Logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request")
     ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
 
 
@@ -77,7 +75,7 @@ let webApp =
                 route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
                 route  "/user"       >=> mustBeUser >=> userHandler
                 routef "/user/%i"    showUserHandler
-                route  "/razor"      >=> razorView "Person.cshtml" { Name = "Razor" }
+                route  "/razor"      >=> razorHtmlView "Person" { Name = "Razor" }
             ]
         setStatusCode 404 >=> text "Not Found" ]
 
@@ -113,14 +111,13 @@ let configureLogging (loggerFactory : ILoggerFactory) =
 
 
 [<EntryPoint>]
-let main argv =                                
-    let host =
-        WebHostBuilder()
-            .UseKestrel()
-            .UseContentRoot(Directory.GetCurrentDirectory())
-            .Configure(Action<IApplicationBuilder> configureApp)
-            .ConfigureServices(Action<IServiceCollection> configureServices)
-            .ConfigureLogging(Action<ILoggerFactory> configureLogging)
-            .Build()
-    host.Run()
+let main argv =
+    WebHostBuilder()
+        .UseKestrel()
+        .UseContentRoot(Directory.GetCurrentDirectory())
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(Action<IServiceCollection> configureServices)
+        .ConfigureLogging(Action<ILoggerFactory> configureLogging)
+        .Build()
+        .Run()
     0

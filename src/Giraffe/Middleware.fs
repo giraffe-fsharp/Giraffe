@@ -6,7 +6,8 @@ open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
-open RazorLight
+open Microsoft.Extensions.FileProviders
+open Microsoft.AspNetCore.Mvc.Razor
 open Giraffe.HttpHandlers
 
 /// ---------------------------
@@ -32,6 +33,7 @@ type GiraffeMiddleware (next          : RequestDelegate,
 
     member __.Invoke (ctx : HttpContext) =
         async {
+
             let logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
             let httpHandlerContext =
                 {
@@ -102,6 +104,9 @@ type IApplicationBuilder with
 
 type IServiceCollection with
     member this.AddRazorEngine (viewsFolderPath : string) =
-        viewsFolderPath
-        |> EngineFactory.CreatePhysical
-        |> this.AddSingleton<IRazorLightEngine>
+        this.Configure<RazorViewEngineOptions>(
+            fun options ->
+                options.FileProviders.Clear()
+                options.FileProviders.Add(new PhysicalFileProvider(viewsFolderPath)))
+            .AddMvc()
+        |> ignore

@@ -7,12 +7,14 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
+open Microsoft.AspNetCore.Mvc.Razor
+open Microsoft.AspNetCore.Mvc.ViewFeatures
 open FSharp.Core.Printf
 open Newtonsoft.Json
 open DotLiquid
-open RazorLight
 open Giraffe.Common
 open Giraffe.FormatExpressions
+open Giraffe.RazorEngine
 
 type HttpHandlerContext =
     {
@@ -269,7 +271,7 @@ let setStatusCode (statusCode : int) =
 let setHttpHeader (key : string) (value : obj) =
     fun (ctx : HttpHandlerContext) ->
         async {
-            ctx.HttpContext.Response.Headers.[key] <- new StringValues(value.ToString())
+            ctx.HttpContext.Response.Headers.[key] <- StringValues(value.ToString())
             return Some ctx
         }
 
@@ -277,7 +279,7 @@ let setHttpHeader (key : string) (value : obj) =
 let setBody (bytes : byte array) =
     fun (ctx : HttpHandlerContext) ->
         async {            
-            ctx.HttpContext.Response.Headers.["Content-Length"] <- new StringValues(bytes.Length.ToString())
+            ctx.HttpContext.Response.Headers.["Content-Length"] <- StringValues(bytes.Length.ToString())
             ctx.HttpContext.Response.Body.WriteAsync(bytes, 0, bytes.Length)
             |> Async.AwaitTask
             |> ignore
@@ -307,27 +309,6 @@ let xml (dataObj : obj) =
     setHttpHeader "Content-Type" "application/xml"
     >=> setBody (serializeXml dataObj)
 
-/// Renders a model and a template with the DotLiquid template engine and sets the HTTP response
-/// with the compiled output as well as the Content-Type HTTP header to the given value.
-let dotLiquid (contentType : string) (template : string) (model : obj) =
-    let view = Template.Parse template
-    setHttpHeader "Content-Type" contentType
-    >=> (model
-        |> Hash.FromAnonymousObject
-        |> view.Render
-        |> setBodyAsString)
-
-/// Renders a model and a HTML template with the DotLiquid template engine and sets the HTTP response
-/// with the compiled output as well as the Content-Type HTTP header to text/html.
-let htmlTemplate (relativeTemplatePath : string) (model : obj) = 
-    fun (ctx : HttpHandlerContext) ->
-        async {
-            let env = ctx.Services.GetService<IHostingEnvironment>()
-            let templatePath = env.ContentRootPath + relativeTemplatePath
-            let! template = readFileAsString templatePath
-            return! dotLiquid "text/html" template model ctx
-        }
-
 /// Reads a HTML file from disk and writes its contents to the body of the HTTP response
 /// with a Content-Type of text/html.
 let htmlFile (relativeFilePath : string) =
@@ -342,15 +323,56 @@ let htmlFile (relativeFilePath : string) =
                 >=> setBodyAsString html)
         }
 
-/// Parses and compiles a Razor view with the associated model and writes its contents to the response body.
-/// It also sets the HTTP header Content-Type to text/html.
-let razorView (viewName : string) (model : obj) =
+/// Renders a model and a template with the DotLiquid template engine and sets the HTTP response
+/// with the compiled output as well as the Content-Type HTTP header to the given value.
+let dotLiquid (contentType : string) (template : string) (model : obj) =
+    let view = Template.Parse template
+    setHttpHeader "Content-Type" contentType
+    >=> (model
+        |> Hash.FromAnonymousObject
+        |> view.Render
+        |> setBodyAsString)
+
+/// Reads a dotLiquid template file from disk and compiles it with the given model and sets
+/// the compiled output as well as the given contentType as the HTTP reponse.
+let dotLiquidTemplate (contentType : string) (templatePath : string) (model : obj) = 
     fun (ctx : HttpHandlerContext) ->
         async {
-            let engine = ctx.Services.GetService<IRazorLightEngine>()
-            let view = engine.Parse(viewName, model)
-            return!
-                ctx
-                |> (setHttpHeader "Content-Type" "text/html"
-                >=> setBodyAsString view)
+            let env = ctx.Services.GetService<IHostingEnvironment>()
+            let templatePath = env.ContentRootPath + templatePath
+            let! template = readFileAsString templatePath
+            return! dotLiquid contentType template model ctx
         }
+
+/// Reads a dotLiquid template file from disk and compiles it with the given model and sets
+/// the compiled output as the HTTP reponse with a Content-Type of text/html.
+let dotLiquidHtmlView (templatePath : string) (model : obj) = 
+    fun (ctx : HttpHandlerContext) ->
+        async {
+            let env = ctx.Services.GetService<IHostingEnvironment>()
+            let templatePath = env.ContentRootPath + templatePath
+            let! template = readFileAsString templatePath
+            return! dotLiquid "text/html" template model ctx
+        }
+
+/// Reads a razor view from disk and compiles it with the given model and sets
+/// the compiled output as the HTTP reponse with the given contentType.
+let razorView (contentType : string) (viewName : string) (model : 'T) =
+    fun (ctx : HttpHandlerContext) ->
+        async {
+            let engine = ctx.Services.GetService<IRazorViewEngine>()
+            let tempDataProvider = ctx.Services.GetService<ITempDataProvider>()
+            let! result = renderRazorView engine tempDataProvider ctx.HttpContext viewName model
+            match result with
+            | Error msg -> return (failwith msg)
+            | Ok output ->
+                return!
+                    ctx
+                    |> (setHttpHeader "Content-Type" contentType
+                    >=> setBodyAsString output)
+        }
+
+/// Reads a razor view from disk and compiles it with the given model and sets
+/// the compiled output as the HTTP reponse with a Content-Type of text/html.
+let razorHtmlView (viewName : string) (model : 'T) =
+    razorView "text/html" viewName model
