@@ -1,4 +1,4 @@
-namespace Models
+namespace _AppName.Models
 
 [<CLIMutable>]
 type Message =

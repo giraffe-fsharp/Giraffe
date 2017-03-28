@@ -1,14 +1,13 @@
 @model SampleApp.Models.Person
+@{ 
+    Layout = "_Layout";
+}
 
-<!DOCTYPE html>
-
-<html>
-<head>
-    <title>Hello, @Model.Name</title>
-</head>
-<body>
-    <div>
-        <h3>Hello, @Model.Name</h3>
-    </div>
-</body>
-</html>
+<div>
+    <h3>Hello, @Model.Name</h3>
+</div>
+<div>
+    @{
+        await Html.RenderPartialAsync("Partial");
+    }
+</div>

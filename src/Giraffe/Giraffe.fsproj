@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>Giraffe</AssemblyName>
-    <VersionPrefix>0.1.0-alpha006</VersionPrefix>
+    <VersionPrefix>0.1.0-alpha007</VersionPrefix>
     <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
     <Copyright>Copyright 2017 Dustin Moris Gorski</Copyright>
     <NeutralLanguage>en-GB</NeutralLanguage>
@@ -33,14 +33,15 @@
     <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.*" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="1.1.*" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="1.1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="1.1.*" />
     <PackageReference Include="Newtonsoft.Json" Version="9.0.*" />
     <PackageReference Include="DotLiquid" Version="2.0.*" />
-    <PackageReference Include="RazorLight" Version="1.0.0-rc2" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="Common.fs" />
     <Compile Include="FormatExpressions.fs" />
+    <Compile Include="RazorEngine.fs" />
     <Compile Include="HttpHandlers.fs" />
     <Compile Include="Middleware.fs" />
   </ItemGroup>

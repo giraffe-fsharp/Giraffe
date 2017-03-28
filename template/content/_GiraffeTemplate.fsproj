@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp1.1</TargetFramework>
     <DebugType>portable</DebugType>
-    <AssemblyName>_GiraffeTemplate</AssemblyName>
+    <AssemblyName>_AppName.</AssemblyName>
     <OutputType>Exe</OutputType>
-    <PackageId>_GiraffeTemplate</PackageId>
+    <PackageId>_AppName.</PackageId>
     <RuntimeFrameworkVersion>1.1.0</RuntimeFrameworkVersion>
     <EnableDefaultContentItems>false</EnableDefaultContentItems>
   </PropertyGroup>
@@ -20,7 +20,6 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="1.1.*" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="1.1.*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="1.1.*" />
-    <PackageReference Include="RazorLight" Version="1.0.0-rc2" />
     <PackageReference Include="Giraffe" Version="0.1.0-alpha006" />
   </ItemGroup>
 
@@ -29,12 +28,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Models\Message.fs" />
+    <Compile Include="Models\*.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Views\Index.cshtml">
+    <Content Include="Views\*.cshtml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

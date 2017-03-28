@@ -1,8 +1,7 @@
-module _GiraffeTemplate
+module _AppName
 
 open System
 open System.IO
-open System.Security.Claims
 open System.Collections.Generic
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
@@ -11,15 +10,7 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
-open Models
-
-// ---------------------------------
-// Error handler
-// ---------------------------------
-
-let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
-    ctx.Logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request")
-    ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
+open _AppName.Models
 
 // ---------------------------------
 // Web app
@@ -29,13 +20,20 @@ let webApp =
     choose [
         GET >=>
             choose [
-                route "/" >=> razorView "Index.cshtml" { Text = "Hello, Giraffe world!" }
+                route "/" >=> razorHtmlView "Index" { Text = "Hello world, from Giraffe!" }
             ]
-
         setStatusCode 404 >=> text "Not Found" ]
 
 // ---------------------------------
-// Main
+// Error handler
+// ---------------------------------
+
+let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
+    ctx.Logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
+    ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
+
+// ---------------------------------
+// Config and Main
 // ---------------------------------
 
 let configureApp (app : IApplicationBuilder) = 

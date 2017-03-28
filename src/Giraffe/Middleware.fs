@@ -6,7 +6,8 @@ open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
-open RazorLight
+open Microsoft.Extensions.FileProviders
+open Microsoft.AspNetCore.Mvc.Razor
 open Giraffe.HttpHandlers
 
 /// ---------------------------
@@ -102,6 +103,9 @@ type IApplicationBuilder with
 
 type IServiceCollection with
     member this.AddRazorEngine (viewsFolderPath : string) =
-        viewsFolderPath
-        |> EngineFactory.CreatePhysical
-        |> this.AddSingleton<IRazorLightEngine>
+        this.Configure<RazorViewEngineOptions>(
+            fun options ->
+                options.FileProviders.Clear()
+                options.FileProviders.Add(new PhysicalFileProvider(viewsFolderPath)))
+            .AddMvc()
+        |> ignore

@@ -10,10 +10,8 @@ open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Xunit
 open NSubstitute
-open RazorLight
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
-open Giraffe.Tests.Models
 
 // ---------------------------------
 // Helper functions
@@ -266,8 +264,8 @@ let ``GET "/dotLiquid" returns rendered html view`` () =
                 route "/"          >=> text "Hello World"
                 route "/dotLiquid" >=> dotLiquid "text/html" dotLiquidTemplate obj ]
             POST >=> choose [
-                route "/post/1" >=> text "1" ]
-            setStatusCode 404 >=> text "Not found" ]
+                route "/post/1"    >=> text "1" ]
+            setStatusCode 404      >=> text "Not found" ]
     
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/dotLiquid")) |> ignore
@@ -300,8 +298,8 @@ let ``POST "/text" with supported Accept header returns "good"`` () =
                 route "/either" >=> mustAccept [ "text/plain"; "application/json" ] >=> text "either" ]
             setStatusCode 404 >=> text "Not found" ]
     
-    let headers = new HeaderDictionary()
-    headers.Add("Accept", new StringValues("text/plain"))
+    let headers = HeaderDictionary()
+    headers.Add("Accept", StringValues("text/plain"))
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/text")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
@@ -334,8 +332,8 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
                 route "/either" >=> mustAccept [ "text/plain"; "application/json" ] >=> text "either" ]
             setStatusCode 404 >=> text "Not found" ]
 
-    let headers = new HeaderDictionary()
-    headers.Add("Accept", new StringValues("application/json"))
+    let headers = HeaderDictionary()
+    headers.Add("Accept", StringValues("application/json"))
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
@@ -368,8 +366,8 @@ let ``POST "/either" with supported Accept header returns "either"`` () =
                 route "/either" >=> mustAccept [ "text/plain"; "application/json" ] >=> text "either" ]
             setStatusCode 404 >=> text "Not found" ]
 
-    let headers = new HeaderDictionary()
-    headers.Add("Accept", new StringValues("application/json"))
+    let headers = HeaderDictionary()
+    headers.Add("Accept", StringValues("application/json"))
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/either")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
@@ -402,8 +400,8 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
                 route "/either" >=> mustAccept [ "text/plain"; "application/json" ] >=> text "either" ]
             setStatusCode 404 >=> text "Not found" ]
 
-    let headers = new HeaderDictionary()
-    headers.Add("Accept", new StringValues("application/xml"))
+    let headers = HeaderDictionary()
+    headers.Add("Accept", StringValues("application/xml"))
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/either")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
@@ -726,28 +724,3 @@ let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-
-[<Fact>]
-let ``GET "/razor" returns rendered html view`` () =
-    let ctx, hctx = initNewContext()
-    hctx.Services.GetService(typeof<IRazorLightEngine>).Returns(EngineFactory.CreatePhysical(Directory.GetCurrentDirectory())) 
-    |> ignore
-
-    let app = GET >=> route "/razor" >=> razorView "Person.cshtml" { Name = "razor" }
-    
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/razor")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "<html><head><title>Hello, razor</title></head><body><h3>Hello, razor</h3></body></html>"
-
-    let result = 
-        hctx
-        |> app
-        |> Async.RunSynchronously
-
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
-        Assert.Equal("text/html", ctx.HttpContext.Response |> getContentType)

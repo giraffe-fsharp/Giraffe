@@ -20,7 +20,6 @@
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.*" />
     <PackageReference Include="xunit" Version="2.2.0" />
     <PackageReference Include="NSubstitute" Version="2.0.1-rc" />
-    <PackageReference Include="RazorLight" Version="1.0.0-rc2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,15 +27,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Models.fs" />
     <Compile Include="FormatExpressionTests.fs" />
     <Compile Include="HttpHandlerTests.fs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Person.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
 </Project>

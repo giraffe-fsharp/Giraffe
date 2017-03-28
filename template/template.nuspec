@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <!-- Required elements-->
+        <id>dotnet-new-giraffe</id>
+        <version>0.1.0-alpha007</version>
+        <description>Template for Giraffe web applications.</description>
+        <authors>David Sinclair</authors>
+        <!-- Optional elements-->
+        <title>Giraffe dotnet-new template</title>
+        <owners>Dustin Moris Gorski</owners>
+        <projectUrl>https://github.com/dustinmoris/Giraffe</projectUrl>
+        <iconUrl>https://github.com/dustinmoris/Giraffe/blob/develop/giraffe-150x150.png</iconUrl>
+        <language>en-GB</language>
+        <tags>giraffe web app razor pages micro service dotnet new template</tags>
+        <packageTypes>
+            <packageType name="Template" />
+        </packageTypes>
+    </metadata>
+</package>

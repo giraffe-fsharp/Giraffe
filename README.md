@@ -1,4 +1,4 @@
-# ![Giraffe](https://raw.githubusercontent.com/dustinmoris/Giraffe/master/giraffe-64x64.png) Giraffe
+# Giraffe
 
 A functional ASP.NET Core micro framework for building rich web applications.
 
@@ -51,10 +51,12 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [text](#text)
     - [json](#json)
     - [xml](#xml)
-    - [dotLiquid](#dotliquid)
-    - [htmlTemplate](#htmltemplate)
     - [htmlFile](#htmlfile)
+    - [dotLiquid](#dotliquid)
+    - [dotLiquidTemplate](#dotliquidtemplate)
+    - [dotLiquidHtmlView](#dotliquidhtmlview)
     - [razorView](#razorview)
+    - [razorHtmlView](#razorhtmlview)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Installation](#installation)
 - [Sample applications](#sample-applications)
@@ -556,6 +558,21 @@ let app =
     ]
 ```
 
+### htmlFile
+
+`htmlFile` sets or modifies the body of the `HttpResponse` with the contents of a physical html file. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
+
+This http handler takes a relative path of a html file as input parameter and sets the HTTP header `Content-Type` to `text/html`.
+
+#### Example:
+
+```fsharp
+let app = 
+    choose [
+        route  "/" >=> htmlFile "index.html"
+    ]
+```
+
 ### dotLiquid
 
 `dotLiquid` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
@@ -579,11 +596,11 @@ let app =
     ]
 ```
 
-### htmlTemplate
+### dotLiquidTemplate
 
-`htmlTemplate` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
+`dotLiquidTemplate` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
 
-This http handler takes a relative path of a template file and the associated model as parameters. It also sets the HTTP header `Content-Type` to `text/html`.
+This http handler takes a relative path of a template file, an associated model and the contentType of the response as parameters.
 
 #### Example:
 
@@ -596,29 +613,34 @@ type Person =
 
 let app = 
     choose [
-        route  "/foo" >=> htmlTemplate "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
+        route  "/foo" >=> dotLiquidTemplate "text/html" "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
     ]
 ```
 
-### htmlFile
+### dotLiquidHtmlView
 
-`htmlFile` sets or modifies the body of the `HttpResponse` with the contents of a physical html file. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
-
-This http handler takes a relative path of a html file as input parameter and sets the HTTP header `Content-Type` to `text/html`.
+`dotLiquidHtmlView` is the same as `dotLiquidTemplate` except that it automatically sets the response as `text/html`.
 
 #### Example:
 
 ```fsharp
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
 let app = 
     choose [
-        route  "/" >=> htmlFile "index.html"
+        route  "/foo" >=> dotLiquidHtmlView "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
     ]
 ```
+
 ### razorView
 
-`razorView` uses the [RazorLight](https://github.com/toddams/RazorLight) view engine to set or modify the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
+`razorView` uses the official ASP.NET Core MVC Razor view engine to compile a page and set the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
 
-The `razorView` handler requires the view name and an object model to be passed in and must be enabled through the `AddRazorEngine` function during start-up.
+The `razorView` handler requires the view name, an object model and the contentType of the response to be passed in. It also requires to be enabled through the `AddRazorEngine` function during start-up.
 
 #### Example:
 Add the razor engine service during start-up:
@@ -637,7 +659,34 @@ let model = { WelcomeText = "Hello World" }
 
 let app = 
     choose [
-        route  "/" >=> razorView "Index.cshtml" model
+        // Assuming there is a view called "Index.cshtml"
+        route  "/" >=> razorView "text/html" "Index" model
+    ]
+```
+
+### razorHtmlView
+
+`razorHtmlView` is the same as `razorView` except that it automatically sets the response as `text/html`.
+
+#### Example:
+Add the razor engine service during start-up:
+
+```fsharp
+type Startup() =
+    member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =    
+        let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
+        services.AddRazorEngine(viewsFolderPath) |> ignore
+```
+
+Use the razorView function:
+
+```fsharp
+let model = { WelcomeText = "Hello World" }
+
+let app = 
+    choose [
+        // Assuming there is a view called "Index.cshtml"
+        route  "/" >=> razorHtmlView "Index" model
     ]
 ```
 
@@ -732,13 +781,13 @@ Please check out [Jimmy Byrd](https://github.com/TheAngryByrd)'s [dotnet-web-ben
 
 ## Building and developing
 
-Giraffe is using the new MSBuild driven `.fsproj` project system that comes with [.NET Core SDK RC4](https://github.com/dotnet/netcorecli-fsc/wiki/.NET-Core-SDK-rc4).
+Giraffe is built with the latest [.NET Core SDK](https://www.microsoft.com/net/download/core).
 
 You can either install [Visual Studio 2017](https://www.visualstudio.com/vs/) which comes with the latest SDK or manually download and install the [.NET SDK 1.1](https://www.microsoft.com/net/download/core).
 
 After installation you should be able to run `build.cmd` to successfully build, test and package the library.
 
-Currently the best way to work with F# on .NET Core is to use [Visual Studio Code](https://code.visualstudio.com/) with the [Ionide](http://ionide.io/) extension. Intellisense and debugging is supported with the latest version of both.
+Currently the best way to work with F# on .NET Core is to use [Visual Studio Code](https://code.visualstudio.com/) with the [Ionide](http://ionide.io/) extension. Intellisense and debugging is supported with the latest versions of both.
 
 ## Contributing
 

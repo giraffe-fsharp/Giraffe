@@ -8,21 +8,28 @@
     "tasks": [
         {
             "taskName": "build",
-            "args": [ "SampleApp.Tests" ],
+            "args": [ "samples\\SampleApp\\SampleApp" ],
             "isBuildCommand": true,
             "showOutput": "silent",
             "problemMatcher": "$msCompile"
         },
         {
             "taskName": "restore",
-            "args": [ "SampleApp.Tests" ],
+            "args": [ "samples\\SampleApp\\SampleApp" ],
             "isBuildCommand": true,
             "showOutput": "silent",
             "problemMatcher": "$msCompile"
         },
         {
             "taskName": "test",
-            "args": [ "SampleApp.Tests\\SampleApp.Tests.fsproj" ],
+            "args": [ "samples\\SampleApp\\SampleApp\\SampleApp.Tests.fsproj" ],
+            "isBuildCommand": true,
+            "showOutput": "silent",
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "taskName": "run",
+            "args": [ "samples\\SampleApp\\SampleApp\\SampleApp.Tests.fsproj" ],
             "isBuildCommand": true,
             "showOutput": "silent",
             "problemMatcher": "$msCompile"
