@@ -346,14 +346,8 @@ let dotLiquidTemplate (contentType : string) (templatePath : string) (model : ob
 
 /// Reads a dotLiquid template file from disk and compiles it with the given model and sets
 /// the compiled output as the HTTP reponse with a Content-Type of text/html.
-let dotLiquidHtmlView (templatePath : string) (model : obj) = 
-    fun (ctx : HttpHandlerContext) ->
-        async {
-            let env = ctx.Services.GetService<IHostingEnvironment>()
-            let templatePath = env.ContentRootPath + templatePath
-            let! template = readFileAsString templatePath
-            return! dotLiquid "text/html" template model ctx
-        }
+let dotLiquidHtmlView (templatePath : string) (model : obj) =
+    dotLiquidTemplate "text/html" templatePath model
 
 /// Reads a razor view from disk and compiles it with the given model and sets
 /// the compiled output as the HTTP reponse with the given contentType.
