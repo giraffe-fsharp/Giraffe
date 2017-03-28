@@ -134,7 +134,20 @@ let ``Test /razor returns html content`` () =
     use client = server.CreateClient()
 
     let nl = Environment.NewLine
-    let expected = "<!DOCTYPE html>" + nl + nl + "<html>" + nl + "<head>" + nl + "    <title>Hello, Razor</title>" + nl + "</head>" + nl + "<body>" + nl + "    <div>" + nl + "        <h3>Hello, Razor</h3>" + nl + "    </div>" + nl + "</body>" + nl + "</html>"
+    let expected = @"<!DOCTYPE html>
+<html>
+<head>
+    <title>Giraffe</title>
+</head>
+<body>
+    
+<div>
+    <h3>Hello, Razor</h3>
+</div>
+<div>
+<p>Some partial text.</p></div>
+</body>
+</html>"
 
     get client "/razor"
     |> ensureSuccess

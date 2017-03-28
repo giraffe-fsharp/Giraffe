@@ -17,7 +17,6 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0-preview-*" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="1.1.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="1.1.*" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.*" />
     <PackageReference Include="xunit" Version="2.2.0" />
     <PackageReference Include="NSubstitute" Version="2.0.1-rc" />
@@ -28,15 +27,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Models.fs" />
     <Compile Include="FormatExpressionTests.fs" />
     <Compile Include="HttpHandlerTests.fs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Person.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
 </Project>

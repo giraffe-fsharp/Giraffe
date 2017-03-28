@@ -12,7 +12,6 @@ open Xunit
 open NSubstitute
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
-open Giraffe.Tests.Models
 
 // ---------------------------------
 // Helper functions
@@ -725,28 +724,3 @@ let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-
-[<Fact>]
-let ``GET "/razor" returns rendered html view`` () =
-    let ctx, hctx = initNewContext()
-    //hctx.Services.GetService(typeof<IRazorLightEngine>).Returns(EngineFactory.CreatePhysical(Directory.GetCurrentDirectory())) 
-    //|> ignore
-
-    let app = GET >=> route "/razor" >=> razorHtmlView "Person" { Name = "razor" }
-    
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/razor")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "<html><head><title>Hello, razor</title></head><body><h3>Hello, razor</h3></body></html>"
-
-    let result = 
-        hctx
-        |> app
-        |> Async.RunSynchronously
-
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
-        Assert.Equal("text/html", ctx.HttpContext.Response |> getContentType)

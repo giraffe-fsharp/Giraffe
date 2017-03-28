@@ -29,7 +29,7 @@ let webApp =
     choose [
         GET >=>
             choose [
-                route "/" >=> razorView "Index.cshtml" { Text = "Hello, Giraffe world!" }
+                route "/" >=> razorHtmlView "Index" { Text = "Hello, Giraffe world!" }
             ]
 
         setStatusCode 404 >=> text "Not Found" ]
