@@ -18,7 +18,7 @@ open SampleApp.Models
 // ---------------------------------
 
 let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
-    ctx.Logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request")
+    ctx.Logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
     ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
 
 

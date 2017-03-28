@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp1.1</TargetFramework>
     <DebugType>portable</DebugType>
-    <AssemblyName>_GiraffeTemplate</AssemblyName>
+    <AssemblyName>_AppName.</AssemblyName>
     <OutputType>Exe</OutputType>
-    <PackageId>_GiraffeTemplate</PackageId>
+    <PackageId>_AppName.</PackageId>
     <RuntimeFrameworkVersion>1.1.0</RuntimeFrameworkVersion>
     <EnableDefaultContentItems>false</EnableDefaultContentItems>
   </PropertyGroup>
@@ -28,12 +28,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Models\Message.fs" />
+    <Compile Include="Models\*.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Views\Index.cshtml">
+    <Content Include="Views\*.cshtml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

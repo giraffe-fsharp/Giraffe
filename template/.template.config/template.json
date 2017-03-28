@@ -1,11 +1,11 @@
 {
-  "author": "David Sinclair",
+  "identity": "Giraffe.Template",
+  "author": "David Sinclair and contributors",
   "classifications": [ "Web", "Giraffe" ],
   "name": "Giraffe Web App",
   "tags": {
     "language": "F#"
   },
-  "identity": "Giraffe.Template",
   "shortName": "giraffe",
-  "sourceName": "_GiraffeTemplate"
+  "sourceName": "_AppName"
 }
