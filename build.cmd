@@ -37,3 +37,6 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 
 dotnet pack src/Giraffe -c Release
 if %errorlevel% neq 0 exit /b %errorlevel%
+
+nuget pack template/giraffe-template.nuspec
+if %errorlevel% neq 0 exit /b %errorlevel%

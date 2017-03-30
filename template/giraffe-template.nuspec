@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <!-- Required elements-->
-        <id>dotnet-new-giraffe</id>
+        <id>giraffe-template</id>
         <version>0.1.0-alpha007</version>
         <description>Template for Giraffe web applications.</description>
         <authors>David Sinclair</authors>
