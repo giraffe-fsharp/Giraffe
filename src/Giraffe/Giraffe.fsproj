@@ -34,7 +34,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="1.1.*" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="1.1.*" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="1.1.*" />
-    <PackageReference Include="Newtonsoft.Json" Version="9.0.*" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.*" />
     <PackageReference Include="DotLiquid" Version="2.0.*" />
   </ItemGroup>
 

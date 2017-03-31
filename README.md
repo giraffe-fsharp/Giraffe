@@ -742,6 +742,18 @@ let app =
 
 ## Installation
 
+### Using dotnet-new
+
+The easiest way to get started with Giraffe is by installing the [`giraffe-template`](https://www.nuget.org/packages/giraffe-template) NuGet package, which adds a new template to your `dotnet new` command:
+
+```
+dotnet new -i giraffe-template::*
+```
+
+Afterwards you can create a new Giraffe application by running `dotnet new giraffe`.
+
+### Doing it manually
+
 Install the [Giraffe](https://www.nuget.org/packages/Giraffe) NuGet package:
 
 ```
