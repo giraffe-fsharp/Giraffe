@@ -25,6 +25,6 @@ deploy:
   api_key:
     secure: +XDgIu4Tmln7LKedNmQgMFnyKTxxuCKFRK3V5oKEfwZiakPXRd5C7OueEGBL50oh
   skip_symbols: false
-  artifact: /.*Giraffe\..*\.nupkg/
+  artifact: /.*\.nupkg/
   on:
     appveyor_repo_tag: true

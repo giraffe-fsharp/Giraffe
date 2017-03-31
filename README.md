@@ -769,7 +769,7 @@ type Startup() =
 
 ## Sample applications
 
-There is a basic sample application in the `/samples/SampleApp` folder.
+There is a basic sample application in the [`/samples/SampleApp`](https://github.com/dustinmoris/Giraffe/tree/develop/samples/SampleApp) folder.
 
 More sample applications will be added in the future.
 
