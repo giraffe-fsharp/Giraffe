@@ -9,7 +9,7 @@
         <authors>David Sinclair</authors>
         <owners>Dustin Moris Gorski</owners>
         <projectUrl>https://github.com/dustinmoris/Giraffe</projectUrl>
-        <iconUrl>https://github.com/dustinmoris/Giraffe/blob/develop/giraffe-64x64.png</iconUrl>
+        <iconUrl>https://raw.githubusercontent.com/dustinmoris/giraffe/master/giraffe-64x64.png</iconUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <releaseNotes></releaseNotes>
         <language>en-GB</language>
