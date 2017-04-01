@@ -6,7 +6,7 @@
     <AssemblyName>SampleApp</AssemblyName>
     <OutputType>Exe</OutputType>
     <PackageId>SampleApp</PackageId>
-    <RuntimeFrameworkVersion>1.1.0</RuntimeFrameworkVersion>
+    <RuntimeFrameworkVersion>1.1.1</RuntimeFrameworkVersion>
     <EnableDefaultContentItems>false</EnableDefaultContentItems>
   </PropertyGroup>
 
