@@ -1,4 +1,4 @@
-module _AppName
+module _AppName.App
 
 open System
 open System.IO
