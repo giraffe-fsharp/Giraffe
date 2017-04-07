@@ -54,6 +54,16 @@ type Dummy =
         Age : int
     }
 
+[<CLIMutable>]
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+        BirthDate : DateTime
+        Height    : float
+        Piercings : string[]
+    }
+
 // ---------------------------------
 // Tests
 // ---------------------------------

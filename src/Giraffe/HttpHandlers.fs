@@ -2,6 +2,7 @@ module Giraffe.HttpHandlers
 
 open System
 open System.Text
+open System.Collections.Generic
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
@@ -370,3 +371,60 @@ let razorView (contentType : string) (viewName : string) (model : 'T) =
 /// the compiled output as the HTTP reponse with a Content-Type of text/html.
 let razorHtmlView (viewName : string) (model : 'T) =
     razorView "text/html" viewName model
+
+/// ---------------------------
+/// Content negotioation handlers
+/// ---------------------------
+
+let defaultNegotioationRules =
+    dict [
+        "*/*"             , json
+        "application/json", json
+        "application/xml" , xml
+        "text/xml"        , xml
+    ]
+
+type AcceptedMimeType =
+    {
+        OriginalValue : string
+        MimeType      : string
+        Preference    : float
+    }
+    static member FromString (value : string) =
+        let values =
+            value.Split([| "; q=" |], StringSplitOptions.RemoveEmptyEntries)
+            |> Array.map (fun x -> x.Trim())
+
+        if      values.Length > 2 then failwithf "Unexpected value in HTTP Accept header: %s" value
+        else if values.Length = 2 then { OriginalValue = value; MimeType = values.[0]; Preference = float values.[1] }
+        else                           { OriginalValue = value; MimeType = values.[0]; Preference = 1.0 }
+
+let negotiateWith (rules : IDictionary<string, obj -> HttpHandler>) (responseObj : obj) =
+    fun (ctx : HttpHandlerContext) ->
+        let acceptedTypes =            
+            ctx.HttpContext.Request.GetTypedHeaders()
+            |> fun headers -> headers.Accept
+            |> Seq.map (fun h -> h.ToString() |> AcceptedMimeType.FromString)
+
+        acceptedTypes
+        |> Seq.map (fun t -> t.MimeType)
+        |> Seq.exists rules.ContainsKey
+        |> function
+            | false ->
+                setStatusCode 406
+                >=> (acceptedTypes
+                    |> Seq.map (fun t -> t.OriginalValue)
+                    |> String.concat ", "
+                    |> sprintf "%s is unacceptable by the server."
+                    |> text)
+            | true  ->
+                let handler =
+                    acceptedTypes
+                    |> Seq.sortByDescending (fun t -> t.Preference)
+                    |> Seq.find (fun t -> rules.ContainsKey t.MimeType)
+                    |> fun t -> rules.[t.MimeType]
+                handler responseObj
+        <| ctx
+
+let negotiate (responseObj : obj) =
+    negotiateWith defaultNegotioationRules responseObj
