@@ -594,7 +594,7 @@ let ``GET "/api" returns "api root"`` () =
         |> Async.RunSynchronously
 
     match result with
-    | None          -> assertFailf "Result was expected to be %s" expected
+    | None -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
@@ -626,7 +626,7 @@ let ``GET "/api/users" returns "users"`` () =
         |> Async.RunSynchronously
 
     match result with
-    | None          -> assertFailf "Result was expected to be %s" expected
+    | None -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
@@ -658,7 +658,7 @@ let ``GET "/api/test" returns "test"`` () =
         |> Async.RunSynchronously
 
     match result with
-    | None          -> assertFailf "Result was expected to be %s" expected
+    | None -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
@@ -699,7 +699,7 @@ let ``GET "/api/v2/users" returns "users v2"`` () =
         |> Async.RunSynchronously
 
     match result with
-    | None          -> assertFailf "Result was expected to be %s" expected
+    | None -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
@@ -730,7 +730,89 @@ let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
         |> Async.RunSynchronously
 
     match result with
-    | None          -> assertFailf "Result was expected to be %s" expected
+    | None -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+
+[<Fact>]
+let ``Get "/flex" with Accept header of "application/json" returns JSON object`` () =
+    let johnDoe =
+        {
+            FirstName = "John"
+            LastName  = "Doe"
+            BirthDate = DateTime(1990, 7, 12)
+            Height    = 1.85
+            Piercings = [| "left ear"; "nose" |]
+        }
+
+    let ctx, hctx = initNewContext()
+    let app = 
+        GET >=> choose [
+            route "/"     >=> text "Hello World"
+            route "/foo"  >=> text "bar"
+            route "/flex" >=> negotiate johnDoe
+            setStatusCode 404 >=> text "Not found" ]
+
+    let headers = HeaderDictionary()
+    headers.Add("Accept", StringValues("application/json"))
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/flex")) |> ignore
+    ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"left ear\",\"nose\"]}"
+
+    let result = 
+        hctx
+        |> app
+        |> Async.RunSynchronously
+
+    match result with
+    | None -> assertFailf "Result was expected to be %s" expected
+    | Some ctx ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+        Assert.Equal("application/json", ctx.HttpContext.Response |> getContentType)
+
+[<Fact>]
+let ``Get "/flex" with Accept header of "application/xml; q=0.9, application/json" returns JSON object`` () =
+    let johnDoe =
+        {
+            FirstName = "John"
+            LastName  = "Doe"
+            BirthDate = DateTime(1990, 7, 12)
+            Height    = 1.85
+            Piercings = [| "left ear"; "nose" |]
+        }
+
+    let ctx, hctx = initNewContext()
+    let app = 
+        GET >=> choose [
+            route "/"     >=> text "Hello World"
+            route "/foo"  >=> text "bar"
+            route "/flex" >=> negotiate johnDoe
+            setStatusCode 404 >=> text "Not found" ]
+
+    let headers = HeaderDictionary()
+    headers.Add("Accept", StringValues("application/xml; q=0.9, application/json"))
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/flex")) |> ignore
+    ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"left ear\",\"nose\"]}"
+
+    let result = 
+        hctx
+        |> app
+        |> Async.RunSynchronously
+
+    match result with
+    | None -> assertFailf "Result was expected to be %s" expected
+    | Some ctx ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+        Assert.Equal("application/json", ctx.HttpContext.Response |> getContentType)
