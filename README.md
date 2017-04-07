@@ -57,6 +57,7 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [dotLiquidHtmlView](#dotliquidhtmlview)
     - [razorView](#razorview)
     - [razorHtmlView](#razorhtmlview)
+    - [htmlNode](#htmlNode)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Installation](#installation)
 - [Sample applications](#sample-applications)
@@ -687,6 +688,43 @@ let app =
     choose [
         // Assuming there is a view called "Index.cshtml"
         route  "/" >=> razorHtmlView "Index" model
+    ]
+```
+
+### htmlNode
+
+`htmlNode` is a more functional way of generating html by composing nodes and elements.
+
+It is based on [Suave's Experimental Html](https://github.com/SuaveIO/suave/blob/master/src/Experimental/Html.fs) and bears some resemblance with [Elm](http://elm-lang.org/examples).
+
+#### Example:
+Create a function that accepts a model and returns a Html Node:
+
+```fsharp
+let model = { Name = "John Doe" }
+
+let layout (content: Node list) =
+    html [] [
+        head [] [
+            title [] (textContent "Giraffe")
+        ]
+        body [] content
+    ]
+
+let partial () =
+    p [] (textContent "Some partial text.")
+
+let person model =
+    [
+        div [] [
+                h3 [] (sprintf "Hello, %s" model.Name |> textContent)
+            ]
+        div [] [partial()]
+    ] |> layout
+
+let app = 
+    choose [
+        route "/" >=> htmlNode (person model)
     ]
 ```
 
