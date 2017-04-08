@@ -12,6 +12,7 @@ open Microsoft.Extensions.DependencyInjection
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
 open SampleApp.Models
+open SampleApp.Html
 
 // ---------------------------------
 // Error handler
@@ -76,6 +77,7 @@ let webApp =
                 route  "/user"       >=> mustBeUser >=> userHandler
                 routef "/user/%i"    showUserHandler
                 route  "/razor"      >=> razorHtmlView "Person" { Name = "Razor" }
+                route  "/htmlNode"   >=> htmlNode (person { Name = "Html Node" })
             ]
         setStatusCode 404 >=> text "Not Found" ]
 

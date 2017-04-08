@@ -12,6 +12,7 @@ open Xunit
 open NSubstitute
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
+open Giraffe.Html
 
 // ---------------------------------
 // Helper functions
@@ -724,3 +725,44 @@ let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+
+[<Fact>]
+let ``GET "/htmlNode" returns rendered html view`` () =
+    let ctx, hctx = initNewContext()
+    let htmlNodeTemplate model =
+        html [] [
+            head [] [
+                title [] (textContent "Html Node")
+            ]
+            body [] [
+                p [] (sprintf "%s %s is %i years old." model.Foo model.Bar model.Age |> textContent)
+            ]
+        ]
+
+    let obj = { Foo = "John"; Bar = "Doe"; Age = 30 }
+
+    let app = 
+        choose [
+            GET >=> choose [ 
+                route "/"          >=> text "Hello World"
+                route "/htmlNode" >=> htmlNode (htmlNodeTemplate obj) ]
+            POST >=> choose [
+                route "/post/1"    >=> text "1" ]
+            setStatusCode 404      >=> text "Not found" ]
+    
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/htmlNode")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "<!DOCTYPE html><html><head><title>Html Node</title></head><body><p>John Doe is 30 years old.</p></body></html>"
+
+    let result = 
+        hctx
+        |> app
+        |> Async.RunSynchronously
+
+    match result with
+    | None     -> assertFailf "Result was expected to be %s" expected
+    | Some ctx ->
+        let body = (getBody ctx).Replace(Environment.NewLine, String.Empty)
+        Assert.Equal(expected, body)
+        Assert.Equal("text/html", ctx.HttpContext.Response |> getContentType)

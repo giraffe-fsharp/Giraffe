@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <Compile Include="Models.fs" />
+    <Compile Include="Html.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
