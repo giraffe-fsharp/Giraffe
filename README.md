@@ -57,7 +57,7 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [dotLiquidHtmlView](#dotliquidhtmlview)
     - [razorView](#razorview)
     - [razorHtmlView](#razorhtmlview)
-    - [htmlNode](#htmlNode)
+    - [renderHtml](#renderhtml)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Installation](#installation)
 - [Sample applications](#sample-applications)
@@ -691,40 +691,42 @@ let app =
     ]
 ```
 
-### htmlNode
+### renderHtml
 
-`htmlNode` is a more functional way of generating html by composing nodes and elements.
+`renderHtml` is a more functional way of generating HTML by composing HTML elements in F# to generate a rich Model-View output.
 
 It is based on [Suave's Experimental Html](https://github.com/SuaveIO/suave/blob/master/src/Experimental/Html.fs) and bears some resemblance with [Elm](http://elm-lang.org/examples).
 
 #### Example:
-Create a function that accepts a model and returns a Html Node:
+Create a function that accepts a model and returns a `HtmlNode`:
 
 ```fsharp
+open Giraffe.HtmlEngine
+
 let model = { Name = "John Doe" }
 
-let layout (content: Node list) =
+let layout (content: HtmlNode list) =
     html [] [
         head [] [
-            title [] (textContent "Giraffe")
+            title [] (encodedText "Giraffe")
         ]
         body [] content
     ]
 
 let partial () =
-    p [] (textContent "Some partial text.")
+    p [] (encodedText "Some partial text.")
 
-let person model =
+let personView model =
     [
         div [] [
-                h3 [] (sprintf "Hello, %s" model.Name |> textContent)
+                h3 [] (sprintf "Hello, %s" model.Name |> encodedText)
             ]
         div [] [partial()]
     ] |> layout
 
 let app = 
     choose [
-        route "/" >=> htmlNode (person model)
+        route "/" >=> (personView model |> renderHtml)
     ]
 ```
 
@@ -862,6 +864,7 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Dave Shaw](https://github.com/xdaDaveShaw) (Extended sample application and general help to keep things in good shape)
 - [Tobias Burger](https://github.com/toburger) (Fixed issues with culture specific parsers in routef handler)
 - [David Sinclair](https://github.com/dsincl12) (Created the dotnet-new template for Giraffe)
+- [Florian Verdonck](https://github.com/nojaf) (Ported Suave's experimental Html into Giraffe)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
 

@@ -12,7 +12,7 @@ open Xunit
 open NSubstitute
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
-open Giraffe.Html
+open Giraffe.HtmlEngine
 
 // ---------------------------------
 // Helper functions
@@ -727,31 +727,31 @@ let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
         Assert.Equal(expected, body)
 
 [<Fact>]
-let ``GET "/htmlNode" returns rendered html view`` () =
+let ``GET "/person" returns rendered HTML view`` () =
     let ctx, hctx = initNewContext()
-    let htmlNodeTemplate model =
+    let personView model =
         html [] [
             head [] [
-                title [] (textContent "Html Node")
+                title [] (encodedText "Html Node")
             ]
             body [] [
-                p [] (sprintf "%s %s is %i years old." model.Foo model.Bar model.Age |> textContent)
+                p [] (sprintf "%s %s is %i years old." model.Foo model.Bar model.Age |> encodedText)
             ]
         ]
 
-    let obj = { Foo = "John"; Bar = "Doe"; Age = 30 }
+    let johnDoe = { Foo = "John"; Bar = "Doe"; Age = 30 }
 
     let app = 
         choose [
             GET >=> choose [ 
                 route "/"          >=> text "Hello World"
-                route "/htmlNode" >=> htmlNode (htmlNodeTemplate obj) ]
+                route "/person"    >=> (personView johnDoe |> renderHtml) ]
             POST >=> choose [
                 route "/post/1"    >=> text "1" ]
             setStatusCode 404      >=> text "Not found" ]
     
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/htmlNode")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/person")) |> ignore
     ctx.Response.Body <- new MemoryStream()
     let expected = "<!DOCTYPE html><html><head><title>Html Node</title></head><body><p>John Doe is 30 years old.</p></body></html>"
 

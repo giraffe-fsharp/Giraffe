@@ -41,8 +41,8 @@
   <ItemGroup>
     <Compile Include="Common.fs" />
     <Compile Include="FormatExpressions.fs" />
+    <Compile Include="HtmlEngine.fs" />
     <Compile Include="RazorEngine.fs" />
-    <Compile Include="Html.fs" />
     <Compile Include="HttpHandlers.fs" />
     <Compile Include="Middleware.fs" />
   </ItemGroup>
