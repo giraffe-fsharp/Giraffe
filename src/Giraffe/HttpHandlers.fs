@@ -16,6 +16,7 @@ open DotLiquid
 open Giraffe.Common
 open Giraffe.FormatExpressions
 open Giraffe.RazorEngine
+open Giraffe.HtmlEngine
 
 type HttpHandlerContext =
     {
@@ -371,6 +372,16 @@ let razorView (contentType : string) (viewName : string) (model : 'T) =
 /// the compiled output as the HTTP reponse with a Content-Type of text/html.
 let razorHtmlView (viewName : string) (model : 'T) =
     razorView "text/html" viewName model
+
+/// Uses the Giraffe.HtmlEngine to compile and render a HTML Document from
+/// a given HtmlNode. The HTTP response is of Content-Type text/html.
+let renderHtml (document: HtmlNode) =
+    fun (ctx : HttpHandlerContext) ->
+        let htmlHandler =
+            document
+            |> renderHtmlDocument
+            |> setBodyAsString
+        ctx |> (setHttpHeader "Content-Type" "text/html" >=> htmlHandler)
 
 /// ---------------------------
 /// Content negotioation handlers

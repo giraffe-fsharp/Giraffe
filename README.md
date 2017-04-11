@@ -57,6 +57,7 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [dotLiquidHtmlView](#dotliquidhtmlview)
     - [razorView](#razorview)
     - [razorHtmlView](#razorhtmlview)
+    - [renderHtml](#renderhtml)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Installation](#installation)
 - [Sample applications](#sample-applications)
@@ -690,6 +691,45 @@ let app =
     ]
 ```
 
+### renderHtml
+
+`renderHtml` is a more functional way of generating HTML by composing HTML elements in F# to generate a rich Model-View output.
+
+It is based on [Suave's Experimental Html](https://github.com/SuaveIO/suave/blob/master/src/Experimental/Html.fs) and bears some resemblance with [Elm](http://elm-lang.org/examples).
+
+#### Example:
+Create a function that accepts a model and returns a `HtmlNode`:
+
+```fsharp
+open Giraffe.HtmlEngine
+
+let model = { Name = "John Doe" }
+
+let layout (content: HtmlNode list) =
+    html [] [
+        head [] [
+            title [] (encodedText "Giraffe")
+        ]
+        body [] content
+    ]
+
+let partial () =
+    p [] (encodedText "Some partial text.")
+
+let personView model =
+    [
+        div [] [
+                h3 [] (sprintf "Hello, %s" model.Name |> encodedText)
+            ]
+        div [] [partial()]
+    ] |> layout
+
+let app = 
+    choose [
+        route "/" >=> (personView model |> renderHtml)
+    ]
+```
+
 ## Custom HttpHandlers
 
 Defining a new `HttpHandler` is fairly easy. All you need to do is to create a new function which matches the signature of `HttpHandlerContext -> Async<HttpHandlerContext option>`. Through currying your custom `HttpHandler` can extend the original signature as long as the partial application of your function will still return a function of `HttpHandlerContext -> Async<HttpHandlerContext option>`.
@@ -824,6 +864,7 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Dave Shaw](https://github.com/xdaDaveShaw) (Extended sample application and general help to keep things in good shape)
 - [Tobias Burger](https://github.com/toburger) (Fixed issues with culture specific parsers in routef handler)
 - [David Sinclair](https://github.com/dsincl12) (Created the dotnet-new template for Giraffe)
+- [Florian Verdonck](https://github.com/nojaf) (Ported Suave's experimental Html into Giraffe)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
 
