@@ -412,30 +412,39 @@ type AcceptedMimeType =
 
 let negotiateWith (rules : IDictionary<string, obj -> HttpHandler>) (responseObj : obj) =
     fun (ctx : HttpHandlerContext) ->
-        let acceptedTypes =            
+        let acceptHeaderValues =
             ctx.HttpContext.Request.GetTypedHeaders()
             |> fun headers -> headers.Accept
-            |> Seq.map (fun h -> h.ToString() |> AcceptedMimeType.FromString)
 
-        acceptedTypes
-        |> Seq.map (fun t -> t.MimeType)
-        |> Seq.exists rules.ContainsKey
-        |> function
-            | false ->
-                setStatusCode 406
-                >=> (acceptedTypes
-                    |> Seq.map (fun t -> t.OriginalValue)
-                    |> String.concat ", "
-                    |> sprintf "%s is unacceptable by the server."
-                    |> text)
-            | true  ->
-                let handler =
+        if isNull acceptHeaderValues || acceptHeaderValues.Count = 0
+        then
+            rules.Keys
+            |> Seq.head
+            |> fun key -> rules.[key]
+            |> fun handler -> handler responseObj ctx
+        else
+            let acceptedTypes =
+                acceptHeaderValues
+                |> Seq.map (fun h -> h.ToString() |> AcceptedMimeType.FromString)
+            
+            acceptedTypes
+            |> Seq.map (fun t -> t.MimeType)
+            |> Seq.exists rules.ContainsKey
+            |> function
+                | false ->
+                    setStatusCode 406
+                    >=> (acceptedTypes
+                        |> Seq.map (fun t -> t.OriginalValue)
+                        |> String.concat ", "
+                        |> sprintf "%s is unacceptable by the server."
+                        |> text)
+                | true  ->
                     acceptedTypes
                     |> Seq.sortByDescending (fun t -> t.Preference)
                     |> Seq.find (fun t -> rules.ContainsKey t.MimeType)
                     |> fun t -> rules.[t.MimeType]
-                handler responseObj
-        <| ctx
+                    |> fun handler -> handler responseObj
+            <| ctx
 
 let negotiate (responseObj : obj) =
     negotiateWith defaultNegotioationRules responseObj

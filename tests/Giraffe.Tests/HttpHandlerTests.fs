@@ -1168,9 +1168,11 @@ let ``Get "/flex" without an Accept header returns a JSON object`` () =
             route "/flex" >=> negotiate johnDoe
             setStatusCode 404 >=> text "Not found" ]
 
+    let headers = HeaderDictionary()
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/flex")) |> ignore
+    ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
     let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"ear\",\"nose\"]}"
