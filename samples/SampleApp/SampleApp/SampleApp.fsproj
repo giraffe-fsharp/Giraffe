@@ -27,6 +27,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.0" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Watch Include="**\*.cshtml" Exclude="bin\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="Models.fs" />
     <Compile Include="HtmlViews.fs" />
     <Compile Include="Program.fs" />
