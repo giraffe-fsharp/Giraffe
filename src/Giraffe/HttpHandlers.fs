@@ -449,5 +449,5 @@ let negotiateWith (rules : IDictionary<string, obj -> HttpHandler>) (responseObj
 let negotiate (responseObj : obj) =
     negotiateWith defaultNegotioationRules responseObj
 
-let warbler f a = 
+let inline warbler f a = 
     f a a
