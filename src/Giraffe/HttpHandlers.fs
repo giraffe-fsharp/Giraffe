@@ -2,6 +2,7 @@ module Giraffe.HttpHandlers
 
 open System
 open System.Text
+open System.Collections.Generic
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
@@ -15,7 +16,7 @@ open DotLiquid
 open Giraffe.Common
 open Giraffe.FormatExpressions
 open Giraffe.RazorEngine
-open Giraffe.Html
+open Giraffe.HtmlEngine
 
 type HttpHandlerContext =
     {
@@ -372,14 +373,78 @@ let razorView (contentType : string) (viewName : string) (model : 'T) =
 let razorHtmlView (viewName : string) (model : 'T) =
     razorView "text/html" viewName model
 
-/// Reads an Html Node and compiles it to a string
-/// the compiled output as the HTTP reponse with a Content-Type of text/html.
-let htmlNode (node: Html.Node) =
+/// Uses the Giraffe.HtmlEngine to compile and render a HTML Document from
+/// a given HtmlNode. The HTTP response is of Content-Type text/html.
+let renderHtml (document: HtmlNode) =
     fun (ctx : HttpHandlerContext) ->
-        async {
-            let html = renderHtmlDocument node
-            return!
-                ctx
-                |> (setHttpHeader "Content-Type" "text/html"
-                >=> setBodyAsString html)
-        }
+        let htmlHandler =
+            document
+            |> renderHtmlDocument
+            |> setBodyAsString
+        ctx |> (setHttpHeader "Content-Type" "text/html" >=> htmlHandler)
+
+/// ---------------------------
+/// Content negotioation handlers
+/// ---------------------------
+
+let defaultNegotioationRules =
+    dict [
+        "*/*"             , json
+        "application/json", json
+        "application/xml" , xml
+        "text/xml"        , xml
+    ]
+
+type AcceptedMimeType =
+    {
+        OriginalValue : string
+        MimeType      : string
+        Preference    : float
+    }
+    static member FromString (value : string) =
+        let values =
+            value.Split([| "; q=" |], StringSplitOptions.RemoveEmptyEntries)
+            |> Array.map (fun x -> x.Trim())
+
+        if      values.Length > 2 then failwithf "Unexpected value in HTTP Accept header: %s" value
+        else if values.Length = 2 then { OriginalValue = value; MimeType = values.[0]; Preference = float values.[1] }
+        else                           { OriginalValue = value; MimeType = values.[0]; Preference = 1.0 }
+
+let negotiateWith (rules : IDictionary<string, obj -> HttpHandler>) (responseObj : obj) =
+    fun (ctx : HttpHandlerContext) ->
+        let acceptHeaderValues =
+            ctx.HttpContext.Request.GetTypedHeaders()
+            |> fun headers -> headers.Accept
+
+        if isNull acceptHeaderValues || acceptHeaderValues.Count = 0
+        then
+            rules.Keys
+            |> Seq.head
+            |> fun key -> rules.[key]
+            |> fun handler -> handler responseObj ctx
+        else
+            let acceptedTypes =
+                acceptHeaderValues
+                |> Seq.map (fun h -> h.ToString() |> AcceptedMimeType.FromString)
+            
+            acceptedTypes
+            |> Seq.map (fun t -> t.MimeType)
+            |> Seq.exists rules.ContainsKey
+            |> function
+                | false ->
+                    setStatusCode 406
+                    >=> (acceptedTypes
+                        |> Seq.map (fun t -> t.OriginalValue)
+                        |> String.concat ", "
+                        |> sprintf "%s is unacceptable by the server."
+                        |> text)
+                | true  ->
+                    acceptedTypes
+                    |> Seq.sortByDescending (fun t -> t.Preference)
+                    |> Seq.find (fun t -> rules.ContainsKey t.MimeType)
+                    |> fun t -> rules.[t.MimeType]
+                    |> fun handler -> handler responseObj
+            <| ctx
+
+let negotiate (responseObj : obj) =
+    negotiateWith defaultNegotioationRules responseObj
