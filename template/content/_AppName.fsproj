@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp1.1</TargetFramework>
     <DebugType>portable</DebugType>
-    <AssemblyName>_AppName.</AssemblyName>
+    <AssemblyName>_AppName</AssemblyName>
     <OutputType>Exe</OutputType>
-    <PackageId>_AppName.</PackageId>
+    <PackageId>_AppName</PackageId>
     <RuntimeFrameworkVersion>1.1.1</RuntimeFrameworkVersion>
     <EnableDefaultContentItems>false</EnableDefaultContentItems>
   </PropertyGroup>
@@ -25,6 +25,10 @@
 
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Watch Include="**\*.cshtml" Exclude="bin\**\*" />
   </ItemGroup>
 
   <ItemGroup>
