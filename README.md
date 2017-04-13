@@ -60,6 +60,7 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [razorView](#razorview)
     - [razorHtmlView](#razorhtmlview)
     - [renderHtml](#renderhtml)
+    - [warbler](#warbler)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Installation](#installation)
 - [Sample applications](#sample-applications)
@@ -786,7 +787,7 @@ let app =
 
 ### warbler
 
-If your route is not returning static response, then you should wrap your function with a warbler.
+If your route is not returning a static response, then you should wrap your function with a warbler.
 
 #### Example
 ```fsharp
