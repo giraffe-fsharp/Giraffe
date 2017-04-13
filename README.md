@@ -784,34 +784,28 @@ let app =
     ]
 ```
 
-#### Gotchas
+### warbler
 
-If your route is not returning static html, then you should wrap your function with a warbler.
+If your route is not returning static response, then you should wrap your function with a warbler.
 
+#### Example
 ```fsharp
 // unit -> string
-let model() =
+let time() =
     System.DateTime.Now.ToString()
-
-// HtmlNode
-let staticView =
-    p [] (model() |> rawText)
-
-// unit -> HtmlNode
-let dynamicView() =
-    p [] (model() |> rawText)
 
 let webApp = 
     choose [
         GET >=>
             choose [
-                route "/static"      >=> (staticView |> renderHtml)
-                route "/dynamic"     >=> warbler (fun _ -> dynamicView() |> renderHtml)
+                route "/once"        >=> (time() |> text)
+                route "/everytime"   >=> warbler (fun _ -> (time() |> text))
             ]
     ]
 ```
 
-Functions in F# are eagerly evaluated and in the case of razor/htmlEngine a warbler will help to evaluate the function every time.
+Functions in F# are eagerly evaluated and the `/once` route will only be evaluated the first time.
+A warbler will help to evaluate the function every time the route is hit.
 
 ```fsharp
 // ('a -> 'a -> 'b) -> 'a -> 'b

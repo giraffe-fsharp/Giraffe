@@ -65,6 +65,8 @@ let showUserHandler id =
         text (sprintf "User ID: %i" id)
         <| ctx
 
+let time() =
+    System.DateTime.Now.ToString()
 
 let webApp = 
     choose [
@@ -79,8 +81,8 @@ let webApp =
                 routef "/user/%i"    showUserHandler
                 route  "/razor"      >=> razorHtmlView "Person" { Name = "Razor" }
                 route  "/person"     >=> (personView { Name = "Html Node" } |> renderHtml)
-                route "/static"      >=> (staticView |> renderHtml)
-                route "/dynamic"     >=> warbler (fun _ -> dynamicView() |> renderHtml)
+                route "/once"        >=> (time() |> text)
+                route "/everytime"   >=> warbler (fun _ -> (time() |> text))
             ]
         setStatusCode 404 >=> text "Not Found" ]
 
