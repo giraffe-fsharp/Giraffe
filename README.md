@@ -51,6 +51,8 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [text](#text)
     - [json](#json)
     - [xml](#xml)
+    - [negotiate](#negotiate)
+    - [negotiateWith](#negotiatewith)
     - [htmlFile](#htmlfile)
     - [dotLiquid](#dotliquid)
     - [dotLiquidTemplate](#dotliquidtemplate)
@@ -481,7 +483,7 @@ let app =
 
 ### setBody
 
-`setBody` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
+`setBody` sets or modifies the body of the `HttpResponse`. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
 
 #### Example:
 
@@ -494,7 +496,7 @@ let app =
 
 ### setBodyAsString
 
-`setBodyAsString` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
+`setBodyAsString` sets or modifies the body of the `HttpResponse`. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
 
 #### Example:
 
@@ -507,7 +509,7 @@ let app =
 
 ### text
 
-`text` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
+`text` sets or modifies the body of the `HttpResponse` by sending a plain text value to the client.. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
 
 The different between `text` and `setBodyAsString` is that this http handler also sets the `Content-Type` HTTP header to `text/plain`.
 
@@ -522,7 +524,7 @@ let app =
 
 ### json
 
-`json` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore. It also sets the `Content-Type` HTTP header to `application/json`.
+`json` sets or modifies the body of the `HttpResponse` by sending a JSON serialized object to the client. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more. It also sets the `Content-Type` HTTP header to `application/json`.
 
 #### Example:
 
@@ -541,7 +543,7 @@ let app =
 
 ### xml
 
-`xml` sets or modifies the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore. It also sets the `Content-Type` HTTP header to `application/xml`.
+`xml` sets or modifies the body of the `HttpResponse` by sending an XML serialized object to the client. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more. It also sets the `Content-Type` HTTP header to `application/xml`.
 
 #### Example:
 
@@ -559,9 +561,61 @@ let app =
     ]
 ```
 
+### negotiate
+
+`negotiate` sets or modifies the body of the `HttpResponse` by inspecting the `Accept` header of the HTTP request and deciding if the response should be sent in JSON or XML. If the client is indifferent then the default response will be sent in JSON.
+
+This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
+
+#### Example:
+
+```fsharp
+[<CLIMutable>]
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let app = 
+    choose [
+        route  "/foo" >=> negotiate { FirstName = "Foo"; LastName = "Bar" }
+    ]
+```
+
+### negotiateWith
+
+`negotiateWith` sets or modifies the body of the `HttpResponse` by inspecting the `Accept` header of the HTTP request and deciding in what mimeType the response should be sent. A dictionary of type `IDictionary<string, obj -> HttpHandler>` is used to determine which `obj -> HttpHandler` function should be used to convert an object into a `HttpHandler` for a given mime type.
+
+This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
+
+#### Example:
+
+```fsharp
+[<CLIMutable>]
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+// xml and json are the two HttpHandler functions from above
+let rules =
+    dict [
+        "*/*"             , xml
+        "application/json", json
+        "application/xml" , xml
+    ]
+
+let app = 
+    choose [
+        route  "/foo" >=> negotiateWith rules { FirstName = "Foo"; LastName = "Bar" }
+    ]
+```
+
 ### htmlFile
 
-`htmlFile` sets or modifies the body of the `HttpResponse` with the contents of a physical html file. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
+`htmlFile` sets or modifies the body of the `HttpResponse` with the contents of a physical html file. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
 
 This http handler takes a relative path of a html file as input parameter and sets the HTTP header `Content-Type` to `text/html`.
 
@@ -576,7 +630,7 @@ let app =
 
 ### dotLiquid
 
-`dotLiquid` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
+`dotLiquid` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
 
 The `dotLiquid` handler requires the content type and the actual template to be passed in as two string values together with an object model. This handler is supposed to be used as the base handler for other http handlers which want to utilize the DotLiquid template engine (e.g. you could create an SVG handler on top of it).
 
@@ -599,7 +653,7 @@ let app =
 
 ### dotLiquidTemplate
 
-`dotLiquidTemplate` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
+`dotLiquidTemplate` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
 
 This http handler takes a relative path of a template file, an associated model and the contentType of the response as parameters.
 
@@ -639,7 +693,7 @@ let app =
 
 ### razorView
 
-`razorView` uses the official ASP.NET Core MVC Razor view engine to compile a page and set the body of the `HttpResponse`. This http handler triggers the response being sent to the client and other http handlers afterwards will not be able to modify the HTTP headers anymore.
+`razorView` uses the official ASP.NET Core MVC Razor view engine to compile a page and set the body of the `HttpResponse`. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
 
 The `razorView` handler requires the view name, an object model and the contentType of the response to be passed in. It also requires to be enabled through the `AddRazorEngine` function during start-up.
 
