@@ -784,6 +784,41 @@ let app =
     ]
 ```
 
+#### Gotchas
+
+If your route is not returning static html, then you should wrap your function with a warbler.
+
+```fsharp
+// unit -> string
+let model() =
+    System.DateTime.Now.ToString()
+
+// HtmlNode
+let staticView =
+    p [] (model() |> rawText)
+
+// unit -> HtmlNode
+let dynamicView() =
+    p [] (model() |> rawText)
+
+let webApp = 
+    choose [
+        GET >=>
+            choose [
+                route "/static"      >=> (staticView |> renderHtml)
+                route "/dynamic"     >=> warbler (fun _ -> dynamicView() |> renderHtml)
+            ]
+    ]
+```
+
+Functions in F# are eagerly evaluated and in the case of razor/htmlEngine a warbler will help to evaluate the function every time.
+
+```fsharp
+// ('a -> 'a -> 'b) -> 'a -> 'b
+let warbler f a =
+    f a a
+```
+
 ## Custom HttpHandlers
 
 Defining a new `HttpHandler` is fairly easy. All you need to do is to create a new function which matches the signature of `HttpHandlerContext -> Async<HttpHandlerContext option>`. Through currying your custom `HttpHandler` can extend the original signature as long as the partial application of your function will still return a function of `HttpHandlerContext -> Async<HttpHandlerContext option>`.

@@ -65,6 +65,7 @@ let showUserHandler id =
         text (sprintf "User ID: %i" id)
         <| ctx
 
+
 let webApp = 
     choose [
         GET >=>
@@ -78,6 +79,8 @@ let webApp =
                 routef "/user/%i"    showUserHandler
                 route  "/razor"      >=> razorHtmlView "Person" { Name = "Razor" }
                 route  "/person"     >=> (personView { Name = "Html Node" } |> renderHtml)
+                route "/static"      >=> (staticView |> renderHtml)
+                route "/dynamic"     >=> warbler (fun _ -> dynamicView() |> renderHtml)
             ]
         setStatusCode 404 >=> text "Not Found" ]
 

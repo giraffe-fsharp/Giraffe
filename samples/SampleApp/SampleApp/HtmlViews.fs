@@ -22,4 +22,11 @@ let personView (model : Person) =
         div [] [partial()]
     ] |> layout
   
-    
+let model() =
+    System.DateTime.Now.ToString()
+
+let staticView =
+    p [] (model() |> rawText)
+
+let dynamicView() =
+    p [] (model() |> rawText)
