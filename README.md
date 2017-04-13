@@ -60,6 +60,7 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [razorView](#razorview)
     - [razorHtmlView](#razorhtmlview)
     - [renderHtml](#renderhtml)
+    - [warbler](#warbler)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Installation](#installation)
 - [Sample applications](#sample-applications)
@@ -782,6 +783,35 @@ let app =
     choose [
         route "/" >=> (personView model |> renderHtml)
     ]
+```
+
+### warbler
+
+If your route is not returning a static response, then you should wrap your function with a warbler.
+
+#### Example
+```fsharp
+// unit -> string
+let time() =
+    System.DateTime.Now.ToString()
+
+let webApp = 
+    choose [
+        GET >=>
+            choose [
+                route "/once"        >=> (time() |> text)
+                route "/everytime"   >=> warbler (fun _ -> (time() |> text))
+            ]
+    ]
+```
+
+Functions in F# are eagerly evaluated and the `/once` route will only be evaluated the first time.
+A warbler will help to evaluate the function every time the route is hit.
+
+```fsharp
+// ('a -> 'a -> 'b) -> 'a -> 'b
+let warbler f a =
+    f a a
 ```
 
 ## Custom HttpHandlers

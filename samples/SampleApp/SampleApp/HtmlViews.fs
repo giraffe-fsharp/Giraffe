@@ -21,5 +21,3 @@ let personView (model : Person) =
             ]
         div [] [partial()]
     ] |> layout
-  
-    
