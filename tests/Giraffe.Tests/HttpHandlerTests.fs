@@ -1188,3 +1188,10 @@ let ``Get "/flex" without an Accept header returns a JSON object`` () =
         let body = getBody ctx
         Assert.Equal(expected, body)
         Assert.Equal("application/json", ctx.HttpContext.Response |> getContentType)
+
+[<Fact>]
+let ``Warbler function should execute inner function`` () =
+    let inner (a: int) = a.ToString()
+    let warbled = warbler (fun (a:int) -> inner)
+    let result = warbled 42
+    Assert.Equal("42", result)
