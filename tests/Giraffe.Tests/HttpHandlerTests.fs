@@ -1190,8 +1190,49 @@ let ``Get "/flex" without an Accept header returns a JSON object`` () =
         Assert.Equal("application/json", ctx.HttpContext.Response |> getContentType)
 
 [<Fact>]
-let ``Warbler function should execute inner function`` () =
-    let inner (a: int) = a.ToString()
-    let warbled = warbler (fun (a:int) -> inner)
-    let result = warbled 42
-    Assert.Equal("42", result)
+let ``Warbler function should execute inner function each time`` () =
+    let ctx, hctx = initNewContext()
+    let inner() = Guid.NewGuid().ToString()
+    let app = 
+        GET >=> choose [ 
+            route "/foo"  >=> text (inner())
+            route "/foo2" >=> warbler (fun _ -> text (inner())) ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let result1 = 
+        hctx
+        |> app
+        |> Async.RunSynchronously
+        |> (fun res -> getBody res.Value)
+
+    ctx.Response.Body <- new MemoryStream()
+
+    let result2 = 
+        hctx
+        |> app
+        |> Async.RunSynchronously
+        |> (fun res -> getBody res.Value)
+
+    Assert.Equal(result1, result2)
+
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo2")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let result3 = 
+        hctx
+        |> app
+        |> Async.RunSynchronously
+        |> (fun res -> getBody res.Value)
+
+    ctx.Response.Body <- new MemoryStream()
+
+    let result4 = 
+        hctx
+        |> app
+        |> Async.RunSynchronously
+        |> (fun res -> getBody res.Value)
+
+    Assert.False(result3.Equals result4)
