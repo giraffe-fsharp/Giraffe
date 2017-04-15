@@ -1082,7 +1082,7 @@ open Giraffe.ModelBinding
 let submitCar =
     fun ctx ->
         async {
-            // Binds a JSO, XML or form urlencoded payload to a Car object
+            // Binds a JSON, XML or form urlencoded payload to a Car object
             let! car = bindModel<Car> ctx
 
             // Serializes the Car object back into JSON
