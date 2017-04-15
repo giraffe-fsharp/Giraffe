@@ -101,7 +101,7 @@ let webApp =
                 route  "/once"       >=> (time() |> text)
                 route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
             ]
-        POST >=> route "/car" >=> submitCar
+        route "/car" >=> submitCar
         setStatusCode 404 >=> text "Not Found" ]
 
 // ---------------------------------

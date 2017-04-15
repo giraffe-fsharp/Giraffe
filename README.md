@@ -66,6 +66,7 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [bindJson](#bindjson)
     - [bindXml](#bindxml)
     - [bindForm](#bindform)
+    - [bindQueryString](#bindquerystring)
     - [bindModel](#bindmodel)
 - [Installation](#installation)
 - [Sample applications](#sample-applications)
@@ -1054,9 +1055,64 @@ Accept: */*
 Name=DB9&Make=Aston+Martin&Wheels=4&Built=2016-01-01
 ```
 
+### bindQueryString
+
+`bindQueryString<'T> (ctx : HttpHandlerContext)` can be used to bind a query string to a strongly typed model.
+
+#### Example
+
+Define an F# record type with the `CLIMutable` attribute which will add a parameterless constructor to the type:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+```
+
+Then create a new `HttpHandler` which uses `bindQueryString` and use it from an app:
+
+```fsharp
+open Giraffe.HttpHandlers
+open Giraffe.ModelBinding
+
+let submitCar =
+    fun ctx ->
+        async {
+            // Binds a query string to a Car object
+            let! car = bindQueryString<Car> ctx
+
+            // Serializes the Car object back into JSON
+            // and sends it back as the response.
+            return! json car ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+                route "/car" >=> submitCar ]
+```
+
+You can test the bind function by sending a HTTP request with a query string:
+
+```
+GET http://localhost:5000/car?Name=Aston%20Martin&Make=DB9&Wheels=4&Built=1990-04-20 HTTP/1.1
+Host: localhost:5000
+Cache-Control: no-cache
+Accept: */*
+
+```
+
 ### bindModel
 
-`bindModel<'T> (ctx : HttpHandlerContext)` can be used to automatically detect the `Content-Type` of a HTTP request and automatically bind a JSON, XML or form urlencoded payload to a strongly typed model.
+`bindModel<'T> (ctx : HttpHandlerContext)` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model.
 
 #### Example
 
@@ -1096,7 +1152,9 @@ let webApp =
             choose [
                 route "/"    >=> text "index"
                 route "ping" >=> text "pong" ]
-        POST >=> route "/car" >=> submitCar ]
+        // Can accept GET and POST requests and
+        // bind a model from the payload or query string
+        route "/car" >=> submitCar ]
 ```
 
 ## Installation

@@ -8,6 +8,7 @@ open Xunit
 open NSubstitute
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
+open Microsoft.AspNetCore.Http.Internal
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Giraffe.Common
@@ -181,6 +182,40 @@ let ``bindForm test`` () =
         Assert.Equal(expected, body)
 
 [<Fact>]
+let ``bindQueryString test`` () =
+    let ctx, hctx = initNewContext()
+
+    let queryHandler =
+        fun ctx -> 
+            async {
+                let! model = bindQueryString<Customer> ctx
+                return! text (model.ToString()) ctx
+            }
+
+    let app = GET >=> route "/query" >=> queryHandler
+    
+    let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
+    let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
+    let asdf = QueryCollection(query) :> IQueryCollection
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/query")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
+
+    let result = 
+        hctx
+        |> app
+        |> Async.RunSynchronously
+
+    match result with
+    | None     -> assertFailf "Result was expected to be %s" expected
+    | Some ctx ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+
+[<Fact>]
 let ``bindModel with JSON content returns correct result`` () =
     let ctx, hctx = initNewContext()
 
@@ -191,7 +226,7 @@ let ``bindModel with JSON content returns correct result`` () =
                 return! text (model.ToString()) ctx
             }
 
-    let app = POST >=> route "/auto" >=> autoHandler
+    let app = route "/auto" >=> autoHandler
     
     let contentType = "application/json"
     let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
@@ -235,7 +270,7 @@ let ``bindModel with XML content returns correct result`` () =
                 return! text (model.ToString()) ctx
             }
 
-    let app = POST >=> route "/auto" >=> autoHandler
+    let app = route "/auto" >=> autoHandler
     
     let contentType = "application/xml"
     let postContent = "<Customer><Name>John Doe</Name><IsVip>true</IsVip><BirthDate>1990-04-20</BirthDate><Balance>150000.5</Balance><LoyaltyPoints>137</LoyaltyPoints></Customer>"
@@ -279,7 +314,7 @@ let ``bindModel with FORM content returns correct result`` () =
                 return! text (model.ToString()) ctx
             }
 
-    let app = POST >=> route "/auto" >=> autoHandler
+    let app = route "/auto" >=> autoHandler
     
     let contentType = "application/x-www-form-urlencoded"
     let headers = HeaderDictionary()
@@ -325,7 +360,7 @@ let ``bindModel with JSON content and a specific charset returns correct result`
                 return! text (model.ToString()) ctx
             }
 
-    let app = POST >=> route "/auto" >=> autoHandler
+    let app = route "/auto" >=> autoHandler
     
     let contentType = "application/json; charset=utf-8"
     let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
@@ -344,6 +379,40 @@ let ``bindModel with JSON content and a specific charset returns correct result`
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Body  <- stream
+
+    let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
+
+    let result = 
+        hctx
+        |> app
+        |> Async.RunSynchronously
+
+    match result with
+    | None     -> assertFailf "Result was expected to be %s" expected
+    | Some ctx ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+
+[<Fact>]
+let ``bindModel during HTTP GET request with query string returns correct result`` () =
+    let ctx, hctx = initNewContext()
+
+    let autoHandler =
+        fun ctx -> 
+            async {
+                let! model = bindModel<Customer> ctx
+                return! text (model.ToString()) ctx
+            }
+
+    let app = route "/auto" >=> autoHandler
+    
+    let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
+    let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
+    let asdf = QueryCollection(query) :> IQueryCollection
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
