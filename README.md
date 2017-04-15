@@ -11,7 +11,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 #### ATTENTION:
 
-This project is still in alpha stage.
+ This project has been fairly stable for a while now and will be entering a beta phase relatively soon. Bigger API changes are less frequent now.
 
 Giraffe was formerly known as [ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) and has been recently [renamed to better distinguish from AWS Lambda](https://github.com/dustinmoris/Giraffe/issues/15) as well as establish a more unique brand.
 
