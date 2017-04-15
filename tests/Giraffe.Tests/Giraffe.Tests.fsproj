@@ -29,7 +29,8 @@
   <ItemGroup>
     <Compile Include="FormatExpressionTests.fs" />
     <Compile Include="HttpHandlerTests.fs" />
-    <Compile Include="HtmlTests.fs" />
+    <Compile Include="HtmlEngineTests.fs" />
+    <Compile Include="ModelBindingTests.fs" />
   </ItemGroup>
 
 </Project>

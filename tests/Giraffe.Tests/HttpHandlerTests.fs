@@ -781,7 +781,7 @@ let ``GET "/person" returns rendered HTML view`` () =
         Assert.Equal("text/html", ctx.HttpContext.Response |> getContentType)
 
 [<Fact>]
-let ``Get "/flex" with Accept header of "application/json" returns JSON object`` () =
+let ``Get "/auto" with Accept header of "application/json" returns JSON object`` () =
     let johnDoe =
         {
             FirstName = "John"
@@ -796,14 +796,14 @@ let ``Get "/flex" with Accept header of "application/json" returns JSON object``
         GET >=> choose [
             route "/"     >=> text "Hello World"
             route "/foo"  >=> text "bar"
-            route "/flex" >=> negotiate johnDoe
+            route "/auto" >=> negotiate johnDoe
             setStatusCode 404 >=> text "Not found" ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/json"))
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/flex")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
@@ -822,7 +822,7 @@ let ``Get "/flex" with Accept header of "application/json" returns JSON object``
         Assert.Equal("application/json", ctx.HttpContext.Response |> getContentType)
 
 [<Fact>]
-let ``Get "/flex" with Accept header of "application/xml; q=0.9, application/json" returns JSON object`` () =
+let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/json" returns JSON object`` () =
     let johnDoe =
         {
             FirstName = "John"
@@ -837,14 +837,14 @@ let ``Get "/flex" with Accept header of "application/xml; q=0.9, application/jso
         GET >=> choose [
             route "/"     >=> text "Hello World"
             route "/foo"  >=> text "bar"
-            route "/flex" >=> negotiate johnDoe
+            route "/auto" >=> negotiate johnDoe
             setStatusCode 404 >=> text "Not found" ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/xml; q=0.9, application/json"))
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/flex")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
@@ -863,7 +863,7 @@ let ``Get "/flex" with Accept header of "application/xml; q=0.9, application/jso
         Assert.Equal("application/json", ctx.HttpContext.Response |> getContentType)
 
 [<Fact>]
-let ``Get "/flex" with Accept header of "application/xml" returns XML object`` () =
+let ``Get "/auto" with Accept header of "application/xml" returns XML object`` () =
     let johnDoe =
         {
             FirstName = "John"
@@ -878,14 +878,14 @@ let ``Get "/flex" with Accept header of "application/xml" returns XML object`` (
         GET >=> choose [
             route "/"     >=> text "Hello World"
             route "/foo"  >=> text "bar"
-            route "/flex" >=> negotiate johnDoe
+            route "/auto" >=> negotiate johnDoe
             setStatusCode 404 >=> text "Not found" ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/xml"))
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/flex")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
@@ -914,7 +914,7 @@ let ``Get "/flex" with Accept header of "application/xml" returns XML object`` (
         Assert.Equal("application/xml", ctx.HttpContext.Response |> getContentType)
 
 [<Fact>]
-let ``Get "/flex" with Accept header of "application/xml, application/json" returns XML object`` () =
+let ``Get "/auto" with Accept header of "application/xml, application/json" returns XML object`` () =
     let johnDoe =
         {
             FirstName = "John"
@@ -929,14 +929,14 @@ let ``Get "/flex" with Accept header of "application/xml, application/json" retu
         GET >=> choose [
             route "/"     >=> text "Hello World"
             route "/foo"  >=> text "bar"
-            route "/flex" >=> negotiate johnDoe
+            route "/auto" >=> negotiate johnDoe
             setStatusCode 404 >=> text "Not found" ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/xml, application/json"))
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/flex")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
@@ -965,7 +965,7 @@ let ``Get "/flex" with Accept header of "application/xml, application/json" retu
         Assert.Equal("application/xml", ctx.HttpContext.Response |> getContentType)
 
 [<Fact>]
-let ``Get "/flex" with Accept header of "application/json, application/xml" returns JSON object`` () =
+let ``Get "/auto" with Accept header of "application/json, application/xml" returns JSON object`` () =
     let johnDoe =
         {
             FirstName = "John"
@@ -980,14 +980,14 @@ let ``Get "/flex" with Accept header of "application/json, application/xml" retu
         GET >=> choose [
             route "/"     >=> text "Hello World"
             route "/foo"  >=> text "bar"
-            route "/flex" >=> negotiate johnDoe
+            route "/auto" >=> negotiate johnDoe
             setStatusCode 404 >=> text "Not found" ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/json, application/xml"))
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/flex")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
@@ -1006,7 +1006,7 @@ let ``Get "/flex" with Accept header of "application/json, application/xml" retu
         Assert.Equal("application/json", ctx.HttpContext.Response |> getContentType)
 
 [<Fact>]
-let ``Get "/flex" with Accept header of "application/json; q=0.5, application/xml" returns XML object`` () =
+let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xml" returns XML object`` () =
     let johnDoe =
         {
             FirstName = "John"
@@ -1021,14 +1021,14 @@ let ``Get "/flex" with Accept header of "application/json; q=0.5, application/xm
         GET >=> choose [
             route "/"     >=> text "Hello World"
             route "/foo"  >=> text "bar"
-            route "/flex" >=> negotiate johnDoe
+            route "/auto" >=> negotiate johnDoe
             setStatusCode 404 >=> text "Not found" ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/json; q=0.5, application/xml"))
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/flex")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
@@ -1057,7 +1057,7 @@ let ``Get "/flex" with Accept header of "application/json; q=0.5, application/xm
         Assert.Equal("application/xml", ctx.HttpContext.Response |> getContentType)
 
 [<Fact>]
-let ``Get "/flex" with Accept header of "application/json; q=0.5, application/xml; q=0.6" returns XML object`` () =
+let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xml; q=0.6" returns XML object`` () =
     let johnDoe =
         {
             FirstName = "John"
@@ -1072,14 +1072,14 @@ let ``Get "/flex" with Accept header of "application/json; q=0.5, application/xm
         GET >=> choose [
             route "/"     >=> text "Hello World"
             route "/foo"  >=> text "bar"
-            route "/flex" >=> negotiate johnDoe
+            route "/auto" >=> negotiate johnDoe
             setStatusCode 404 >=> text "Not found" ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/json; q=0.5, application/xml; q=0.6"))
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/flex")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
@@ -1108,7 +1108,7 @@ let ``Get "/flex" with Accept header of "application/json; q=0.5, application/xm
         Assert.Equal("application/xml", ctx.HttpContext.Response |> getContentType)
 
 [<Fact>]
-let ``Get "/flex" with Accept header of "text/html" returns a 406 response`` () =
+let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () =
     let johnDoe =
         {
             FirstName = "John"
@@ -1123,14 +1123,14 @@ let ``Get "/flex" with Accept header of "text/html" returns a 406 response`` () 
         GET >=> choose [
             route "/"     >=> text "Hello World"
             route "/foo"  >=> text "bar"
-            route "/flex" >=> negotiate johnDoe
+            route "/auto" >=> negotiate johnDoe
             setStatusCode 404 >=> text "Not found" ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("text/html"))
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/flex")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
@@ -1150,7 +1150,7 @@ let ``Get "/flex" with Accept header of "text/html" returns a 406 response`` () 
         Assert.Equal("text/plain", ctx.HttpContext.Response |> getContentType)
 
 [<Fact>]
-let ``Get "/flex" without an Accept header returns a JSON object`` () =
+let ``Get "/auto" without an Accept header returns a JSON object`` () =
     let johnDoe =
         {
             FirstName = "John"
@@ -1165,13 +1165,13 @@ let ``Get "/flex" without an Accept header returns a JSON object`` () =
         GET >=> choose [
             route "/"     >=> text "Hello World"
             route "/foo"  >=> text "bar"
-            route "/flex" >=> negotiate johnDoe
+            route "/auto" >=> negotiate johnDoe
             setStatusCode 404 >=> text "Not found" ]
 
     let headers = HeaderDictionary()
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/flex")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 

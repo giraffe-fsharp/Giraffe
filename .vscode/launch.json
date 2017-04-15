@@ -37,9 +37,6 @@
             },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
-            },
-            "sourceFileMap": {
-                "/Views": "${workspaceRoot}/samples/SampleApp/SampleApp/bin/Debug/netcoreapp1.1/views"
             }
         },
         {

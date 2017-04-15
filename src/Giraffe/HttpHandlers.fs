@@ -11,7 +11,6 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.AspNetCore.Mvc.Razor
 open Microsoft.AspNetCore.Mvc.ViewFeatures
 open FSharp.Core.Printf
-open Newtonsoft.Json
 open DotLiquid
 open Giraffe.Common
 open Giraffe.FormatExpressions
@@ -35,6 +34,12 @@ type HttpHandlerResult = Async<HttpHandlerContext option>
 type HttpHandler = HttpHandlerContext -> HttpHandlerResult
 
 type ErrorHandler = exn -> HttpHandler
+
+/// ---------------------------
+/// Globally useful functions
+/// ---------------------------
+
+let inline warbler f a = f a a
 
 /// ---------------------------
 /// Sub route helper functions
@@ -303,7 +308,7 @@ let text (str : string) =
 /// It also sets the HTTP header Content-Type: application/json and sets the Content-Length header accordingly.
 let json (dataObj : obj) =
     setHttpHeader "Content-Type" "application/json"
-    >=> setBodyAsString (JsonConvert.SerializeObject dataObj)
+    >=> setBodyAsString (serializeJson dataObj)
 
 /// Serializes an object to XML and writes it to the body of the HTTP response.
 /// It also sets the HTTP header Content-Type: application/xml and sets the Content-Length header accordingly.
@@ -383,71 +388,65 @@ let renderHtml (document: HtmlNode) =
             |> setBodyAsString
         ctx |> (setHttpHeader "Content-Type" "text/html" >=> htmlHandler)
 
-/// ---------------------------
-/// Content negotioation handlers
-/// ---------------------------
-
-let defaultNegotioationRules =
-    dict [
-        "*/*"             , json
-        "application/json", json
-        "application/xml" , xml
-        "text/xml"        , xml
-    ]
-
-type AcceptedMimeType =
-    {
-        OriginalValue : string
-        MimeType      : string
-        Preference    : float
-    }
-    static member FromString (value : string) =
-        let values =
-            value.Split([| "; q=" |], StringSplitOptions.RemoveEmptyEntries)
-            |> Array.map (fun x -> x.Trim())
-
-        if      values.Length > 2 then failwithf "Unexpected value in HTTP Accept header: %s" value
-        else if values.Length = 2 then { OriginalValue = value; MimeType = values.[0]; Preference = float values.[1] }
-        else                           { OriginalValue = value; MimeType = values.[0]; Preference = 1.0 }
-
-let negotiateWith (rules : IDictionary<string, obj -> HttpHandler>) (responseObj : obj) =
+/// Checks the HTTP Accept header of the request and determines the most appropriate
+/// response type from a given set of negotiationRules. If the Accept header cannot be
+/// matched with a supported media type then it will invoke the unacceptableHandler.
+///
+/// The negotiationRules must be a dictionary of supported media types with a matching
+/// HttpHandler which can serve that particular media type.
+///
+/// Example:
+/// let negotiationRules = dict [ "application/json", json; "application/xml" , xml ]
+/// `json` and `xml` are both the respective default HttpHandler functions in this example.
+let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>)
+                  (unacceptableHandler : HttpHandler)
+                  (responseObj         : obj) =
     fun (ctx : HttpHandlerContext) ->
-        let acceptHeaderValues =
-            ctx.HttpContext.Request.GetTypedHeaders()
-            |> fun headers -> headers.Accept
+        (ctx.HttpContext.Request.GetTypedHeaders()).Accept
+        |> fun acceptedMimeTypes ->
+            match isNull acceptedMimeTypes || acceptedMimeTypes.Count = 0 with
+            | true  ->
+                negotiationRules.Keys
+                |> Seq.head
+                |> fun mediaType -> negotiationRules.[mediaType]
+                |> fun handler   -> handler responseObj ctx
+            | false ->
+                List.ofSeq acceptedMimeTypes
+                |> List.filter (fun x -> negotiationRules.ContainsKey x.MediaType)
+                |> fun mimeTypes ->
+                    match mimeTypes.Length with
+                    | 0 -> unacceptableHandler
+                    | _ ->
+                        mimeTypes
+                        |> List.sortByDescending (fun x -> if x.Quality.HasValue then x.Quality.Value else 1.0)
+                        |> List.head
+                        |> fun mimeType -> negotiationRules.[mimeType.MediaType]
+                        |> fun handler  -> handler responseObj
+                <| ctx
 
-        if isNull acceptHeaderValues || acceptHeaderValues.Count = 0
-        then
-            rules.Keys
-            |> Seq.head
-            |> fun key -> rules.[key]
-            |> fun handler -> handler responseObj ctx
-        else
-            let acceptedTypes =
-                acceptHeaderValues
-                |> Seq.map (fun h -> h.ToString() |> AcceptedMimeType.FromString)
-            
-            acceptedTypes
-            |> Seq.map (fun t -> t.MimeType)
-            |> Seq.exists rules.ContainsKey
-            |> function
-                | false ->
-                    setStatusCode 406
-                    >=> (acceptedTypes
-                        |> Seq.map (fun t -> t.OriginalValue)
-                        |> String.concat ", "
-                        |> sprintf "%s is unacceptable by the server."
-                        |> text)
-                | true  ->
-                    acceptedTypes
-                    |> Seq.sortByDescending (fun t -> t.Preference)
-                    |> Seq.find (fun t -> rules.ContainsKey t.MimeType)
-                    |> fun t -> rules.[t.MimeType]
-                    |> fun handler -> handler responseObj
-            <| ctx
-
+/// Same as negotiateWith except that it specifies a default set of negotiation rules
+/// and a default unacceptableHandler.
+///
+/// The supported media types are:
+/// */*              -> json
+/// application/json -> json
+/// application/xml  -> xml
+/// text/xml         -> xml
 let negotiate (responseObj : obj) =
-    negotiateWith defaultNegotioationRules responseObj
-
-let inline warbler f a = 
-    f a a
+    negotiateWith
+        // Default negotiation rules
+        (dict [
+            "*/*"             , json
+            "application/json", json
+            "application/xml" , xml
+            "text/xml"        , xml
+        ])
+        // Default unacceptable HttpHandler
+        (fun (ctx : HttpHandlerContext) ->
+            setStatusCode 406
+            >=> ((ctx.HttpContext.Request.Headers.["Accept"]).ToString()
+                |> sprintf "%s is unacceptable by the server."
+                |> text)
+            <| ctx)
+        // response object
+        responseObj

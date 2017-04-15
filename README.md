@@ -62,6 +62,11 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [renderHtml](#renderhtml)
     - [warbler](#warbler)
 - [Custom HttpHandlers](#custom-httphandlers)
+- [Model Binding](#model-binding)
+    - [bindJson](#bindjson)
+    - [bindXml](#bindxml)
+    - [bindForm](#bindform)
+    - [bindModel](#bindmodel)
 - [Installation](#installation)
 - [Sample applications](#sample-applications)
 - [Benchmarks](#benchmarks)
@@ -799,8 +804,8 @@ let webApp =
     choose [
         GET >=>
             choose [
-                route "/once"        >=> (time() |> text)
-                route "/everytime"   >=> warbler (fun _ -> (time() |> text))
+                route "/once"      >=> (time() |> text)
+                route "/everytime" >=> warbler (fun _ -> (time() |> text))
             ]
     ]
 ```
@@ -810,8 +815,7 @@ A warbler will help to evaluate the function every time the route is hit.
 
 ```fsharp
 // ('a -> 'a -> 'b) -> 'a -> 'b
-let warbler f a =
-    f a a
+let warbler f a = f a a
 ```
 
 ## Custom HttpHandlers
@@ -862,6 +866,237 @@ let app =
             )
         setStatusCode 404 >=> text "Not found"
     ] : HttpHandler
+```
+
+## Model Binding
+
+The `Giraffe.ModelBinding` module exposes a default set of model binding functions which can be used from within a `HttpHandler`.
+
+### bindJson
+
+`bindJson<'T> (ctx : HttpHandlerContext)` can be used to bind a JSON payload to a strongly typed model.
+
+#### Example
+
+Define an F# record type with the `CLIMutable` attribute which will add a parameterless constructor to the type:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+```
+
+Then create a new `HttpHandler` which uses `bindJson` and use it from an app:
+
+```fsharp
+open Giraffe.HttpHandlers
+open Giraffe.ModelBinding
+
+let submitCar =
+    fun ctx ->
+        async {
+            // Binds a JSON payload to a Car object
+            let! car = bindJson<Car> ctx
+
+            // Serializes the Car object back into JSON
+            // and sends it back as the response.
+            return! json car ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong" ]
+        POST >=> route "/car" >=> submitCar ]
+```
+
+You can test the bind function by sending a HTTP request with a JSON payload:
+
+```
+POST http://localhost:5000/car HTTP/1.1
+Host: localhost:5000
+Connection: keep-alive
+Content-Length: 77
+Cache-Control: no-cache
+Content-Type: application/json
+Accept: */*
+
+{ "Name": "DB9", "Make": "Aston Martin", "Wheels": 4, "Built": "2016-01-01" }
+```
+
+### bindXml
+
+`bindXml<'T> (ctx : HttpHandlerContext)` can be used to bind an XML payload to a strongly typed model.
+
+#### Example
+
+Define an F# record type with the `CLIMutable` attribute which will add a parameterless constructor to the type:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+```
+
+Then create a new `HttpHandler` which uses `bindXml` and use it from an app:
+
+```fsharp
+open Giraffe.HttpHandlers
+open Giraffe.ModelBinding
+
+let submitCar =
+    fun ctx ->
+        async {
+            // Binds an XML payload to a Car object
+            let! car = bindXml<Car> ctx
+
+            // Serializes the Car object back into JSON
+            // and sends it back as the response.
+            return! json car ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong" ]
+        POST >=> route "/car" >=> submitCar ]
+```
+
+You can test the bind function by sending a HTTP request with an XML payload:
+
+```
+POST http://localhost:5000/car HTTP/1.1
+Host: localhost:5000
+Connection: keep-alive
+Content-Length: 104
+Cache-Control: no-cache
+Content-Type: application/xml
+Accept: */*
+
+<Car>
+    <Name>DB9</Name>
+    <Make>Aston Martin</Make>
+    <Wheels>4</Wheels>
+    <Built>2016-01-01</Built>
+</Car>
+```
+
+### bindForm
+
+`bindForm<'T> (ctx : HttpHandlerContext)` can be used to bind a form urlencoded payload to a strongly typed model.
+
+#### Example
+
+Define an F# record type with the `CLIMutable` attribute which will add a parameterless constructor to the type:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+```
+
+Then create a new `HttpHandler` which uses `bindForm` and use it from an app:
+
+```fsharp
+open Giraffe.HttpHandlers
+open Giraffe.ModelBinding
+
+let submitCar =
+    fun ctx ->
+        async {
+            // Binds a form urlencoded payload to a Car object
+            let! car = bindForm<Car> ctx
+
+            // Serializes the Car object back into JSON
+            // and sends it back as the response.
+            return! json car ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong" ]
+        POST >=> route "/car" >=> submitCar ]
+```
+
+You can test the bind function by sending a HTTP request with a form payload:
+
+```
+POST http://localhost:5000/car HTTP/1.1
+Host: localhost:5000
+Connection: keep-alive
+Content-Length: 52
+Cache-Control: no-cache
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+
+Name=DB9&Make=Aston+Martin&Wheels=4&Built=2016-01-01
+```
+
+### bindModel
+
+`bindModel<'T> (ctx : HttpHandlerContext)` can be used to automatically detect the `Content-Type` of a HTTP request and automatically bind a JSON, XML or form urlencoded payload to a strongly typed model.
+
+#### Example
+
+Define an F# record type with the `CLIMutable` attribute which will add a parameterless constructor to the type:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+```
+
+Then create a new `HttpHandler` which uses `bindModel` and use it from an app:
+
+```fsharp
+open Giraffe.HttpHandlers
+open Giraffe.ModelBinding
+
+let submitCar =
+    fun ctx ->
+        async {
+            // Binds a JSO, XML or form urlencoded payload to a Car object
+            let! car = bindModel<Car> ctx
+
+            // Serializes the Car object back into JSON
+            // and sends it back as the response.
+            return! json car ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong" ]
+        POST >=> route "/car" >=> submitCar ]
 ```
 
 ## Installation
@@ -948,7 +1183,7 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Dave Shaw](https://github.com/xdaDaveShaw) (Extended sample application and general help to keep things in good shape)
 - [Tobias Burger](https://github.com/toburger) (Fixed issues with culture specific parsers in routef handler)
 - [David Sinclair](https://github.com/dsincl12) (Created the dotnet-new template for Giraffe)
-- [Florian Verdonck](https://github.com/nojaf) (Ported Suave's experimental Html into Giraffe)
+- [Florian Verdonck](https://github.com/nojaf) (Ported Suave's experimental Html into Giraffe, implemented the warbler and general help with the project)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
 

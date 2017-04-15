@@ -1,4 +1,4 @@
-module Giraffe.HtmlTests
+module Giraffe.HtmlEngineTests
 
 open System
 open Xunit

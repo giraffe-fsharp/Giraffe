@@ -11,6 +11,7 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
+open Giraffe.ModelBinding
 open SampleApp.Models
 open SampleApp.HtmlViews
 
@@ -68,6 +69,22 @@ let showUserHandler id =
 let time() =
     System.DateTime.Now.ToString()
 
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let submitCar =
+    fun ctx ->
+        async {
+            let! car = bindModel<Car> ctx
+            return! json car ctx
+        }
+
 let webApp = 
     choose [
         GET >=>
@@ -81,9 +98,10 @@ let webApp =
                 routef "/user/%i"    showUserHandler
                 route  "/razor"      >=> razorHtmlView "Person" { Name = "Razor" }
                 route  "/person"     >=> (personView { Name = "Html Node" } |> renderHtml)
-                route "/once"        >=> (time() |> text)
-                route "/everytime"   >=> warbler (fun _ -> (time() |> text))
+                route  "/once"       >=> (time() |> text)
+                route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
             ]
+        POST >=> route "/car" >=> submitCar
         setStatusCode 404 >=> text "Not Found" ]
 
 // ---------------------------------

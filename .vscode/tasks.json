@@ -2,34 +2,12 @@
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
     "version": "0.1.0",
-    "command": "dotnet",
-    "isShellCommand": true,
-    "args": [],
     "tasks": [
         {
             "taskName": "build",
-            "args": [ "samples\\SampleApp\\SampleApp" ],
-            "isBuildCommand": true,
-            "showOutput": "silent",
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "taskName": "restore",
-            "args": [ "samples\\SampleApp\\SampleApp" ],
-            "isBuildCommand": true,
-            "showOutput": "silent",
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "taskName": "test",
-            "args": [ "samples\\SampleApp\\SampleApp\\SampleApp.Tests.fsproj" ],
-            "isBuildCommand": true,
-            "showOutput": "silent",
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "taskName": "run",
-            "args": [ "samples\\SampleApp\\SampleApp\\SampleApp.Tests.fsproj" ],
+            "command": "dotnet",
+            "isShellCommand": true,
+            "args": [ "build", "samples\\SampleApp\\SampleApp" ],
             "isBuildCommand": true,
             "showOutput": "silent",
             "problemMatcher": "$msCompile"
