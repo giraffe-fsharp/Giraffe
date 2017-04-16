@@ -30,16 +30,16 @@ let bindXml<'T> (ctx : HttpHandlerContext) =
 
 let bindForm<'T> (ctx : HttpHandlerContext) =
     async {
-        let! form = ctx.HttpContext.Request.ReadFormAsync() |> Async.AwaitTask        
+        let! form = ctx.HttpContext.Request.ReadFormAsync() |> Async.AwaitTask
         let obj   = Activator.CreateInstance<'T>()
         let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
         props
-        |> Seq.iter (fun p -> 
+        |> Seq.iter (fun p ->
             let strValue = ref (StringValues())
             if form.TryGetValue(p.Name, strValue)
             then
                 let converter = TypeDescriptor.GetConverter p.PropertyType
-                let value = converter.ConvertFromString(strValue.Value.ToString())
+                let value = converter.ConvertFromInvariantString(strValue.Value.ToString())
                 p.SetValue(obj, value, null))
         return obj
     }
@@ -50,19 +50,19 @@ let bindQueryString<'T> (ctx : HttpHandlerContext) =
         let obj   = Activator.CreateInstance<'T>()
         let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
         props
-        |> Seq.iter (fun p -> 
+        |> Seq.iter (fun p ->
             let strValue = ref (StringValues())
             if query.TryGetValue(p.Name, strValue)
             then
                 let converter = TypeDescriptor.GetConverter p.PropertyType
-                let value = converter.ConvertFromString(strValue.Value.ToString())
+                let value = converter.ConvertFromInvariantString(strValue.Value.ToString())
                 p.SetValue(obj, value, null))
         return obj
     }
 
 let bindModel<'T> (ctx : HttpHandlerContext) =
     async {
-        let method = ctx.HttpContext.Request.Method        
+        let method = ctx.HttpContext.Request.Method
         return!
             if method.Equals "POST" || method.Equals "PUT" then
                 let original = ctx.HttpContext.Request.ContentType
