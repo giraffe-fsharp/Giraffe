@@ -1239,7 +1239,7 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [slang25](https://github.com/slang25) (Added subRoute feature and general help to keep things in good shape)
 - [Nicolás Herrera](https://github.com/nicolocodev) (Added razor engine feature)
 - [Dave Shaw](https://github.com/xdaDaveShaw) (Extended sample application and general help to keep things in good shape)
-- [Tobias Burger](https://github.com/toburger) (Fixed issues with culture specific parsers in routef handler)
+- [Tobias Burger](https://github.com/toburger) (Fixed issues with culture specific parsers)
 - [David Sinclair](https://github.com/dsincl12) (Created the dotnet-new template for Giraffe)
 - [Florian Verdonck](https://github.com/nojaf) (Ported Suave's experimental Html into Giraffe, implemented the warbler and general help with the project)
 
