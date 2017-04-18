@@ -302,7 +302,7 @@ let app =
 let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
     ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
 
-let app = 
+let webApp = 
     choose [
         route "/foo" >=> text "Foo"
         route "/bar" >=> text "Bar"
