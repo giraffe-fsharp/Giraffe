@@ -330,6 +330,20 @@ let htmlFile (relativeFilePath : string) =
                 >=> setBodyAsString html)
         }
 
+/// Reads a file from disk and writes its contents to the body of the HTTP response
+/// with a Content-Type provided.
+let fileContent (contentType: string) (relativeFilePath : string) =
+    fun (ctx : HttpHandlerContext) ->
+        async {
+            let env = ctx.Services.GetService<IHostingEnvironment>()
+            let filePath = env.ContentRootPath + relativeFilePath
+            let! contents = readFileAsBytes filePath     
+            return!
+                ctx
+                |> (setHttpHeader "Content-Type" contentType
+                >=> setBody contents)
+        }
+
 /// Renders a model and a template with the DotLiquid template engine and sets the HTTP response
 /// with the compiled output as well as the Content-Type HTTP header to the given value.
 let dotLiquid (contentType : string) (template : string) (model : obj) =
