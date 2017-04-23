@@ -1,5 +1,7 @@
 # Giraffe
 
+![Giraffe](https://raw.githubusercontent.com/dustinmoris/Giraffe/develop/giraffe-128x128.png)
+
 A functional ASP.NET Core micro framework for building rich web applications.
 
 Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) for more information.
