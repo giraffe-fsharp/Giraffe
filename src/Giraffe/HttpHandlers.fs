@@ -450,7 +450,8 @@ let negotiate (responseObj : obj) =
             <| ctx)
         // response object
         responseObj
-///Rdirect to route with 302 status
+
+///Redirect to route with 302 status
 let redirectTo route  =
     fun (ctx:HttpHandlerContext) -> 
         ctx.HttpContext.Response.Redirect route
