@@ -48,6 +48,7 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [setHttpHeader](#sethttpheader)
     - [setBody](#setbody)
     - [setBodyAsString](#setbodyasstring)
+    - [redirectTo](#redirectTo)
     - [text](#text)
     - [json](#json)
     - [xml](#xml)
@@ -511,6 +512,20 @@ let app =
 let app = 
     choose [
         route  "/foo" >=> setBodyAsString "Some string"
+    ]
+```
+
+### redirectTo
+
+`redirectTo` uses a 302 response code to redirect the browser to the specified path.
+
+#### Example:
+
+```fsharp
+let app = 
+    choose [
+        route "/" >=> redirectTo "/"
+        route  "/foo" >=> text "Some string"
     ]
 ```
 
