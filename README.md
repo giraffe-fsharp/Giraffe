@@ -48,12 +48,12 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [setHttpHeader](#sethttpheader)
     - [setBody](#setbody)
     - [setBodyAsString](#setbodyasstring)
-    - [redirectTo](#redirectTo)
     - [text](#text)
     - [json](#json)
     - [xml](#xml)
     - [negotiate](#negotiate)
     - [negotiateWith](#negotiatewith)
+    - [redirectTo](#redirectTo)
     - [htmlFile](#htmlfile)
     - [dotLiquid](#dotliquid)
     - [dotLiquidTemplate](#dotliquidtemplate)
@@ -515,20 +515,6 @@ let app =
     ]
 ```
 
-### redirectTo
-
-`redirectTo` uses a 302 response code to redirect the browser to the specified path.
-
-#### Example:
-
-```fsharp
-let app = 
-    choose [
-        route "/" >=> redirectTo "/"
-        route  "/foo" >=> text "Some string"
-    ]
-```
-
 ### text
 
 `text` sets or modifies the body of the `HttpResponse` by sending a plain text value to the client.. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
@@ -632,6 +618,20 @@ let rules =
 let app = 
     choose [
         route  "/foo" >=> negotiateWith rules { FirstName = "Foo"; LastName = "Bar" }
+    ]
+```
+
+### redirectTo
+
+`redirectTo` uses a 302 response code to redirect the client to the specified path.
+
+#### Example:
+
+```fsharp
+let app = 
+    choose [
+        route "/" >=> redirectTo "/foo"
+        route "/foo" >=> text "Some string"
     ]
 ```
 
