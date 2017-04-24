@@ -450,3 +450,9 @@ let negotiate (responseObj : obj) =
             <| ctx)
         // response object
         responseObj
+
+///Redirect to a different location with a 302 HTTP status code.
+let redirectTo route  =
+    fun (ctx:HttpHandlerContext) -> 
+        ctx.HttpContext.Response.Redirect route
+        ctx |> Some |> async.Return

@@ -55,6 +55,7 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [xml](#xml)
     - [negotiate](#negotiate)
     - [negotiateWith](#negotiatewith)
+    - [redirectTo](#redirectTo)
     - [htmlFile](#htmlfile)
     - [dotLiquid](#dotliquid)
     - [dotLiquidTemplate](#dotliquidtemplate)
@@ -619,6 +620,20 @@ let rules =
 let app = 
     choose [
         route  "/foo" >=> negotiateWith rules { FirstName = "Foo"; LastName = "Bar" }
+    ]
+```
+
+### redirectTo
+
+`redirectTo` uses a 302 response code to redirect the client to the specified path.
+
+#### Example:
+
+```fsharp
+let app = 
+    choose [
+        route "/" >=> redirectTo "/foo"
+        route "/foo" >=> text "Some string"
     ]
 ```
 
