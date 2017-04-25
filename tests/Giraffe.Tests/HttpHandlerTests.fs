@@ -1236,3 +1236,46 @@ let ``Warbler function should execute inner function each time`` () =
         |> (fun res -> getBody res.Value)
 
     Assert.False(result3.Equals result4)
+
+[<Fact>]
+let ``GET "/redirect" redirect to "/" `` () =
+    let ctx, hctx = initNewContext()
+    let app = 
+        GET >=> choose [ 
+            route "/"    >=> text "Hello World"
+            route "/redirect" >=> redirectTo "/"
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/redirect")) |> ignore
+
+    let result = 
+        hctx
+        |> app
+        |> Async.RunSynchronously
+    
+    match result with
+    | None     -> assertFail "It was expected that the request would be redirected" 
+    | Some ctx -> ctx.HttpContext.Response.Received().Redirect("/")
+
+
+[<Fact>]
+let ``POST "/redirect" redirect to "/" `` () =
+    let ctx, hctx = initNewContext()
+    let app = 
+        POST >=> choose [ 
+            route "/"    >=> text "Hello World"
+            route "/redirect" >=> redirectTo "/"
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/redirect")) |> ignore
+
+    let result = 
+        hctx
+        |> app
+        |> Async.RunSynchronously
+    
+    match result with
+    | None     -> assertFail "It was expected that the request would be redirected" 
+    | Some ctx -> ctx.HttpContext.Response.Received().Redirect("/")
