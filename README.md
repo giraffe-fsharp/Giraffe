@@ -55,7 +55,6 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [xml](#xml)
     - [negotiate](#negotiate)
     - [negotiateWith](#negotiatewith)
-    - [redirectTo](#redirectTo)
     - [htmlFile](#htmlfile)
     - [dotLiquid](#dotliquid)
     - [dotLiquidTemplate](#dotliquidtemplate)
@@ -63,6 +62,7 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [razorView](#razorview)
     - [razorHtmlView](#razorhtmlview)
     - [renderHtml](#renderhtml)
+    - [redirectTo](#redirectto)
     - [warbler](#warbler)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Model Binding](#model-binding)
@@ -623,20 +623,6 @@ let app =
     ]
 ```
 
-### redirectTo
-
-`redirectTo` uses a 302 response code to redirect the client to the specified path.
-
-#### Example:
-
-```fsharp
-let app = 
-    choose [
-        route "/" >=> redirectTo "/foo"
-        route "/foo" >=> text "Some string"
-    ]
-```
-
 ### htmlFile
 
 `htmlFile` sets or modifies the body of the `HttpResponse` with the contents of a physical html file. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
@@ -805,6 +791,20 @@ let personView model =
 let app = 
     choose [
         route "/" >=> (personView model |> renderHtml)
+    ]
+```
+
+### redirectTo
+
+`redirectTo` uses a 302 response code to redirect the client to the specified path.
+
+#### Example:
+
+```fsharp
+let app = 
+    choose [
+        route "/" >=> redirectTo "/foo"
+        route "/foo" >=> text "Some string"
     ]
 ```
 
