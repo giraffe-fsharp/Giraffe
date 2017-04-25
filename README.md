@@ -1244,6 +1244,7 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Tobias Burger](https://github.com/toburger) (Fixed issues with culture specific parsers)
 - [David Sinclair](https://github.com/dsincl12) (Created the dotnet-new template for Giraffe)
 - [Florian Verdonck](https://github.com/nojaf) (Ported Suave's experimental Html into Giraffe, implemented the warbler and general help with the project)
+- [Roman Melnikov](https://github.com/Neftedollar) (Added `redirectTo` route)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
 
