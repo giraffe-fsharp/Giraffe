@@ -1242,8 +1242,8 @@ let ``GET "/redirect" redirect to "/" `` () =
     let ctx, hctx = initNewContext()
     let app = 
         GET >=> choose [ 
-            route "/"    >=> text "Hello World"
-            route "/redirect" >=> redirectTo "/"
+            route "/"         >=> text "Hello World"
+            route "/redirect" >=> redirectTo "/" false
             setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -1256,7 +1256,7 @@ let ``GET "/redirect" redirect to "/" `` () =
     
     match result with
     | None     -> assertFail "It was expected that the request would be redirected" 
-    | Some ctx -> ctx.HttpContext.Response.Received().Redirect("/")
+    | Some ctx -> ctx.HttpContext.Response.Received().Redirect("/", false)
 
 
 [<Fact>]
@@ -1264,8 +1264,8 @@ let ``POST "/redirect" redirect to "/" `` () =
     let ctx, hctx = initNewContext()
     let app = 
         POST >=> choose [ 
-            route "/"    >=> text "Hello World"
-            route "/redirect" >=> redirectTo "/"
+            route "/"         >=> text "Hello World"
+            route "/redirect" >=> redirectTo "/" true
             setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
@@ -1278,4 +1278,4 @@ let ``POST "/redirect" redirect to "/" `` () =
     
     match result with
     | None     -> assertFail "It was expected that the request would be redirected" 
-    | Some ctx -> ctx.HttpContext.Response.Received().Redirect("/")
+    | Some ctx -> ctx.HttpContext.Response.Received().Redirect("/", true)
