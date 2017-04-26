@@ -1243,7 +1243,7 @@ let ``GET "/redirect" redirect to "/" `` () =
     let app = 
         GET >=> choose [ 
             route "/"         >=> text "Hello World"
-            route "/redirect" >=> redirectTo "/" false
+            route "/redirect" >=> redirectTo false "/"
             setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -1265,7 +1265,7 @@ let ``POST "/redirect" redirect to "/" `` () =
     let app = 
         POST >=> choose [ 
             route "/"         >=> text "Hello World"
-            route "/redirect" >=> redirectTo "/" true
+            route "/redirect" >=> redirectTo true "/"
             setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore

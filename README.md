@@ -796,16 +796,16 @@ let app =
 
 ### redirectTo
 
-`redirectTo` uses a 302 or 301 (when permanent) HTTP response code to redirect the client to the specified location. It takes in two parameters, the location to redirect to and a boolean flag denoting whether the redirect should be permanent or not.
+`redirectTo` uses a 302 or 301 (when permanent) HTTP response code to redirect the client to the specified location. It takes in two parameters, a boolean flag denoting whether the redirect should be permanent or not and the location to redirect to.
 
 #### Example:
 
 ```fsharp
 let app = 
     choose [
-        route "/"        >=> redirectTo "/foo" false
-        route "/example" >=> redirectTo "http://example.org" true
-        route "/foo"     >=> text "Some string"
+        route "/"          >=> redirectTo false "/foo"
+        route "/permanent" >=> redirectTo true "http://example.org"
+        route "/foo"       >=> text "Some string"
     ]
 ```
 

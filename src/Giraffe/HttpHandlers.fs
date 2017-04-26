@@ -452,7 +452,7 @@ let negotiate (responseObj : obj) =
         responseObj
 
 ///Redirects to a different location with a 302 or 301 (when permanent) HTTP status code.
-let redirectTo (location : string) (permanent : bool)  =
+let redirectTo (permanent : bool) (location : string)  =
     fun (ctx:HttpHandlerContext) -> 
         ctx.HttpContext.Response.Redirect(location, permanent)
         ctx |> Some |> async.Return
