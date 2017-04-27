@@ -1,4 +1,5 @@
 ﻿<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <AssemblyName>Giraffe</AssemblyName>
     <VersionPrefix>0.1.0-alpha015</VersionPrefix>
@@ -46,7 +47,5 @@
     <Compile Include="ModelBinding.fs" />
     <Compile Include="Middleware.fs" />
   </ItemGroup>
-
-
 
 </Project>
