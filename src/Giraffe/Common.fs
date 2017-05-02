@@ -33,3 +33,12 @@ let readFileAsString (filePath : string) =
             reader.ReadToEndAsync()
             |> Async.AwaitTask
     }
+
+let readFileAsBytes (filePath : string) =
+    async {
+        use stream = new System.IO.FileStream(filePath, System.IO.FileMode.Open)
+        let length = (int) stream.Length
+        let result = Array.init length (fun _ -> (byte)0)
+        let! contents = stream.AsyncRead (result, 0, length)
+        return result
+    }

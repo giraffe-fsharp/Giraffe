@@ -56,6 +56,7 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [negotiate](#negotiate)
     - [negotiateWith](#negotiatewith)
     - [htmlFile](#htmlfile)
+    - [fileContent] (#fileContent)
     - [dotLiquid](#dotliquid)
     - [dotLiquidTemplate](#dotliquidtemplate)
     - [dotLiquidHtmlView](#dotliquidhtmlview)
@@ -635,6 +636,20 @@ This http handler takes a relative path of a html file as input parameter and se
 let app = 
     choose [
         route  "/" >=> htmlFile "index.html"
+    ]
+```
+### fileContent
+
+`fileContent` sets or modifies the body of the `HttpResponse` with the contents of a physical file. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
+
+This http handler takes a relative path of a file as input parameter and sets the HTTP header `Content-Type` to the content type provided as the first parameter.
+
+#### Example:
+
+```fsharp
+let app = 
+    choose [
+        routef  "/style" >=> fileContent "text/css" "mystyles.css"
     ]
 ```
 
