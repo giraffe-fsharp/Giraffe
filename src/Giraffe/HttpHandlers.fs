@@ -22,9 +22,6 @@ type HttpHandlerContext =
         /// ASP.NET Core HttpContext
         HttpContext : HttpContext
 
-        /// Service Locator to retrieve registered services on demand
-        Services    : IServiceProvider
-
         /// Default logger
         Logger      : ILogger
     }
@@ -321,7 +318,7 @@ let xml (dataObj : obj) =
 let htmlFile (relativeFilePath : string) =
     fun (ctx : HttpHandlerContext) ->
         async {
-            let env = ctx.Services.GetService<IHostingEnvironment>()
+            let env = ctx.HttpContext.RequestServices.GetService<IHostingEnvironment>()
             let filePath = env.ContentRootPath + relativeFilePath
             let! html = readFileAsString filePath
             return!
@@ -345,7 +342,7 @@ let dotLiquid (contentType : string) (template : string) (model : obj) =
 let dotLiquidTemplate (contentType : string) (templatePath : string) (model : obj) = 
     fun (ctx : HttpHandlerContext) ->
         async {
-            let env = ctx.Services.GetService<IHostingEnvironment>()
+            let env = ctx.HttpContext.RequestServices.GetService<IHostingEnvironment>()
             let templatePath = env.ContentRootPath + templatePath
             let! template = readFileAsString templatePath
             return! dotLiquid contentType template model ctx
@@ -361,8 +358,8 @@ let dotLiquidHtmlView (templatePath : string) (model : obj) =
 let razorView (contentType : string) (viewName : string) (model : 'T) =
     fun (ctx : HttpHandlerContext) ->
         async {
-            let engine = ctx.Services.GetService<IRazorViewEngine>()
-            let tempDataProvider = ctx.Services.GetService<ITempDataProvider>()
+            let engine = ctx.HttpContext.RequestServices.GetService<IRazorViewEngine>()
+            let tempDataProvider = ctx.HttpContext.RequestServices.GetService<ITempDataProvider>()
             let! result = renderRazorView engine tempDataProvider ctx.HttpContext viewName model
             match result with
             | Error msg -> return (failwith msg)

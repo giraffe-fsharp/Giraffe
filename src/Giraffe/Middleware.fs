@@ -26,7 +26,6 @@ let private getRequestInfo (ctx : HttpContext) =
 
 type GiraffeMiddleware (next          : RequestDelegate,
                         handler       : HttpHandler,
-                        services      : IServiceProvider,
                         loggerFactory : ILoggerFactory) =
     
     do if isNull next then raise (ArgumentNullException("next"))
@@ -37,7 +36,6 @@ type GiraffeMiddleware (next          : RequestDelegate,
             let httpHandlerContext =
                 {
                     HttpContext = ctx
-                    Services    = services
                     Logger      = logger
                 }
             let! result = handler httpHandlerContext
@@ -60,7 +58,6 @@ type GiraffeMiddleware (next          : RequestDelegate,
 
 type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
                                     errorHandler  : ErrorHandler,
-                                    services      : IServiceProvider,
                                     loggerFactory : ILoggerFactory) =
 
     do if isNull next then raise (ArgumentNullException("next"))
@@ -77,7 +74,6 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
                     let httpHandlerContext =
                         {
                             HttpContext = ctx
-                            Services    = services
                             Logger      = logger
                         }
                     return!

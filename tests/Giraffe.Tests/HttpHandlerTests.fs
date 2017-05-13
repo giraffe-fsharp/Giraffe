@@ -37,12 +37,10 @@ let assertFailf format args =
 
 let initNewContext() =
     let ctx      = Substitute.For<HttpContext>()
-    let services = Substitute.For<IServiceProvider>()
     let logger   = Substitute.For<ILogger>()
     let handlerCtx =
         {
             HttpContext = ctx
-            Services    = services
             Logger      = logger
         }
     ctx, handlerCtx
