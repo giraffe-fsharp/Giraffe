@@ -67,6 +67,14 @@ type Person =
         Height    : float
         Piercings : string[]
     }
+    override this.ToString() =
+        let nl = Environment.NewLine
+        sprintf "First name: %s%sLast name: %s%sBirth date: %s%sHeight: %.2f%sPiercings: %A"
+            this.FirstName nl
+            this.LastName nl
+            (this.BirthDate.ToString("yyyy-MM-dd")) nl
+            this.Height nl
+            this.Piercings
 
 // ---------------------------------
 // Tests
@@ -1106,6 +1114,51 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
         let body = getBody ctx
         Assert.Equal(expected, body)
         Assert.Equal("application/xml", ctx.HttpContext.Response |> getContentType)
+
+[<Fact>]
+let ``Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0.6" returns text object`` () =
+    let johnDoe =
+        {
+            FirstName = "John"
+            LastName  = "Doe"
+            BirthDate = DateTime(1990, 7, 12)
+            Height    = 1.85
+            Piercings = [| "ear"; "nose" |]
+        }
+
+    let ctx, hctx = initNewContext()
+    let app = 
+        GET >=> choose [
+            route "/"     >=> text "Hello World"
+            route "/foo"  >=> text "bar"
+            route "/auto" >=> negotiate johnDoe
+            setStatusCode 404 >=> text "Not found" ]
+
+    let headers = HeaderDictionary()
+    headers.Add("Accept", StringValues("text/plain; q=0.7, application/xml; q=0.6"))
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
+    ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let expected = @"First name: John
+Last name: Doe
+Birth date: 1990-07-12
+Height: 1.85
+Piercings: [|""ear""; ""nose""|]"
+
+    let result = 
+        hctx
+        |> app
+        |> Async.RunSynchronously
+
+    match result with
+    | None -> assertFailf "Result was expected to be %s" expected
+    | Some ctx ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+        Assert.Equal("text/plain", ctx.HttpContext.Response |> getContentType)
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () =

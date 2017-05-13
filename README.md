@@ -573,7 +573,7 @@ let app =
 
 ### negotiate
 
-`negotiate` sets or modifies the body of the `HttpResponse` by inspecting the `Accept` header of the HTTP request and deciding if the response should be sent in JSON or XML. If the client is indifferent then the default response will be sent in JSON.
+`negotiate` sets or modifies the body of the `HttpResponse` by inspecting the `Accept` header of the HTTP request and deciding if the response should be sent in JSON or XML or plain text. If the client is indifferent then the default response will be sent in JSON.
 
 This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
 
@@ -586,6 +586,9 @@ type Person =
         FirstName : string
         LastName  : string
     }
+    // The ToString method is used to serialize the object as text/plain during content negotiation
+    override this.ToString() =
+        sprintf "%s %s" this.FirstName this.LastNam
 
 let app = 
     choose [

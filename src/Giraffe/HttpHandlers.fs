@@ -428,10 +428,11 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
 /// and a default unacceptableHandler.
 ///
 /// The supported media types are:
-/// */*              -> json
-/// application/json -> json
-/// application/xml  -> xml
-/// text/xml         -> xml
+/// */*              -> serializes object to JSON
+/// application/json -> serializes object to JSON
+/// application/xml  -> serializes object to XML
+/// text/xml         -> serializes object to XML
+/// text/plain       -> returns object's ToString() result
 let negotiate (responseObj : obj) =
     negotiateWith
         // Default negotiation rules
@@ -440,6 +441,7 @@ let negotiate (responseObj : obj) =
             "application/json", json
             "application/xml" , xml
             "text/xml"        , xml
+            "text/plain"      , fun x -> x.ToString() |> text
         ])
         // Default unacceptable HttpHandler
         (fun (ctx : HttpHandlerContext) ->
