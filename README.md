@@ -912,7 +912,7 @@ let submitCar =
     fun (ctx : HttpContext) ->
         async {
             // Binds a JSON payload to a Car object
-            let! car = ctx.bindJson<Car>()
+            let! car = ctx.BindJson<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
