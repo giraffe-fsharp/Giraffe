@@ -19,8 +19,10 @@ open SampleApp.HtmlViews
 // Error handler
 // ---------------------------------
 
-let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
-    ctx.Logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
+let errorHandler (ex : Exception) (ctx : HttpContext) =
+    let factory = ctx.GetService<ILoggerFactory>()
+    let logger  = factory.CreateLogger("errorHandler")
+    logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
     ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
 
 
@@ -39,7 +41,7 @@ let mustBeAdmin =
     >=> requiresRole "Admin" accessDenied
 
 let loginHandler =
-    fun ctx ->
+    fun (ctx : HttpContext) ->
         async {
             let issuer = "http://localhost:5000"
             let claims =
@@ -51,17 +53,17 @@ let loginHandler =
             let identity = ClaimsIdentity(claims, authScheme)
             let user     = ClaimsPrincipal(identity)
 
-            do! ctx.HttpContext.Authentication.SignInAsync(authScheme, user) |> Async.AwaitTask
+            do! ctx.Authentication.SignInAsync(authScheme, user) |> Async.AwaitTask
             
             return! text "Successfully logged in" ctx
         }
 
 let userHandler =
-    fun ctx ->
-        text ctx.HttpContext.User.Identity.Name ctx
+    fun (ctx : HttpContext) ->
+        text ctx.User.Identity.Name ctx
 
 let showUserHandler id =
-    fun ctx ->
+    fun (ctx : HttpContext) ->
         mustBeAdmin >=>
         text (sprintf "User ID: %i" id)
         <| ctx

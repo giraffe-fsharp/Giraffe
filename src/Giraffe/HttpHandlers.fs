@@ -17,20 +17,22 @@ open Giraffe.FormatExpressions
 open Giraffe.RazorEngine
 open Giraffe.HtmlEngine
 
-type HttpHandlerContext =
-    {
-        /// ASP.NET Core HttpContext
-        HttpContext : HttpContext
+type HttpHandlerResult = Async<HttpContext option>
 
-        /// Default logger
-        Logger      : ILogger
-    }
-
-type HttpHandlerResult = Async<HttpHandlerContext option>
-
-type HttpHandler = HttpHandlerContext -> HttpHandlerResult
+type HttpHandler = HttpContext -> HttpHandlerResult
 
 type ErrorHandler = exn -> HttpHandler
+
+/// ---------------------------
+/// HttpContext extensions
+/// ---------------------------
+
+type HttpContext with
+    member this.GetService<'T>() =
+        this.RequestServices.GetService(typeof<'T>) :?> 'T
+
+    member this.GetLogger<'T>() =
+        this.GetService<ILogger<'T>>()
 
 /// ---------------------------
 /// Globally useful functions
@@ -56,16 +58,16 @@ let private getPath (ctx : HttpContext) =
     | None   -> ctx.Request.Path.ToString()
 
 let private handlerWithRootedPath (path : string) (handler : HttpHandler) = 
-    fun (ctx : HttpHandlerContext) ->
+    fun (ctx : HttpContext) ->
         async {
-            let savedSubPath = getSavedSubPath ctx.HttpContext
+            let savedSubPath = getSavedSubPath ctx
             try
-                ctx.HttpContext.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
+                ctx.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
                 return! handler ctx
             finally
                 match savedSubPath with
-                | Some savedSubPath -> ctx.HttpContext.Items.Item RouteKey <- savedSubPath
-                | None              -> ctx.HttpContext.Items.Remove RouteKey |> ignore
+                | Some savedSubPath -> ctx.Items.Item RouteKey <- savedSubPath
+                | None              -> ctx.Items.Remove RouteKey |> ignore
         }
 
 /// ---------------------------
@@ -84,14 +86,14 @@ let bind (handler : HttpHandler) =
             match ctx with
             | None   -> return None
             | Some c ->
-                match c.HttpContext.Response.HasStarted with
+                match c.Response.HasStarted with
                 | true  -> return  Some c
                 | false -> return! handler c
         }
 
 /// Combines two HttpHandler functions into one.
 let compose (handler : HttpHandler) (handler2 : HttpHandler) =
-    fun (ctx : HttpHandlerContext) ->
+    fun (ctx : HttpContext) ->
         handler ctx |> bind handler2
 
 /// Adapts a HttpHandler function to accept a HttpHandlerResult.
@@ -105,7 +107,7 @@ let (>=>) = compose
 /// Iterates through a list of HttpHandler functions and returns the
 /// result of the first HttpHandler which outcome is Some HttpContext
 let rec choose (handlers : HttpHandler list) =
-    fun (ctx : HttpHandlerContext) ->
+    fun (ctx : HttpContext) ->
         async {
             match handlers with
             | []              -> return None
@@ -118,23 +120,23 @@ let rec choose (handlers : HttpHandler list) =
 
 /// Filters an incoming HTTP request based on the HTTP verb
 let httpVerb (verb : string) =
-    fun (ctx : HttpHandlerContext) ->
-        if ctx.HttpContext.Request.Method.Equals verb
+    fun (ctx : HttpContext) ->
+        if ctx.Request.Method.Equals verb
         then Some ctx
         else None
         |> async.Return
 
-let GET     = httpVerb "GET"
-let POST    = httpVerb "POST"
-let PUT     = httpVerb "PUT"
-let PATCH   = httpVerb "PATCH"
-let DELETE  = httpVerb "DELETE"
+let GET    : HttpHandler = httpVerb "GET"
+let POST   : HttpHandler = httpVerb "POST"
+let PUT    : HttpHandler = httpVerb "PUT"
+let PATCH  : HttpHandler = httpVerb "PATCH"
+let DELETE : HttpHandler = httpVerb "DELETE"
 
 /// Filters an incoming HTTP request based on the accepted
 /// mime types of the client.
 let mustAccept (mimeTypes : string list) =
-    fun (ctx : HttpHandlerContext) ->
-        let headers = ctx.HttpContext.Request.GetTypedHeaders()
+    fun (ctx : HttpContext) ->
+        let headers = ctx.Request.GetTypedHeaders()
         headers.Accept
         |> Seq.map    (fun h -> h.ToString())
         |> Seq.exists (fun h -> mimeTypes |> Seq.contains h)
@@ -145,18 +147,18 @@ let mustAccept (mimeTypes : string list) =
 
 /// Challenges the client to authenticate with a given authentication scheme.
 let challenge (authScheme : string) =
-    fun (ctx : HttpHandlerContext) ->
+    fun (ctx : HttpContext) ->
         async {
-            let auth = ctx.HttpContext.Authentication
+            let auth = ctx.Authentication
             do! auth.ChallengeAsync authScheme |> Async.AwaitTask
             return Some ctx
         }
 
 /// Signs off the current user.
 let signOff (authScheme : string) =
-    fun (ctx : HttpHandlerContext) ->
+    fun (ctx : HttpContext) ->
         async {
-            let auth = ctx.HttpContext.Authentication
+            let auth = ctx.Authentication
             do! auth.SignOutAsync authScheme |> Async.AwaitTask
             return Some ctx
         }
@@ -164,8 +166,8 @@ let signOff (authScheme : string) =
 /// Validates if a user is authenticated.
 /// If not it will proceed with the authFailedHandler.
 let requiresAuthentication (authFailedHandler : HttpHandler) =
-    fun (ctx : HttpHandlerContext) ->
-        let user = ctx.HttpContext.User
+    fun (ctx : HttpContext) ->
+        let user = ctx.User
         if isNotNull user && user.Identity.IsAuthenticated
         then async.Return (Some ctx)
         else authFailedHandler ctx
@@ -173,8 +175,8 @@ let requiresAuthentication (authFailedHandler : HttpHandler) =
 /// Validates if a user is in a specific role.
 /// If not it will proceed with the authFailedHandler.
 let requiresRole (role : string) (authFailedHandler : HttpHandler) =
-    fun (ctx : HttpHandlerContext) ->
-        let user = ctx.HttpContext.User
+    fun (ctx : HttpContext) ->
+        let user = ctx.User
         if user.IsInRole role
         then async.Return (Some ctx)
         else authFailedHandler ctx
@@ -182,8 +184,8 @@ let requiresRole (role : string) (authFailedHandler : HttpHandler) =
 /// Validates if a user has at least one of the specified roles.
 /// If not it will proceed with the authFailedHandler.
 let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) =
-    fun (ctx : HttpHandlerContext) ->
-        let user = ctx.HttpContext.User
+    fun (ctx : HttpContext) ->
+        let user = ctx.User
         roles
         |> List.exists user.IsInRole 
         |> function
@@ -194,14 +196,14 @@ let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) =
 /// This can be useful inside an error handler when the response
 /// needs to be overwritten in the case of a failure.
 let clearResponse =
-    fun (ctx : HttpHandlerContext) ->
-        ctx.HttpContext.Response.Clear()
+    fun (ctx : HttpContext) ->
+        ctx.Response.Clear()
         async.Return (Some ctx)
 
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 let route (path : string) =
-    fun (ctx : HttpHandlerContext) ->
-        if (getPath ctx.HttpContext).Equals path
+    fun (ctx : HttpContext) ->
+        if (getPath ctx).Equals path
         then Some ctx
         else None
         |> async.Return
@@ -210,16 +212,16 @@ let route (path : string) =
 /// The arguments from the format string will be automatically resolved when the
 /// route matches and subsequently passed into the supplied routeHandler.
 let routef (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
-    fun (ctx : HttpHandlerContext) ->
-        tryMatchInput path (getPath ctx.HttpContext) false
+    fun (ctx : HttpContext) ->
+        tryMatchInput path (getPath ctx) false
         |> function
             | None      -> async.Return None
             | Some args -> routeHandler args ctx
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 let routeCi (path : string) =
-    fun (ctx : HttpHandlerContext) ->
-        if String.Equals(getPath ctx.HttpContext, path, StringComparison.CurrentCultureIgnoreCase)
+    fun (ctx : HttpContext) ->
+        if String.Equals(getPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
         then Some ctx
         else None
         |> async.Return
@@ -228,24 +230,24 @@ let routeCi (path : string) =
 /// The arguments from the format string will be automatically resolved when the
 /// route matches and subsequently passed into the supplied routeHandler.
 let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
-    fun (ctx : HttpHandlerContext) ->
-        tryMatchInput path (getPath ctx.HttpContext) true
+    fun (ctx : HttpContext) ->
+        tryMatchInput path (getPath ctx) true
         |> function
             | None      -> async.Return None
             | Some args -> routeHandler args ctx
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
 let routeStartsWith (subPath : string) =
-    fun (ctx : HttpHandlerContext) ->
-        if (getPath ctx.HttpContext).StartsWith subPath 
+    fun (ctx : HttpContext) ->
+        if (getPath ctx).StartsWith subPath 
         then Some ctx
         else None
         |> async.Return
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
 let routeStartsWithCi (subPath : string) =
-    fun (ctx : HttpHandlerContext) ->
-        if (getPath ctx.HttpContext).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase) 
+    fun (ctx : HttpContext) ->
+        if (getPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase) 
         then Some ctx
         else None
         |> async.Return
@@ -265,26 +267,26 @@ let subRouteCi (path : string) (handler : HttpHandler) =
 
 /// Sets the HTTP response status code.
 let setStatusCode (statusCode : int) =
-    fun (ctx : HttpHandlerContext) ->
+    fun (ctx : HttpContext) ->
         async {
-            ctx.HttpContext.Response.StatusCode <- statusCode
+            ctx.Response.StatusCode <- statusCode
             return Some ctx
         }
 
 /// Sets a HTTP header in the HTTP response.
 let setHttpHeader (key : string) (value : obj) =
-    fun (ctx : HttpHandlerContext) ->
+    fun (ctx : HttpContext) ->
         async {
-            ctx.HttpContext.Response.Headers.[key] <- StringValues(value.ToString())
+            ctx.Response.Headers.[key] <- StringValues(value.ToString())
             return Some ctx
         }
 
 /// Writes to the body of the HTTP response and sets the HTTP header Content-Length accordingly.
 let setBody (bytes : byte array) =
-    fun (ctx : HttpHandlerContext) ->
+    fun (ctx : HttpContext) ->
         async {            
-            ctx.HttpContext.Response.Headers.["Content-Length"] <- StringValues(bytes.Length.ToString())
-            ctx.HttpContext.Response.Body.WriteAsync(bytes, 0, bytes.Length)
+            ctx.Response.Headers.["Content-Length"] <- StringValues(bytes.Length.ToString())
+            ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length)
             |> Async.AwaitTask
             |> ignore
             return Some ctx
@@ -316,9 +318,9 @@ let xml (dataObj : obj) =
 /// Reads a HTML file from disk and writes its contents to the body of the HTTP response
 /// with a Content-Type of text/html.
 let htmlFile (relativeFilePath : string) =
-    fun (ctx : HttpHandlerContext) ->
+    fun (ctx : HttpContext) ->
         async {
-            let env = ctx.HttpContext.RequestServices.GetService<IHostingEnvironment>()
+            let env = ctx.RequestServices.GetService<IHostingEnvironment>()
             let filePath = env.ContentRootPath + relativeFilePath
             let! html = readFileAsString filePath
             return!
@@ -340,9 +342,9 @@ let dotLiquid (contentType : string) (template : string) (model : obj) =
 /// Reads a dotLiquid template file from disk and compiles it with the given model and sets
 /// the compiled output as well as the given contentType as the HTTP reponse.
 let dotLiquidTemplate (contentType : string) (templatePath : string) (model : obj) = 
-    fun (ctx : HttpHandlerContext) ->
+    fun (ctx : HttpContext) ->
         async {
-            let env = ctx.HttpContext.RequestServices.GetService<IHostingEnvironment>()
+            let env = ctx.RequestServices.GetService<IHostingEnvironment>()
             let templatePath = env.ContentRootPath + templatePath
             let! template = readFileAsString templatePath
             return! dotLiquid contentType template model ctx
@@ -356,11 +358,11 @@ let dotLiquidHtmlView (templatePath : string) (model : obj) =
 /// Reads a razor view from disk and compiles it with the given model and sets
 /// the compiled output as the HTTP reponse with the given contentType.
 let razorView (contentType : string) (viewName : string) (model : 'T) =
-    fun (ctx : HttpHandlerContext) ->
+    fun (ctx : HttpContext) ->
         async {
-            let engine = ctx.HttpContext.RequestServices.GetService<IRazorViewEngine>()
-            let tempDataProvider = ctx.HttpContext.RequestServices.GetService<ITempDataProvider>()
-            let! result = renderRazorView engine tempDataProvider ctx.HttpContext viewName model
+            let engine = ctx.RequestServices.GetService<IRazorViewEngine>()
+            let tempDataProvider = ctx.RequestServices.GetService<ITempDataProvider>()
+            let! result = renderRazorView engine tempDataProvider ctx viewName model
             match result with
             | Error msg -> return (failwith msg)
             | Ok output ->
@@ -378,7 +380,7 @@ let razorHtmlView (viewName : string) (model : 'T) =
 /// Uses the Giraffe.HtmlEngine to compile and render a HTML Document from
 /// a given HtmlNode. The HTTP response is of Content-Type text/html.
 let renderHtml (document: HtmlNode) =
-    fun (ctx : HttpHandlerContext) ->
+    fun (ctx : HttpContext) ->
         let htmlHandler =
             document
             |> renderHtmlDocument
@@ -398,8 +400,8 @@ let renderHtml (document: HtmlNode) =
 let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>)
                   (unacceptableHandler : HttpHandler)
                   (responseObj         : obj) =
-    fun (ctx : HttpHandlerContext) ->
-        (ctx.HttpContext.Request.GetTypedHeaders()).Accept
+    fun (ctx : HttpContext) ->
+        (ctx.Request.GetTypedHeaders()).Accept
         |> fun acceptedMimeTypes ->
             match isNull acceptedMimeTypes || acceptedMimeTypes.Count = 0 with
             | true  ->
@@ -441,9 +443,9 @@ let negotiate (responseObj : obj) =
             "text/plain"      , fun x -> x.ToString() |> text
         ])
         // Default unacceptable HttpHandler
-        (fun (ctx : HttpHandlerContext) ->
+        (fun (ctx : HttpContext) ->
             setStatusCode 406
-            >=> ((ctx.HttpContext.Request.Headers.["Accept"]).ToString()
+            >=> ((ctx.Request.Headers.["Accept"]).ToString()
                 |> sprintf "%s is unacceptable by the server."
                 |> text)
             <| ctx)
@@ -452,6 +454,6 @@ let negotiate (responseObj : obj) =
 
 ///Redirects to a different location with a 302 or 301 (when permanent) HTTP status code.
 let redirectTo (permanent : bool) (location : string)  =
-    fun (ctx:HttpHandlerContext) -> 
-        ctx.HttpContext.Response.Redirect(location, permanent)
+    fun (ctx:HttpContext) -> 
+        ctx.Response.Redirect(location, permanent)
         ctx |> Some |> async.Return

@@ -19,19 +19,9 @@ let assertFailf format args =
     let msg = sprintf format args
     Assert.True(false, msg)
 
-let initNewContext() =
-    let ctx      = Substitute.For<HttpContext>()
-    let logger   = Substitute.For<ILogger>()
-    let handlerCtx =
-        {
-            HttpContext = ctx
-            Logger      = logger
-        }
-    ctx, handlerCtx
-
-let getBody (ctx : HttpHandlerContext) =
-    ctx.HttpContext.Response.Body.Position <- 0L
-    use reader = new StreamReader(ctx.HttpContext.Response.Body, Encoding.UTF8)
+let getBody (ctx : HttpContext) =
+    ctx.Response.Body.Position <- 0L
+    use reader = new StreamReader(ctx.Response.Body, Encoding.UTF8)
     reader.ReadToEnd()
 
 [<CLIMutable>]
@@ -53,7 +43,7 @@ type Customer =
 
 [<Fact>]
 let ``bindJson test`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
 
     let jsonHandler =
         fun ctx -> 
@@ -83,7 +73,7 @@ let ``bindJson test`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -95,7 +85,7 @@ let ``bindJson test`` () =
 
 [<Fact>]
 let ``bindXml test`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
 
     let xmlHandler =
         fun ctx -> 
@@ -125,7 +115,7 @@ let ``bindXml test`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -137,7 +127,7 @@ let ``bindXml test`` () =
 
 [<Fact>]
 let ``bindForm test`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
 
     let formHandler =
         fun ctx -> 
@@ -169,7 +159,7 @@ let ``bindForm test`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -181,7 +171,7 @@ let ``bindForm test`` () =
 
 [<Fact>]
 let ``bindQueryString test`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
 
     let queryHandler =
         fun ctx -> 
@@ -203,7 +193,7 @@ let ``bindQueryString test`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -215,7 +205,7 @@ let ``bindQueryString test`` () =
 
 [<Fact>]
 let ``bindModel with JSON content returns correct result`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
         fun ctx -> 
@@ -247,7 +237,7 @@ let ``bindModel with JSON content returns correct result`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -259,7 +249,7 @@ let ``bindModel with JSON content returns correct result`` () =
 
 [<Fact>]
 let ``bindModel with XML content returns correct result`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
         fun ctx -> 
@@ -291,7 +281,7 @@ let ``bindModel with XML content returns correct result`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -303,7 +293,7 @@ let ``bindModel with XML content returns correct result`` () =
 
 [<Fact>]
 let ``bindModel with FORM content returns correct result`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
         fun ctx -> 
@@ -337,7 +327,7 @@ let ``bindModel with FORM content returns correct result`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -349,7 +339,7 @@ let ``bindModel with FORM content returns correct result`` () =
 
 [<Fact>]
 let ``bindModel with JSON content and a specific charset returns correct result`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
         fun ctx -> 
@@ -381,7 +371,7 @@ let ``bindModel with JSON content and a specific charset returns correct result`
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -393,7 +383,7 @@ let ``bindModel with JSON content and a specific charset returns correct result`
 
 [<Fact>]
 let ``bindModel during HTTP GET request with query string returns correct result`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
         fun ctx -> 
@@ -415,7 +405,7 @@ let ``bindModel during HTTP GET request with query string returns correct result
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 

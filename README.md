@@ -100,21 +100,12 @@ You can think of [Giraffe](https://www.nuget.org/packages/Giraffe) as the functi
 The only building block in Giraffe is a so called `HttpHandler`:
 
 ```fsharp
-type HttpHandlerContext =
-    {
-        /// ASP.NET Core HttpContext
-        HttpContext : HttpContext
+type HttpHandlerResult = Async<HttpContext option>
 
-        /// Default logger
-        Logger      : ILogger
-    }
-
-type HttpHandlerResult = Async<HttpHandlerContext option>
-
-type HttpHandler = HttpHandlerContext -> HttpHandlerResult
+type HttpHandler = HttpContext -> HttpHandlerResult
 ```
 
-A `HttpHandler` is a simple function which takes in a `HttpHandlerContext` and returns an object of the same type (wrapped in an option and async workflow) when finished.
+A `HttpHandler` is a simple function which takes in a `HttpContext` and returns a `HttpContext` (wrapped in an option and async workflow) when finished.
 
 Inside that function it can process an incoming `HttpRequest` and make changes to the `HttpResponse` of the given `HttpContext`. By receiving and returning a `HttpContext` there's nothing which cannot be done from inside a `HttpHandler`.
 
@@ -142,7 +133,7 @@ let bind (handler : HttpHandler) =
 let (>>=) = bind
 ```
 
-The `bind` function takes in a `HttpHandler` function and a `HttpHandlerResult`. It first evaluates the `HttpHandlerResult` and checks its return value. If there was `Some HttpHandlerContext` then it will pass it on to the `HttpHandler` function otherwise it will return `None`. If the response object inside the `HttpHandlerContext` has already been written, then it will skip the `HttpHandler` function as well and return the current `HttpHandlerContext` as the final result.
+The `bind` function takes in a `HttpHandler` function and a `HttpHandlerResult`. It first evaluates the `HttpHandlerResult` and checks its return value. If there was `Some HttpContext` then it will pass it on to the `HttpHandler` function otherwise it will return `None`. If the response object inside the `HttpContext` has already been written, then it will skip the `HttpHandler` function as well and return the current `HttpContext` as the final result.
 
 #### compose (>=>)
 
@@ -150,7 +141,7 @@ The `compose` combinator combines two `HttpHandler` functions into one:
 
 ```fsharp
 let compose (handler : HttpHandler) (handler2 : HttpHandler) =
-    fun (ctx : HttpHandlerContext) ->
+    fun (ctx : HttpContext) ->
         handler ctx |> bind handler2
 ```
 
@@ -299,7 +290,7 @@ let app =
 #### Example:
 
 ```fsharp
-let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
+let errorHandler (ex : Exception) (ctx : HttpContext) =
     ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
 
 let webApp = 
@@ -839,7 +830,7 @@ let warbler f a = f a a
 
 ## Custom HttpHandlers
 
-Defining a new `HttpHandler` is fairly easy. All you need to do is to create a new function which matches the signature of `HttpHandlerContext -> Async<HttpHandlerContext option>`. Through currying your custom `HttpHandler` can extend the original signature as long as the partial application of your function will still return a function of `HttpHandlerContext -> Async<HttpHandlerContext option>`.
+Defining a new `HttpHandler` is fairly easy. All you need to do is to create a new function which matches the signature of `HttpContext -> Async<HttpContext option>`. Through currying your custom `HttpHandler` can extend the original signature as long as the partial application of your function will still return a function of `HttpContext -> Async<HttpContext option>`.
 
 ### Example:
 
@@ -893,7 +884,7 @@ The `Giraffe.ModelBinding` module exposes a default set of model binding functio
 
 ### bindJson
 
-`bindJson<'T> (ctx : HttpHandlerContext)` can be used to bind a JSON payload to a strongly typed model.
+`bindJson<'T> (ctx : HttpContext)` can be used to bind a JSON payload to a strongly typed model.
 
 #### Example
 
@@ -952,7 +943,7 @@ Accept: */*
 
 ### bindXml
 
-`bindXml<'T> (ctx : HttpHandlerContext)` can be used to bind an XML payload to a strongly typed model.
+`bindXml<'T> (ctx : HttpContext)` can be used to bind an XML payload to a strongly typed model.
 
 #### Example
 
@@ -1016,7 +1007,7 @@ Accept: */*
 
 ### bindForm
 
-`bindForm<'T> (ctx : HttpHandlerContext)` can be used to bind a form urlencoded payload to a strongly typed model.
+`bindForm<'T> (ctx : HttpContext)` can be used to bind a form urlencoded payload to a strongly typed model.
 
 #### Example
 
@@ -1075,7 +1066,7 @@ Name=DB9&Make=Aston+Martin&Wheels=4&Built=2016-01-01
 
 ### bindQueryString
 
-`bindQueryString<'T> (ctx : HttpHandlerContext)` can be used to bind a query string to a strongly typed model.
+`bindQueryString<'T> (ctx : HttpContext)` can be used to bind a query string to a strongly typed model.
 
 #### Example
 
@@ -1130,7 +1121,7 @@ Accept: */*
 
 ### bindModel
 
-`bindModel<'T> (ctx : HttpHandlerContext)` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model.
+`bindModel<'T> (ctx : HttpContext)` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model.
 
 #### Example
 

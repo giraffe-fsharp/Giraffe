@@ -28,8 +28,10 @@ let webApp =
 // Error handler
 // ---------------------------------
 
-let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
-    ctx.Logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
+let errorHandler (ex : Exception) (ctx : HttpContext) =
+    let factory = ctx.GetService<ILoggerFactory>()
+    let logger  = factory.CreateLogger("errorHandler")
+    logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
     ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
 
 // ---------------------------------
@@ -44,7 +46,6 @@ let configureServices (services : IServiceCollection) =
     let sp  = services.BuildServiceProvider()
     let env = sp.GetService<IHostingEnvironment>()
     let viewsFolderPath = Path.Combine(env.ContentRootPath, "Views")
-
     services.AddRazorEngine(viewsFolderPath) |> ignore
 
 let configureLogging (loggerFactory : ILoggerFactory) =

@@ -32,14 +32,9 @@ type GiraffeMiddleware (next          : RequestDelegate,
 
     member __.Invoke (ctx : HttpContext) =
         async {
-            let logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
-            let httpHandlerContext =
-                {
-                    HttpContext = ctx
-                    Logger      = logger
-                }
-            let! result = handler httpHandlerContext
+            let! result = handler ctx
 
+            let logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
             if logger.IsEnabled LogLevel.Debug then
                 match result with
                 | Some _ -> sprintf "Giraffe returned Some for %s" (getRequestInfo ctx)
@@ -71,13 +66,8 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
                     |> Async.AwaitTask
             with ex ->
                 try
-                    let httpHandlerContext =
-                        {
-                            HttpContext = ctx
-                            Logger      = logger
-                        }
                     return!
-                        errorHandler ex httpHandlerContext
+                        errorHandler ex ctx
                         |> Async.Ignore
                 with ex2 ->
                     logger.LogError(EventId(0), ex,  "An unhandled exception has occurred while executing the request.")

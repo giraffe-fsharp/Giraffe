@@ -4,33 +4,34 @@ open System
 open System.IO
 open System.Reflection
 open System.ComponentModel
+open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Primitives
 open Microsoft.Net.Http.Headers
 open Giraffe.Common
 open Giraffe.HttpHandlers
 
-let readBodyFromRequest (ctx : HttpHandlerContext) =
+let readBodyFromRequest (ctx : HttpContext) =
     async {
-        let body = ctx.HttpContext.Request.Body
+        let body = ctx.Request.Body
         use reader = new StreamReader(body, true)
         return! reader.ReadToEndAsync() |> Async.AwaitTask
     }
 
-let bindJson<'T> (ctx : HttpHandlerContext) =
+let bindJson<'T> (ctx : HttpContext) =
     async {
         let! body = readBodyFromRequest ctx
         return deserializeJson<'T> body
     }
 
-let bindXml<'T> (ctx : HttpHandlerContext) =
+let bindXml<'T> (ctx : HttpContext) =
     async {
         let! body = readBodyFromRequest ctx
         return deserializeXml<'T> body
     }
 
-let bindForm<'T> (ctx : HttpHandlerContext) =
+let bindForm<'T> (ctx : HttpContext) =
     async {
-        let! form = ctx.HttpContext.Request.ReadFormAsync() |> Async.AwaitTask
+        let! form = ctx.Request.ReadFormAsync() |> Async.AwaitTask
         let obj   = Activator.CreateInstance<'T>()
         let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
         props
@@ -44,9 +45,9 @@ let bindForm<'T> (ctx : HttpHandlerContext) =
         return obj
     }
 
-let bindQueryString<'T> (ctx : HttpHandlerContext) =
+let bindQueryString<'T> (ctx : HttpContext) =
     async {
-        let query = ctx.HttpContext.Request.Query
+        let query = ctx.Request.Query
         let obj   = Activator.CreateInstance<'T>()
         let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
         props
@@ -60,12 +61,12 @@ let bindQueryString<'T> (ctx : HttpHandlerContext) =
         return obj
     }
 
-let bindModel<'T> (ctx : HttpHandlerContext) =
+let bindModel<'T> (ctx : HttpContext) =
     async {
-        let method = ctx.HttpContext.Request.Method
+        let method = ctx.Request.Method
         return!
             if method.Equals "POST" || method.Equals "PUT" then
-                let original = ctx.HttpContext.Request.ContentType
+                let original = ctx.Request.ContentType
                 let parsed   = ref (MediaTypeHeaderValue("*/*"))
                 match MediaTypeHeaderValue.TryParse(original, parsed) with
                 | false -> failwithf "Could not parse Content-Type HTTP header value '%s'" original

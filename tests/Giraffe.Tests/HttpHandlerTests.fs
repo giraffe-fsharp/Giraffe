@@ -18,12 +18,12 @@ open Giraffe.HtmlEngine
 // Helper functions
 // ---------------------------------
 
-let getStatusCode (ctx : HttpHandlerContext) =
-    ctx.HttpContext.Response.StatusCode
+let getStatusCode (ctx : HttpContext) =
+    ctx.Response.StatusCode
 
-let getBody (ctx : HttpHandlerContext) =
-    ctx.HttpContext.Response.Body.Position <- 0L
-    use reader = new StreamReader(ctx.HttpContext.Response.Body, Encoding.UTF8)
+let getBody (ctx : HttpContext) =
+    ctx.Response.Body.Position <- 0L
+    use reader = new StreamReader(ctx.Response.Body, Encoding.UTF8)
     reader.ReadToEnd()
 
 let getContentType (response : HttpResponse) =
@@ -34,16 +34,6 @@ let assertFail msg = Assert.True(false, msg)
 let assertFailf format args = 
     let msg = sprintf format args
     Assert.True(false, msg)
-
-let initNewContext() =
-    let ctx      = Substitute.For<HttpContext>()
-    let logger   = Substitute.For<ILogger>()
-    let handlerCtx =
-        {
-            HttpContext = ctx
-            Logger      = logger
-        }
-    ctx, handlerCtx
 
 // ---------------------------------
 // Test Types
@@ -80,7 +70,7 @@ type Person =
 
 [<Fact>]
 let ``GET "/" returns "Hello World"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [ 
             route "/"    >=> text "Hello World"
@@ -93,7 +83,7 @@ let ``GET "/" returns "Hello World"`` () =
     let expected = "Hello World"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -105,7 +95,7 @@ let ``GET "/" returns "Hello World"`` () =
 
 [<Fact>]
 let ``GET "/foo" returns "bar"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [ 
             route "/"    >=> text "Hello World"
@@ -118,7 +108,7 @@ let ``GET "/foo" returns "bar"`` () =
     let expected = "bar"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -130,7 +120,7 @@ let ``GET "/foo" returns "bar"`` () =
 
 [<Fact>]
 let ``GET "/FOO" returns 404 "Not found"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [ 
             route "/"    >=> text "Hello World"
@@ -143,7 +133,7 @@ let ``GET "/FOO" returns 404 "Not found"`` () =
     let expected = "Not found"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -152,11 +142,11 @@ let ``GET "/FOO" returns 404 "Not found"`` () =
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal(404, ctx.HttpContext.Response.StatusCode)
+        Assert.Equal(404, ctx.Response.StatusCode)
 
 [<Fact>]
 let ``GET "/json" returns json object`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [ 
             route "/"     >=> text "Hello World"
@@ -170,7 +160,7 @@ let ``GET "/json" returns json object`` () =
     let expected = "{\"Foo\":\"john\",\"Bar\":\"doe\",\"Age\":30}"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -182,7 +172,7 @@ let ``GET "/json" returns json object`` () =
 
 [<Fact>]
 let ``POST "/post/1" returns "1"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         choose [
             GET >=> choose [ 
@@ -199,7 +189,7 @@ let ``POST "/post/1" returns "1"`` () =
     let expected = "1"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -211,7 +201,7 @@ let ``POST "/post/1" returns "1"`` () =
 
 [<Fact>]
 let ``POST "/post/2" returns "2"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         choose [
             GET >=> choose [ 
@@ -228,7 +218,7 @@ let ``POST "/post/2" returns "2"`` () =
     let expected = "2"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -240,7 +230,7 @@ let ``POST "/post/2" returns "2"`` () =
 
 [<Fact>]
 let ``PUT "/post/2" returns 404 "Not found"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         choose [
             GET >=> choose [ 
@@ -257,7 +247,7 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
     let expected = "Not found"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -266,11 +256,11 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal(404, ctx.HttpContext.Response.StatusCode)
+        Assert.Equal(404, ctx.Response.StatusCode)
 
 [<Fact>]
 let ``GET "/dotLiquid" returns rendered html view`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let dotLiquidTemplate =
         "<html><head><title>DotLiquid</title></head>" + 
         "<body><p>{{ foo }} {{ bar }} is {{ age }} years old.</p>" +
@@ -293,7 +283,7 @@ let ``GET "/dotLiquid" returns rendered html view`` () =
     let expected = "<html><head><title>DotLiquid</title></head><body><p>John Doe is 30 years old.</p></body></html>"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -302,11 +292,11 @@ let ``GET "/dotLiquid" returns rendered html view`` () =
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("text/html", ctx.HttpContext.Response |> getContentType)
+        Assert.Equal("text/html", ctx.Response |> getContentType)
 
 [<Fact>]
 let ``POST "/text" with supported Accept header returns "good"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         choose [
             GET >=> choose [ 
@@ -327,7 +317,7 @@ let ``POST "/text" with supported Accept header returns "good"`` () =
     let expected = "text"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -336,11 +326,11 @@ let ``POST "/text" with supported Accept header returns "good"`` () =
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("text/plain", ctx.HttpContext.Response |> getContentType)
+        Assert.Equal("text/plain", ctx.Response |> getContentType)
 
 [<Fact>]
 let ``POST "/json" with supported Accept header returns "json"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         choose [
             GET >=> choose [ 
@@ -361,7 +351,7 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
     let expected = "\"json\""
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -370,11 +360,11 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("application/json", ctx.HttpContext.Response |> getContentType)
+        Assert.Equal("application/json", ctx.Response |> getContentType)
 
 [<Fact>]
 let ``POST "/either" with supported Accept header returns "either"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         choose [
             GET >=> choose [ 
@@ -395,7 +385,7 @@ let ``POST "/either" with supported Accept header returns "either"`` () =
     let expected = "either"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -404,11 +394,11 @@ let ``POST "/either" with supported Accept header returns "either"`` () =
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("text/plain", ctx.HttpContext.Response |> getContentType)
+        Assert.Equal("text/plain", ctx.Response |> getContentType)
 
 [<Fact>]
 let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         choose [
             GET >=> choose [ 
@@ -429,7 +419,7 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
     let expected = "Not found"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -438,11 +428,11 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal(404, ctx.HttpContext.Response.StatusCode)
+        Assert.Equal(404, ctx.Response.StatusCode)
 
 [<Fact>]
 let ``GET "/JSON" returns "BaR"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [ 
             route   "/"       >=> text "Hello World"
@@ -457,7 +447,7 @@ let ``GET "/JSON" returns "BaR"`` () =
     let expected = "BaR"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -469,7 +459,7 @@ let ``GET "/JSON" returns "BaR"`` () =
 
 [<Fact>]
 let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [ 
             route   "/"       >=> text "Hello World"
@@ -484,7 +474,7 @@ let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
     let expected = "blah%20blah"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -496,7 +486,7 @@ let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
 
 [<Fact>]
 let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [ 
             route   "/"       >=> text "Hello World"
@@ -511,7 +501,7 @@ let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
     let expected = "Name: johndoe, Age: 59"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -523,11 +513,11 @@ let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
 
 [<Fact>]
 let ``POST "/POsT/1" returns "1"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app =
         choose [
             GET >=> choose [ 
-                route "/"          >=> text "Hello World" ]
+                route "/" >=> text "Hello World" ]
             POST >=> choose [
                 route    "/post/1" >=> text "1"
                 routeCif "/post/%i" json ]
@@ -539,7 +529,7 @@ let ``POST "/POsT/1" returns "1"`` () =
     let expected = "1"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -551,11 +541,11 @@ let ``POST "/POsT/1" returns "1"`` () =
 
 [<Fact>]
 let ``POST "/POsT/523" returns "523"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app =
         choose [
             GET >=> choose [ 
-                route "/"          >=> text "Hello World" ]
+                route "/" >=> text "Hello World" ]
             POST >=> choose [
                 route    "/post/1" >=> text "1"
                 routeCif "/post/%i" json ]
@@ -567,7 +557,7 @@ let ``POST "/POsT/523" returns "523"`` () =
     let expected = "523"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -579,7 +569,7 @@ let ``POST "/POsT/523" returns "523"`` () =
 
 [<Fact>]
 let ``GET "/api" returns "api root"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -599,7 +589,7 @@ let ``GET "/api" returns "api root"`` () =
     let expected = "api root"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -611,7 +601,7 @@ let ``GET "/api" returns "api root"`` () =
 
 [<Fact>]
 let ``GET "/api/users" returns "users"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -631,7 +621,7 @@ let ``GET "/api/users" returns "users"`` () =
     let expected = "users"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -643,7 +633,7 @@ let ``GET "/api/users" returns "users"`` () =
 
 [<Fact>]
 let ``GET "/api/test" returns "test"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -663,7 +653,7 @@ let ``GET "/api/test" returns "test"`` () =
     let expected = "test"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -675,7 +665,7 @@ let ``GET "/api/test" returns "test"`` () =
 
 [<Fact>]
 let ``GET "/api/v2/users" returns "users v2"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -704,7 +694,7 @@ let ``GET "/api/v2/users" returns "users v2"`` () =
     let expected = "users v2"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -716,7 +706,7 @@ let ``GET "/api/v2/users" returns "users v2"`` () =
 
 [<Fact>]
 let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -735,7 +725,7 @@ let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
     let expected = "yadayada"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -747,7 +737,7 @@ let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
 
 [<Fact>]
 let ``GET "/person" returns rendered HTML view`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let personView model =
         html [] [
             head [] [
@@ -775,7 +765,7 @@ let ``GET "/person" returns rendered HTML view`` () =
     let expected = "<!DOCTYPE html><html><head><title>Html Node</title></head><body><p>John Doe is 30 years old.</p></body></html>"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -784,7 +774,7 @@ let ``GET "/person" returns rendered HTML view`` () =
     | Some ctx ->
         let body = (getBody ctx).Replace(Environment.NewLine, String.Empty)
         Assert.Equal(expected, body)
-        Assert.Equal("text/html", ctx.HttpContext.Response |> getContentType)
+        Assert.Equal("text/html", ctx.Response |> getContentType)
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "application/json" returns JSON object`` () =
@@ -797,7 +787,7 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
             Piercings = [| "left ear"; "nose" |]
         }
 
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -816,7 +806,7 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
     let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"left ear\",\"nose\"]}"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -825,7 +815,7 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("application/json", ctx.HttpContext.Response |> getContentType)
+        Assert.Equal("application/json", ctx.Response |> getContentType)
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/json" returns JSON object`` () =
@@ -838,7 +828,7 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
             Piercings = [| "left ear"; "nose" |]
         }
 
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -857,7 +847,7 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
     let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"left ear\",\"nose\"]}"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -866,7 +856,7 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("application/json", ctx.HttpContext.Response |> getContentType)
+        Assert.Equal("application/json", ctx.Response |> getContentType)
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "application/xml" returns XML object`` () =
@@ -879,7 +869,7 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
             Piercings = [| "ear"; "nose" |]
         }
 
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -908,7 +898,7 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
 </Person>"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -917,7 +907,7 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("application/xml", ctx.HttpContext.Response |> getContentType)
+        Assert.Equal("application/xml", ctx.Response |> getContentType)
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "application/xml, application/json" returns XML object`` () =
@@ -930,7 +920,7 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
             Piercings = [| "ear"; "nose" |]
         }
 
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -959,7 +949,7 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
 </Person>"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -968,7 +958,7 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("application/xml", ctx.HttpContext.Response |> getContentType)
+        Assert.Equal("application/xml", ctx.Response |> getContentType)
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "application/json, application/xml" returns JSON object`` () =
@@ -981,7 +971,7 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
             Piercings = [| "ear"; "nose" |]
         }
 
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1000,7 +990,7 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
     let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"ear\",\"nose\"]}"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -1009,7 +999,7 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("application/json", ctx.HttpContext.Response |> getContentType)
+        Assert.Equal("application/json", ctx.Response |> getContentType)
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xml" returns XML object`` () =
@@ -1022,7 +1012,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
             Piercings = [| "ear"; "nose" |]
         }
 
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1051,7 +1041,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
 </Person>"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -1060,7 +1050,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("application/xml", ctx.HttpContext.Response |> getContentType)
+        Assert.Equal("application/xml", ctx.Response |> getContentType)
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xml; q=0.6" returns XML object`` () =
@@ -1073,7 +1063,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
             Piercings = [| "ear"; "nose" |]
         }
 
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1102,7 +1092,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
 </Person>"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -1111,7 +1101,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("application/xml", ctx.HttpContext.Response |> getContentType)
+        Assert.Equal("application/xml", ctx.Response |> getContentType)
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0.6" returns text object`` () =
@@ -1124,7 +1114,7 @@ let ``Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0
             Piercings = [| "ear"; "nose" |]
         }
 
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1147,7 +1137,7 @@ Height: 1.85
 Piercings: [|""ear""; ""nose""|]"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -1156,7 +1146,7 @@ Piercings: [|""ear""; ""nose""|]"
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("text/plain", ctx.HttpContext.Response |> getContentType)
+        Assert.Equal("text/plain", ctx.Response |> getContentType)
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () =
@@ -1169,7 +1159,7 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
             Piercings = [| "ear"; "nose" |]
         }
 
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1188,7 +1178,7 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
     let expected = "text/html is unacceptable by the server."
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -1198,7 +1188,7 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
         let body = getBody ctx
         Assert.Equal(406, getStatusCode ctx)
         Assert.Equal(expected, body)
-        Assert.Equal("text/plain", ctx.HttpContext.Response |> getContentType)
+        Assert.Equal("text/plain", ctx.Response |> getContentType)
 
 [<Fact>]
 let ``Get "/auto" without an Accept header returns a JSON object`` () =
@@ -1211,7 +1201,7 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
             Piercings = [| "ear"; "nose" |]
         }
 
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1229,7 +1219,7 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
     let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"ear\",\"nose\"]}"
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
 
@@ -1238,11 +1228,11 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-        Assert.Equal("application/json", ctx.HttpContext.Response |> getContentType)
+        Assert.Equal("application/json", ctx.Response |> getContentType)
 
 [<Fact>]
 let ``Warbler function should execute inner function each time`` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let inner() = Guid.NewGuid().ToString()
     let app = 
         GET >=> choose [ 
@@ -1254,7 +1244,7 @@ let ``Warbler function should execute inner function each time`` () =
     ctx.Response.Body <- new MemoryStream()
 
     let result1 = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
         |> (fun res -> getBody res.Value)
@@ -1262,7 +1252,7 @@ let ``Warbler function should execute inner function each time`` () =
     ctx.Response.Body <- new MemoryStream()
 
     let result2 = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
         |> (fun res -> getBody res.Value)
@@ -1273,7 +1263,7 @@ let ``Warbler function should execute inner function each time`` () =
     ctx.Response.Body <- new MemoryStream()
 
     let result3 = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
         |> (fun res -> getBody res.Value)
@@ -1281,7 +1271,7 @@ let ``Warbler function should execute inner function each time`` () =
     ctx.Response.Body <- new MemoryStream()
 
     let result4 = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
         |> (fun res -> getBody res.Value)
@@ -1290,7 +1280,7 @@ let ``Warbler function should execute inner function each time`` () =
 
 [<Fact>]
 let ``GET "/redirect" redirect to "/" `` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         GET >=> choose [ 
             route "/"         >=> text "Hello World"
@@ -1301,18 +1291,18 @@ let ``GET "/redirect" redirect to "/" `` () =
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/redirect")) |> ignore
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
     
     match result with
     | None     -> assertFail "It was expected that the request would be redirected" 
-    | Some ctx -> ctx.HttpContext.Response.Received().Redirect("/", false)
+    | Some ctx -> ctx.Response.Received().Redirect("/", false)
 
 
 [<Fact>]
 let ``POST "/redirect" redirect to "/" `` () =
-    let ctx, hctx = initNewContext()
+    let ctx = Substitute.For<HttpContext>()
     let app = 
         POST >=> choose [ 
             route "/"         >=> text "Hello World"
@@ -1323,10 +1313,10 @@ let ``POST "/redirect" redirect to "/" `` () =
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/redirect")) |> ignore
 
     let result = 
-        hctx
+        ctx
         |> app
         |> Async.RunSynchronously
     
     match result with
     | None     -> assertFail "It was expected that the request would be redirected" 
-    | Some ctx -> ctx.HttpContext.Response.Received().Redirect("/", true)
+    | Some ctx -> ctx.Response.Received().Redirect("/", true)
