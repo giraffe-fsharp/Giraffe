@@ -7,8 +7,7 @@
     <Copyright>Copyright 2017 Dustin Moris Gorski</Copyright>
     <NeutralLanguage>en-GB</NeutralLanguage>
     <Authors>Dustin Moris Gorski and contributors</Authors>
-    <!--<TargetFrameworks>net46;netstandard1.6</TargetFrameworks>-->
-    <TargetFramework>netstandard1.6</TargetFramework>
+    <TargetFrameworks>net46;netstandard1.6</TargetFrameworks>
     <DebugType>portable</DebugType>
     <WarningsAsErrors>1</WarningsAsErrors>
     <Optimize>True</Optimize>
