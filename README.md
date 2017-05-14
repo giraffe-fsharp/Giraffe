@@ -66,11 +66,11 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [warbler](#warbler)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Model Binding](#model-binding)
-    - [bindJson](#bindjson)
-    - [bindXml](#bindxml)
-    - [bindForm](#bindform)
-    - [bindQueryString](#bindquerystring)
-    - [bindModel](#bindmodel)
+    - [BindJson](#bindjson)
+    - [BindXml](#bindxml)
+    - [BindForm](#bindform)
+    - [BindQueryString](#bindquerystring)
+    - [BindModel](#bindmodel)
 - [Error Handling](#error-handling)
 - [Installation](#installation)
 - [Sample applications](#sample-applications)
@@ -841,8 +841,8 @@ Defining a custom HTTP handler to partially filter a route:
 
 ```fsharp
 let routeStartsWith (subPath : string) =
-    fun ctx ->
-        if ctx.HttpContext.Request.Path.ToString().StartsWith subPath 
+    fun (ctx : HttpContext) ->
+        if ctx.Request.Path.ToString().StartsWith subPath 
         then Some ctx
         else None
         |> async.Return
@@ -852,8 +852,8 @@ Defining another custom HTTP handler to validate a mandatory HTTP header:
 
 ```fsharp
 let requiresToken (expectedToken : string) (handler : HttpHandler) =
-    fun ctx ->
-        let token    = ctx.HttpContext.Request.Headers.["X-Token"].ToString()
+    fun (ctx : HttpContext) ->
+        let token    = ctx.Request.Headers.["X-Token"].ToString()
         let response =
             if token.Equals(expectedToken)
             then handler
@@ -881,11 +881,11 @@ let app =
 
 ## Model Binding
 
-The `Giraffe.ModelBinding` module exposes a default set of model binding functions which can be used from within a `HttpHandler`.
+The `Giraffe.HttpContextExtensions` module exposes a default set of model binding functions which extend the `HttpContext` object.
 
-### bindJson
+### BindJson
 
-`bindJson<'T> (ctx : HttpContext)` can be used to bind a JSON payload to a strongly typed model.
+`ctx.BindJson<'T>()` can be used to bind a JSON payload to a strongly typed model.
 
 #### Example
 
@@ -902,17 +902,17 @@ type Car =
     }
 ```
 
-Then create a new `HttpHandler` which uses `bindJson` and use it from an app:
+Then create a new `HttpHandler` which uses `BindJson` and use it from an app:
 
 ```fsharp
 open Giraffe.HttpHandlers
-open Giraffe.ModelBinding
+open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun ctx ->
+    fun (ctx : HttpContext) ->
         async {
             // Binds a JSON payload to a Car object
-            let! car = bindJson<Car> ctx
+            let! car = ctx.bindJson<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
@@ -944,7 +944,7 @@ Accept: */*
 
 ### bindXml
 
-`bindXml<'T> (ctx : HttpContext)` can be used to bind an XML payload to a strongly typed model.
+`ctx.BindXml<'T>()` can be used to bind an XML payload to a strongly typed model.
 
 #### Example
 
@@ -961,17 +961,17 @@ type Car =
     }
 ```
 
-Then create a new `HttpHandler` which uses `bindXml` and use it from an app:
+Then create a new `HttpHandler` which uses `BindXml` and use it from an app:
 
 ```fsharp
 open Giraffe.HttpHandlers
-open Giraffe.ModelBinding
+open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun ctx ->
+    fun (ctx : HttpContext) ->
         async {
             // Binds an XML payload to a Car object
-            let! car = bindXml<Car> ctx
+            let! car = ctx.BindXml<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
@@ -1008,7 +1008,7 @@ Accept: */*
 
 ### bindForm
 
-`bindForm<'T> (ctx : HttpContext)` can be used to bind a form urlencoded payload to a strongly typed model.
+`ctx.BindForm<'T>()` can be used to bind a form urlencoded payload to a strongly typed model.
 
 #### Example
 
@@ -1025,17 +1025,17 @@ type Car =
     }
 ```
 
-Then create a new `HttpHandler` which uses `bindForm` and use it from an app:
+Then create a new `HttpHandler` which uses `BindForm` and use it from an app:
 
 ```fsharp
 open Giraffe.HttpHandlers
-open Giraffe.ModelBinding
+open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun ctx ->
+    fun (ctx : HttpContext) ->
         async {
             // Binds a form urlencoded payload to a Car object
-            let! car = bindForm<Car> ctx
+            let! car = ctx.BindForm<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
@@ -1067,7 +1067,7 @@ Name=DB9&Make=Aston+Martin&Wheels=4&Built=2016-01-01
 
 ### bindQueryString
 
-`bindQueryString<'T> (ctx : HttpContext)` can be used to bind a query string to a strongly typed model.
+`ctx.BindQueryString<'T>()` can be used to bind a query string to a strongly typed model.
 
 #### Example
 
@@ -1084,17 +1084,17 @@ type Car =
     }
 ```
 
-Then create a new `HttpHandler` which uses `bindQueryString` and use it from an app:
+Then create a new `HttpHandler` which uses `BindQueryString` and use it from an app:
 
 ```fsharp
 open Giraffe.HttpHandlers
-open Giraffe.ModelBinding
+open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun ctx ->
+    fun (ctx : HttpContext) ->
         async {
             // Binds a query string to a Car object
-            let! car = bindQueryString<Car> ctx
+            let! car = ctx.BindQueryString<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
@@ -1122,7 +1122,7 @@ Accept: */*
 
 ### bindModel
 
-`bindModel<'T> (ctx : HttpContext)` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model.
+`ctx.BindModel<'T>()` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model.
 
 #### Example
 
@@ -1139,17 +1139,17 @@ type Car =
     }
 ```
 
-Then create a new `HttpHandler` which uses `bindModel` and use it from an app:
+Then create a new `HttpHandler` which uses `BindModel` and use it from an app:
 
 ```fsharp
 open Giraffe.HttpHandlers
-open Giraffe.ModelBinding
+open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun ctx ->
+    fun (ctx : HttpContext) ->
         async {
             // Binds a JSON, XML or form urlencoded payload to a Car object
-            let! car = bindModel<Car> ctx
+            let! car = ctx.BindModel<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.

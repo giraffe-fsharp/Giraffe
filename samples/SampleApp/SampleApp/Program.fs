@@ -9,9 +9,9 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
+open Giraffe.HttpContextExtensions
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
-open Giraffe.ModelBinding
 open SampleApp.Models
 open SampleApp.HtmlViews
 
@@ -79,9 +79,9 @@ type Car =
     }
 
 let submitCar =
-    fun ctx ->
+    fun (ctx : HttpContext) ->
         async {
-            let! car = bindModel<Car> ctx
+            let! car = ctx.BindModel<Car>()
             return! json car ctx
         }
 

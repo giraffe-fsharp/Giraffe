@@ -12,7 +12,7 @@ open Microsoft.AspNetCore.Http.Internal
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Giraffe.Common
-open Giraffe.ModelBinding
+open Giraffe.HttpContextExtensions
 open Giraffe.HttpHandlers
 
 let assertFailf format args = 
@@ -46,9 +46,9 @@ let ``bindJson test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let jsonHandler =
-        fun ctx -> 
+        fun (ctx : HttpContext) -> 
             async {
-                let! model = bindJson<Customer> ctx
+                let! model = ctx.BindJson<Customer>()
                 return! text (model.ToString()) ctx
             }
 
@@ -88,9 +88,9 @@ let ``bindXml test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let xmlHandler =
-        fun ctx -> 
+        fun (ctx : HttpContext) -> 
             async {
-                let! model = bindXml<Customer> ctx
+                let! model = ctx.BindXml<Customer>()
                 return! text (model.ToString()) ctx
             }
 
@@ -130,9 +130,9 @@ let ``bindForm test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let formHandler =
-        fun ctx -> 
+        fun (ctx : HttpContext) -> 
             async {
-                let! model = bindForm<Customer> ctx
+                let! model = ctx.BindForm<Customer>()
                 return! text (model.ToString()) ctx
             }
 
@@ -174,9 +174,9 @@ let ``bindQueryString test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let queryHandler =
-        fun ctx -> 
+        fun (ctx : HttpContext) -> 
             async {
-                let! model = bindQueryString<Customer> ctx
+                let! model = ctx.BindQueryString<Customer>()
                 return! text (model.ToString()) ctx
             }
 
@@ -208,9 +208,9 @@ let ``bindModel with JSON content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun ctx -> 
+        fun (ctx : HttpContext) -> 
             async {
-                let! model = bindModel<Customer> ctx
+                let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) ctx
             }
 
@@ -252,9 +252,9 @@ let ``bindModel with XML content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun ctx -> 
+        fun (ctx : HttpContext) -> 
             async {
-                let! model = bindModel<Customer> ctx
+                let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) ctx
             }
 
@@ -296,9 +296,9 @@ let ``bindModel with FORM content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun ctx -> 
+        fun (ctx : HttpContext) -> 
             async {
-                let! model = bindModel<Customer> ctx
+                let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) ctx
             }
 
@@ -342,9 +342,9 @@ let ``bindModel with JSON content and a specific charset returns correct result`
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun ctx -> 
+        fun (ctx : HttpContext) -> 
             async {
-                let! model = bindModel<Customer> ctx
+                let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) ctx
             }
 
@@ -386,9 +386,9 @@ let ``bindModel during HTTP GET request with query string returns correct result
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun ctx -> 
+        fun (ctx : HttpContext) -> 
             async {
-                let! model = bindModel<Customer> ctx
+                let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) ctx
             }
 

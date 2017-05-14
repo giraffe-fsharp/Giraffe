@@ -14,6 +14,7 @@ open FSharp.Core.Printf
 open DotLiquid
 open Giraffe.Common
 open Giraffe.FormatExpressions
+open Giraffe.HttpContextExtensions
 open Giraffe.RazorEngine
 open Giraffe.HtmlEngine
 
@@ -22,17 +23,6 @@ type HttpHandlerResult = Async<HttpContext option>
 type HttpHandler = HttpContext -> HttpHandlerResult
 
 type ErrorHandler = exn -> ILogger -> HttpHandler
-
-/// ---------------------------
-/// HttpContext extensions
-/// ---------------------------
-
-type HttpContext with
-    member this.GetService<'T>() =
-        this.RequestServices.GetService(typeof<'T>) :?> 'T
-
-    member this.GetLogger<'T>() =
-        this.GetService<ILogger<'T>>()
 
 /// ---------------------------
 /// Globally useful functions
@@ -320,7 +310,7 @@ let xml (dataObj : obj) =
 let htmlFile (relativeFilePath : string) =
     fun (ctx : HttpContext) ->
         async {
-            let env = ctx.RequestServices.GetService<IHostingEnvironment>()
+            let env = ctx.GetService<IHostingEnvironment>()
             let filePath = env.ContentRootPath + relativeFilePath
             let! html = readFileAsString filePath
             return!
@@ -344,7 +334,7 @@ let dotLiquid (contentType : string) (template : string) (model : obj) =
 let dotLiquidTemplate (contentType : string) (templatePath : string) (model : obj) = 
     fun (ctx : HttpContext) ->
         async {
-            let env = ctx.RequestServices.GetService<IHostingEnvironment>()
+            let env = ctx.GetService<IHostingEnvironment>()
             let templatePath = env.ContentRootPath + templatePath
             let! template = readFileAsString templatePath
             return! dotLiquid contentType template model ctx
@@ -360,8 +350,8 @@ let dotLiquidHtmlView (templatePath : string) (model : obj) =
 let razorView (contentType : string) (viewName : string) (model : 'T) =
     fun (ctx : HttpContext) ->
         async {
-            let engine = ctx.RequestServices.GetService<IRazorViewEngine>()
-            let tempDataProvider = ctx.RequestServices.GetService<ITempDataProvider>()
+            let engine = ctx.GetService<IRazorViewEngine>()
+            let tempDataProvider = ctx.GetService<ITempDataProvider>()
             let! result = renderRazorView engine tempDataProvider ctx viewName model
             match result with
             | Error msg -> return (failwith msg)
