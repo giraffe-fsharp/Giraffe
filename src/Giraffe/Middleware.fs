@@ -67,7 +67,7 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
             with ex ->
                 try
                     return!
-                        errorHandler ex ctx
+                        errorHandler ex logger ctx
                         |> Async.Ignore
                 with ex2 ->
                     logger.LogError(EventId(0), ex,  "An unhandled exception has occurred while executing the request.")

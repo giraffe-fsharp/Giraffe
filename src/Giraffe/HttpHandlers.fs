@@ -21,7 +21,7 @@ type HttpHandlerResult = Async<HttpContext option>
 
 type HttpHandler = HttpContext -> HttpHandlerResult
 
-type ErrorHandler = exn -> HttpHandler
+type ErrorHandler = exn -> ILogger -> HttpHandler
 
 /// ---------------------------
 /// HttpContext extensions

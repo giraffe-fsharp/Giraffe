@@ -71,6 +71,7 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [bindForm](#bindform)
     - [bindQueryString](#bindquerystring)
     - [bindModel](#bindmodel)
+- [Error Handling](#error-handling)
 - [Installation](#installation)
 - [Sample applications](#sample-applications)
 - [Benchmarks](#benchmarks)
@@ -290,7 +291,7 @@ let app =
 #### Example:
 
 ```fsharp
-let errorHandler (ex : Exception) (ctx : HttpContext) =
+let errorHandler (ex : Exception) (logger : ILogger) (ctx : HttpContext) =
     ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
 
 let webApp = 
@@ -1166,6 +1167,37 @@ let webApp =
         route "/car" >=> submitCar ]
 ```
 
+## Error Handling
+
+Similar to defining a web application in Giraffe you can also set a global error handler, which can react to unhandled server exceptions.
+
+The `ErrorHandler` is a function which accepts the unhandled exception object and a default logger and returns a `HttpHandler` function which essentially works the same way as the `HttpHandler` functions of a web application:
+
+```fsharp
+type ErrorHandler = exn -> ILogger -> HttpHandler
+```
+
+For example you could create an error handler which logs the unhandled exception and returns a HTTP 500 response with the error message as plain text:
+
+```fsharp
+let errorHandler (ex : Exception) (logger : ILogger) (ctx : HttpContext) =
+    logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
+    ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
+```
+
+In order to enable the error handler you have to configure the error handler in your application startup:
+
+```fsharp
+type Startup() =
+    member __.Configure (app : IApplicationBuilder)
+                        (env : IHostingEnvironment)
+                        (loggerFactory : ILoggerFactory) =
+        app.UseGiraffeErrorHandler errorHandler
+        app.UseGiraffe webApp
+```
+
+It is recommended to set the error handler as the first middleware in the pipeline, so that any exception from a following middleware can be caught by the error handling function.
+
 ## Installation
 
 ### Using dotnet-new
@@ -1201,8 +1233,8 @@ type Startup() =
     member __.Configure (app : IApplicationBuilder)
                         (env : IHostingEnvironment)
                         (loggerFactory : ILoggerFactory) =
-        
-        app.UseGiraffe(webApp)
+                
+        app.UseGiraffe webApp
 ```
 
 ## Sample applications
