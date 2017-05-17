@@ -5,10 +5,27 @@ open System.IO
 open System.Xml.Serialization
 open Newtonsoft.Json
 
+/// ---------------------------
+/// Helper functions
+/// ---------------------------
+
 let inline isNotNull x = isNull x |> not
 
 let inline strOption (str : string) =
     if String.IsNullOrEmpty str then None else Some str
+
+let readFileAsString (filePath : string) =
+    async {
+        use stream = new FileStream(filePath, FileMode.Open)
+        use reader = new StreamReader(stream)
+        return!
+            reader.ReadToEndAsync()
+            |> Async.AwaitTask
+    }
+
+/// ---------------------------
+/// Serializers
+/// ---------------------------
 
 let inline serializeJson x = JsonConvert.SerializeObject x
 
@@ -24,12 +41,3 @@ let deserializeXml<'T> str =
     let serializer = XmlSerializer(typeof<'T>)
     use reader = new StringReader(str)
     serializer.Deserialize reader :?> 'T
-
-let readFileAsString (filePath : string) =
-    async {
-        use stream = new FileStream(filePath, FileMode.Open)
-        use reader = new StreamReader(stream)
-        return!
-            reader.ReadToEndAsync()
-            |> Async.AwaitTask
-    }

@@ -23,6 +23,22 @@ type HttpContext with
         this.GetService<ILogger<'T>>()
 
     /// ---------------------------
+    /// Common helpers
+    /// ---------------------------
+
+    member this.TryGetRequestHeader (key : string) =
+        let strValue = ref (StringValues())
+        match this.Request.Headers.TryGetValue(key, strValue) with
+        | true  -> Some (strValue.Value.ToString())
+        | false -> None
+
+    member this.GetRequestHeader (key : string) =
+        let strValue = ref (StringValues())
+        match this.Request.Headers.TryGetValue(key, strValue) with
+        | true  -> Ok (strValue.Value.ToString())
+        | false -> Error (sprintf "HTTP request header '%s' is missing." key)
+
+    /// ---------------------------
     /// Model binding
     /// ---------------------------
 
