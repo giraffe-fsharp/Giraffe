@@ -71,6 +71,16 @@ function Update-AppVeyorBuildVersion ($project)
     }
 }
 
+function Remove-OldBuildArtifacts
+{
+    Write-Host "Deleting old build artifacts..." -ForegroundColor Magenta
+
+    Get-ChildItem -Include "bin", "obj" -Recurse -Directory `
+    | ForEach-Object { 
+        Write-Host "Removing folder $_" -ForegroundColor DarkGray
+        Remove-Item $_ -Recurse -Force }
+}
+
 # ----------------------------------------------
 # Main
 # ----------------------------------------------
@@ -81,6 +91,7 @@ Update-AppVeyorBuildVersion $giraffe
 Test-Version $giraffe
 
 Write-DotnetVersion
+Remove-OldBuildArtifacts
 
 $configuration = if ($Release.IsPresent) { "Release" } else { "Debug" }
 
