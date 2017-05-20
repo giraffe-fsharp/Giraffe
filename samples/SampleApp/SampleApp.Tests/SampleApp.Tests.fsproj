@@ -2,8 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp1.1</TargetFramework>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <PreserveCompilationContext>true</PreserveCompilationContext>
+    <AssemblyName>SampleApp.Tests</AssemblyName>
     <DebugType>portable</DebugType>
   </PropertyGroup>
 

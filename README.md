@@ -1255,7 +1255,49 @@ Giraffe is built with the latest [.NET Core SDK](https://www.microsoft.com/net/d
 
 You can either install [Visual Studio 2017](https://www.visualstudio.com/vs/) which comes with the latest SDK or manually download and install the [.NET SDK 1.1](https://www.microsoft.com/net/download/core).
 
-After installation you should be able to run `build.cmd` to successfully build, test and package the library.
+After installation you should be able to run the `.\build.ps1` script to successfully build, test and package the library.
+
+The build script supports the following flags:
+
+- `-IncludeTests` will build and run the tests project as well
+- `-IncludeSamples` will build and test the samples project as well
+- `-All` will build and test all projects
+- `-Release` will build Giraffe with the `Release` configuration
+- `-Pack` will create a NuGet package for Giraffe and giraffe-template.
+
+Examples:
+
+Only build the Giraffe project in `Debug` mode:
+```
+PS > .\build.ps1 
+```
+
+Build the Giraffe project in `Release` mode:
+```
+PS > .\build.ps1 -Release
+```
+
+Build the Giraffe project in `Debug` mode and also build and run the tests project:
+```
+PS > .\build.ps1 -IncludeTests
+```
+
+Same as before, but also build and test the samples project:
+```
+PS > .\build.ps1 -IncludeTests -IncludeSamples
+```
+
+One switch to build and test all projects:
+```
+PS > .\build.ps1 -All
+```
+
+Build and test all projects, use the `Release` build configuration and create all NuGet packages:
+```
+PS > .\build.ps1 -Release -All -Pack
+```
+
+### Development environment
 
 Currently the best way to work with F# on .NET Core is to use [Visual Studio Code](https://code.visualstudio.com/) with the [Ionide](http://ionide.io/) extension. Intellisense and debugging is supported with the latest versions of both.
 
