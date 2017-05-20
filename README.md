@@ -1264,7 +1264,7 @@ The build script supports the following flags:
 - `-All` will build and test all projects
 - `-Release` will build Giraffe with the `Release` configuration
 - `-Pack` will create a NuGet package for Giraffe and giraffe-template.
-- `OnlyNetStandard` will build Giraffe only targeting the NETStandard1.6 framework ([see known issues](#known-issues))
+- `-OnlyNetStandard` will build Giraffe only targeting the NETStandard1.6 framework ([see known issues](#known-issues))
 
 Examples:
 
@@ -1308,7 +1308,7 @@ Currently there is a known issue with Ionide where [Intellisense breaks when a p
 
 This issue affects Giraffe because it targets more than one framework and therefore breaks Intellisense when building the project with the default configuration.
 
-During development you can workaround this issue by invoking the build script with the `OnlyNetStandard` flag:
+During development you can workaround this issue by invoking the build script with the `-OnlyNetStandard` flag:
 
 ```
 PS > .\build.ps1 -OnlyNetStandard
