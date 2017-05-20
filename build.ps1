@@ -8,7 +8,8 @@ param
     [switch] $IncludeTests,
     [switch] $IncludeSamples,
     [switch] $All,
-    [switch] $Pack
+    [switch] $Pack,
+    [switch] $OnlyNetStandard
 )
 
 $ErrorActionPreference = "Stop"
@@ -98,7 +99,9 @@ $configuration = if ($Release.IsPresent) { "Release" } else { "Debug" }
 Write-Host "Building Giraffe..." -ForegroundColor Magenta
 
 dotnet-restore $giraffe
-dotnet-build $giraffe "-c $configuration"
+
+$framework = if ($OnlyNetStandard.IsPresent) { "-f netstandard1.6" } else { "" }
+dotnet-build   $giraffe "-c $configuration $framework"
 
 if ($All.IsPresent -or $IncludeTests.IsPresent)
 {
@@ -107,24 +110,23 @@ if ($All.IsPresent -or $IncludeTests.IsPresent)
     $giraffeTests = ".\tests\Giraffe.Tests\Giraffe.Tests.fsproj"
 
     dotnet-restore $giraffeTests
-    dotnet-build $giraffeTests
-    dotnet-test $giraffeTests
+    dotnet-build   $giraffeTests
+    dotnet-test    $giraffeTests
 }
 
 if ($All.IsPresent -or $IncludeSamples.IsPresent)
 {
     Write-Host "Building and testing samples..." -ForegroundColor Magenta
 
-    $sampleApp = ".\samples\SampleApp\SampleApp\SampleApp.fsproj"
+    $sampleApp      = ".\samples\SampleApp\SampleApp\SampleApp.fsproj"
+    $sampleAppTests = ".\samples\SampleApp\SampleApp.Tests\SampleApp.Tests.fsproj"
 
     dotnet-restore $sampleApp
-    dotnet-build $sampleApp
-
-    $sampleAppTests = ".\samples\SampleApp\SampleApp.Tests\SampleApp.Tests.fsproj"
+    dotnet-build   $sampleApp
     
     dotnet-restore $sampleAppTests
-    dotnet-build $sampleAppTests
-    dotnet-test $sampleAppTests
+    dotnet-build   $sampleAppTests
+    dotnet-test    $sampleAppTests
 }
 
 if ($Pack.IsPresent)

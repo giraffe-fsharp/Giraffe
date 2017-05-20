@@ -1264,6 +1264,7 @@ The build script supports the following flags:
 - `-All` will build and test all projects
 - `-Release` will build Giraffe with the `Release` configuration
 - `-Pack` will create a NuGet package for Giraffe and giraffe-template.
+- `OnlyNetStandard` will build Giraffe only targeting the NETStandard1.6 framework ([see known issues](#known-issues))
 
 Examples:
 
@@ -1300,6 +1301,22 @@ PS > .\build.ps1 -Release -All -Pack
 ### Development environment
 
 Currently the best way to work with F# on .NET Core is to use [Visual Studio Code](https://code.visualstudio.com/) with the [Ionide](http://ionide.io/) extension. Intellisense and debugging is supported with the latest versions of both.
+
+#### Known issues
+
+Currently there is a known issue with Ionide where [Intellisense breaks when a project targets multiple frameworks](https://github.com/ionide/ionide-vscode-fsharp/issues/416).
+
+This issue affects Giraffe because it targets more than one framework and therefore breaks Intellisense when building the project with the default configuration.
+
+During development you can workaround this issue by invoking the build script with the `OnlyNetStandard` flag:
+
+```
+PS > .\build.ps1 -OnlyNetStandard
+``` 
+
+This switch will override the default configuration and allow a frictionless development experience.
+
+The official build by the build server doesn't use this setting and builds the project against all supported target frameworks as you would expect it.
 
 ## Contributing
 
