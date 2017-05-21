@@ -122,6 +122,7 @@ let webApp =
                 route  "/user"       >=> mustBeUser >=> userHandler
                 routef "/user/%i"    showUserHandler
                 route  "/razor"      >=> razorHtmlView "Person" { Name = "Razor" }
+                route  "/fileupload" >=> razorHtmlView "FileUpload" ""
                 route  "/person"     >=> (personView { Name = "Html Node" } |> renderHtml)
                 route  "/once"       >=> (time() |> text)
                 route  "/everytime"  >=> warbler (fun _ -> (time() |> text))

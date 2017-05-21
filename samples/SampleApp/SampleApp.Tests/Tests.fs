@@ -138,6 +138,7 @@ let ``Test /razor returns html content`` () =
 <html>
 <head>
     <title>Giraffe</title>
+    <link rel=""stylesheet"" type=""text/css"" href=""main.css"">
 </head>
 <body>
     
