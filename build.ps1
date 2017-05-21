@@ -9,6 +9,7 @@ param
     [switch] $IncludeSamples,
     [switch] $All,
     [switch] $Pack,
+    [switch] $Run,
     [switch] $OnlyNetStandard
 )
 
@@ -34,7 +35,7 @@ function Write-DotnetVersion
 
 function dotnet-restore ($project, $argv) { Invoke-Cmd "dotnet restore $project $argv" }
 function dotnet-build   ($project, $argv) { Invoke-Cmd "dotnet build $project $argv" }
-function dotnet-run     ($project, $argv) { Invoke-Cmd "dotnet run $project $argv" }
+function dotnet-run     ($project, $argv) { Invoke-Cmd "dotnet run --project $project $argv" }
 function dotnet-test    ($project, $argv) { Invoke-Cmd "dotnet test $project $argv" }
 function dotnet-pack    ($project, $argv) { Invoke-Cmd "dotnet pack $project $argv" }
 
@@ -127,6 +128,17 @@ if ($All.IsPresent -or $IncludeSamples.IsPresent)
     dotnet-restore $sampleAppTests
     dotnet-build   $sampleAppTests
     dotnet-test    $sampleAppTests
+}
+
+if ($Run.IsPresent)
+{
+    Write-Host "Launching sample application..." -ForegroundColor Magenta
+
+    $sampleApp      = ".\samples\SampleApp\SampleApp\SampleApp.fsproj"
+
+    dotnet-restore $sampleApp
+    dotnet-build   $sampleApp
+    dotnet-run     $sampleApp
 }
 
 if ($Pack.IsPresent)

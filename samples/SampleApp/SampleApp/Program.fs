@@ -4,9 +4,11 @@ open System
 open System.IO
 open System.Security.Claims
 open System.Collections.Generic
+open System.Threading
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.Http.Features
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe.HttpContextExtensions
@@ -85,6 +87,29 @@ let submitCar =
             return! json car ctx
         }
 
+let smallFileUploadHandler =
+    fun (ctx : HttpContext) ->
+        async {
+            return!
+                (match ctx.Request.HasFormContentType with
+                | false -> setStatusCode 400 >=> text "Bad request"
+                | true  ->
+                    ctx.Request.Form.Files
+                    |> Seq.fold (fun acc file -> sprintf "%s\n%s" acc file.FileName) ""
+                    |> text) ctx
+        }
+
+let largeFileUploadHandler =
+    fun (ctx : HttpContext) ->
+        async {
+            let formFeature = ctx.Features.Get<IFormFeature>()
+            let! form = formFeature.ReadFormAsync CancellationToken.None |> Async.AwaitTask
+            return!
+                (form.Files
+                |> Seq.fold (fun acc file -> sprintf "%s\n%s" acc file.FileName) ""
+                |> text) ctx
+        }
+
 let webApp = 
     choose [
         GET >=>
@@ -101,6 +126,10 @@ let webApp =
                 route  "/once"       >=> (time() |> text)
                 route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
             ]
+        POST >=>
+            choose [
+                route "/small-upload" >=> smallFileUploadHandler
+                route "/large-upload" >=> largeFileUploadHandler ]
         route "/car" >=> submitCar
         setStatusCode 404 >=> text "Not Found" ]
 
@@ -122,6 +151,7 @@ let cookieAuth =
 let configureApp (app : IApplicationBuilder) = 
     app.UseGiraffeErrorHandler errorHandler
     app.UseCookieAuthentication cookieAuth |> ignore
+    app.UseStaticFiles() |> ignore
     app.UseGiraffe webApp
 
 let configureServices (services : IServiceCollection) =
@@ -139,9 +169,12 @@ let configureLogging (loggerFactory : ILoggerFactory) =
 
 [<EntryPoint>]
 let main argv =
+    let contentRoot = Directory.GetCurrentDirectory()
+    let webRoot     = Path.Combine(contentRoot, "webroot")
     WebHostBuilder()
         .UseKestrel()
-        .UseContentRoot(Directory.GetCurrentDirectory())
+        .UseContentRoot(contentRoot)
+        .UseWebRoot(webRoot)
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(Action<IServiceCollection> configureServices)
         .ConfigureLogging(Action<ILoggerFactory> configureLogging)
