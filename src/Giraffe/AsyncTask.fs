@@ -76,11 +76,6 @@ module Giraffe.AsyncTask
             let awaiter = m.GetAwaiter()
             awaiter.OnCompleted(fun _ -> tcs.SetResult(f ()))
             t.Unwrap()
-            //m.ContinueWith((fun (x: Task<_>) -> f x.Result)).Unwrap()
-
-
-    //  let inline bind (f: 'T -> Task<'U>) (m: Task<'T>) = 
-    //      m.ContinueWith(fun (x: Task<_>) -> f x.Result).Unwrap()
 
     let inline returnM a = 
         let s = TaskCompletionSource()
@@ -163,83 +158,5 @@ module Giraffe.AsyncTask
         member this.Delay (f: unit -> Task<'T>) = f
 
         member this.Run (f: unit -> Task<'T>) = f()
-
-    // type TaskBuilderWithToken(?continuationOptions, ?scheduler) =
-    //     let contOptions = defaultArg continuationOptions TaskContinuationOptions.None
-    //     let scheduler = defaultArg scheduler TaskScheduler.Default
-
-    //     let lift (t: Task<_>) = fun (_: CancellationToken) -> t
-    //     let bind (t: CancellationToken -> Task<'T>) (f: 'T -> (CancellationToken -> Task<'U>)) =
-    //         fun (token: CancellationToken) ->
-    //             (t token).ContinueWith((fun (x: Task<_>) -> f x.Result token), token, contOptions, scheduler).Unwrap()
-            
-    //     member this.Return x = lift (returnM x)
-
-    //     member this.ReturnFrom t = lift t
-
-    //     member this.ReturnFrom (t: CancellationToken -> Task<'T>) = t
-
-    //     member this.Zero() = this.Return ()
-
-    //     member this.Bind(t, f) = bind t f            
-
-    //     member this.Bind(t, f) = bind (lift t) f                
-
-    //     member this.Combine(t1, t2) = bind t1 (konst t2)        
-
-    //     member this.While(guard, m) =
-    //             if not(guard()) then 
-    //                 this.Zero()
-    //             else
-    //                 bind m (fun () -> this.While(guard, m))                    
-
-    //     member this.TryFinally(t : CancellationToken -> Task<'T>, compensation) =
-    //         try t
-    //         finally compensation()
-
-    //     member this.Using(res: #IDisposable, body: #IDisposable -> (CancellationToken -> Task<'T>)) =
-    //         this.TryFinally(body res, fun () -> match res with null -> () | disp -> disp.Dispose())
-
-    //     member this.For(sequence: seq<'T>, body) =            
-    //             this.Using(sequence.GetEnumerator(),
-    //                                 fun enum -> this.While(enum.MoveNext, fun token -> body enum.Current token))
-            
-    //     member this.Delay f = this.Bind(this.Return (), f)
-
-
-    // type FastTaskBuilder(?continuationOptions, ?scheduler, ?cancellationToken) =
-    //     let contOptions = defaultArg continuationOptions TaskContinuationOptions.None
-    //     let scheduler = defaultArg scheduler TaskScheduler.Default
-    //     let cancellationToken = defaultArg cancellationToken CancellationToken.None
-
-    //     member this.Return x = returnM x
-
-    //     member this.Zero() = returnM ()
-
-    //     member this.ReturnFrom (a: Task<'T>) = a
-
-    //     member this.Bind(m, f) = bindWithOptions cancellationToken contOptions scheduler f m
-
-    //     member this.Combine(comp1, comp2) =
-    //         this.Bind(comp1, comp2)
-
-    //     member this.While(guard, m) =
-    //         if not(guard()) then this.Zero() else
-    //             this.Bind(m(), fun () -> this.While(guard, m))
-
-    //     member this.TryFinally(m, compensation) =
-    //         try this.ReturnFrom m
-    //         finally compensation()
-
-    //     member this.Using(res: #IDisposable, body: #IDisposable -> Task<_>) =
-    //         this.TryFinally(body res, fun () -> match res with null -> () | disp -> disp.Dispose())
-
-    //     member this.For(sequence: seq<_>, body) =
-    //         this.Using(sequence.GetEnumerator(),
-    //                                 fun enum -> this.While(enum.MoveNext, fun () -> body enum.Current))
-
-    //     member this.Delay (f: unit -> Task<'T>) = f
-
-    //     member this.Run (f: unit -> Task<'T>) = f()
 
     let task = TaskBuilder(scheduler = TaskScheduler.Current)

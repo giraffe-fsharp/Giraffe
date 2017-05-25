@@ -69,7 +69,6 @@ type HttpContext with
             let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
             props
             |> Seq.iter (fun p ->
-                //let strValue = ref (StringValues())
                 match form.TryGetValue(p.Name, strValue) with
                 | true , strValue ->  
                     let converter = TypeDescriptor.GetConverter p.PropertyType
