@@ -4,6 +4,8 @@ open System
 open System.IO
 open System.Xml.Serialization
 open Newtonsoft.Json
+open Giraffe.AsyncTask
+
 
 /// ---------------------------
 /// Helper functions
@@ -15,12 +17,11 @@ let inline strOption (str : string) =
     if String.IsNullOrEmpty str then None else Some str
 
 let readFileAsString (filePath : string) =
-    async {
+    task {
         use stream = new FileStream(filePath, FileMode.Open)
         use reader = new StreamReader(stream)
         return!
             reader.ReadToEndAsync()
-            |> Async.AwaitTask
     }
 
 /// ---------------------------
