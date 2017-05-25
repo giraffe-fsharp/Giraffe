@@ -77,7 +77,7 @@ let bind (handler : HttpHandler) =
             let! ctx = result
             match ctx with
             | None   -> return None
-            | Some c ->
+            | Some (c:HttpContext) ->
                 match c.Response.HasStarted with
                 | true  -> return  Some c
                 | false -> return! handler c
