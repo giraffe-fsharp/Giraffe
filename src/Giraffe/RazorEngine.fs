@@ -10,14 +10,13 @@ open Microsoft.AspNetCore.Mvc.Razor
 open Microsoft.AspNetCore.Mvc.Rendering
 open Microsoft.AspNetCore.Mvc.ViewFeatures
 open Microsoft.AspNetCore.Routing
-open Giraffe.AsyncTask
 
 let renderRazorView (razorViewEngine   : IRazorViewEngine)
                     (tempDataProvider  : ITempDataProvider)
                     (httpContext       : HttpContext)
                     (viewName          : string)
                     (model             : 'T) =
-    task {
+    async {
         let actionContext    = ActionContext(httpContext, RouteData(), ActionDescriptor())
         let viewEngineResult = razorViewEngine.FindView(actionContext, viewName, false)
 
@@ -30,6 +29,6 @@ let renderRazorView (razorViewEngine   : IRazorViewEngine)
             let htmlHelperOptions  = HtmlHelperOptions()            
             use output = new StringWriter()
             let viewContext = ViewContext(actionContext, view, viewDataDict, tempDataDict, output, htmlHelperOptions)
-            do! view.RenderAsync(viewContext)
+            do! view.RenderAsync(viewContext) |> Async.AwaitTask
             return Ok (output.ToString())
     }
