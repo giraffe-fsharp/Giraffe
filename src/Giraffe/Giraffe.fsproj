@@ -1,5 +1,5 @@
-﻿<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
-
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <AssemblyName>Giraffe</AssemblyName>
     <Version>0.1.0-alpha018</Version>
@@ -25,28 +25,25 @@
     <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netstandard1.6' ">$(PackageTargetFallback);portable-net45+win8;</PackageTargetFallback>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="FSharp.Core" Version="4.1.*" />
-    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
-    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.*" />
-    <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="1.1.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="1.1.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="1.1.*" />
-    <PackageReference Include="Newtonsoft.Json" Version="10.0.*" />
-    <PackageReference Include="DotLiquid" Version="2.0.*" />
+    <PackageReference Include="FSharp.Core" Version="4.1.*"/>
+    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All"/>
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.*"/>
+    <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.*"/>
+    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="1.1.*"/>
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="1.1.*"/>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="1.1.*"/>
+    <PackageReference Include="DotLiquid" Version="2.0.*"/>
   </ItemGroup>
-
   <ItemGroup>
-    <Compile Include="Common.fs" />
-    <Compile Include="ComputationExpressions.fs" />
-    <Compile Include="FormatExpressions.fs" />
-    <Compile Include="HttpContextExtensions.fs" />
-    <Compile Include="HtmlEngine.fs" />
-    <Compile Include="RazorEngine.fs" />
-    <Compile Include="HttpHandlers.fs" />
-    <Compile Include="Middleware.fs" />
+    <Compile Include="AsyncTask.fs"/>
+    <Compile Include="Common.fs"/>
+    <Compile Include="ComputationExpressions.fs"/>
+    <Compile Include="FormatExpressions.fs"/>
+    <Compile Include="HttpContextExtensions.fs"/>
+    <Compile Include="HtmlEngine.fs"/>
+    <Compile Include="RazorEngine.fs"/>
+    <Compile Include="HttpHandlers.fs"/>
+    <Compile Include="Middleware.fs"/>
   </ItemGroup>
-
 </Project>

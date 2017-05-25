@@ -2,6 +2,7 @@ module Giraffe.HttpHandlers
 
 open System
 open System.Text
+open System.Threading.Tasks
 open System.Collections.Generic
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
@@ -17,8 +18,9 @@ open Giraffe.FormatExpressions
 open Giraffe.HttpContextExtensions
 open Giraffe.RazorEngine
 open Giraffe.HtmlEngine
+open Giraffe.AsyncTask
 
-type HttpHandlerResult = Async<HttpContext option>
+type HttpHandlerResult = Task<HttpContext option>
 
 type HttpHandler = HttpContext -> HttpHandlerResult
 
@@ -49,7 +51,7 @@ let private getPath (ctx : HttpContext) =
 
 let private handlerWithRootedPath (path : string) (handler : HttpHandler) = 
     fun (ctx : HttpContext) ->
-        async {
+        task {
             let savedSubPath = getSavedSubPath ctx
             try
                 ctx.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
@@ -71,7 +73,7 @@ let private handlerWithRootedPath (path : string) (handler : HttpHandler) =
 /// then it will skip the HttpHandler as well.
 let bind (handler : HttpHandler) =
     fun (result : HttpHandlerResult) ->
-        async {
+        task {
             let! ctx = result
             match ctx with
             | None   -> return None
@@ -98,7 +100,7 @@ let (>=>) = compose
 /// result of the first HttpHandler which outcome is Some HttpContext
 let rec choose (handlers : HttpHandler list) =
     fun (ctx : HttpContext) ->
-        async {
+        task {
             match handlers with
             | []              -> return None
             | handler :: tail ->
@@ -114,7 +116,7 @@ let httpVerb (verb : string) =
         if ctx.Request.Method.Equals verb
         then Some ctx
         else None
-        |> async.Return
+        |> Task.FromResult
 
 let GET    : HttpHandler = httpVerb "GET"
 let POST   : HttpHandler = httpVerb "POST"
@@ -133,23 +135,23 @@ let mustAccept (mimeTypes : string list) =
         |> function
             | true  -> Some ctx
             | false -> None
-            |> async.Return
+            |> Task.FromResult
 
 /// Challenges the client to authenticate with a given authentication scheme.
 let challenge (authScheme : string) =
     fun (ctx : HttpContext) ->
-        async {
+        task {
             let auth = ctx.Authentication
-            do! auth.ChallengeAsync authScheme |> Async.AwaitTask
+            do! auth.ChallengeAsync authScheme
             return Some ctx
         }
 
 /// Signs off the current user.
 let signOff (authScheme : string) =
     fun (ctx : HttpContext) ->
-        async {
+        task {
             let auth = ctx.Authentication
-            do! auth.SignOutAsync authScheme |> Async.AwaitTask
+            do! auth.SignOutAsync authScheme
             return Some ctx
         }
 
@@ -159,7 +161,7 @@ let requiresAuthentication (authFailedHandler : HttpHandler) =
     fun (ctx : HttpContext) ->
         let user = ctx.User
         if isNotNull user && user.Identity.IsAuthenticated
-        then async.Return (Some ctx)
+        then Task.FromResult (Some ctx)
         else authFailedHandler ctx
 
 /// Validates if a user is in a specific role.
@@ -168,7 +170,7 @@ let requiresRole (role : string) (authFailedHandler : HttpHandler) =
     fun (ctx : HttpContext) ->
         let user = ctx.User
         if user.IsInRole role
-        then async.Return (Some ctx)
+        then Task.FromResult (Some ctx)
         else authFailedHandler ctx
 
 /// Validates if a user has at least one of the specified roles.
@@ -179,7 +181,7 @@ let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) =
         roles
         |> List.exists user.IsInRole 
         |> function
-            | true  -> async.Return (Some ctx)
+            | true  -> Task.FromResult (Some ctx)
             | false -> authFailedHandler ctx
 
 /// Attempts to clear the current HttpResponse object.
@@ -188,7 +190,7 @@ let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) =
 let clearResponse =
     fun (ctx : HttpContext) ->
         ctx.Response.Clear()
-        async.Return (Some ctx)
+        Task.FromResult (Some ctx)
 
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 let route (path : string) =
@@ -196,7 +198,7 @@ let route (path : string) =
         if (getPath ctx).Equals path
         then Some ctx
         else None
-        |> async.Return
+        |> Task.FromResult
 
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 /// The arguments from the format string will be automatically resolved when the
@@ -205,7 +207,7 @@ let routef (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
     fun (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) false
         |> function
-            | None      -> async.Return None
+            | None      -> Task.FromResult None
             | Some args -> routeHandler args ctx
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
@@ -214,7 +216,7 @@ let routeCi (path : string) =
         if String.Equals(getPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
         then Some ctx
         else None
-        |> async.Return
+        |> Task.FromResult
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 /// The arguments from the format string will be automatically resolved when the
@@ -223,7 +225,7 @@ let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
     fun (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) true
         |> function
-            | None      -> async.Return None
+            | None      -> Task.FromResult None
             | Some args -> routeHandler args ctx
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
@@ -232,7 +234,7 @@ let routeStartsWith (subPath : string) =
         if (getPath ctx).StartsWith subPath 
         then Some ctx
         else None
-        |> async.Return
+        |> Task.FromResult
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
 let routeStartsWithCi (subPath : string) =
@@ -240,7 +242,7 @@ let routeStartsWithCi (subPath : string) =
         if (getPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase) 
         then Some ctx
         else None
-        |> async.Return
+        |> Task.FromResult
 
 /// Filters an incoming HTTP request based on a part of the request path (case sensitive).
 /// Subsequent route handlers inside the given handler function should omit the already validated path.
@@ -258,7 +260,7 @@ let subRouteCi (path : string) (handler : HttpHandler) =
 /// Sets the HTTP response status code.
 let setStatusCode (statusCode : int) =
     fun (ctx : HttpContext) ->
-        async {
+        task {
             ctx.Response.StatusCode <- statusCode
             return Some ctx
         }
@@ -266,7 +268,7 @@ let setStatusCode (statusCode : int) =
 /// Sets a HTTP header in the HTTP response.
 let setHttpHeader (key : string) (value : obj) =
     fun (ctx : HttpContext) ->
-        async {
+        task {
             ctx.Response.Headers.[key] <- StringValues(value.ToString())
             return Some ctx
         }
@@ -274,11 +276,9 @@ let setHttpHeader (key : string) (value : obj) =
 /// Writes to the body of the HTTP response and sets the HTTP header Content-Length accordingly.
 let setBody (bytes : byte array) =
     fun (ctx : HttpContext) ->
-        async {            
+        task {            
             ctx.Response.Headers.["Content-Length"] <- StringValues(bytes.Length.ToString())
-            ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length)
-            |> Async.AwaitTask
-            |> ignore
+            do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length)
             return Some ctx
         }
 
@@ -309,7 +309,7 @@ let xml (dataObj : obj) =
 /// with a Content-Type of text/html.
 let htmlFile (relativeFilePath : string) =
     fun (ctx : HttpContext) ->
-        async {
+        task {
             let env = ctx.GetService<IHostingEnvironment>()
             let filePath = env.ContentRootPath + relativeFilePath
             let! html = readFileAsString filePath
@@ -333,7 +333,7 @@ let dotLiquid (contentType : string) (template : string) (model : obj) =
 /// the compiled output as well as the given contentType as the HTTP reponse.
 let dotLiquidTemplate (contentType : string) (templatePath : string) (model : obj) = 
     fun (ctx : HttpContext) ->
-        async {
+        task {
             let env = ctx.GetService<IHostingEnvironment>()
             let templatePath = env.ContentRootPath + templatePath
             let! template = readFileAsString templatePath
@@ -349,7 +349,7 @@ let dotLiquidHtmlView (templatePath : string) (model : obj) =
 /// the compiled output as the HTTP reponse with the given contentType.
 let razorView (contentType : string) (viewName : string) (model : 'T) =
     fun (ctx : HttpContext) ->
-        async {
+        task {
             let engine = ctx.GetService<IRazorViewEngine>()
             let tempDataProvider = ctx.GetService<ITempDataProvider>()
             let! result = renderRazorView engine tempDataProvider ctx viewName model

@@ -9,6 +9,7 @@ open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Microsoft.Net.Http.Headers
 open Giraffe.Common
+open Giraffe.AsyncTask
 
 type HttpContext with
 
@@ -43,42 +44,44 @@ type HttpContext with
     /// ---------------------------
 
     member this.ReadBodyFromRequest() =
-        async {
+        task {
             let body = this.Request.Body
             use reader = new StreamReader(body, true)
-            return! reader.ReadToEndAsync() |> Async.AwaitTask
+            return! reader.ReadToEndAsync()
         }
 
     member this.BindJson<'T>() =
-        async {
+        task {
             let! body = this.ReadBodyFromRequest()
             return deserializeJson<'T> body
         }
 
     member this.BindXml<'T>() =
-        async {
+        task {
             let! body = this.ReadBodyFromRequest()
             return deserializeXml<'T> body
         }
 
     member this.BindForm<'T>() =
-        async {
-            let! form = this.Request.ReadFormAsync() |> Async.AwaitTask
+        task {
+            let! form = this.Request.ReadFormAsync()
             let obj   = Activator.CreateInstance<'T>()
             let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
             props
             |> Seq.iter (fun p ->
-                let strValue = ref (StringValues())
-                if form.TryGetValue(p.Name, strValue)
-                then
+                //let strValue = ref (StringValues())
+                match form.TryGetValue(p.Name, strValue) with
+                | true , strValue ->  
                     let converter = TypeDescriptor.GetConverter p.PropertyType
                     let value = converter.ConvertFromInvariantString(strValue.Value.ToString())
-                    p.SetValue(obj, value, null))
+                    p.SetValue(obj, value, null)
+                | false , _ -> ()
+            )
             return obj
         }
 
     member this.BindQueryString<'T>() =
-        async {
+        task {
             let query = this.Request.Query
             let obj   = Activator.CreateInstance<'T>()
             let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
@@ -94,7 +97,7 @@ type HttpContext with
         }
 
     member this.BindModel<'T>() =
-        async {
+        task {
             let method = this.Request.Method
             return!
                 if method.Equals "POST" || method.Equals "PUT" then
