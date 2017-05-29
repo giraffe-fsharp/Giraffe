@@ -32,20 +32,33 @@ type GiraffeMiddleware (next          : RequestDelegate,
     
     do if isNull next then raise (ArgumentNullException("next"))
 
+    let logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
+    
+    let printResult v ctx = sprintf "Giraffe returned %s for %s" v (getRequestInfo ctx) |> logger.LogDebug 
+
+    let succ, fail =
+        // debug case
+        if logger.IsEnabled LogLevel.Debug then 
+            (fun (ctx:HttpContext) -> task { 
+                printResult "Succ/Some" ctx
+                return ctx
+            }),
+            (fun (ctx:HttpContext) -> task { 
+                printResult "Fail/None" ctx
+                do! next.Invoke ctx
+                return ctx
+            })
+        // production case
+        else 
+            (fun (ctx:HttpContext) -> task { return ctx }),
+            (fun (ctx:HttpContext) -> 
+                task { 
+                    do! next.Invoke ctx
+                    return ctx 
+                })
     member __.Invoke (ctx : HttpContext) =
         task {
-            let! result = handler ctx
-
-            let logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
-            if logger.IsEnabled LogLevel.Debug then
-                match result with
-                | Some _ -> sprintf "Giraffe returned Some for %s" (getRequestInfo ctx)
-                | None   -> sprintf "Giraffe returned None for %s" (getRequestInfo ctx)
-                |> logger.LogDebug
-
-            if (result.IsNone) then
-                do!
-                    next.Invoke ctx
+            do! handler succ fail ctx
         } 
 
 /// ---------------------------
@@ -58,6 +71,14 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
 
     do if isNull next then raise (ArgumentNullException("next"))
 
+    let succ, fail =
+        (fun (ctx:HttpContext) -> task { return ctx }),
+        (fun (ctx:HttpContext) -> 
+            task { 
+                do! next.Invoke ctx
+                return ctx 
+            })
+
     member __.Invoke (ctx : HttpContext) =
         task {
             let logger = loggerFactory.CreateLogger<GiraffeErrorHandlerMiddleware>()
@@ -67,7 +88,7 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
             with ex ->
                 try
                     do!
-                        (errorHandler ex logger ctx)
+                        (errorHandler ex logger succ fail ctx)
                         
                 with ex2 ->
                     logger.LogError(EventId(0), ex,  "An unhandled exception has occurred while executing the request.")
