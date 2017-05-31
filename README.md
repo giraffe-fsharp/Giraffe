@@ -1343,6 +1343,7 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [David Sinclair](https://github.com/dsincl12) (Created the dotnet-new template for Giraffe)
 - [Florian Verdonck](https://github.com/nojaf) (Ported Suave's experimental Html into Giraffe, implemented the warbler and general help with the project)
 - [Roman Melnikov](https://github.com/Neftedollar) (Added `redirectTo` route)
+- [Diego B. Fernandez](https://github.com/diegobfernandez) (Added support for the `Option<'T>` type in the query string model binding)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
 
