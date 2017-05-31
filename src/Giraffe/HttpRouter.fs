@@ -4,44 +4,92 @@ open Giraffe.HttpHandlers
 open FSharp.Core.Printf
 open System.Collections.Generic
 
+/// Range Parsers that quickly try parse over matched range (all fpos checked before running)
 
-let stringParse2 (path:string) ipos fpos = path.Substring(ipos,fpos - ipos)
+let stringParse (path:string) ipos fpos = path.Substring(ipos,fpos - ipos) |> box |> Some
 
-let intParse2 (path:string) ipos fpos =
+let charParse (path:string) ipos fpos = path.[ipos] |> box |> Some // this is not ideal method (but uncommonly used)
+let boolParse (path:string) ipos fpos = 
+    match path.[ipos] with
+    | 't' | 'T' | 'y' | 'Y' -> true  |> box |> Some
+    | 'f' | 'F' | 'n' | 'N' -> false |> box |> Some
+    | _ -> None
+let intParse (path:string) ipos fpos =
     let mutable result = 0
-    for pos in ipos .. fpos do 
-        let charDiff = int path.[pos] //- '0'
+    let mutable negNumber = false
+    let rec go pos =
+        let charDiff = int path.[pos] - 48//- '0'
         if -1 < charDiff && charDiff < 10 then
             result <- (result * 10) + charDiff
-    result
+            if pos = fpos then
+                if negNumber then - result else result 
+                |> box |> Some 
+            else go (pos + 1)       // continue iter
+        else None
+    //Start Parse taking into account sign operator
+    match path.[ipos] with
+    | '-' -> negNumber <- true ; go (ipos + 1)
+    | '+' -> go (ipos + 1)
+    | _ -> go (ipos)
+    
+let int64Parse (path:string) ipos fpos =
+    let mutable result = 0L
+    let mutable negNumber = false
+    let rec go pos =
+        let charDiff = int64 path.[pos] - 48L//- '0'
+        if -1L < charDiff && charDiff < 10L then
+            result <- (result * 10L) + charDiff
+            if pos = fpos then
+                if negNumber then - result else result 
+                |> box |> Some 
+            else go (pos + 1)       // continue iter
+        else None
+    //Start Parse taking into account sign operator
+    match path.[ipos] with
+    | '-' -> negNumber <- true ; go (ipos + 1)
+    | '+' -> go (ipos + 1)
+    | _ -> go (ipos)
 
-let floatParse2 (path:string) ipos fpos =
+let floatParse (path:string) ipos fpos =
     let mutable result = 0.
     let mutable decPlaces = 0.
-    let negNumber = path.[ipos] = '-'
-    for pos in ipos .. fpos do
+    let mutable negNumber = false
+    
+    let rec go pos =
         if path.[pos] = '.' then
             decPlaces <- 1.
+            if pos < fpos then go (pos + 1) else None
         else
-            let charDiff = float path.[pos] // - '0'
+            let charDiff = float path.[pos] - 48. // - '0'
             if -1. < charDiff && charDiff < 10. then
                 if decPlaces = 0. then 
-                    result <- (result * 10.) + float charDiff
+                    result <- (result * 10.) + charDiff
                 else
                     result <- result + ((float charDiff) / (10. * decPlaces))
-    if negNumber then result * -1. else result
+                if pos = fpos then
+                    if negNumber then - result else result 
+                    |> box |> Some 
+                else go (pos + 1)   // continue iter
+            else None   // Invalid Character in path
+
+    match path.[ipos] with
+    | '-' -> negNumber <- true ; go (ipos + 1)
+    | '+' -> go (ipos + 1)
+    | _ -> go (ipos)
 
 let formatStringMap =
     dict [
-    // Char    Regex                    Parser
-    // ----------------------------------------------------------
-        'b', (bool.Parse >> box)  // bool
-        'c', (char       >> box)  // char
-        's', (              box)  // string
-        'i', (int32      >> box)  // int
-        'd', (int64      >> box)  // int64
-        'f', (float      >> box)  // float
+    // Char    Range Parser
+    // ---------------  -------------------------------------------
+        'b', (boolParse  )  // bool
+        'c', (charParse  )  // char
+        's', (stringParse)  // string
+        'i', (intParse   )  // int
+        'd', (int64Parse )  // int64
+        'f', (floatParse )  // float
     ]
+
+// implimenation of Trie Node
 
 type Node(iRouteFn:RouteCont<'T>) = 
     let edges = Dictionary<char,Node>()
@@ -79,6 +127,7 @@ type Node(iRouteFn:RouteCont<'T>) =
             else None
         go ipos x
 
+        /// Multiple Edge designs possible, for now use simple dictionary over sorted array w/ binary search
 
         // let rec go l r = 
         //     if l > r then 
@@ -116,11 +165,11 @@ let tRoutef (path : StringFormat<_,'U>) (fn:'U -> HttpHandler) (root:Node)=
         if i = fin then
             node.Add path.Value.[i] (MatchMap( fMap , None ))
         else
-            if path.Value.[i] = '%' then
-                let fmtChar = path.Value.[i + 1] ///HACK fix out of bounds gap
+            if path.Value.[i] = '%' && i + 1 < fin then
+                let fmtChar = path.Value.[i + 1]
                 if formatStringMap.ContainsKey fmtChar then
                     let nMatchMap = fmtChar :: fMap
-                    let newNodeBranch = Node(EmptyMap)
+                    let newNodeBranch = Node(EmptyMap) //doublr check logic & relation to i + 1 = 2
                     node.RouteFn <- MatchMap( nMatchMap , Some newNodeBranch )
                     go (i + 2) newNodeBranch nMatchMap
                 else
@@ -153,52 +202,6 @@ let processPath (path:string) (ipos:int) (inode:Node) : HttpHandler =
 
         let pathLen = path.Length
 
-        let intParse ipos (c:char) =
-            let mutable result = 0
-            let rec go pos =
-                if pos < pathLen && path.[pos] <> c then
-                    let charDiff = path.[pos] - '0'
-                    if -1 < charDiff && charDiff < 10 then
-                        result <- (result * 10) + charDiff
-                        go (pos + 1)
-                else
-                    (pos,result)
-            go ipos
-
-       
-
-        let floatParse ipos (c:char) =
-            let mutable result = 0.
-            let rec go pos decDepth =
-                if pos < pathLen && path.[pos] <> c then
-                    if path.[pos] = '.' then
-                        go (pos + 1) 1
-                    else
-                        let charDiff = path.[pos] - '0'
-                        if -1 < charDiff && charDiff < 10 then
-                            if decDepth = 0 then 
-                                result <- (result * 10) + float charDiff
-                                go (pos + 1) 0
-                            else
-                                result <- result + ((float charDiff) / (10 * decDepth))
-
-                else
-                    (pos,result)
-            go ipos 0
-
-
-
-        let stringParse ipos (c:char) =
-            let result = System.Text.StringBuilder()
-            let rec go pos =
-                if pos < pathLen && path.[pos] <> c  then
-                    result.Append path.[pos]
-                    go (pos + 1)
-                else
-                    (pos, result.ToString())
-            go ipos
-
-        let stringParse2 path ipos fpos = path.Substring(ipos,fpos - ipos)
 
         let findClosure (path:string) ipos (inode:Node) =
             let pathLen = path.Length
