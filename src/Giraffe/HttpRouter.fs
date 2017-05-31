@@ -4,7 +4,6 @@ open Giraffe.HttpHandlers
 open FSharp.Core.Printf
 open System.Collections.Generic
 
-<<<<<<< HEAD
 type RouteState(path:string) =
     member val path = path with get
     member val pos = 0 with get , set
@@ -17,24 +16,23 @@ let private stringParse (path:string) ipos fpos = path.Substring(ipos,fpos - ipo
 let private  charParse (path:string) ipos fpos = path.[ipos] |> box |> Some // this is not ideal method (but uncommonly used)
 
 let private boolParse (path:string) ipos fpos = 
-=======
+
 /// Range Parsers that quickly try parse over matched range (all fpos checked before running)
 
 let stringParse (path:string) ipos fpos = path.Substring(ipos,fpos - ipos) |> box |> Some
 
 let charParse (path:string) ipos fpos = path.[ipos] |> box |> Some // this is not ideal method (but uncommonly used)
 let boolParse (path:string) ipos fpos = 
->>>>>>> af9d8165df9925304fe56ea2190dce8bec2a0110
+
     match path.[ipos] with
     | 't' | 'T' | 'y' | 'Y' -> true  |> box |> Some
     | 'f' | 'F' | 'n' | 'N' -> false |> box |> Some
     | _ -> None
-<<<<<<< HEAD
 
 let private intParse (path:string) ipos fpos =
-=======
+
 let intParse (path:string) ipos fpos =
->>>>>>> af9d8165df9925304fe56ea2190dce8bec2a0110
+
     let mutable result = 0
     let mutable negNumber = false
     let rec go pos =
@@ -52,11 +50,11 @@ let intParse (path:string) ipos fpos =
     | '+' -> go (ipos + 1)
     | _ -> go (ipos)
     
-<<<<<<< HEAD
+
 let private int64Parse (path:string) ipos fpos =
-=======
+
 let int64Parse (path:string) ipos fpos =
->>>>>>> af9d8165df9925304fe56ea2190dce8bec2a0110
+
     let mutable result = 0L
     let mutable negNumber = false
     let rec go pos =
@@ -79,13 +77,12 @@ let private floatParse (path:string) ipos fpos =
     let mutable result = 0.
     let mutable decPlaces = 0.
     let mutable negNumber = false
-=======
+
 let floatParse (path:string) ipos fpos =
     let mutable result = 0.
     let mutable decPlaces = 0.
     let mutable negNumber = false
     
->>>>>>> af9d8165df9925304fe56ea2190dce8bec2a0110
     let rec go pos =
         if path.[pos] = '.' then
             decPlaces <- 1.
@@ -102,11 +99,8 @@ let floatParse (path:string) ipos fpos =
                     |> box |> Some 
                 else go (pos + 1)   // continue iter
             else None   // Invalid Character in path
-<<<<<<< HEAD
-    //Start Parse taking into account sign operator
-=======
 
->>>>>>> af9d8165df9925304fe56ea2190dce8bec2a0110
+    //Start Parse taking into account sign operator
     match path.[ipos] with
     | '-' -> negNumber <- true ; go (ipos + 1)
     | '+' -> go (ipos + 1)
@@ -125,10 +119,7 @@ let formatStringMap =
     ]
 
 // implimenation of Trie Node
-<<<<<<< HEAD
 // assumptions: memory and compile time not relevant, all about execution speed, initially testing with Dictionary edges
-=======
->>>>>>> af9d8165df9925304fe56ea2190dce8bec2a0110
 
 type Node(iRouteFn:RouteCont<'T>) = 
     let edges = Dictionary<char,Node>()
