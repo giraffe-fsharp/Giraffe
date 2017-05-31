@@ -7,6 +7,7 @@ open System.ComponentModel
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
+open Microsoft.FSharp.Reflection
 open Microsoft.Net.Http.Headers
 open Giraffe.Common
 
@@ -87,9 +88,36 @@ type HttpContext with
                 let strValue = ref (StringValues())
                 if query.TryGetValue(p.Name, strValue)
                 then
-                    let converter = TypeDescriptor.GetConverter p.PropertyType
+                    let isOptionType = 
+                        p.PropertyType.GetTypeInfo().IsGenericType &&
+                        p.PropertyType.GetGenericTypeDefinition() = typedefof<Option<_>>
+
+                    let propertyType =
+                        if isOptionType then
+                            p.PropertyType.GetGenericArguments().[0]
+                        else
+                            p.PropertyType
+
+                    let propertyType =
+                        if propertyType.GetTypeInfo().IsValueType then
+                            (typedefof<Nullable<_>>).MakeGenericType([|propertyType|])
+                        else
+                            propertyType
+
+                    let converter = TypeDescriptor.GetConverter propertyType
+
                     let value = converter.ConvertFromInvariantString(strValue.Value.ToString())
-                    p.SetValue(obj, value, null))
+
+                    if isOptionType then
+                        let cases = FSharpType.GetUnionCases(p.PropertyType)
+                        let value =
+                            if isNull value then
+                                FSharpValue.MakeUnion(cases.[0], [||])
+                            else
+                                FSharpValue.MakeUnion(cases.[1], [|value|])
+                        p.SetValue(obj, value, null)
+                    else
+                        p.SetValue(obj, value, null))
             return obj
         }
 
