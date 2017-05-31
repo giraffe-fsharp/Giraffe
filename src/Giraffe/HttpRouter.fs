@@ -11,17 +11,17 @@ type RouteState(path:string) =
 
 /// Range Parsers that quickly try parse over matched range (all fpos checked before running)
 
-let stringParse (path:string) ipos fpos = path.Substring(ipos,fpos - ipos) |> box |> Some
+let private stringParse (path:string) ipos fpos = path.Substring(ipos,fpos - ipos) |> box |> Some
 
-let charParse (path:string) ipos fpos = path.[ipos] |> box |> Some // this is not ideal method (but uncommonly used)
+let private  charParse (path:string) ipos fpos = path.[ipos] |> box |> Some // this is not ideal method (but uncommonly used)
 
-let boolParse (path:string) ipos fpos = 
+let private boolParse (path:string) ipos fpos = 
     match path.[ipos] with
     | 't' | 'T' | 'y' | 'Y' -> true  |> box |> Some
     | 'f' | 'F' | 'n' | 'N' -> false |> box |> Some
     | _ -> None
 
-let intParse (path:string) ipos fpos =
+let private intParse (path:string) ipos fpos =
     let mutable result = 0
     let mutable negNumber = false
     let rec go pos =
@@ -39,7 +39,7 @@ let intParse (path:string) ipos fpos =
     | '+' -> go (ipos + 1)
     | _ -> go (ipos)
     
-let int64Parse (path:string) ipos fpos =
+let private int64Parse (path:string) ipos fpos =
     let mutable result = 0L
     let mutable negNumber = false
     let rec go pos =
@@ -57,7 +57,7 @@ let int64Parse (path:string) ipos fpos =
     | '+' -> go (ipos + 1)
     | _ -> go (ipos)
 
-let floatParse (path:string) ipos fpos =
+let private floatParse (path:string) ipos fpos =
     let mutable result = 0.
     let mutable decPlaces = 0.
     let mutable negNumber = false
@@ -96,6 +96,7 @@ let formatStringMap =
     ]
 
 // implimenation of Trie Node
+// assumptions: memory and compile time not relevant, all about execution speed, initially testing with Dictionary edges
 
 type Node(iRouteFn:RouteCont<'T>) = 
     let edges = Dictionary<char,Node>()
