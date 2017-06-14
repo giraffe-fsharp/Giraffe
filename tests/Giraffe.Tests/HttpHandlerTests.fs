@@ -4,6 +4,7 @@ open System
 open System.Collections.Generic
 open System.IO
 open System.Text
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
@@ -18,6 +19,7 @@ open Giraffe.HtmlEngine
 // Helper functions
 // ---------------------------------
 
+let awaitValueTask (work:ValueTask<_>) = work.Result 
 let getStatusCode (ctx : HttpContext) =
     ctx.Response.StatusCode
 
@@ -85,7 +87,7 @@ let ``GET "/" returns "Hello World"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -110,7 +112,7 @@ let ``GET "/foo" returns "bar"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -135,7 +137,7 @@ let ``GET "/FOO" returns 404 "Not found"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -162,7 +164,7 @@ let ``GET "/json" returns json object`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -191,7 +193,7 @@ let ``POST "/post/1" returns "1"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -220,7 +222,7 @@ let ``POST "/post/2" returns "2"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -249,7 +251,7 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -285,7 +287,7 @@ let ``GET "/dotLiquid" returns rendered html view`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -319,7 +321,7 @@ let ``POST "/text" with supported Accept header returns "good"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -353,7 +355,7 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -387,7 +389,7 @@ let ``POST "/either" with supported Accept header returns "either"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -421,7 +423,7 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -449,7 +451,7 @@ let ``GET "/JSON" returns "BaR"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -476,7 +478,7 @@ let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -503,7 +505,7 @@ let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -531,7 +533,7 @@ let ``POST "/POsT/1" returns "1"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -559,7 +561,7 @@ let ``POST "/POsT/523" returns "523"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -591,7 +593,7 @@ let ``GET "/api" returns "api root"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -623,7 +625,7 @@ let ``GET "/api/users" returns "users"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -655,7 +657,7 @@ let ``GET "/api/test" returns "test"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -696,7 +698,7 @@ let ``GET "/api/v2/users" returns "users v2"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -727,7 +729,7 @@ let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -767,7 +769,7 @@ let ``GET "/person" returns rendered HTML view`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -808,7 +810,7 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -849,7 +851,7 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -900,7 +902,7 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -951,7 +953,7 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -992,7 +994,7 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -1043,7 +1045,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -1094,7 +1096,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -1139,7 +1141,7 @@ Piercings: [|""ear""; ""nose""|]"
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -1180,7 +1182,7 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -1221,7 +1223,7 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -1246,7 +1248,7 @@ let ``Warbler function should execute inner function each time`` () =
     let result1 = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
         |> (fun res -> getBody res.Value)
 
     ctx.Response.Body <- new MemoryStream()
@@ -1254,7 +1256,7 @@ let ``Warbler function should execute inner function each time`` () =
     let result2 = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
         |> (fun res -> getBody res.Value)
 
     Assert.Equal(result1, result2)
@@ -1265,7 +1267,7 @@ let ``Warbler function should execute inner function each time`` () =
     let result3 = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
         |> (fun res -> getBody res.Value)
 
     ctx.Response.Body <- new MemoryStream()
@@ -1273,7 +1275,7 @@ let ``Warbler function should execute inner function each time`` () =
     let result4 = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
         |> (fun res -> getBody res.Value)
 
     Assert.False(result3.Equals result4)
@@ -1293,7 +1295,7 @@ let ``GET "/redirect" redirect to "/" `` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
     
     match result with
     | None     -> assertFail "It was expected that the request would be redirected" 
@@ -1315,7 +1317,7 @@ let ``POST "/redirect" redirect to "/" `` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask
     
     match result with
     | None     -> assertFail "It was expected that the request would be redirected" 

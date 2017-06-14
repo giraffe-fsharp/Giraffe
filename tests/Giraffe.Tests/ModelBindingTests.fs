@@ -15,6 +15,8 @@ open Giraffe.Common
 open Giraffe.HttpContextExtensions
 open Giraffe.HttpHandlers
 
+let awaitValueTask (work:ValueTask<_>) = work.Result 
+
 let assertFailf format args = 
     let msg = sprintf format args
     Assert.True(false, msg)
@@ -54,7 +56,7 @@ let ``bindJson test`` () =
 
     let jsonHandler =
         fun (ctx : HttpContext) -> 
-            async {
+            task {
                 let! model = ctx.BindJson<Customer>()
                 return! text (model.ToString()) ctx
             }
@@ -82,7 +84,7 @@ let ``bindJson test`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> awaitValueTask 
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -96,7 +98,7 @@ let ``bindXml test`` () =
 
     let xmlHandler =
         fun (ctx : HttpContext) -> 
-            async {
+            task {
                 let! model = ctx.BindXml<Customer>()
                 return! text (model.ToString()) ctx
             }
@@ -138,7 +140,7 @@ let ``bindForm test`` () =
 
     let formHandler =
         fun (ctx : HttpContext) -> 
-            async {
+            task {
                 let! model = ctx.BindForm<Customer>()
                 return! text (model.ToString()) ctx
             }
@@ -182,7 +184,7 @@ let ``bindQueryString test`` () =
 
     let queryHandler =
         fun (ctx : HttpContext) -> 
-            async {
+            task {
                 let! model = ctx.BindQueryString<Customer>()
                 return! text (model.ToString()) ctx
             }
@@ -214,7 +216,7 @@ let ``bindQueryString test`` () =
 let ``bindQueryString with option property test`` () =
     let testRoute queryStr expected =
         let queryHandlerWithSome (ctx : HttpContext) =
-            async {
+            task {
                 let! model = ctx.BindQueryString<ModelWithOption>()
                 Assert.Equal(expected, model)
                 return! setStatusCode 200 ctx
@@ -244,7 +246,7 @@ let ``bindModel with JSON content returns correct result`` () =
 
     let autoHandler =
         fun (ctx : HttpContext) -> 
-            async {
+            task {
                 let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) ctx
             }
@@ -288,7 +290,7 @@ let ``bindModel with XML content returns correct result`` () =
 
     let autoHandler =
         fun (ctx : HttpContext) -> 
-            async {
+            task {
                 let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) ctx
             }
@@ -332,7 +334,7 @@ let ``bindModel with FORM content returns correct result`` () =
 
     let autoHandler =
         fun (ctx : HttpContext) -> 
-            async {
+            task {
                 let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) ctx
             }
@@ -378,7 +380,7 @@ let ``bindModel with JSON content and a specific charset returns correct result`
 
     let autoHandler =
         fun (ctx : HttpContext) -> 
-            async {
+            task {
                 let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) ctx
             }
@@ -422,7 +424,7 @@ let ``bindModel during HTTP GET request with query string returns correct result
 
     let autoHandler =
         fun (ctx : HttpContext) -> 
-            async {
+            task {
                 let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) ctx
             }
