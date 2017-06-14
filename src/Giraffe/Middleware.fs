@@ -62,14 +62,6 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
 
     do if isNull next then raise (ArgumentNullException("next"))
 
-    let succ, fail =
-        (fun (ctx:HttpContext) -> task { return ctx }),
-        (fun (ctx:HttpContext) -> 
-            task { 
-                do! next.Invoke ctx
-                return ctx 
-            })
-
     member __.Invoke (ctx : HttpContext) =
         task {
             let logger = loggerFactory.CreateLogger<GiraffeErrorHandlerMiddleware>()

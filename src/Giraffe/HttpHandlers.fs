@@ -258,7 +258,7 @@ let subRoute (path : string) (handler : HttpHandler) : HttpHandler =
 /// Subsequent route handlers inside the given handler function should omit the already validated path.
 let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
     routeStartsWithCi path >=>
-    handlerWithRootedPath path
+    handlerWithRootedPath path handler
 
 
 /// Sets the HTTP response status code.
@@ -335,13 +335,13 @@ let dotLiquid (contentType : string) (template : string) (model : obj) : HttpHan
 
 /// Reads a dotLiquid template file from disk and compiles it with the given model and sets
 /// the compiled output as well as the given contentType as the HTTP reponse.
-let dotLiquidTemplate (contentType : string) (templatePath : string) (model : obj) : HttpHandler = 
+let dotLiquidTemplate (contentType : string) (templatePath : string) (model : obj) = 
     fun (ctx : HttpContext) ->
         task {
             let env = ctx.GetService<IHostingEnvironment>()
             let templatePath = env.ContentRootPath + templatePath
             let! template = readFileAsString templatePath
-            return! dotLiquid contentType template model
+            return! dotLiquid contentType template model ctx
         }
 
 /// Reads a dotLiquid template file from disk and compiles it with the given model and sets
@@ -360,7 +360,7 @@ let razorView (contentType : string) (viewName : string) (model : 'T) : HttpHand
             match result with
             | Error msg -> return (failwith msg)
             | Ok output ->
-                return! (setHttpHeader "Content-Type" contentType >=> setBodyAsString output) 
+                return! ctx |> (setHttpHeader "Content-Type" contentType >=> setBodyAsString output) 
         }
 
 /// Reads a razor view from disk and compiles it with the given model and sets
@@ -390,7 +390,7 @@ let renderHtml (document: HtmlNode) : HttpHandler =
 /// `json` and `xml` are both the respective default HttpHandler functions in this example.
 let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>)
                   (unacceptableHandler : HttpHandler)
-                  (responseObj         : obj) : HttpHandler =
+                  (responseObj         : obj) =
     fun (ctx : HttpContext) ->
         (ctx.Request.GetTypedHeaders()).Accept
         |> fun acceptedMimeTypes ->
@@ -422,7 +422,7 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
 /// application/xml  -> serializes object to XML
 /// text/xml         -> serializes object to XML
 /// text/plain       -> returns object's ToString() result
-let negotiate (responseObj : obj) : HttpHandler =
+let negotiate (responseObj : obj) =
     negotiateWith
         // Default negotiation rules
         (dict [
@@ -433,7 +433,12 @@ let negotiate (responseObj : obj) : HttpHandler =
             "text/plain"      , fun x -> x.ToString() |> text
         ])
         // Default unacceptable HttpHandler
-        (setStatusCode 406 >=> defaultHandler)
+        (fun (ctx : HttpContext) ->
+            setStatusCode 406
+            >=> ((ctx.Request.Headers.["Accept"]).ToString()
+                |> sprintf "%s is unacceptable by the server."
+                |> text)
+            <| ctx)
         // response object
         responseObj
 
