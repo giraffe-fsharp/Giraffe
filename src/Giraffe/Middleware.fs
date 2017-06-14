@@ -1,6 +1,7 @@
 module Giraffe.Middleware
 
 open System
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
@@ -8,7 +9,9 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.FileProviders
 open Microsoft.AspNetCore.Mvc.Razor
+open Giraffe.ValueTask
 open Giraffe.HttpHandlers
+
 
 /// ---------------------------
 /// Logging helper functions
@@ -19,6 +22,9 @@ let private getRequestInfo (ctx : HttpContext) =
      ctx.Request.Method,
      ctx.Request.Path.ToString())
     |||> sprintf "%s %s %s"
+
+let inline startAsPlainTask (work : ValueTask<_>) = work.AsTask() :> Task
+
 
 /// ---------------------------
 /// Default middleware
@@ -31,7 +37,7 @@ type GiraffeMiddleware (next          : RequestDelegate,
     do if isNull next then raise (ArgumentNullException("next"))
 
     member __.Invoke (ctx : HttpContext) =
-        async {
+        task {
             let! result = handler ctx
 
             let logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
@@ -42,10 +48,9 @@ type GiraffeMiddleware (next          : RequestDelegate,
                 |> logger.LogDebug
 
             if (result.IsNone) then
-                return!
-                    next.Invoke ctx
-                    |> Async.AwaitTask
-        } |> Async.StartAsTask
+                do! next.Invoke ctx |> TaskMap //return
+                    
+        } |> startAsPlainTask
 
 /// ---------------------------
 /// Error Handling middleware
@@ -58,21 +63,18 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
     do if isNull next then raise (ArgumentNullException("next"))
 
     member __.Invoke (ctx : HttpContext) =
-        async {
+        task {
             let logger = loggerFactory.CreateLogger<GiraffeErrorHandlerMiddleware>()
             try
-                return!
-                    next.Invoke ctx
-                    |> Async.AwaitTask
+                do! next.Invoke ctx |> TaskMap //return
             with ex ->
                 try
-                    return!
-                        errorHandler ex logger ctx
-                        |> Async.Ignore
+                    let! _ = errorHandler ex logger ctx
+                    return ()
                 with ex2 ->
                     logger.LogError(EventId(0), ex,  "An unhandled exception has occurred while executing the request.")
                     logger.LogError(EventId(0), ex2, "An exception was thrown attempting to handle the original exception.")
-        } |> Async.StartAsTask
+        } |> startAsPlainTask
 
 /// ---------------------------
 /// Extension methods for convenience

@@ -3,6 +3,7 @@ module Giraffe.HttpHandlers
 open System
 open System.Text
 open System.Collections.Generic
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
@@ -12,13 +13,15 @@ open Microsoft.AspNetCore.Mvc.Razor
 open Microsoft.AspNetCore.Mvc.ViewFeatures
 open FSharp.Core.Printf
 open DotLiquid
+open Giraffe.ValueTask
 open Giraffe.Common
 open Giraffe.FormatExpressions
 open Giraffe.HttpContextExtensions
 open Giraffe.RazorEngine
 open Giraffe.HtmlEngine
 
-type HttpHandlerResult = Async<HttpContext option>
+
+type HttpHandlerResult = ValueTask<HttpContext option>
 
 type HttpHandler = HttpContext -> HttpHandlerResult
 
@@ -42,14 +45,16 @@ let private getSavedSubPath (ctx : HttpContext) =
     then ctx.Items.Item RouteKey |> string |> strOption 
     else None
 
+
+
 let private getPath (ctx : HttpContext) =
     match getSavedSubPath ctx with
     | Some p -> ctx.Request.Path.ToString().[p.Length..]
     | None   -> ctx.Request.Path.ToString()
 
-let private handlerWithRootedPath (path : string) (handler : HttpHandler) = 
+let private handlerWithRootedPath (path : string) (handler : HttpHandler) : HttpHandler = 
     fun (ctx : HttpContext) ->
-        async {
+        task {
             let savedSubPath = getSavedSubPath ctx
             try
                 ctx.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
@@ -71,7 +76,7 @@ let private handlerWithRootedPath (path : string) (handler : HttpHandler) =
 /// then it will skip the HttpHandler as well.
 let bind (handler : HttpHandler) =
     fun (result : HttpHandlerResult) ->
-        async {
+        task {
             let! ctx = result
             match ctx with
             | None   -> return None
@@ -96,9 +101,9 @@ let (>=>) = compose
 
 /// Iterates through a list of HttpHandler functions and returns the
 /// result of the first HttpHandler which outcome is Some HttpContext
-let rec choose (handlers : HttpHandler list) =
+let rec choose (handlers : HttpHandler list) : HttpHandler =
     fun (ctx : HttpContext) ->
-        async {
+        task {
             match handlers with
             | []              -> return None
             | handler :: tail ->
@@ -109,12 +114,12 @@ let rec choose (handlers : HttpHandler list) =
         }
 
 /// Filters an incoming HTTP request based on the HTTP verb
-let httpVerb (verb : string) =
+let httpVerb (verb : string) : HttpHandler =
     fun (ctx : HttpContext) ->
         if ctx.Request.Method.Equals verb
         then Some ctx
         else None
-        |> async.Return
+        |> ValueTask<_>
 
 let GET    : HttpHandler = httpVerb "GET"
 let POST   : HttpHandler = httpVerb "POST"
@@ -124,7 +129,7 @@ let DELETE : HttpHandler = httpVerb "DELETE"
 
 /// Filters an incoming HTTP request based on the accepted
 /// mime types of the client.
-let mustAccept (mimeTypes : string list) =
+let mustAccept (mimeTypes : string list) : HttpHandler=
     fun (ctx : HttpContext) ->
         let headers = ctx.Request.GetTypedHeaders()
         headers.Accept
@@ -133,53 +138,53 @@ let mustAccept (mimeTypes : string list) =
         |> function
             | true  -> Some ctx
             | false -> None
-            |> async.Return
+            |> ValueTask<_>
 
 /// Challenges the client to authenticate with a given authentication scheme.
-let challenge (authScheme : string) =
+let challenge (authScheme : string) : HttpHandler =
     fun (ctx : HttpContext) ->
-        async {
+        task {
             let auth = ctx.Authentication
-            do! auth.ChallengeAsync authScheme |> Async.AwaitTask
+            do! auth.ChallengeAsync authScheme |> TaskMap
             return Some ctx
         }
 
 /// Signs off the current user.
 let signOff (authScheme : string) =
     fun (ctx : HttpContext) ->
-        async {
+        task {
             let auth = ctx.Authentication
-            do! auth.SignOutAsync authScheme |> Async.AwaitTask
+            do! auth.SignOutAsync authScheme |> TaskMap
             return Some ctx
         }
 
 /// Validates if a user is authenticated.
 /// If not it will proceed with the authFailedHandler.
-let requiresAuthentication (authFailedHandler : HttpHandler) =
+let requiresAuthentication (authFailedHandler : HttpHandler) : HttpHandler =
     fun (ctx : HttpContext) ->
         let user = ctx.User
         if isNotNull user && user.Identity.IsAuthenticated
-        then async.Return (Some ctx)
+        then ValueTask<_>(Some ctx)
         else authFailedHandler ctx
 
 /// Validates if a user is in a specific role.
 /// If not it will proceed with the authFailedHandler.
-let requiresRole (role : string) (authFailedHandler : HttpHandler) =
+let requiresRole (role : string) (authFailedHandler : HttpHandler) : HttpHandler =
     fun (ctx : HttpContext) ->
         let user = ctx.User
         if user.IsInRole role
-        then async.Return (Some ctx)
+        then ValueTask<_>(Some ctx)
         else authFailedHandler ctx
 
 /// Validates if a user has at least one of the specified roles.
 /// If not it will proceed with the authFailedHandler.
-let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) =
+let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) : HttpHandler =
     fun (ctx : HttpContext) ->
         let user = ctx.User
         roles
         |> List.exists user.IsInRole 
         |> function
-            | true  -> async.Return (Some ctx)
+            | true  -> ValueTask<_>(Some ctx)
             | false -> authFailedHandler ctx
 
 /// Attempts to clear the current HttpResponse object.
@@ -188,7 +193,7 @@ let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) =
 let clearResponse =
     fun (ctx : HttpContext) ->
         ctx.Response.Clear()
-        async.Return (Some ctx)
+        ValueTask<_> (Some ctx)
 
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 let route (path : string) =
@@ -196,120 +201,118 @@ let route (path : string) =
         if (getPath ctx).Equals path
         then Some ctx
         else None
-        |> async.Return
+        |> ValueTask<_>
 
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 /// The arguments from the format string will be automatically resolved when the
 /// route matches and subsequently passed into the supplied routeHandler.
-let routef (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
+let routef (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     fun (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) false
         |> function
-            | None      -> async.Return None
+            | None      -> ValueTask<_> None
             | Some args -> routeHandler args ctx
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
-let routeCi (path : string) =
+let routeCi (path : string) : HttpHandler =
     fun (ctx : HttpContext) ->
         if String.Equals(getPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
         then Some ctx
         else None
-        |> async.Return
+        |> ValueTask<_>
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 /// The arguments from the format string will be automatically resolved when the
 /// route matches and subsequently passed into the supplied routeHandler.
-let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
+let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     fun (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) true
         |> function
-            | None      -> async.Return None
+            | None      -> ValueTask<_> None
             | Some args -> routeHandler args ctx
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
-let routeStartsWith (subPath : string) =
+let routeStartsWith (subPath : string) : HttpHandler =
     fun (ctx : HttpContext) ->
         if (getPath ctx).StartsWith subPath 
         then Some ctx
         else None
-        |> async.Return
+        |> ValueTask<_>
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
-let routeStartsWithCi (subPath : string) =
+let routeStartsWithCi (subPath : string) : HttpHandler =
     fun (ctx : HttpContext) ->
         if (getPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase) 
         then Some ctx
         else None
-        |> async.Return
+        |> ValueTask<_>
 
 /// Filters an incoming HTTP request based on a part of the request path (case sensitive).
 /// Subsequent route handlers inside the given handler function should omit the already validated path.
-let subRoute (path : string) (handler : HttpHandler) =
+let subRoute (path : string) (handler : HttpHandler) : HttpHandler =
     routeStartsWith path >=>
     handlerWithRootedPath path handler
 
 /// Filters an incoming HTTP request based on a part of the request path (case insensitive).
 /// Subsequent route handlers inside the given handler function should omit the already validated path.
-let subRouteCi (path : string) (handler : HttpHandler) =
+let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
     routeStartsWithCi path >=>
     handlerWithRootedPath path handler
 
 
 /// Sets the HTTP response status code.
-let setStatusCode (statusCode : int) =
+let setStatusCode (statusCode : int) : HttpHandler =
     fun (ctx : HttpContext) ->
-        async {
+        task {
             ctx.Response.StatusCode <- statusCode
             return Some ctx
         }
 
 /// Sets a HTTP header in the HTTP response.
-let setHttpHeader (key : string) (value : obj) =
-    fun (ctx : HttpContext) ->
-        async {
+let setHttpHeader (key : string) (value : obj) : HttpHandler =
+    fun (ctx : HttpContext) -> 
+        task {
             ctx.Response.Headers.[key] <- StringValues(value.ToString())
             return Some ctx
         }
 
 /// Writes to the body of the HTTP response and sets the HTTP header Content-Length accordingly.
-let setBody (bytes : byte array) =
+let setBody (bytes : byte array) : HttpHandler =
     fun (ctx : HttpContext) ->
-        async {            
+        task {            
             ctx.Response.Headers.["Content-Length"] <- StringValues(bytes.Length.ToString())
-            ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length)
-            |> Async.AwaitTask
-            |> ignore
+            do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length) |> TaskMap
             return Some ctx
         }
 
 /// Writes a string to the body of the HTTP response and sets the HTTP header Content-Length accordingly.
-let setBodyAsString (str : string) =
+let setBodyAsString (str : string) : HttpHandler =
     Encoding.UTF8.GetBytes str
     |> setBody
 
 /// Writes a string to the body of the HTTP response.
 /// It also sets the HTTP header Content-Type: text/plain and sets the Content-Length header accordingly.
-let text (str : string) =
+let text (str : string) : HttpHandler =
     setHttpHeader "Content-Type" "text/plain"
     >=> setBodyAsString str
 
 /// Serializes an object to JSON and writes it to the body of the HTTP response.
 /// It also sets the HTTP header Content-Type: application/json and sets the Content-Length header accordingly.
-let json (dataObj : obj) =
+let json (dataObj : obj) : HttpHandler =
     setHttpHeader "Content-Type" "application/json"
     >=> setBodyAsString (serializeJson dataObj)
 
 /// Serializes an object to XML and writes it to the body of the HTTP response.
 /// It also sets the HTTP header Content-Type: application/xml and sets the Content-Length header accordingly.
-let xml (dataObj : obj) =
+let xml (dataObj : obj) : HttpHandler =
     setHttpHeader "Content-Type" "application/xml"
     >=> setBody (serializeXml dataObj)
 
 /// Reads a HTML file from disk and writes its contents to the body of the HTTP response
 /// with a Content-Type of text/html.
-let htmlFile (relativeFilePath : string) =
+let htmlFile (relativeFilePath : string) : HttpHandler =
     fun (ctx : HttpContext) ->
-        async {
+        task {
             let env = ctx.GetService<IHostingEnvironment>()
             let filePath = env.ContentRootPath + relativeFilePath
             let! html = readFileAsString filePath
@@ -321,7 +324,7 @@ let htmlFile (relativeFilePath : string) =
 
 /// Renders a model and a template with the DotLiquid template engine and sets the HTTP response
 /// with the compiled output as well as the Content-Type HTTP header to the given value.
-let dotLiquid (contentType : string) (template : string) (model : obj) =
+let dotLiquid (contentType : string) (template : string) (model : obj) : HttpHandler =
     let view = Template.Parse template
     setHttpHeader "Content-Type" contentType
     >=> (model
@@ -331,9 +334,9 @@ let dotLiquid (contentType : string) (template : string) (model : obj) =
 
 /// Reads a dotLiquid template file from disk and compiles it with the given model and sets
 /// the compiled output as well as the given contentType as the HTTP reponse.
-let dotLiquidTemplate (contentType : string) (templatePath : string) (model : obj) = 
+let dotLiquidTemplate (contentType : string) (templatePath : string) (model : obj) : HttpHandler = 
     fun (ctx : HttpContext) ->
-        async {
+        task {
             let env = ctx.GetService<IHostingEnvironment>()
             let templatePath = env.ContentRootPath + templatePath
             let! template = readFileAsString templatePath
@@ -342,14 +345,14 @@ let dotLiquidTemplate (contentType : string) (templatePath : string) (model : ob
 
 /// Reads a dotLiquid template file from disk and compiles it with the given model and sets
 /// the compiled output as the HTTP reponse with a Content-Type of text/html.
-let dotLiquidHtmlView (templatePath : string) (model : obj) =
+let dotLiquidHtmlView (templatePath : string) (model : obj) : HttpHandler =
     dotLiquidTemplate "text/html" templatePath model
 
 /// Reads a razor view from disk and compiles it with the given model and sets
 /// the compiled output as the HTTP reponse with the given contentType.
-let razorView (contentType : string) (viewName : string) (model : 'T) =
+let razorView (contentType : string) (viewName : string) (model : 'T) : HttpHandler =
     fun (ctx : HttpContext) ->
-        async {
+        task {
             let engine = ctx.GetService<IRazorViewEngine>()
             let tempDataProvider = ctx.GetService<ITempDataProvider>()
             let! result = renderRazorView engine tempDataProvider ctx viewName model
@@ -364,12 +367,12 @@ let razorView (contentType : string) (viewName : string) (model : 'T) =
 
 /// Reads a razor view from disk and compiles it with the given model and sets
 /// the compiled output as the HTTP reponse with a Content-Type of text/html.
-let razorHtmlView (viewName : string) (model : 'T) =
+let razorHtmlView (viewName : string) (model : 'T) : HttpHandler =
     razorView "text/html" viewName model
 
 /// Uses the Giraffe.HtmlEngine to compile and render a HTML Document from
 /// a given HtmlNode. The HTTP response is of Content-Type text/html.
-let renderHtml (document: HtmlNode) =
+let renderHtml (document: HtmlNode) : HttpHandler =
     fun (ctx : HttpContext) ->
         let htmlHandler =
             document
@@ -389,7 +392,7 @@ let renderHtml (document: HtmlNode) =
 /// `json` and `xml` are both the respective default HttpHandler functions in this example.
 let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>)
                   (unacceptableHandler : HttpHandler)
-                  (responseObj         : obj) =
+                  (responseObj         : obj) : HttpHandler =
     fun (ctx : HttpContext) ->
         (ctx.Request.GetTypedHeaders()).Accept
         |> fun acceptedMimeTypes ->
@@ -422,7 +425,7 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
 /// application/xml  -> serializes object to XML
 /// text/xml         -> serializes object to XML
 /// text/plain       -> returns object's ToString() result
-let negotiate (responseObj : obj) =
+let negotiate (responseObj : obj) : HttpHandler =
     negotiateWith
         // Default negotiation rules
         (dict [
@@ -443,7 +446,7 @@ let negotiate (responseObj : obj) =
         responseObj
 
 ///Redirects to a different location with a 302 or 301 (when permanent) HTTP status code.
-let redirectTo (permanent : bool) (location : string)  =
+let redirectTo (permanent : bool) (location : string) : HttpHandler =
     fun (ctx:HttpContext) -> 
         ctx.Response.Redirect(location, permanent)
-        ctx |> Some |> async.Return
+        ctx |> Some |> ValueTask<_>

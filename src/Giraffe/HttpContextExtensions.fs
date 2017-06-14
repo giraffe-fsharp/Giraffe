@@ -9,6 +9,8 @@ open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Microsoft.FSharp.Reflection
 open Microsoft.Net.Http.Headers
+open System.Threading.Tasks
+open Giraffe.ValueTask
 open Giraffe.Common
 
 type HttpContext with
@@ -43,28 +45,28 @@ type HttpContext with
     /// Model binding
     /// ---------------------------
 
-    member this.ReadBodyFromRequest() =
-        async {
+    member this.ReadBodyFromRequest() : ValueTask<_> =
+        task {
             let body = this.Request.Body
             use reader = new StreamReader(body, true)
-            return! reader.ReadToEndAsync() |> Async.AwaitTask
+            return! reader.ReadToEndAsync()
         }
 
-    member this.BindJson<'T>() =
-        async {
+    member this.BindJson<'T>() : ValueTask<_> =
+        task {
             let! body = this.ReadBodyFromRequest()
             return deserializeJson<'T> body
         }
 
-    member this.BindXml<'T>() =
-        async {
+    member this.BindXml<'T>() : ValueTask<_> =
+        task {
             let! body = this.ReadBodyFromRequest()
             return deserializeXml<'T> body
         }
 
-    member this.BindForm<'T>() =
-        async {
-            let! form = this.Request.ReadFormAsync() |> Async.AwaitTask
+    member this.BindForm<'T>() : ValueTask<_> =
+        task {
+            let! (form:IFormCollection) = this.Request.ReadFormAsync()
             let obj   = Activator.CreateInstance<'T>()
             let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
             props
@@ -78,8 +80,8 @@ type HttpContext with
             return obj
         }
 
-    member this.BindQueryString<'T>() =
-        async {
+    member this.BindQueryString<'T>() : ValueTask<_> =
+        task {
             let query = this.Request.Query
             let obj   = Activator.CreateInstance<'T>()
             let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
@@ -121,8 +123,8 @@ type HttpContext with
             return obj
         }
 
-    member this.BindModel<'T>() =
-        async {
+    member this.BindModel<'T>() : ValueTask<_> =
+        task {
             let method = this.Request.Method
             return!
                 if method.Equals "POST" || method.Equals "PUT" then
