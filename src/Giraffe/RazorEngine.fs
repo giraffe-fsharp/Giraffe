@@ -2,6 +2,7 @@ module Giraffe.RazorEngine
 
 open System
 open System.IO
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Mvc
 open Microsoft.AspNetCore.Mvc.Abstractions
@@ -10,8 +11,7 @@ open Microsoft.AspNetCore.Mvc.Razor
 open Microsoft.AspNetCore.Mvc.Rendering
 open Microsoft.AspNetCore.Mvc.ViewFeatures
 open Microsoft.AspNetCore.Routing
-open Giraffe.AsyncTask
-
+open Giraffe.ValueTask
 let renderRazorView (razorViewEngine   : IRazorViewEngine)
                     (tempDataProvider  : ITempDataProvider)
                     (httpContext       : HttpContext)
@@ -30,6 +30,6 @@ let renderRazorView (razorViewEngine   : IRazorViewEngine)
             let htmlHelperOptions  = HtmlHelperOptions()            
             use output = new StringWriter()
             let viewContext = ViewContext(actionContext, view, viewDataDict, tempDataDict, output, htmlHelperOptions)
-            do! view.RenderAsync viewContext
+            do! view.RenderAsync(viewContext) |> TaskMap
             return Ok (output.ToString())
     }

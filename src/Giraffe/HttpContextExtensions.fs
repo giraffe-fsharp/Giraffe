@@ -9,6 +9,8 @@ open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Microsoft.FSharp.Reflection
 open Microsoft.Net.Http.Headers
+open System.Threading.Tasks
+open Giraffe.ValueTask
 open Giraffe.Common
 open Giraffe.AsyncTask
 
@@ -44,29 +46,28 @@ type HttpContext with
     /// Model binding
     /// ---------------------------
 
-    member this.ReadBodyFromRequest() =
+    member this.ReadBodyFromRequest() : ValueTask<_> =
         task {
             let body = this.Request.Body
             use reader = new StreamReader(body, true)
             return! reader.ReadToEndAsync()
         }
 
-    member this.BindJson<'T>() =
+    member this.BindJson<'T>() : ValueTask<_> =
         task {
             let! body = this.ReadBodyFromRequest()
             return deserializeJson<'T> body
         }
 
-    member this.BindXml<'T>() =
+    member this.BindXml<'T>() : ValueTask<_> =
         task {
             let! body = this.ReadBodyFromRequest()
             return deserializeXml<'T> body
         }
 
-    member this.BindForm<'T>() =
+    member this.BindForm<'T>() : ValueTask<_> =
         task {
-            let! form  = this.Request.ReadFormAsync() 
-            let iform = form :> IFormCollection
+            let! (form:IFormCollection) = this.Request.ReadFormAsync()
             let obj   = Activator.CreateInstance<'T>()
             let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
             props
@@ -81,7 +82,7 @@ type HttpContext with
             return obj
         }
 
-    member this.BindQueryString<'T>() =
+    member this.BindQueryString<'T>() : ValueTask<_> =
         task {
             let query = this.Request.Query
             let obj   = Activator.CreateInstance<'T>()
@@ -124,7 +125,7 @@ type HttpContext with
             return obj
         }
 
-    member this.BindModel<'T>() =
+    member this.BindModel<'T>() : ValueTask<_> =
         task {
             let method = this.Request.Method
             return!

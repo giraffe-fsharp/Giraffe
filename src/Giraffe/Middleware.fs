@@ -9,8 +9,10 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.FileProviders
 open Microsoft.AspNetCore.Mvc.Razor
+open Giraffe.ValueTask
 open Giraffe.HttpHandlers
 open Giraffe.AsyncTask
+
 
 /// ---------------------------
 /// Logging helper functions
@@ -21,6 +23,9 @@ let private getRequestInfo (ctx : HttpContext) =
      ctx.Request.Method,
      ctx.Request.Path.ToString())
     |||> sprintf "%s %s %s"
+
+let inline startAsPlainTask (work : ValueTask<_>) = work.AsTask() :> Task
+
 
 /// ---------------------------
 /// Default middleware
@@ -58,8 +63,19 @@ type GiraffeMiddleware (next          : RequestDelegate,
                 })
     member __.Invoke (ctx : HttpContext) =
         task {
-            do! handler succ fail ctx
-        } 
+            let! result = handler ctx
+
+            let logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
+            if logger.IsEnabled LogLevel.Debug then
+                match result with
+                | Some _ -> sprintf "Giraffe returned Some for %s" (getRequestInfo ctx)
+                | None   -> sprintf "Giraffe returned None for %s" (getRequestInfo ctx)
+                |> logger.LogDebug
+
+            if (result.IsNone) then
+                do! next.Invoke ctx |> TaskMap //return
+                    
+        } |> startAsPlainTask
 
 /// ---------------------------
 /// Error Handling middleware
@@ -83,17 +99,15 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
         task {
             let logger = loggerFactory.CreateLogger<GiraffeErrorHandlerMiddleware>()
             try
-                do!
-                    next.Invoke ctx
+                do! next.Invoke ctx |> TaskMap //return
             with ex ->
                 try
-                    do!
-                        (errorHandler ex logger succ fail ctx)
-                        
+                    let! _ = errorHandler ex logger ctx
+                    return ()
                 with ex2 ->
                     logger.LogError(EventId(0), ex,  "An unhandled exception has occurred while executing the request.")
                     logger.LogError(EventId(0), ex2, "An exception was thrown attempting to handle the original exception.")
-        } 
+        } |> startAsPlainTask
 
 /// ---------------------------
 /// Extension methods for convenience
