@@ -16,6 +16,8 @@
     <PackageReference Include="xunit" Version="2.3.0-beta*" />
     <PackageReference Include="NSubstitute" Version="2.0.1-rc" />
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.0-beta*"/>
+    <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.0" />
+
   </ItemGroup>
 
   <ItemGroup>
@@ -23,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Assert.fs" />
     <Compile Include="FormatExpressionTests.fs" />
     <Compile Include="HttpHandlerTests.fs" />
     <Compile Include="HtmlEngineTests.fs" />

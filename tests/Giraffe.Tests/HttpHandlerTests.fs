@@ -13,6 +13,7 @@ open NSubstitute
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
 open Giraffe.HtmlEngine
+open GiraffeAsserts
 
 // ---------------------------------
 // Helper functions
@@ -858,6 +859,8 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
         Assert.Equal(expected, body)
         Assert.Equal("application/json", ctx.Response |> getContentType)
 
+
+
 [<Fact>]
 let ``Get "/auto" with Accept header of "application/xml" returns XML object`` () =
     let johnDoe =
@@ -906,7 +909,7 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
     | None -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
-        Assert.Equal(expected, body)
+        XmlAssert.equals expected body
         Assert.Equal("application/xml", ctx.Response |> getContentType)
 
 [<Fact>]
@@ -957,7 +960,7 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
     | None -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
-        Assert.Equal(expected, body)
+        XmlAssert.equals expected body
         Assert.Equal("application/xml", ctx.Response |> getContentType)
 
 [<Fact>]
@@ -1049,7 +1052,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
     | None -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
-        Assert.Equal(expected, body)
+        XmlAssert.equals expected body
         Assert.Equal("application/xml", ctx.Response |> getContentType)
 
 [<Fact>]
@@ -1100,7 +1103,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
     | None -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
-        Assert.Equal(expected, body)
+        XmlAssert.equals expected body
         Assert.Equal("application/xml", ctx.Response |> getContentType)
 
 [<Fact>]
