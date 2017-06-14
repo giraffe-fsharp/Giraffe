@@ -7,8 +7,7 @@ module Giraffe.ValueTask
     open System.Threading
     open System.Threading.Tasks
 
-    let TaskMap (t: Task) = ValueTask<unit>(t :?> Task<unit>) 
-       
+    let TaskMap (t: Task) = t :?> Task<unit>      
     let toAsync (t: Task<'T>): Async<'T> =
         let abegin (cb: AsyncCallback, state: obj) : IAsyncResult = 
             match cb with
@@ -50,23 +49,54 @@ module Giraffe.ValueTask
     //         vt
             //t.Unwrap()
             //m.ContinueWith((fun (x: Task<_>) -> f x.Result)).Unwrap()
-    let inline tbind (f: 'T -> Task<'U>) (m: Task<'T>) =
+    let inline trbind (m: Task<'T>) (f: 'T -> ValueTask<'U>)  =
         if m.IsCompleted then f m.Result
         else
             let tcs =  new TaskCompletionSource<_>() // (Runtime.CompilerServices.AsyncTaskMethodBuilder<_>.Create())
             let t = tcs.Task
             let awaiter = m.GetAwaiter()
-            awaiter.OnCompleted(fun _ -> tcs.SetResult(f m.Result))
+            awaiter.OnCompleted(fun _ -> 
+                        (f m.Result).AsTask()
+                        |> tcs.SetResult )
             t.Unwrap()
+            |> ValueTask<_>
             //m.ContinueWith((fun (x: Task<_>) -> f x.Result)).Unwrap()
-    let inline taskBind (f:unit -> Task<'U>) (m:Task<unit>) =
+    let inline taskBind (m:Task<unit>) (f:unit -> ValueTask<_>) =
         if m.IsCompleted then f ()
         else
             let tcs =  new TaskCompletionSource<_>() // (Runtime.CompilerServices.AsyncTaskMethodBuilder<_>.Create())
             let t = tcs.Task
             let awaiter = m.GetAwaiter()
-            awaiter.OnCompleted(fun _ -> tcs.SetResult(f ()))
+            awaiter.OnCompleted(fun _ ->
+                        (f ()).AsTask() 
+                        |> tcs.SetResult)
             t.Unwrap()
+            |> ValueTask<_>
+            
+    let inline vtbind (m: ValueTask<'T>) (f: 'T -> ValueTask<'U>)  =
+        if m.IsCompleted then f m.Result
+        else
+            let tcs =  new TaskCompletionSource<_>() // (Runtime.CompilerServices.AsyncTaskMethodBuilder<_>.Create())
+            let t = tcs.Task
+            let awaiter = m.GetAwaiter()
+            awaiter.OnCompleted(fun _ -> 
+                        (f m.Result).AsTask()
+                        |> tcs.SetResult )
+            t.Unwrap()
+            |> ValueTask<_>
+            //m.ContinueWith((fun (x: Task<_>) -> f x.Result)).Unwrap()
+
+    // let inline vvbind (m: ValueTask<'T>) (f: 'T -> ValueTask<'U>)  =
+    //     if m.IsCompleted then f m.Result
+    //     else
+    //         let tcs =  new TaskCompletionSource<'U>() // (Runtime.CompilerServices.AsyncTaskMethodBuilder<_>.Create())
+    //         let t = tcs.Task
+    //         let vt = ValueTask<'U>(t)
+    //         let awaiter = m.GetAwaiter()
+    //         awaiter.OnCompleted(fun _ -> tcs.SetResult(f m.Result))
+    //         //t.Unwrap()
+    //         vt
+    //         //m.ContinueWith((fun (x: Task<_>) -> f x.Result)).Unwrap()
 
     let inline returnM (a:'T) = ValueTask<'T>(a)
 
@@ -85,33 +115,47 @@ module Giraffe.ValueTask
 
         //member this.Bind(m, f) = vtbind f m // bindWithOptions cancellationToken contOptions scheduler f m
 
-        member this.Bind(m, f) = tbind f m // bindWithOptions cancellationToken contOptions scheduler f m
+        member this.Bind(m, f) = trbind m f // bindWithOptions cancellationToken contOptions scheduler f m
 
-        member this.Bind(m , f) = taskBind f m
+        member this.Bind(m , f) = vtbind m f
+        member this.Bind(m , f) = taskBind m f
 
-        member this.Combine(comp1, comp2) = tbind comp2 comp1
+        member this.Bind(m , f) = vvbind m f
+
+        member this.Combine(comp1, comp2) = vtbind comp1 comp2
+        member this.Combine(comp1, comp2) = trbind comp1 comp2 
 //            this.Bind(comp1, comp2)
-        member this.Combine(comp1, comp2) = taskBind comp2 comp1
+        member this.Combine(comp1, comp2) = taskBind comp1 comp2
+        member this.Combine(comp1, comp2) = vvbind comp1 comp2 
             // this.Bind(comp1, comp2)
             
         member this.While(guard, m:unit -> Task<_>) =
             let rec whileRec(guard, m:unit -> Task<_>) = 
                 if not(guard()) then this.Zero() else
-                    this.Bind(m(), fun () -> whileRec(guard, m))
+                    taskBind (m()) ( fun () -> whileRec(guard, m))
             whileRec(guard, m)
         
         member this.TryWith(m:unit->Task<_>,exFn) =
-            try this.ReturnFrom  (m())
+            try m() |> ValueTask<_>
             with ex -> exFn ex
 
-        member this.TryFinally(m:unit->Task<_>, compensation) =
-            try this.ReturnFrom (m())
+        member this.TryWith(m:unit->ValueTask<_>,exFn) =
+            try m()
+            with ex -> exFn ex
+
+        member this.TryFinally(m:unit->ValueTask<_>, compensation) =
+            try m()
             finally compensation()
 
-        member this.Using(res: #IDisposable, body: #IDisposable -> Task<_>) =
-            this.TryFinally((fun () -> body res), fun () -> match res with null -> () | disp -> disp.Dispose())
+        member this.TryFinally(m:unit->Task<_>, compensation) =
+            try m() |> ValueTask<_>
+            finally compensation()        
 
-        member this.For(sequence: seq<_>, body: 'T->Task<'U>) =
+        member this.Using(res: #IDisposable, body: #IDisposable -> Task<_>) =
+            try fun () -> body res 
+            finally match res with null -> () | disp -> disp.Dispose()
+
+        member this.For(sequence: seq<_>, body: 'T->Task<_>) =
             this.Using(sequence.GetEnumerator(),
                         fun enum -> this.While(enum.MoveNext, fun () -> body enum.Current))
 
