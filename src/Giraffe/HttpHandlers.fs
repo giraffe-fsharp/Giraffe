@@ -20,24 +20,12 @@ open Giraffe.FormatExpressions
 open Giraffe.HttpContextExtensions
 open Giraffe.RazorEngine
 open Giraffe.HtmlEngine
-open Giraffe.AsyncTask
 
 
 type HttpHandlerResult = ValueTask<HttpContext option>
 
-type Continuation = HttpContext -> Task<HttpContext>
-
 //result of any handler
-type HttpHandler = Continuation -> Continuation -> HttpContext -> Task<HttpContext>
-
-/// Combines two HttpHandler functions into one.
-let compose (a : HttpHandler) (b : HttpHandler) =
-    fun (succ : Continuation) (fail : Continuation) (ctx:HttpContext) ->
-        let childCont = b succ fail
-        let parentCont = a childCont fail
-        parentCont ctx
-
-let (>=>) = compose
+type HttpHandler = HttpContext -> HttpHandlerResult
 
 type ErrorHandler = exn -> ILogger -> HttpHandler
 
@@ -59,8 +47,6 @@ let private getSavedSubPath (ctx : HttpContext) =
     then ctx.Items.Item RouteKey |> string |> strOption 
     else None
 
-
-
 let private getPath (ctx : HttpContext) =
     match getSavedSubPath ctx with
     | Some p -> ctx.Request.Path.ToString().[p.Length..]
@@ -72,11 +58,12 @@ let private handlerWithRootedPath (path : string) (handler : HttpHandler) : Http
             let savedSubPath = getSavedSubPath ctx
             try
                 ctx.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
-                succ ctx
+                return Some ctx
             finally
                 match savedSubPath with
                 | Some savedSubPath -> ctx.Items.Item RouteKey <- savedSubPath
                 | None              -> ctx.Items.Remove RouteKey |> ignore
+        }
 
 /// ---------------------------
 /// Default HttpHandlers
@@ -104,18 +91,27 @@ let compose (handler : HttpHandler) (handler2 : HttpHandler) =
     fun (ctx : HttpContext) ->
         handler ctx |> bind handler2
 
+/// Adapts a HttpHandler function to accept a HttpHandlerResult.
+/// See bind for more information.
+let (>>=) = bind
 
-//hdlr -> ctx -> hndlr -> tresult
+/// Combines two HttpHandler functions into one.
+/// See bind for more information.
+let (>=>) = compose
+
 /// Iterates through a list of HttpHandler functions and returns the
 /// result of the first HttpHandler which outcome is Some HttpContext
-let rec choose (handlers : HttpHandler list) : HttpHandler =
+let rec choose (handlers : HttpHandler list) =
     fun (ctx : HttpContext) ->
         task {
             match handlers with
-            | [] -> fail ctx
+            | []              -> return None
             | handler :: tail ->
-                let next = choose tail succ fail //if a branch fails, go to next handler in list
-                handler succ next ctx
+                let! result = handler ctx
+                match result with
+                | Some c -> return Some c
+                | None   -> return! choose tail ctx
+        }
 
 
 /// Filters an incoming HTTP request based on the HTTP verb
@@ -196,13 +192,13 @@ let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) : Htt
 /// This can be useful inside an error handler when the response
 /// needs to be overwritten in the case of a failure.
 let clearResponse : HttpHandler =
-    fun succ fail ctx ->
+    fun ctx ->
         ctx.Response.Clear()
         ValueTask<_> (Some ctx)
 
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 let route (path : string) =
-    fun (succ : Continuation) (fail : Continuation)  (ctx : HttpContext) ->
+    fun (ctx : HttpContext) ->
         if (getPath ctx).Equals path
         then Some ctx
         else None
@@ -315,15 +311,16 @@ let xml (dataObj : obj) : HttpHandler =
 
 /// Reads a HTML file from disk and writes its contents to the body of the HTTP response
 /// with a Content-Type of text/html.
-let htmlFile (relativeFilePath : string) : HttpHandler =
+let htmlFile (relativeFilePath : string) =
     fun (ctx : HttpContext) ->
         task {
             let env = ctx.GetService<IHostingEnvironment>()
             let filePath = env.ContentRootPath + relativeFilePath
             let! html = readFileAsString filePath
             return!
-                (setHttpHeader "Content-Type" "text/html"
-                >=> setBodyAsString html) succ fail ctx
+                ctx
+                |> (setHttpHeader "Content-Type" "text/html"
+                >=> setBodyAsString html)
         }
 
 /// Renders a model and a template with the DotLiquid template engine and sets the HTTP response

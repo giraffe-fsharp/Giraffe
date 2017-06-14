@@ -12,7 +12,6 @@ open Microsoft.Net.Http.Headers
 open System.Threading.Tasks
 open Giraffe.ValueTask
 open Giraffe.Common
-open Giraffe.AsyncTask
 
 type HttpContext with
 
@@ -67,12 +66,12 @@ type HttpContext with
 
     member this.BindForm<'T>() : ValueTask<_> =
         task {
-            let! (form:IFormCollection) = this.Request.ReadFormAsync()
+            let! form = this.Request.ReadFormAsync()
             let obj   = Activator.CreateInstance<'T>()
             let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
             props
             |> Seq.iter (fun p ->
-                match iform.TryGetValue(p.Name) with
+                match form.TryGetValue(p.Name) with
                 | true , strValue ->  
                     let converter = TypeDescriptor.GetConverter p.PropertyType
                     let value = converter.ConvertFromInvariantString(strValue.ToString())

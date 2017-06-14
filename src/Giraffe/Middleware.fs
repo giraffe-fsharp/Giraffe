@@ -11,7 +11,6 @@ open Microsoft.Extensions.FileProviders
 open Microsoft.AspNetCore.Mvc.Razor
 open Giraffe.ValueTask
 open Giraffe.HttpHandlers
-open Giraffe.AsyncTask
 
 
 /// ---------------------------
@@ -37,30 +36,6 @@ type GiraffeMiddleware (next          : RequestDelegate,
     
     do if isNull next then raise (ArgumentNullException("next"))
 
-    let logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
-    
-    let printResult v ctx = sprintf "Giraffe returned %s for %s" v (getRequestInfo ctx) |> logger.LogDebug 
-
-    let succ, fail =
-        // debug case
-        if logger.IsEnabled LogLevel.Debug then 
-            (fun (ctx:HttpContext) -> task { 
-                printResult "Succ/Some" ctx
-                return ctx
-            }),
-            (fun (ctx:HttpContext) -> task { 
-                printResult "Fail/None" ctx
-                do! next.Invoke ctx
-                return ctx
-            })
-        // production case
-        else 
-            (fun (ctx:HttpContext) -> task { return ctx }),
-            (fun (ctx:HttpContext) -> 
-                task { 
-                    do! next.Invoke ctx
-                    return ctx 
-                })
     member __.Invoke (ctx : HttpContext) =
         task {
             let! result = handler ctx
