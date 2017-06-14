@@ -25,6 +25,13 @@ let getBody (ctx : HttpContext) =
     reader.ReadToEnd()
 
 [<CLIMutable>]
+type ModelWithOption =
+    {
+        OptionalInt: int option
+        OptionalString: string option
+    }
+
+[<CLIMutable>]
 type Customer =
     {
         Name          : string
@@ -202,6 +209,34 @@ let ``bindQueryString test`` () =
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+
+[<Fact>]
+let ``bindQueryString with option property test`` () =
+    let testRoute queryStr expected =
+        let queryHandlerWithSome (ctx : HttpContext) =
+            async {
+                let! model = ctx.BindQueryString<ModelWithOption>()
+                Assert.Equal(expected, model)
+                return! setStatusCode 200 ctx
+            }
+
+        let app = GET >=> route "/" >=> queryHandlerWithSome
+
+        let ctx = Substitute.For<HttpContext>()
+        let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
+        ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+        ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+        ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+        ctx.Response.Body <- new MemoryStream()
+
+        ctx
+        |> app
+        |> Async.RunSynchronously
+        |> ignore
+
+    testRoute "?OptionalInt=1&OptionalString=Hi" { OptionalInt = Some 1; OptionalString = Some "Hi" }
+    testRoute "?" { OptionalInt = None; OptionalString = None }
+    testRoute "?OptionalInt=&OptionalString=" { OptionalInt = None; OptionalString = Some "" }
 
 [<Fact>]
 let ``bindModel with JSON content returns correct result`` () =
