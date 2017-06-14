@@ -22,14 +22,8 @@ open Giraffe.RazorEngine
 open Giraffe.HtmlEngine
 open Giraffe.AsyncTask
 
-<<<<<<< HEAD
-//type HttpContext = HttpContext 
-//Async Handlers
-//type HttpHandlerResultAsync = Task<HttpContext>
-=======
 
 type HttpHandlerResult = ValueTask<HttpContext option>
->>>>>>> 28c1e360826faf3bf7e53caa693c1de07ab8a3ab
 
 type Continuation = HttpContext -> Task<HttpContext>
 
