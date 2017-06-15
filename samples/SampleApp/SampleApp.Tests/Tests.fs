@@ -4,11 +4,13 @@ open System
 open System.Net
 open System.Net.Http
 open System.IO
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.TestHost
 open Microsoft.Extensions.DependencyInjection
 open Xunit
+open Giraffe.ValueTask
 open Giraffe.Middleware
 
 // ---------------------------------
@@ -25,7 +27,7 @@ let createHost() =
 // Helper functions
 // ---------------------------------
 
-let runTask task = 
+let runTask task =
     task 
     |> Async.AwaitTask
     |> Async.RunSynchronously
