@@ -1,5 +1,3 @@
-### Fork to test replacement of "Async<HttpContext option>" with "Task<HttpContext option>" to improve performance and more easily integrate
-
 # Giraffe
 
 ![Giraffe](https://raw.githubusercontent.com/dustinmoris/Giraffe/develop/giraffe.png)
