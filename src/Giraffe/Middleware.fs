@@ -48,7 +48,7 @@ type GiraffeMiddleware (next          : RequestDelegate,
                 |> logger.LogDebug
 
             if (result.IsNone) then
-                do! next.Invoke ctx |> TaskMap //return
+                do! next.Invoke ctx |> taskMap //return
                     
         } |> startAsPlainTask
 
@@ -66,7 +66,7 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
         task {
             let logger = loggerFactory.CreateLogger<GiraffeErrorHandlerMiddleware>()
             try
-                do! next.Invoke ctx |> TaskMap //return
+                do! next.Invoke ctx |> taskMap //return
             with ex ->
                 try
                     let! _ = errorHandler ex logger ctx

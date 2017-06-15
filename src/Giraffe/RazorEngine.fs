@@ -30,6 +30,6 @@ let renderRazorView (razorViewEngine   : IRazorViewEngine)
             let htmlHelperOptions  = HtmlHelperOptions()            
             use output = new StringWriter()
             let viewContext = ViewContext(actionContext, view, viewDataDict, tempDataDict, output, htmlHelperOptions)
-            do! view.RenderAsync(viewContext) |> TaskMap
+            do! view.RenderAsync(viewContext) |> taskMap
             return Ok (output.ToString())
     }
