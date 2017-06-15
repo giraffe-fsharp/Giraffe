@@ -16,7 +16,7 @@ open Giraffe.Common
 open Giraffe.HttpContextExtensions
 open Giraffe.HttpHandlers
 
-let awaitValueTask (work:ValueTask<_>) = work.Result 
+let awaitValueTask (work:ValueTask<_>) = work.AsTask() :> Task 
 
 let assertFailf format args = 
     let msg = sprintf format args
@@ -82,16 +82,15 @@ let ``bindJson test`` () =
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-        ctx
-        |> app
-        |> awaitValueTask 
-
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+    task {
+        let! result = ctx |> app
+           
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+    } |> awaitValueTask
 
 [<Fact>]
 let ``bindXml test`` () =
@@ -124,16 +123,18 @@ let ``bindXml test`` () =
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-        ctx
-        |> app
-        |> awaitValueTask
+    task {
+        let! result = 
+            ctx
+            |> app
+            
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+    } |> awaitValueTask
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
 
 [<Fact>]
 let ``bindForm test`` () =
@@ -159,8 +160,8 @@ let ``bindForm test`` () =
             "Balance", StringValues("150000.5")
             "LoyaltyPoints", StringValues("137")
         ] |> Dictionary
-    let task = System.Threading.Tasks.Task.FromResult(FormCollection(form) :> IFormCollection)
-    ctx.Request.ReadFormAsync().ReturnsForAnyArgs(task) |> ignore
+    let formtask = System.Threading.Tasks.Task.FromResult(FormCollection(form) :> IFormCollection)
+    ctx.Request.ReadFormAsync().ReturnsForAnyArgs(formtask) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/form")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
@@ -168,16 +169,17 @@ let ``bindForm test`` () =
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-        ctx
-        |> app
-        |> awaitValueTask
-
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+    task {
+        let! result = 
+            ctx
+            |> app
+            
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+    } |> awaitValueTask
 
 [<Fact>]
 let ``bindQueryString test`` () =
@@ -202,16 +204,16 @@ let ``bindQueryString test`` () =
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-        ctx
-        |> app
-        |> awaitValueTask
+    task {
+        let! result = ctx |> app
+            
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+    } |> awaitValueTask
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
 
 [<Fact>]
 let ``bindQueryString with option property test`` () =
@@ -232,10 +234,7 @@ let ``bindQueryString with option property test`` () =
         ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
         ctx.Response.Body <- new MemoryStream()
 
-        ctx
-        |> app
-        |> awaitValueTask
-        |> ignore
+        ctx |> app |> ValueTask<_> |> awaitValueTask
 
     testRoute "?OptionalInt=1&OptionalString=Hi" { OptionalInt = Some 1; OptionalString = Some "Hi" }
     testRoute "?" { OptionalInt = None; OptionalString = None }
@@ -274,16 +273,15 @@ let ``bindModel with JSON content returns correct result`` () =
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-        ctx
-        |> app
-        |> awaitValueTask
+    task {
+        let! result = ctx |> app
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+    } |> awaitValueTask
 
 [<Fact>]
 let ``bindModel with XML content returns correct result`` () =
@@ -318,16 +316,15 @@ let ``bindModel with XML content returns correct result`` () =
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-        ctx
-        |> app
-        |> awaitValueTask
+    task {
+        let! result = ctx |> app
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+    } |> awaitValueTask
 
 [<Fact>]
 let ``bindModel with FORM content returns correct result`` () =
@@ -354,8 +351,8 @@ let ``bindModel with FORM content returns correct result`` () =
             "Balance", StringValues("150000.5")
             "LoyaltyPoints", StringValues("137")
         ] |> Dictionary
-    let task = System.Threading.Tasks.Task.FromResult(FormCollection(form) :> IFormCollection)
-    ctx.Request.ReadFormAsync().ReturnsForAnyArgs(task) |> ignore
+    let formtask = System.Threading.Tasks.Task.FromResult(FormCollection(form) :> IFormCollection)
+    ctx.Request.ReadFormAsync().ReturnsForAnyArgs(formtask) |> ignore
     ctx.Request.ContentType.ReturnsForAnyArgs contentType |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
@@ -364,16 +361,15 @@ let ``bindModel with FORM content returns correct result`` () =
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-        ctx
-        |> app
-        |> awaitValueTask
+    task {
+        let! result = ctx |> app
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+    } |> awaitValueTask
 
 [<Fact>]
 let ``bindModel with JSON content and a specific charset returns correct result`` () =
@@ -408,16 +404,15 @@ let ``bindModel with JSON content and a specific charset returns correct result`
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-        ctx
-        |> app
-        |> awaitValueTask
+    task {
+        let! result = ctx |> app
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+    } |> awaitValueTask    
 
 [<Fact>]
 let ``bindModel during HTTP GET request with query string returns correct result`` () =
@@ -442,13 +437,12 @@ let ``bindModel during HTTP GET request with query string returns correct result
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-        ctx
-        |> app
-        |> awaitValueTask
+    task {
+        let! result = ctx |> app
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+    } |> awaitValueTask
