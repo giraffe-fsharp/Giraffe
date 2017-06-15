@@ -58,7 +58,7 @@ let private handlerWithRootedPath (path : string) (handler : HttpHandler) : Http
             let savedSubPath = getSavedSubPath ctx
             try
                 ctx.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
-                return Some ctx
+                return! handler ctx
             finally
                 match savedSubPath with
                 | Some savedSubPath -> ctx.Items.Item RouteKey <- savedSubPath
@@ -390,7 +390,7 @@ let renderHtml (document: HtmlNode) : HttpHandler =
 /// `json` and `xml` are both the respective default HttpHandler functions in this example.
 let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>)
                   (unacceptableHandler : HttpHandler)
-                  (responseObj         : obj) =
+                  (responseObj         : obj) : HttpHandler =
     fun (ctx : HttpContext) ->
         (ctx.Request.GetTypedHeaders()).Accept
         |> fun acceptedMimeTypes ->
@@ -399,19 +399,19 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
                 negotiationRules.Keys
                 |> Seq.head
                 |> fun mediaType -> negotiationRules.[mediaType]
-                |> fun handler   -> handler responseObj 
+                |> fun handler   -> handler responseObj ctx
             | false ->
                 List.ofSeq acceptedMimeTypes
                 |> List.filter (fun x -> negotiationRules.ContainsKey x.MediaType)
                 |> fun mimeTypes ->
                     match mimeTypes.Length with
-                    | 0 -> unacceptableHandler 
+                    | 0 -> unacceptableHandler ctx
                     | _ ->
                         mimeTypes
                         |> List.sortByDescending (fun x -> if x.Quality.HasValue then x.Quality.Value else 1.0)
                         |> List.head
                         |> fun mimeType -> negotiationRules.[mimeType.MediaType]
-                        |> fun handler  -> handler responseObj 
+                        |> fun handler  -> handler responseObj ctx
 
 /// Same as negotiateWith except that it specifies a default set of negotiation rules
 /// and a default unacceptableHandler.
@@ -422,7 +422,7 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
 /// application/xml  -> serializes object to XML
 /// text/xml         -> serializes object to XML
 /// text/plain       -> returns object's ToString() result
-let negotiate (responseObj : obj) =
+let negotiate (responseObj : obj) : HttpHandler =
     negotiateWith
         // Default negotiation rules
         (dict [

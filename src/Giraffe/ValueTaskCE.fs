@@ -119,14 +119,6 @@ module Giraffe.ValueTask
             try body res 
             finally match res with null -> () | disp -> disp.Dispose()
 
-        // member this.Using(res: #IDisposable, body: #IDisposable -> Task<'T>) =
-        //     try fun () -> body res |> ValueTask<'T> 
-        //     finally match res with null -> () | disp -> disp.Dispose()
-
-        // member this.Using(res: #IDisposable, body: #IDisposable -> 'T) =
-        //     try fun () -> body res |> ValueTask<'T> 
-        //     finally match res with null -> () | disp -> disp.Dispose()
-
         member this.For(sequence: seq<_>, body: 'T-> ValueTask<'T>) =
             let enum = sequence.GetEnumerator()
             try  this.While(enum.MoveNext, fun () -> body enum.Current)
