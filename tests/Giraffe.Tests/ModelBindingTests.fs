@@ -6,6 +6,7 @@ open System.IO
 open System.Text
 open Xunit
 open NSubstitute
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http.Internal
@@ -85,8 +86,8 @@ let ``bindJson test`` () =
     let result = 
         ctx
         |> app
-        |> awaitValueTask 
-
+        |> awaitValueTask
+           
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
@@ -133,7 +134,7 @@ let ``bindXml test`` () =
     | None     -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
-        Assert.Equal(expected, body)
+        Assert.Equal(expected, body)    
 
 [<Fact>]
 let ``bindForm test`` () =
@@ -159,8 +160,8 @@ let ``bindForm test`` () =
             "Balance", StringValues("150000.5")
             "LoyaltyPoints", StringValues("137")
         ] |> Dictionary
-    let task = System.Threading.Tasks.Task.FromResult(FormCollection(form) :> IFormCollection)
-    ctx.Request.ReadFormAsync().ReturnsForAnyArgs(task) |> ignore
+    let formtask = System.Threading.Tasks.Task.FromResult(FormCollection(form) :> IFormCollection)
+    ctx.Request.ReadFormAsync().ReturnsForAnyArgs(formtask) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/form")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
@@ -206,12 +207,13 @@ let ``bindQueryString test`` () =
         ctx
         |> app
         |> Async.AwaitTask |> Async.RunSynchronously
-
+            
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+
 
 [<Fact>]
 let ``bindQueryString with option property test`` () =
@@ -285,6 +287,7 @@ let ``bindModel with JSON content returns correct result`` () =
         let body = getBody ctx
         Assert.Equal(expected, body)
 
+
 [<Fact>]
 let ``bindModel with XML content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
@@ -329,6 +332,7 @@ let ``bindModel with XML content returns correct result`` () =
         let body = getBody ctx
         Assert.Equal(expected, body)
 
+
 [<Fact>]
 let ``bindModel with FORM content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
@@ -354,8 +358,8 @@ let ``bindModel with FORM content returns correct result`` () =
             "Balance", StringValues("150000.5")
             "LoyaltyPoints", StringValues("137")
         ] |> Dictionary
-    let task = System.Threading.Tasks.Task.FromResult(FormCollection(form) :> IFormCollection)
-    ctx.Request.ReadFormAsync().ReturnsForAnyArgs(task) |> ignore
+    let formtask = System.Threading.Tasks.Task.FromResult(FormCollection(form) :> IFormCollection)
+    ctx.Request.ReadFormAsync().ReturnsForAnyArgs(formtask) |> ignore
     ctx.Request.ContentType.ReturnsForAnyArgs contentType |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
@@ -374,6 +378,7 @@ let ``bindModel with FORM content returns correct result`` () =
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+
 
 [<Fact>]
 let ``bindModel with JSON content and a specific charset returns correct result`` () =
@@ -417,7 +422,7 @@ let ``bindModel with JSON content and a specific charset returns correct result`
     | None     -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
-        Assert.Equal(expected, body)
+        Assert.Equal(expected, body)   
 
 [<Fact>]
 let ``bindModel during HTTP GET request with query string returns correct result`` () =

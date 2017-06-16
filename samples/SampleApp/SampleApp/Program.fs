@@ -5,12 +5,14 @@ open System.IO
 open System.Security.Claims
 open System.Collections.Generic
 open System.Threading
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Features
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
+open Giraffe.ValueTask
 open Giraffe.HttpContextExtensions
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
@@ -42,7 +44,7 @@ let mustBeAdmin =
 
 let loginHandler =
     fun (ctx : HttpContext) ->
-        async {
+        task {
             let issuer = "http://localhost:5000"
             let claims =
                 [
@@ -53,7 +55,7 @@ let loginHandler =
             let identity = ClaimsIdentity(claims, authScheme)
             let user     = ClaimsPrincipal(identity)
 
-            do! ctx.Authentication.SignInAsync(authScheme, user) |> Async.AwaitTask
+            do! ctx.Authentication.SignInAsync(authScheme, user) |> taskMap
             
             return! text "Successfully logged in" ctx
         }
@@ -82,14 +84,14 @@ type Car =
 
 let submitCar =
     fun (ctx : HttpContext) ->
-        async {
+        task {
             let! car = ctx.BindModel<Car>()
             return! json car ctx
         }
 
 let smallFileUploadHandler =
     fun (ctx : HttpContext) ->
-        async {
+        task {
             return!
                 (match ctx.Request.HasFormContentType with
                 | false -> setStatusCode 400 >=> text "Bad request"
@@ -101,7 +103,7 @@ let smallFileUploadHandler =
 
 let largeFileUploadHandler =
     fun (ctx : HttpContext) ->
-        async {
+        task {
             let formFeature = ctx.Features.Get<IFormFeature>()
             let! form = formFeature.ReadFormAsync CancellationToken.None |> Async.AwaitTask
             return!
