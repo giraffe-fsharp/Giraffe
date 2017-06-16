@@ -94,7 +94,8 @@ let ``Test /error returns status code 500`` () =
     get client "/error"
     |> isStatus HttpStatusCode.InternalServerError
     |> readText
-    |> shouldEqual "One or more errors occurred. (Something went wrong!)"
+    //|> shouldEqual "One or more errors occurred. (Something went wrong!)"
+    |> shouldEqual "Something went wrong!"
 
 [<Fact>]
 let ``Test /user returns error when not logged in`` () =
