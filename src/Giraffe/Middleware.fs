@@ -1,6 +1,7 @@
 module Giraffe.Middleware
 
 open System
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
@@ -8,7 +9,9 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.FileProviders
 open Microsoft.AspNetCore.Mvc.Razor
+open Giraffe.Task
 open Giraffe.HttpHandlers
+
 
 /// ---------------------------
 /// Logging helper functions
@@ -19,6 +22,8 @@ let private getRequestInfo (ctx : HttpContext) =
      ctx.Request.Method,
      ctx.Request.Path.ToString())
     |||> sprintf "%s %s %s"
+
+let inline asPlainTask (work : Task<unit>) = work :> Task //Task<'T> inherites from Task so maintains tcs & exception
 
 /// ---------------------------
 /// Default middleware
@@ -31,9 +36,10 @@ type GiraffeMiddleware (next          : RequestDelegate,
     do if isNull next then raise (ArgumentNullException("next"))
 
     member __.Invoke (ctx : HttpContext) =
-        async {
+        task {
+            
             let! result = handler ctx
-
+            
             let logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
             if logger.IsEnabled LogLevel.Debug then
                 match result with
@@ -42,10 +48,8 @@ type GiraffeMiddleware (next          : RequestDelegate,
                 |> logger.LogDebug
 
             if (result.IsNone) then
-                return!
-                    next.Invoke ctx
-                    |> Async.AwaitTask
-        } |> Async.StartAsTask
+                return! next.Invoke ctx |> task.AwaitTask //return
+        } |> asPlainTask
 
 /// ---------------------------
 /// Error Handling middleware
@@ -58,21 +62,17 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
     do if isNull next then raise (ArgumentNullException("next"))
 
     member __.Invoke (ctx : HttpContext) =
-        async {
-            let logger = loggerFactory.CreateLogger<GiraffeErrorHandlerMiddleware>()
+        task {
             try
-                return!
-                    next.Invoke ctx
-                    |> Async.AwaitTask
+                return! next.Invoke ctx |> task.AwaitTask
             with ex ->
+                let logger = loggerFactory.CreateLogger<GiraffeErrorHandlerMiddleware>()
                 try
-                    return!
-                        errorHandler ex logger ctx
-                        |> Async.Ignore
+                    return! errorHandler ex logger ctx |> task.AwaitTask
                 with ex2 ->
                     logger.LogError(EventId(0), ex,  "An unhandled exception has occurred while executing the request.")
                     logger.LogError(EventId(0), ex2, "An exception was thrown attempting to handle the original exception.")
-        } |> Async.StartAsTask
+        } |> asPlainTask
 
 /// ---------------------------
 /// Extension methods for convenience

@@ -4,11 +4,13 @@ open System
 open System.Net
 open System.Net.Http
 open System.IO
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.TestHost
 open Microsoft.Extensions.DependencyInjection
 open Xunit
+open Giraffe.Task
 open Giraffe.Middleware
 
 // ---------------------------------
@@ -25,7 +27,7 @@ let createHost() =
 // Helper functions
 // ---------------------------------
 
-let runTask task = 
+let runTask task =
     task 
     |> Async.AwaitTask
     |> Async.RunSynchronously
@@ -92,7 +94,8 @@ let ``Test /error returns status code 500`` () =
     get client "/error"
     |> isStatus HttpStatusCode.InternalServerError
     |> readText
-    |> shouldEqual "One or more errors occurred. (Something went wrong!)"
+    //|> shouldEqual "One or more errors occurred. (Something went wrong!)"
+    |> shouldEqual "Something went wrong!"
 
 [<Fact>]
 let ``Test /user returns error when not logged in`` () =

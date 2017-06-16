@@ -18,6 +18,7 @@ module Giraffe.HtmlEngine
 
 open System
 open System.Net
+open Giraffe.Task
 
 /// ---------------------------
 /// Definition of different HTML content

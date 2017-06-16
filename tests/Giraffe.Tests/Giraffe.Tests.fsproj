@@ -1,31 +1,29 @@
-﻿<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
-
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp1.1</TargetFramework>
     <AssemblyName>Giraffe.Tests</AssemblyName>
     <DebugType>portable</DebugType>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="FSharp.Core" Version="4.1.*" />
-    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0-preview-*" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Http" Version="1.1.*" />
-    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.*" />
-    <PackageReference Include="xunit" Version="2.2.0" />
-    <PackageReference Include="NSubstitute" Version="2.0.1-rc" />
+    <PackageReference Include="FSharp.Core" Version="4.1.*"/>
+    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All"/>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0-preview-*"/>
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.2.0"/>
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="1.1.*"/>
+    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.*"/>
+    <PackageReference Include="xunit" Version="2.2.0"/>
+    <PackageReference Include="NSubstitute" Version="2.0.1-rc"/>
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.2"/>
   </ItemGroup>
-
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Giraffe\Giraffe.fsproj" />
+    <ProjectReference Include="..\..\src\Giraffe\Giraffe.fsproj"/>
   </ItemGroup>
-
   <ItemGroup>
-    <Compile Include="FormatExpressionTests.fs" />
-    <Compile Include="HttpHandlerTests.fs" />
-    <Compile Include="HtmlEngineTests.fs" />
-    <Compile Include="ModelBindingTests.fs" />
+    <Compile Include="FormatExpressionTests.fs"/>
+    <Compile Include="HttpHandlerTests.fs"/>
+    <Compile Include="HtmlEngineTests.fs"/>
+    <Compile Include="ModelBindingTests.fs"/>
   </ItemGroup>
-
 </Project>

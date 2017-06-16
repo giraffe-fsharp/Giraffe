@@ -9,6 +9,8 @@ open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Microsoft.FSharp.Reflection
 open Microsoft.Net.Http.Headers
+open System.Threading.Tasks
+open Giraffe.Task
 open Giraffe.Common
 
 type HttpContext with
@@ -43,43 +45,44 @@ type HttpContext with
     /// Model binding
     /// ---------------------------
 
-    member this.ReadBodyFromRequest() =
-        async {
+    member this.ReadBodyFromRequest()  =
+        task {
             let body = this.Request.Body
             use reader = new StreamReader(body, true)
-            return! reader.ReadToEndAsync() |> Async.AwaitTask
+            return! reader.ReadToEndAsync()
         }
 
-    member this.BindJson<'T>() =
-        async {
+    member this.BindJson<'T>()  =
+        task {
             let! body = this.ReadBodyFromRequest()
             return deserializeJson<'T> body
         }
 
-    member this.BindXml<'T>() =
-        async {
+    member this.BindXml<'T>()  =
+        task {
             let! body = this.ReadBodyFromRequest()
             return deserializeXml<'T> body
         }
 
-    member this.BindForm<'T>() =
-        async {
-            let! form = this.Request.ReadFormAsync() |> Async.AwaitTask
+    member this.BindForm<'T>()  =
+        task {
+            let! form = this.Request.ReadFormAsync()
             let obj   = Activator.CreateInstance<'T>()
             let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
             props
             |> Seq.iter (fun p ->
-                let strValue = ref (StringValues())
-                if form.TryGetValue(p.Name, strValue)
-                then
+                match form.TryGetValue(p.Name) with
+                | true , strValue ->  
                     let converter = TypeDescriptor.GetConverter p.PropertyType
-                    let value = converter.ConvertFromInvariantString(strValue.Value.ToString())
-                    p.SetValue(obj, value, null))
+                    let value = converter.ConvertFromInvariantString(strValue.ToString())
+                    p.SetValue(obj, value, null)
+                | false , _ -> ()
+            )
             return obj
         }
 
-    member this.BindQueryString<'T>() =
-        async {
+    member this.BindQueryString<'T>()  =
+        task {
             let query = this.Request.Query
             let obj   = Activator.CreateInstance<'T>()
             let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
@@ -121,8 +124,8 @@ type HttpContext with
             return obj
         }
 
-    member this.BindModel<'T>() =
-        async {
+    member this.BindModel<'T>()  =
+        task {
             let method = this.Request.Method
             return!
                 if method.Equals "POST" || method.Equals "PUT" then
