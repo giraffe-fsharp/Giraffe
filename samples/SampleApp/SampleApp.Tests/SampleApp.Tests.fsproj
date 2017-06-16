@@ -21,6 +21,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="1.1.*" />
     <PackageReference Include="xunit" Version="2.2.*" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.2.*" />
+    <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>
