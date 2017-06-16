@@ -859,8 +859,6 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
         Assert.Equal(expected, body)
         Assert.Equal("application/json", ctx.Response |> getContentType)
 
-
-
 [<Fact>]
 let ``Get "/auto" with Accept header of "application/xml" returns XML object`` () =
     let johnDoe =
