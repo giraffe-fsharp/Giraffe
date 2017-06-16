@@ -43,7 +43,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="views\*.cshtml">
+    <Content Include="Views\*.cshtml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
