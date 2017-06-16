@@ -11,11 +11,12 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http.Internal
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
+open System.Threading.Tasks
 open Giraffe.Common
 open Giraffe.HttpContextExtensions
 open Giraffe.HttpHandlers
 
-let awaitValueTask (work:ValueTask<_>) = work.Result 
+let awaitValueTask (work:Task<_>) = work |> Async.AwaitTask |> Async.RunSynchronously 
 
 let assertFailf format args = 
     let msg = sprintf format args
@@ -126,7 +127,7 @@ let ``bindXml test`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> Async.AwaitTask |> Async.RunSynchronously
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -170,7 +171,7 @@ let ``bindForm test`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> Async.AwaitTask |> Async.RunSynchronously
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -204,7 +205,7 @@ let ``bindQueryString test`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> Async.AwaitTask |> Async.RunSynchronously
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -233,7 +234,7 @@ let ``bindQueryString with option property test`` () =
 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> Async.AwaitTask |> Async.RunSynchronously
         |> ignore
 
     testRoute "?OptionalInt=1&OptionalString=Hi" { OptionalInt = Some 1; OptionalString = Some "Hi" }
@@ -276,7 +277,7 @@ let ``bindModel with JSON content returns correct result`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> Async.AwaitTask |> Async.RunSynchronously
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -320,7 +321,7 @@ let ``bindModel with XML content returns correct result`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> Async.AwaitTask |> Async.RunSynchronously
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -366,7 +367,7 @@ let ``bindModel with FORM content returns correct result`` () =
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> Async.AwaitTask |> Async.RunSynchronously
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -410,7 +411,7 @@ let ``bindModel with JSON content and a specific charset returns correct result`
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> Async.AwaitTask |> Async.RunSynchronously
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -444,7 +445,7 @@ let ``bindModel during HTTP GET request with query string returns correct result
     let result = 
         ctx
         |> app
-        |> Async.RunSynchronously
+        |> Async.AwaitTask |> Async.RunSynchronously
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected

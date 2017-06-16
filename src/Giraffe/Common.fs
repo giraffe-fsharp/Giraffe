@@ -5,7 +5,7 @@ open System.IO
 open System.Threading.Tasks
 open System.Xml.Serialization
 open Newtonsoft.Json
-open Giraffe.ValueTask
+open Giraffe.Task
 
 /// ---------------------------
 /// Helper functions

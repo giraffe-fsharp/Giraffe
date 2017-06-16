@@ -11,6 +11,7 @@ open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Xunit
 open NSubstitute
+open Giraffe.Task
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
 open Giraffe.HtmlEngine
@@ -19,7 +20,7 @@ open Giraffe.HtmlEngine
 // Helper functions
 // ---------------------------------
 
-let awaitValueTask (work:ValueTask<_>) = work.Result 
+let inline awaitValueTask (work:Task<_>) = work |> Async.AwaitTask |> Async.RunSynchronously 
 let getStatusCode (ctx : HttpContext) =
     ctx.Response.StatusCode
 
@@ -623,10 +624,10 @@ let ``GET "/api/users" returns "users"`` () =
     let expected = "users"
 
     let result = 
-        ctx
+        ctx 
         |> app
         |> awaitValueTask
-
+        
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->

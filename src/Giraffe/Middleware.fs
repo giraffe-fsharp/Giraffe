@@ -9,7 +9,7 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.FileProviders
 open Microsoft.AspNetCore.Mvc.Razor
-open Giraffe.ValueTask
+open Giraffe.Task
 open Giraffe.HttpHandlers
 
 
@@ -23,8 +23,7 @@ let private getRequestInfo (ctx : HttpContext) =
      ctx.Request.Path.ToString())
     |||> sprintf "%s %s %s"
 
-let inline startAsPlainTask (work : ValueTask<_>) = work.AsTask() :> Task
-
+let inline asPlainTask (work : Task<unit>) = work :> Task
 
 /// ---------------------------
 /// Default middleware
@@ -48,9 +47,9 @@ type GiraffeMiddleware (next          : RequestDelegate,
                 |> logger.LogDebug
 
             if (result.IsNone) then
-                do! next.Invoke ctx |> TaskMap //return
+                do! next.Invoke ctx |> awaitTask //return
                     
-        } |> startAsPlainTask
+        } |> asPlainTask
 
 /// ---------------------------
 /// Error Handling middleware
@@ -66,15 +65,14 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
         task {
             let logger = loggerFactory.CreateLogger<GiraffeErrorHandlerMiddleware>()
             try
-                do! next.Invoke ctx |> TaskMap //return
+                return! next.Invoke ctx |> awaitTask //return
             with ex ->
                 try
-                    let! _ = errorHandler ex logger ctx
-                    return ()
+                    return! errorHandler ex logger ctx |> awaitTask
                 with ex2 ->
                     logger.LogError(EventId(0), ex,  "An unhandled exception has occurred while executing the request.")
                     logger.LogError(EventId(0), ex2, "An exception was thrown attempting to handle the original exception.")
-        } |> startAsPlainTask
+        } |> asPlainTask
 
 /// ---------------------------
 /// Extension methods for convenience

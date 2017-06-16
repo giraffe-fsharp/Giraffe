@@ -14,7 +14,7 @@ open Microsoft.AspNetCore.Mvc.Razor
 open Microsoft.AspNetCore.Mvc.ViewFeatures
 open FSharp.Core.Printf
 open DotLiquid
-open Giraffe.ValueTask
+open Giraffe.Task
 open Giraffe.Common
 open Giraffe.FormatExpressions
 open Giraffe.HttpContextExtensions
@@ -22,7 +22,7 @@ open Giraffe.RazorEngine
 open Giraffe.HtmlEngine
 
 
-type HttpHandlerResult = ValueTask<HttpContext option>
+type HttpHandlerResult = Task<HttpContext option>
 
 //result of any handler
 type HttpHandler = HttpContext -> HttpHandlerResult
@@ -52,13 +52,13 @@ let private getPath (ctx : HttpContext) =
     | Some p -> ctx.Request.Path.ToString().[p.Length..]
     | None   -> ctx.Request.Path.ToString()
 
-let private handlerWithRootedPath (path : string) (handler : HttpHandler) : HttpHandler = 
+let private handlerWithRootedPath (path : string) (handler : HttpHandler) = 
     fun (ctx : HttpContext) ->
         task {
             let savedSubPath = getSavedSubPath ctx
             try
                 ctx.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
-                return Some ctx
+                return! handler ctx
             finally
                 match savedSubPath with
                 | Some savedSubPath -> ctx.Items.Item RouteKey <- savedSubPath
@@ -120,7 +120,7 @@ let httpVerb (verb : string) : HttpHandler =
         if ctx.Request.Method.Equals verb
         then Some ctx
         else None
-        |> ValueTask<_>
+        |> Task.FromResult
 
 let GET    : HttpHandler = httpVerb "GET"
 let POST   : HttpHandler = httpVerb "POST"
@@ -139,14 +139,14 @@ let mustAccept (mimeTypes : string list) : HttpHandler=
         |> function
             | true  -> Some ctx
             | false -> None
-            |> ValueTask<_>
+            |> Task.FromResult 
 
 /// Challenges the client to authenticate with a given authentication scheme.
 let challenge (authScheme : string) : HttpHandler =
     fun (ctx : HttpContext) ->
         task {
             let auth = ctx.Authentication
-            do! auth.ChallengeAsync authScheme |> TaskMap
+            do! auth.ChallengeAsync authScheme |> awaitTask
             return Some ctx
         }
 
@@ -155,7 +155,7 @@ let signOff (authScheme : string) =
     fun (ctx : HttpContext) ->
         task {
             let auth = ctx.Authentication
-            do! auth.SignOutAsync authScheme |> TaskMap
+            do! auth.SignOutAsync authScheme |> awaitTask
             return Some ctx
         }
 
@@ -165,7 +165,7 @@ let requiresAuthentication (authFailedHandler : HttpHandler) : HttpHandler =
     fun (ctx : HttpContext) ->
         let user = ctx.User
         if isNotNull user && user.Identity.IsAuthenticated
-        then ValueTask<_>(Some ctx)
+        then Task.FromResult(Some ctx)
         else authFailedHandler ctx
 
 /// Validates if a user is in a specific role.
@@ -174,7 +174,7 @@ let requiresRole (role : string) (authFailedHandler : HttpHandler) : HttpHandler
     fun (ctx : HttpContext) ->
         let user = ctx.User
         if user.IsInRole role
-        then ValueTask<_>(Some ctx)
+        then Task.FromResult(Some ctx)
         else authFailedHandler ctx
 
 /// Validates if a user has at least one of the specified roles.
@@ -185,7 +185,7 @@ let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) : Htt
         roles
         |> List.exists user.IsInRole 
         |> function
-            | true  -> ValueTask<_>(Some ctx)
+            | true  -> Task.FromResult (Some ctx)
             | false -> authFailedHandler ctx
 
 /// Attempts to clear the current HttpResponse object.
@@ -194,7 +194,7 @@ let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) : Htt
 let clearResponse : HttpHandler =
     fun ctx ->
         ctx.Response.Clear()
-        ValueTask<_> (Some ctx)
+        Task.FromResult(Some ctx)
 
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 let route (path : string) =
@@ -202,7 +202,7 @@ let route (path : string) =
         if (getPath ctx).Equals path
         then Some ctx
         else None
-        |> ValueTask<_>
+        |> Task.FromResult
 
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 /// The arguments from the format string will be automatically resolved when the
@@ -211,7 +211,7 @@ let routef (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : Htt
     fun (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) false
         |> function
-            | None      -> ValueTask<_> None
+            | None      -> Task.FromResult(None)
             | Some args -> routeHandler args ctx
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
@@ -220,7 +220,7 @@ let routeCi (path : string) : HttpHandler =
         if String.Equals(getPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
         then Some ctx
         else None
-        |> ValueTask<_>
+        |> Task.FromResult
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 /// The arguments from the format string will be automatically resolved when the
@@ -229,7 +229,7 @@ let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : H
     fun (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) true
         |> function
-            | None      -> ValueTask<_> None
+            | None      -> Task.FromResult  None
             | Some args -> routeHandler args ctx
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
@@ -238,7 +238,7 @@ let routeStartsWith (subPath : string) : HttpHandler =
         if (getPath ctx).StartsWith subPath 
         then Some ctx
         else None
-        |> ValueTask<_>
+        |> Task.FromResult 
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
 let routeStartsWithCi (subPath : string) : HttpHandler =
@@ -246,7 +246,7 @@ let routeStartsWithCi (subPath : string) : HttpHandler =
         if (getPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase) 
         then Some ctx
         else None
-        |> ValueTask<_>
+        |> Task.FromResult 
 
 /// Filters an incoming HTTP request based on a part of the request path (case sensitive).
 /// Subsequent route handlers inside the given handler function should omit the already validated path.
@@ -282,7 +282,7 @@ let setBody (bytes : byte array) : HttpHandler =
     fun (ctx : HttpContext) ->
         task {            
             ctx.Response.Headers.["Content-Length"] <- StringValues(bytes.Length.ToString())
-            do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length) |> TaskMap
+            do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length) |> awaitTask
             return Some ctx
         }
 
@@ -390,7 +390,7 @@ let renderHtml (document: HtmlNode) : HttpHandler =
 /// `json` and `xml` are both the respective default HttpHandler functions in this example.
 let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>)
                   (unacceptableHandler : HttpHandler)
-                  (responseObj         : obj) =
+                  (responseObj         : obj) : HttpHandler =
     fun (ctx : HttpContext) ->
         (ctx.Request.GetTypedHeaders()).Accept
         |> fun acceptedMimeTypes ->
@@ -399,19 +399,19 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
                 negotiationRules.Keys
                 |> Seq.head
                 |> fun mediaType -> negotiationRules.[mediaType]
-                |> fun handler   -> handler responseObj 
+                |> fun handler   -> handler responseObj ctx
             | false ->
                 List.ofSeq acceptedMimeTypes
                 |> List.filter (fun x -> negotiationRules.ContainsKey x.MediaType)
                 |> fun mimeTypes ->
                     match mimeTypes.Length with
-                    | 0 -> unacceptableHandler 
+                    | 0 -> unacceptableHandler ctx
                     | _ ->
                         mimeTypes
                         |> List.sortByDescending (fun x -> if x.Quality.HasValue then x.Quality.Value else 1.0)
                         |> List.head
                         |> fun mimeType -> negotiationRules.[mimeType.MediaType]
-                        |> fun handler  -> handler responseObj 
+                        |> fun handler  -> handler responseObj ctx 
 
 /// Same as negotiateWith except that it specifies a default set of negotiation rules
 /// and a default unacceptableHandler.
@@ -446,4 +446,4 @@ let negotiate (responseObj : obj) =
 let redirectTo (permanent : bool) (location : string) : HttpHandler =
     fun (ctx:HttpContext) -> 
         ctx.Response.Redirect(location, permanent)
-        ctx |> Some |> ValueTask<_>
+        ctx |> Some |> Task.FromResult 
