@@ -6,6 +6,7 @@ open System.Collections.Generic
 
 open System.Threading
 open System.Threading.Tasks
+open System.Runtime.ExceptionServices
 
 let inline wait (task:Task<_>) = task.Wait()
 
@@ -89,10 +90,18 @@ type TaskBuilder(?continuationOptions, ?scheduler, ?cancellationToken) =
           .Unwrap()
       with e -> catchFn(e)
 
+      
    member this.TryFinally(body:unit->Task<'T>, compensation) =
-            try body ()
-            finally compensation()
+      let wrapOk (x:'a) : Task<'a> =
+          compensation()
+          this.Return x
 
+      let wrapCrash (e:exn) : Task<'a> =
+          compensation()
+          ExceptionDispatchInfo.Capture(e).Throw() 
+          raise e
+
+      this.Bind(this.TryWith(body, wrapCrash), wrapOk)
    member this.Using(res: #IDisposable, body: #IDisposable -> Task<'T>) =
       this.TryFinally(
             (fun () -> body res),
