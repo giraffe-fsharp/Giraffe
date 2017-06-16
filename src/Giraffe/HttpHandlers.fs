@@ -146,7 +146,7 @@ let challenge (authScheme : string) : HttpHandler =
     fun (ctx : HttpContext) ->
         task {
             let auth = ctx.Authentication
-            do! auth.ChallengeAsync authScheme |> awaitTask
+            do! auth.ChallengeAsync authScheme |> task.AwaitTask
             return Some ctx
         }
 
@@ -155,7 +155,7 @@ let signOff (authScheme : string) =
     fun (ctx : HttpContext) ->
         task {
             let auth = ctx.Authentication
-            do! auth.SignOutAsync authScheme |> awaitTask
+            do! auth.SignOutAsync authScheme |> task.AwaitTask
             return Some ctx
         }
 
@@ -282,7 +282,7 @@ let setBody (bytes : byte array) : HttpHandler =
     fun (ctx : HttpContext) ->
         task {            
             ctx.Response.Headers.["Content-Length"] <- StringValues(bytes.Length.ToString())
-            do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length) |> awaitTask
+            do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length) |> task.AwaitTask
             return Some ctx
         }
 

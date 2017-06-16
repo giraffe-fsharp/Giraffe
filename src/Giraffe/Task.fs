@@ -10,15 +10,6 @@ open System.Runtime.ExceptionServices
 
 let inline wait (task:Task<_>) = task.Wait()
 
-let inline awaitTask (t:Task) = 
-   let tcs = TaskCompletionSource()
-   t.ContinueWith(fun t -> 
-      match t.IsFaulted with
-      | false -> if t.IsCanceled then tcs.SetCanceled()
-                 else tcs.SetResult()     
-      | true  -> tcs.SetException(t.Exception.GetBaseException())) |> ignore
-   tcs.Task
-
 let inline delay (delay:TimeSpan) = 
    let tcs = TaskCompletionSource()
    Task.Delay(delay).ContinueWith(fun _ -> tcs.SetResult()) |> ignore
@@ -42,6 +33,10 @@ let inline mapWithOptions (token: CancellationToken) (continuationOptions: TaskC
 /// Transforms a Task's first value by using a specified mapping function.
 let inline map f (m: Task<_>) =
    m.ContinueWith(fun (t: Task<_>) -> f t.Result)
+
+
+let inline bindTaskWithOptions (token: CancellationToken) (continuationOptions: TaskContinuationOptions) (scheduler: TaskScheduler) (f: unit -> Task<'U>) (m: Task) =
+   m.ContinueWith((fun _ -> f ()), token, continuationOptions, scheduler).Unwrap()
 
 let inline bindWithOptions (token: CancellationToken) (continuationOptions: TaskContinuationOptions) (scheduler: TaskScheduler) (f: 'T -> Task<'U>) (m: Task<'T>) =
    m.ContinueWith((fun (x: Task<_>) -> f x.Result), token, continuationOptions, scheduler).Unwrap()
@@ -71,7 +66,15 @@ type TaskBuilder(?continuationOptions, ?scheduler, ?cancellationToken) =
 
    member this.ReturnFrom (a: Task<'T>) = a
 
-   member this.Bind(m, f) = bindWithOptions cancellationToken contOptions scheduler f m
+   member this.Bind(m:Task<'T>, f:'T->Task<'U>) = 
+      if m.IsFaulted then
+            let tcs = TaskCompletionSource<'U>()           
+            let be = m.Exception.GetBaseException()
+            raise be
+            // tcs.SetException(be)
+            // tcs.Task
+      else      
+            bindWithOptions cancellationToken contOptions scheduler f m
 
    member this.Combine(comp1, comp2) =
       this.Bind(comp1, comp2)
@@ -80,10 +83,10 @@ type TaskBuilder(?continuationOptions, ?scheduler, ?cancellationToken) =
       if not(guard()) then this.Zero() else
             this.Bind(m(), fun () -> this.While(guard, m))
 
-   member this.TryWith(body:unit -> Task<_>, catchFn:exn -> Task<_>) =  
+   member this.TryWith(body:unit -> Task<'T>, catchFn:exn -> Task<'T>) =  
       try
          body()
-          .ContinueWith(fun (t:Task<_>) ->
+          .ContinueWith(fun (t:Task<'T>) ->
              match t.IsFaulted with
              | false -> t
              | true  -> catchFn(t.Exception.GetBaseException()))
@@ -97,10 +100,14 @@ type TaskBuilder(?continuationOptions, ?scheduler, ?cancellationToken) =
           this.Return x
 
       let wrapCrash (e:exn) : Task<'a> =
-          compensation()
-          ExceptionDispatchInfo.Capture(e).Throw() 
-          raise e
-
+            printfn ">> the following exception has been receieved : %A" e.Message
+            compensation()
+            ExceptionDispatchInfo.Capture(e).Throw() 
+            raise e
+            // let tcs = TaskCompletionSource<_>()
+            // tcs.SetException(e)
+            // tcs.Task
+      
       this.Bind(this.TryWith(body, wrapCrash), wrapOk)
    member this.Using(res: #IDisposable, body: #IDisposable -> Task<'T>) =
       this.TryFinally(
@@ -112,8 +119,27 @@ type TaskBuilder(?continuationOptions, ?scheduler, ?cancellationToken) =
       this.Using(sequence.GetEnumerator(),
                      fun enum -> this.While(enum.MoveNext, fun () -> body enum.Current))
 
-   member this.Delay (f: unit -> Task<'T>) = f
+   member this.Delay (body : unit -> Task<'a>) : unit -> Task<'a> = fun () -> this.Bind(this.Return(), body)
 
-   member this.Run (f: unit -> Task<'T>) = f()
+   member this.Run (body: unit -> Task<'T>) = body()
 
-let task = TaskBuilder(scheduler = TaskScheduler.Current)
+   member this.AwaitTask (t:Task) =      
+      let tcs = TaskCompletionSource<_>()
+      let inline continuation (t:Task) : Task  = 
+            match t.IsFaulted with
+            | false ->  if t.IsCanceled 
+                        then tcs.SetCanceled()
+                        else tcs.SetResult()     
+            | true  -> 
+                  let be = t.Exception.GetBaseException()
+                  tcs.SetException(be)
+            t
+
+      t.ContinueWith(
+            continuation,
+            cancellationToken,
+            contOptions,
+            scheduler) |> ignore
+      tcs.Task
+
+let task = TaskBuilder() //scheduler = TaskScheduler.Current

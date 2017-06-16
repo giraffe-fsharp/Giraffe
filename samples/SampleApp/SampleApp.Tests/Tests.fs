@@ -10,7 +10,7 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.TestHost
 open Microsoft.Extensions.DependencyInjection
 open Xunit
-open Giraffe.ValueTask
+open Giraffe.Task
 open Giraffe.Middleware
 
 // ---------------------------------

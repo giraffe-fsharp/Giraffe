@@ -23,7 +23,7 @@ let private getRequestInfo (ctx : HttpContext) =
      ctx.Request.Path.ToString())
     |||> sprintf "%s %s %s"
 
-let inline asPlainTask (work : Task<unit>) = work :> Task
+let inline asPlainTask (work : Task<unit>) = work :> Task //Task<'T> inherites from Task so maintains tcs & exception
 
 /// ---------------------------
 /// Default middleware
@@ -37,8 +37,9 @@ type GiraffeMiddleware (next          : RequestDelegate,
 
     member __.Invoke (ctx : HttpContext) =
         task {
+            
             let! result = handler ctx
-
+            
             let logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
             if logger.IsEnabled LogLevel.Debug then
                 match result with
@@ -47,8 +48,7 @@ type GiraffeMiddleware (next          : RequestDelegate,
                 |> logger.LogDebug
 
             if (result.IsNone) then
-                do! next.Invoke ctx |> awaitTask //return
-                    
+                return! next.Invoke ctx |> task.AwaitTask //return
         } |> asPlainTask
 
 /// ---------------------------
@@ -63,12 +63,12 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
 
     member __.Invoke (ctx : HttpContext) =
         task {
-            let logger = loggerFactory.CreateLogger<GiraffeErrorHandlerMiddleware>()
             try
-                return! next.Invoke ctx |> awaitTask //return
+                return! next.Invoke ctx |> task.AwaitTask
             with ex ->
+                let logger = loggerFactory.CreateLogger<GiraffeErrorHandlerMiddleware>()
                 try
-                    return! errorHandler ex logger ctx |> awaitTask
+                    return! errorHandler ex logger ctx |> task.AwaitTask
                 with ex2 ->
                     logger.LogError(EventId(0), ex,  "An unhandled exception has occurred while executing the request.")
                     logger.LogError(EventId(0), ex2, "An exception was thrown attempting to handle the original exception.")

@@ -12,7 +12,7 @@ open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Features
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
-open Giraffe.ValueTask
+open Giraffe.Task
 open Giraffe.HttpContextExtensions
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
@@ -55,7 +55,7 @@ let loginHandler =
             let identity = ClaimsIdentity(claims, authScheme)
             let user     = ClaimsPrincipal(identity)
 
-            do! ctx.Authentication.SignInAsync(authScheme, user) |> taskMap
+            do! ctx.Authentication.SignInAsync(authScheme, user) |> task.AwaitTask
             
             return! text "Successfully logged in" ctx
         }
@@ -105,7 +105,7 @@ let largeFileUploadHandler =
     fun (ctx : HttpContext) ->
         task {
             let formFeature = ctx.Features.Get<IFormFeature>()
-            let! form = formFeature.ReadFormAsync CancellationToken.None |> Async.AwaitTask
+            let! form = formFeature.ReadFormAsync CancellationToken.None
             return!
                 (form.Files
                 |> Seq.fold (fun acc file -> sprintf "%s\n%s" acc file.FileName) ""
