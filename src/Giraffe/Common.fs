@@ -2,6 +2,8 @@ module Giraffe.Common
 
 open System
 open System.IO
+open System.Text
+open System.Xml
 open System.Xml.Serialization
 open Newtonsoft.Json
 
@@ -32,9 +34,11 @@ let inline serializeJson x = JsonConvert.SerializeObject x
 let inline deserializeJson<'T> str = JsonConvert.DeserializeObject<'T> str
 
 let serializeXml x =
-    let serializer = XmlSerializer(x.GetType())
     use stream = new MemoryStream()
-    serializer.Serialize(stream, x)
+    let xmlWriterSettings = XmlWriterSettings(Encoding= Encoding.UTF8, Indent = true, OmitXmlDeclaration=false )
+    use xmlWriter = XmlWriter.Create(stream, xmlWriterSettings)
+    let serializer = XmlSerializer(x.GetType())
+    serializer.Serialize(xmlWriter, x)
     stream.ToArray()
 
 let deserializeXml<'T> str =

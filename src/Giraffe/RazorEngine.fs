@@ -21,7 +21,9 @@ let renderRazorView (razorViewEngine   : IRazorViewEngine)
         let viewEngineResult = razorViewEngine.FindView(actionContext, viewName, false)
 
         match viewEngineResult.Success with
-        | false -> return Error (sprintf "Could not find view with the name '%s'" viewName)
+        | false -> 
+            let locations = String.Join(" ", viewEngineResult.SearchedLocations)
+            return Error (sprintf "Could not find view with the name '%s', looked in %s" viewName locations)
         | true  ->
             let view = viewEngineResult.View
             let viewDataDict       = ViewDataDictionary<'T>(EmptyModelMetadataProvider(), ModelStateDictionary(), Model = model)

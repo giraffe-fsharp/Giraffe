@@ -158,7 +158,7 @@ let configureApp (app : IApplicationBuilder) =
 let configureServices (services : IServiceCollection) =
     let sp  = services.BuildServiceProvider()
     let env = sp.GetService<IHostingEnvironment>()
-    let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
+    let viewsFolderPath = Path.Combine(env.ContentRootPath, "Views")
 
     services.AddAuthentication() |> ignore
     services.AddDataProtection() |> ignore
