@@ -1216,12 +1216,12 @@ let ``Warbler function should execute inner function each time`` () =
     ctx.Response.Body <- new MemoryStream()
 
     task {
-        let! res1 = ctx |> app 
+        let! (res1:HttpContext option) = ctx |> app 
         let result1 = getBody res1.Value
 
         ctx.Response.Body <- new MemoryStream()
 
-        let! res2 = ctx |> app
+        let! (res2:HttpContext option) = ctx |> app
         let result2 = getBody res2.Value
 
         Assert.Equal(result1, result2)
@@ -1229,12 +1229,12 @@ let ``Warbler function should execute inner function each time`` () =
         ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo2")) |> ignore
         ctx.Response.Body <- new MemoryStream()
 
-        let! res3 = ctx |> app
+        let! (res3:HttpContext option) = ctx |> app
         let result3 = getBody res3.Value
 
         ctx.Response.Body <- new MemoryStream()
 
-        let! res4 = ctx |> app
+        let! (res4:HttpContext option) = ctx |> app
         let result4 = getBody res4.Value
 
         Assert.False(result3.Equals result4)
@@ -1253,7 +1253,7 @@ let ``GET "/redirect" redirect to "/" `` () =
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/redirect")) |> ignore
 
     task {
-        let! result = ctx |> app
+        let! (result:HttpContext option) = ctx |> app
     
         match result with
         | None     -> assertFail "It was expected that the request would be redirected" 
@@ -1262,7 +1262,7 @@ let ``GET "/redirect" redirect to "/" `` () =
 
 [<Fact>]
 let ``POST "/redirect" redirect to "/" `` () =
-    let ctx = Substitute.For<HttpContext>()
+    let (ctx:HttpContext) = Substitute.For<HttpContext>()
     let app = 
         POST >=> choose [ 
             route "/"         >=> text "Hello World"
@@ -1273,7 +1273,7 @@ let ``POST "/redirect" redirect to "/" `` () =
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/redirect")) |> ignore
 
     task {
-        let! result = ctx |> app
+        let! (result:HttpContext option) = ctx |> app
     
         match result with
         | None     -> assertFail "It was expected that the request would be redirected" 

@@ -217,7 +217,7 @@ let ``bindQueryString test`` () =
 
 [<Fact>]
 let ``bindQueryString with option property test`` () =
-    let testRoute queryStr expected =
+    let testRoute (queryStr:string) (expected:ModelWithOption) =
         let queryHandlerWithSome (ctx : HttpContext) =
             task {
                 let! model = ctx.BindQueryString<ModelWithOption>()

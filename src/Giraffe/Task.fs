@@ -34,15 +34,17 @@ let inline mapWithOptions (token: CancellationToken) (continuationOptions: TaskC
 let inline map f (m: Task<_>) =
    m.ContinueWith(fun (t: Task<_>) -> f t.Result)
 
-
 let inline bindTaskWithOptions (token: CancellationToken) (continuationOptions: TaskContinuationOptions) (scheduler: TaskScheduler) (f: unit -> Task<'U>) (m: Task) =
-   m.ContinueWith((fun _ -> f ()), token, continuationOptions, scheduler).Unwrap()
+   if m.IsCompleted then f ()
+   else m.ContinueWith((fun _ -> f ()), token, continuationOptions, scheduler).Unwrap()
 
 let inline bindWithOptions (token: CancellationToken) (continuationOptions: TaskContinuationOptions) (scheduler: TaskScheduler) (f: 'T -> Task<'U>) (m: Task<'T>) =
-   m.ContinueWith((fun (x: Task<_>) -> f x.Result), token, continuationOptions, scheduler).Unwrap()
+   if m.IsCompleted then f m.Result
+   else m.ContinueWith((fun (x: Task<_>) -> f x.Result), token, continuationOptions, scheduler).Unwrap()
 
 let inline bind (f: 'T -> Task<'U>) (m: Task<'T>) = 
-   m.ContinueWith(fun (x: Task<_>) -> f x.Result).Unwrap()
+   if m.IsCompleted then f m.Result
+   else m.ContinueWith(fun (x: Task<_>) -> f x.Result).Unwrap()
 
 let inline returnM a = 
    let s = TaskCompletionSource()
@@ -66,17 +68,20 @@ type TaskBuilder(?continuationOptions, ?scheduler, ?cancellationToken) =
 
    member this.ReturnFrom (a: Task<'T>) = a
 
-   member this.Bind(m:Task<'T>, f:'T->Task<'U>) = 
-      if m.IsFaulted then
-            let tcs = TaskCompletionSource<'U>()           
-            let be = m.Exception.GetBaseException()
-            raise be
-            // tcs.SetException(be)
-            // tcs.Task
-      else      
-            bindWithOptions cancellationToken contOptions scheduler f m
+//    [<CustomOperation("await")>]
+//    member this.Await (m:Task,[<ProjectionParameter>] f:unit -> Task<'U>) =
+//       bindTaskWithOptions cancellationToken contOptions scheduler f m
 
-   member this.Combine(comp1, comp2) =
+   member this.Bind(m:Task, f:unit->Task<'U>) : Task<'U> =
+      bindTaskWithOptions cancellationToken contOptions scheduler f m
+
+   member this.Bind(m:Task<'T>, f:'T->Task<'U>) : Task<'U> = 
+      bindWithOptions cancellationToken contOptions scheduler f m
+
+   member this.Combine(comp1:Task, comp2:unit->Task<'U>) =
+      this.Bind(comp1, comp2)
+
+   member this.Combine(comp1:Task<'T>, comp2:'T->Task<'U> ) =
       this.Bind(comp1, comp2)
 
    member this.While(guard, m) =
@@ -104,9 +109,6 @@ type TaskBuilder(?continuationOptions, ?scheduler, ?cancellationToken) =
             compensation()
             ExceptionDispatchInfo.Capture(e).Throw() 
             raise e
-            // let tcs = TaskCompletionSource<_>()
-            // tcs.SetException(e)
-            // tcs.Task
       
       this.Bind(this.TryWith(body, wrapCrash), wrapOk)
    member this.Using(res: #IDisposable, body: #IDisposable -> Task<'T>) =
@@ -123,23 +125,72 @@ type TaskBuilder(?continuationOptions, ?scheduler, ?cancellationToken) =
 
    member this.Run (body: unit -> Task<'T>) = body()
 
-   member this.AwaitTask (t:Task) =      
-      let tcs = TaskCompletionSource<_>()
-      let inline continuation (t:Task) : Task  = 
-            match t.IsFaulted with
-            | false ->  if t.IsCanceled 
-                        then tcs.SetCanceled()
-                        else tcs.SetResult()     
-            | true  -> 
-                  let be = t.Exception.GetBaseException()
-                  tcs.SetException(be)
-            t
-
-      t.ContinueWith(
-            continuation,
-            cancellationToken,
-            contOptions,
-            scheduler) |> ignore
-      tcs.Task
-
 let task = TaskBuilder() //scheduler = TaskScheduler.Current
+
+
+/// PainTask Builder
+
+type AwaitBuilder(?continuationOptions, ?scheduler, ?cancellationToken) =
+   let contOptions = defaultArg continuationOptions TaskContinuationOptions.None
+   let scheduler = defaultArg scheduler TaskScheduler.Default
+   let cancellationToken = defaultArg cancellationToken CancellationToken.None
+
+   member this.Zero() = Task.CompletedTask
+
+   member this.ReturnFrom (a: Task) = a
+
+   member this.Bind(m:Task, f:unit->Task) : Task = 
+      if m.IsCompleted then f ()
+      else m.ContinueWith((fun (x: Task) -> f ()), cancellationToken, contOptions, scheduler).Unwrap()
+
+   member this.Bind(m:Task<'T>, f:'T->Task) : Task = 
+      if m.IsCompleted then f m.Result
+      else m.ContinueWith((fun (x: Task<'T>) -> f x.Result), cancellationToken, contOptions, scheduler).Unwrap()
+   
+   member this.Combine(comp1:Task, comp2:unit->Task) =
+      this.Bind(comp1, comp2)
+
+   member this.Combine(comp1:Task<'T>, comp2:'T->Task ) =
+      this.Bind(comp1, comp2)
+
+   member this.While(guard, m) =
+      if not(guard()) then this.Zero() else
+            this.Bind(m(), fun () -> this.While(guard, m))
+
+   member this.TryWith(body:unit -> Task, catchFn:exn -> Task) =  
+      try
+         body()
+          .ContinueWith(fun (t:Task) ->
+             match t.IsFaulted with
+             | false -> t
+             | true  -> catchFn(t.Exception.GetBaseException()))
+          .Unwrap()
+      with e -> catchFn(e)
+
+   member this.TryFinally(body:unit->Task, compensation) =
+      let wrapOk () : Task =
+          compensation()
+          Task.CompletedTask
+
+      let wrapCrash (e:exn) : Task =
+            printfn ">> the following exception has been receieved : %A" e.Message
+            compensation()
+            ExceptionDispatchInfo.Capture(e).Throw() 
+            raise e
+      
+      this.Bind(this.TryWith(body, wrapCrash), wrapOk)
+   member this.Using(res: #IDisposable, body: #IDisposable -> Task) =
+      this.TryFinally(
+            (fun () -> body res),
+            (fun () -> match res with null -> () | disp -> disp.Dispose())
+            )
+
+   member this.For(sequence: seq<_>, body) =
+      this.Using(sequence.GetEnumerator(),
+                     fun enum -> this.While(enum.MoveNext, fun () -> body enum.Current))
+
+   member this.Delay (body : unit -> Task) = body
+
+   member this.Run (body: unit -> Task) = body()
+
+let await = AwaitBuilder()

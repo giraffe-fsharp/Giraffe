@@ -36,7 +36,7 @@ type GiraffeMiddleware (next          : RequestDelegate,
     do if isNull next then raise (ArgumentNullException("next"))
 
     member __.Invoke (ctx : HttpContext) =
-        task {
+        await {
             
             let! result = handler ctx
             
@@ -48,8 +48,8 @@ type GiraffeMiddleware (next          : RequestDelegate,
                 |> logger.LogDebug
 
             if (result.IsNone) then
-                return! next.Invoke ctx |> task.AwaitTask //return
-        } |> asPlainTask
+                return! next.Invoke ctx //return
+        }
 
 /// ---------------------------
 /// Error Handling middleware
@@ -62,17 +62,17 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
     do if isNull next then raise (ArgumentNullException("next"))
 
     member __.Invoke (ctx : HttpContext) =
-        task {
+        await {
             try
-                return! next.Invoke ctx |> task.AwaitTask
+                return! next.Invoke ctx
             with ex ->
                 let logger = loggerFactory.CreateLogger<GiraffeErrorHandlerMiddleware>()
                 try
-                    return! errorHandler ex logger ctx |> task.AwaitTask
+                    return! errorHandler ex logger ctx
                 with ex2 ->
                     logger.LogError(EventId(0), ex,  "An unhandled exception has occurred while executing the request.")
                     logger.LogError(EventId(0), ex2, "An exception was thrown attempting to handle the original exception.")
-        } |> asPlainTask
+        } // |> asPlainTask
 
 /// ---------------------------
 /// Extension methods for convenience

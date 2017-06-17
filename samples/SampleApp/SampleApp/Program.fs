@@ -55,7 +55,7 @@ let loginHandler =
             let identity = ClaimsIdentity(claims, authScheme)
             let user     = ClaimsPrincipal(identity)
 
-            do! ctx.Authentication.SignInAsync(authScheme, user) |> task.AwaitTask
+            do! ctx.Authentication.SignInAsync(authScheme, user) //|> task.AwaitTask
             
             return! text "Successfully logged in" ctx
         }
@@ -105,7 +105,7 @@ let largeFileUploadHandler =
     fun (ctx : HttpContext) ->
         task {
             let formFeature = ctx.Features.Get<IFormFeature>()
-            let! form = formFeature.ReadFormAsync CancellationToken.None
+            let! (form:IFormCollection) = formFeature.ReadFormAsync CancellationToken.None
             return!
                 (form.Files
                 |> Seq.fold (fun acc file -> sprintf "%s\n%s" acc file.FileName) ""

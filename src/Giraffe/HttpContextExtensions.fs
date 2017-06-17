@@ -64,9 +64,9 @@ type HttpContext with
             return deserializeXml<'T> body
         }
 
-    member this.BindForm<'T>()  =
+    member this.BindForm<'T>() =
         task {
-            let! form = this.Request.ReadFormAsync()
+            let! (form : IFormCollection) = this.Request.ReadFormAsync()
             let obj   = Activator.CreateInstance<'T>()
             let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
             props
