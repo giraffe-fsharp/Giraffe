@@ -6,10 +6,12 @@ A functional ASP.NET Core micro framework for building rich web applications.
 
 Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) for more information.
 
-[![Build status](https://ci.appveyor.com/api/projects/status/0ft2427dflip7wti/branch/master?svg=true)](https://ci.appveyor.com/project/dustinmoris/giraffe/branch/master)
+[![Windows Build status](https://ci.appveyor.com/api/projects/status/0ft2427dflip7wti/branch/master?svg=true)](https://ci.appveyor.com/project/dustinmoris/giraffe/branch/master)
+[![Linux Build status](https://travis-ci.org/dustinmoris/Giraffe.svg?branch=master)](https://travis-ci.org/dustinmoris/Giraffe) 
 [![NuGet Info](https://buildstats.info/nuget/Giraffe?includePreReleases=true)](https://www.nuget.org/packages/Giraffe/)
 
-[![Build history](https://buildstats.info/appveyor/chart/dustinmoris/giraffe?branch=master&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/giraffe/history)
+[![Windows Build history](https://buildstats.info/appveyor/chart/dustinmoris/giraffe?branch=master&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/giraffe/history)
+[![Linux Build history](https://buildstats.info/travisci/chart/dustinmoris/Giraffe?branch=master&includeBuildsFromPullRequest=false)](https://travis-ci.org/dustinmoris/Giraffe/builds/) 
 
 #### ATTENTION:
 
