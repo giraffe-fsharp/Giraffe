@@ -21,14 +21,14 @@ let renderRazorView (razorViewEngine   : IRazorViewEngine)
         let viewEngineResult = razorViewEngine.FindView(actionContext, viewName, false)
 
         match viewEngineResult.Success with
-        | false -> 
+        | false ->
             let locations = String.Join(" ", viewEngineResult.SearchedLocations)
             return Error (sprintf "Could not find view with the name '%s', looked in %s" viewName locations)
         | true  ->
             let view = viewEngineResult.View
             let viewDataDict       = ViewDataDictionary<'T>(EmptyModelMetadataProvider(), ModelStateDictionary(), Model = model)
             let tempDataDict       = TempDataDictionary(actionContext.HttpContext, tempDataProvider)
-            let htmlHelperOptions  = HtmlHelperOptions()            
+            let htmlHelperOptions  = HtmlHelperOptions()
             use output = new StringWriter()
             let viewContext = ViewContext(actionContext, view, viewDataDict, tempDataDict, output, htmlHelperOptions)
             do! view.RenderAsync(viewContext) |> Async.AwaitTask
