@@ -723,7 +723,7 @@ There's a few additional `HttpHandler` functions which you can get through refer
 
 ### Giraffe.Razor
 
-The `Giraffe.Razor` NuGet package adds additional http handlers to render a Razor view from Giraffe.
+The `Giraffe.Razor` NuGet package adds additional `HttpHandler` functions to render Razor views from Giraffe.
 
 #### razorView
 
@@ -735,6 +735,8 @@ The `razorView` handler requires the view name, an object model and the contentT
 Add the razor engine service during start-up:
 
 ```fsharp
+open Giraffe.Razor.Middleware
+
 type Startup() =
     member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =    
         let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
@@ -744,6 +746,8 @@ type Startup() =
 Use the razorView function:
 
 ```fsharp
+open Giraffe.Razor.HttpHandlers
+
 let model = { WelcomeText = "Hello World" }
 
 let app = 
@@ -761,6 +765,8 @@ let app =
 Add the razor engine service during start-up:
 
 ```fsharp
+open Giraffe.Razor.Middleware
+
 type Startup() =
     member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =    
         let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
@@ -770,6 +776,8 @@ type Startup() =
 Use the razorView function:
 
 ```fsharp
+open Giraffe.Razor.HttpHandlers
+
 let model = { WelcomeText = "Hello World" }
 
 let app = 
@@ -781,7 +789,7 @@ let app =
 
 ### Giraffe.DotLiquid
 
-The `Giraffe.DotLiquid` NuGet package adds additional http handlers to render a DotLiquid template in Giraffe.
+The `Giraffe.DotLiquid` NuGet package adds additional `HttpHandler` functions to render DotLiquid templates in Giraffe.
 
 #### dotLiquid
 
@@ -792,6 +800,8 @@ The `dotLiquid` handler requires the content type and the actual template to be 
 ##### Example:
 
 ```fsharp
+open Giraffe.DotLiquid.HttpHandlers
+
 type Person =
     {
         FirstName : string
@@ -815,6 +825,8 @@ This http handler takes a relative path of a template file, an associated model 
 ##### Example:
 
 ```fsharp
+open Giraffe.DotLiquid.HttpHandlers
+
 type Person =
     {
         FirstName : string
@@ -834,6 +846,8 @@ let app =
 ##### Example:
 
 ```fsharp
+open Giraffe.DotLiquid.HttpHandlers
+
 type Person =
     {
         FirstName : string
@@ -1362,6 +1376,7 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Roman Melnikov](https://github.com/Neftedollar) (Added `redirectTo` route)
 - [Diego B. Fernandez](https://github.com/diegobfernandez) (Added support for the `Option<'T>` type in the query string model binding)
 - [Jimmy Byrd](https://github.com/TheAngryByrd) (Added Linux builds)
+- [Jon Canning](https://github.com/JonCanning) (Moved the Razor and DotLiquid http handlers into separate NuGet packages)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
 
