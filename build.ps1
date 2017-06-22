@@ -27,13 +27,13 @@ function Invoke-Cmd ($cmd)
     {
         $command = "cmd.exe /C $cmd"
         Invoke-Expression -Command $command
+        if ($LastExitCode -ne 0) { Write-Error "An error occured when executing '$cmd'."; return }
     }
     catch
     {
-        # Run normal cmd when on Linux
+        # Run normal when on Linux
         Invoke-Expression -Command $cmd
     }
-    if ($LastExitCode -ne 0) { Write-Error "An error occured when executing '$cmd'."; return }
 }
 
 function Write-DotnetVersion
