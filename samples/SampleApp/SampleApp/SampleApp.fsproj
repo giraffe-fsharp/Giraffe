@@ -26,12 +26,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Giraffe\Giraffe.fsproj" />
+    <ProjectReference Include="..\..\..\src\Giraffe.Razor\Giraffe.Razor.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.0" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <Watch Include="**\*.cshtml" Exclude="bin\**\*" />
   </ItemGroup>

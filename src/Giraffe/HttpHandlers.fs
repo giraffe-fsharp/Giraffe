@@ -8,14 +8,10 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.AspNetCore.Mvc.Razor
-open Microsoft.AspNetCore.Mvc.ViewFeatures
 open FSharp.Core.Printf
-open DotLiquid
 open Giraffe.Common
 open Giraffe.FormatExpressions
 open Giraffe.HttpContextExtensions
-open Giraffe.RazorEngine
 open Giraffe.HtmlEngine
 
 type HttpHandlerResult = Async<HttpContext option>
@@ -39,7 +35,7 @@ let private RouteKey = "giraffe_route"
 
 let private getSavedSubPath (ctx : HttpContext) =
     if ctx.Items.ContainsKey RouteKey
-    then ctx.Items.Item RouteKey |> string |> strOption 
+    then ctx.Items.Item RouteKey |> string |> strOption
     else None
 
 let private getPath (ctx : HttpContext) =
@@ -47,7 +43,7 @@ let private getPath (ctx : HttpContext) =
     | Some p -> ctx.Request.Path.ToString().[p.Length..]
     | None   -> ctx.Request.Path.ToString()
 
-let private handlerWithRootedPath (path : string) (handler : HttpHandler) = 
+let private handlerWithRootedPath (path : string) (handler : HttpHandler) =
     fun (ctx : HttpContext) ->
         async {
             let savedSubPath = getSavedSubPath ctx
@@ -177,7 +173,7 @@ let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) =
     fun (ctx : HttpContext) ->
         let user = ctx.User
         roles
-        |> List.exists user.IsInRole 
+        |> List.exists user.IsInRole
         |> function
             | true  -> async.Return (Some ctx)
             | false -> authFailedHandler ctx
@@ -229,7 +225,7 @@ let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
 let routeStartsWith (subPath : string) =
     fun (ctx : HttpContext) ->
-        if (getPath ctx).StartsWith subPath 
+        if (getPath ctx).StartsWith subPath
         then Some ctx
         else None
         |> async.Return
@@ -237,7 +233,7 @@ let routeStartsWith (subPath : string) =
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
 let routeStartsWithCi (subPath : string) =
     fun (ctx : HttpContext) ->
-        if (getPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase) 
+        if (getPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase)
         then Some ctx
         else None
         |> async.Return
@@ -274,7 +270,7 @@ let setHttpHeader (key : string) (value : obj) =
 /// Writes to the body of the HTTP response and sets the HTTP header Content-Length accordingly.
 let setBody (bytes : byte array) =
     fun (ctx : HttpContext) ->
-        async {            
+        async {
             ctx.Response.Headers.["Content-Length"] <- StringValues(bytes.Length.ToString())
             ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length)
             |> Async.AwaitTask
@@ -318,54 +314,6 @@ let htmlFile (relativeFilePath : string) =
                 |> (setHttpHeader "Content-Type" "text/html"
                 >=> setBodyAsString html)
         }
-
-/// Renders a model and a template with the DotLiquid template engine and sets the HTTP response
-/// with the compiled output as well as the Content-Type HTTP header to the given value.
-let dotLiquid (contentType : string) (template : string) (model : obj) =
-    let view = Template.Parse template
-    setHttpHeader "Content-Type" contentType
-    >=> (model
-        |> Hash.FromAnonymousObject
-        |> view.Render
-        |> setBodyAsString)
-
-/// Reads a dotLiquid template file from disk and compiles it with the given model and sets
-/// the compiled output as well as the given contentType as the HTTP reponse.
-let dotLiquidTemplate (contentType : string) (templatePath : string) (model : obj) = 
-    fun (ctx : HttpContext) ->
-        async {
-            let env = ctx.GetService<IHostingEnvironment>()
-            let templatePath = env.ContentRootPath + templatePath
-            let! template = readFileAsString templatePath
-            return! dotLiquid contentType template model ctx
-        }
-
-/// Reads a dotLiquid template file from disk and compiles it with the given model and sets
-/// the compiled output as the HTTP reponse with a Content-Type of text/html.
-let dotLiquidHtmlView (templatePath : string) (model : obj) =
-    dotLiquidTemplate "text/html" templatePath model
-
-/// Reads a razor view from disk and compiles it with the given model and sets
-/// the compiled output as the HTTP reponse with the given contentType.
-let razorView (contentType : string) (viewName : string) (model : 'T) =
-    fun (ctx : HttpContext) ->
-        async {
-            let engine = ctx.GetService<IRazorViewEngine>()
-            let tempDataProvider = ctx.GetService<ITempDataProvider>()
-            let! result = renderRazorView engine tempDataProvider ctx viewName model
-            match result with
-            | Error msg -> return (failwith msg)
-            | Ok output ->
-                return!
-                    ctx
-                    |> (setHttpHeader "Content-Type" contentType
-                    >=> setBodyAsString output)
-        }
-
-/// Reads a razor view from disk and compiles it with the given model and sets
-/// the compiled output as the HTTP reponse with a Content-Type of text/html.
-let razorHtmlView (viewName : string) (model : 'T) =
-    razorView "text/html" viewName model
 
 /// Uses the Giraffe.HtmlEngine to compile and render a HTML Document from
 /// a given HtmlNode. The HTTP response is of Content-Type text/html.
@@ -444,6 +392,6 @@ let negotiate (responseObj : obj) =
 
 ///Redirects to a different location with a 302 or 301 (when permanent) HTTP status code.
 let redirectTo (permanent : bool) (location : string)  =
-    fun (ctx:HttpContext) -> 
+    fun (ctx:HttpContext) ->
         ctx.Response.Redirect(location, permanent)
         ctx |> Some |> async.Return

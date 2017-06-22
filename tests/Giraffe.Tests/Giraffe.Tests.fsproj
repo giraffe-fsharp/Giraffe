@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Giraffe\Giraffe.fsproj" />
+    <ProjectReference Include="..\..\src\Giraffe.DotLiquid\Giraffe.DotLiquid.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -28,7 +28,7 @@ let renderRazorView (razorViewEngine   : IRazorViewEngine)
             let view = viewEngineResult.View
             let viewDataDict       = ViewDataDictionary<'T>(EmptyModelMetadataProvider(), ModelStateDictionary(), Model = model)
             let tempDataDict       = TempDataDictionary(actionContext.HttpContext, tempDataProvider)
-            let htmlHelperOptions  = HtmlHelperOptions()            
+            let htmlHelperOptions  = HtmlHelperOptions()
             use output = new StringWriter()
             let viewContext = ViewContext(actionContext, view, viewDataDict, tempDataDict, output, htmlHelperOptions)
             do! view.RenderAsync(viewContext) |> Async.AwaitTask

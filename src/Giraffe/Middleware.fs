@@ -7,7 +7,6 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.FileProviders
-open Microsoft.AspNetCore.Mvc.Razor
 open Giraffe.HttpHandlers
 
 /// ---------------------------
@@ -27,7 +26,7 @@ let private getRequestInfo (ctx : HttpContext) =
 type GiraffeMiddleware (next          : RequestDelegate,
                         handler       : HttpHandler,
                         loggerFactory : ILoggerFactory) =
-    
+
     do if isNull next then raise (ArgumentNullException("next"))
 
     member __.Invoke (ctx : HttpContext) =
@@ -85,13 +84,4 @@ type IApplicationBuilder with
 
     member this.UseGiraffeErrorHandler (handler : ErrorHandler) =
         this.UseMiddleware<GiraffeErrorHandlerMiddleware>(handler)
-        |> ignore
-
-type IServiceCollection with
-    member this.AddRazorEngine (viewsFolderPath : string) =
-        this.Configure<RazorViewEngineOptions>(
-            fun options ->
-                options.FileProviders.Clear()
-                options.FileProviders.Add(new PhysicalFileProvider(viewsFolderPath)))
-            .AddMvc()
         |> ignore
