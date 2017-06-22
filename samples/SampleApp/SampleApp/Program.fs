@@ -171,7 +171,7 @@ let configureLogging (loggerFactory : ILoggerFactory) =
 [<EntryPoint>]
 let main argv =
     let contentRoot = Directory.GetCurrentDirectory()
-    let webRoot     = Path.Combine(contentRoot, "webroot")
+    let webRoot     = Path.Combine(contentRoot, "WebRoot")
     WebHostBuilder()
         .UseKestrel()
         .UseContentRoot(contentRoot)

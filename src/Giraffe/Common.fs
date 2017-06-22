@@ -35,10 +35,10 @@ let inline deserializeJson<'T> str = JsonConvert.DeserializeObject<'T> str
 
 let serializeXml x =
     use stream = new MemoryStream()
-    let xmlWriterSettings = XmlWriterSettings(Encoding= Encoding.UTF8, Indent = true, OmitXmlDeclaration=false )
-    use xmlWriter = XmlWriter.Create(stream, xmlWriterSettings)
+    let settings = XmlWriterSettings(Encoding = Encoding.UTF8, Indent = true, OmitXmlDeclaration = false)
+    use writer = XmlWriter.Create(stream, settings)
     let serializer = XmlSerializer(x.GetType())
-    serializer.Serialize(xmlWriter, x)
+    serializer.Serialize(writer, x)
     stream.ToArray()
 
 let deserializeXml<'T> str =

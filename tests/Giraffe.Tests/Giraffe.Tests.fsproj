@@ -15,8 +15,6 @@
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.*" />
     <PackageReference Include="xunit" Version="2.2.0" />
     <PackageReference Include="NSubstitute" Version="2.0.1-rc" />
-    <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.0" />
-
   </ItemGroup>
 
   <ItemGroup>
@@ -24,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Assert.fs" />
+    <Compile Include="Asserts.fs" />
     <Compile Include="FormatExpressionTests.fs" />
     <Compile Include="HttpHandlerTests.fs" />
     <Compile Include="HtmlEngineTests.fs" />

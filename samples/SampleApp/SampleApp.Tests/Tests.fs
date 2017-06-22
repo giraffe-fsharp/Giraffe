@@ -52,10 +52,9 @@ let makeRequest (client : HttpClient) (request : HttpRequestMessage) =
     |> runTask
 
 let ensureSuccess (response : HttpResponseMessage) =
-    if not response.IsSuccessStatusCode then
-        response.Content.ReadAsStringAsync() |> runTask |> failwithf "%A"
-    else
-        response
+    if not response.IsSuccessStatusCode
+    then response.Content.ReadAsStringAsync() |> runTask |> failwithf "%A"
+    else response
 
 let isStatus (code : HttpStatusCode) (response : HttpResponseMessage) =
     Assert.Equal(code, response.StatusCode)

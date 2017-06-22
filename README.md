@@ -6,12 +6,12 @@ A functional ASP.NET Core micro framework for building rich web applications.
 
 Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) for more information.
 
-[![Windows Build status](https://ci.appveyor.com/api/projects/status/0ft2427dflip7wti/branch/master?svg=true)](https://ci.appveyor.com/project/dustinmoris/giraffe/branch/master)
-[![Linux Build status](https://travis-ci.org/dustinmoris/Giraffe.svg?branch=master)](https://travis-ci.org/dustinmoris/Giraffe) 
 [![NuGet Info](https://buildstats.info/nuget/Giraffe?includePreReleases=true)](https://www.nuget.org/packages/Giraffe/)
 
-[![Windows Build history](https://buildstats.info/appveyor/chart/dustinmoris/giraffe?branch=master&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/giraffe/history)
-[![Linux Build history](https://buildstats.info/travisci/chart/dustinmoris/Giraffe?branch=master&includeBuildsFromPullRequest=false)](https://travis-ci.org/dustinmoris/Giraffe/builds/) 
+| Windows | Linux |
+| ------- | ----- |
+| [![Windows Build status](https://ci.appveyor.com/api/projects/status/0ft2427dflip7wti/branch/develop?svg=true)](https://ci.appveyor.com/project/dustinmoris/giraffe/branch/develop) | [![Linux Build status](https://travis-ci.org/dustinmoris/Giraffe.svg?branch=develop)](https://travis-ci.org/dustinmoris/Giraffe/builds?branch=develop) |
+| [![Windows Build history](https://buildstats.info/appveyor/chart/dustinmoris/giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/giraffe/history) | [![Linux Build history](https://buildstats.info/travisci/chart/dustinmoris/Giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://travis-ci.org/dustinmoris/Giraffe/builds?branch=develop) |
 
 #### ATTENTION:
 
@@ -1346,6 +1346,7 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Florian Verdonck](https://github.com/nojaf) (Ported Suave's experimental Html into Giraffe, implemented the warbler and general help with the project)
 - [Roman Melnikov](https://github.com/Neftedollar) (Added `redirectTo` route)
 - [Diego B. Fernandez](https://github.com/diegobfernandez) (Added support for the `Option<'T>` type in the query string model binding)
+- [Jimmy Byrd](https://github.com/TheAngryByrd) (Added Linux builds)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
 
