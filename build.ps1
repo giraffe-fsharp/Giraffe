@@ -23,8 +23,16 @@ $ErrorActionPreference = "Stop"
 function Invoke-Cmd ($cmd)
 {
     Write-Host $cmd -ForegroundColor DarkCyan
-    $command = "cmd.exe /C $cmd"
-    Invoke-Expression -Command $command
+    try
+    {
+        $command = "cmd.exe /C $cmd"
+        Invoke-Expression -Command $command
+    }
+    catch
+    {
+        # Run normal cmd when on Linux
+        Invoke-Expression -Command $cmd
+    }
     if ($LastExitCode -ne 0) { Write-Error "An error occured when executing '$cmd'."; return }
 }
 
