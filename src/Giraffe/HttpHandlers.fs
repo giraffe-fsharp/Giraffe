@@ -272,9 +272,7 @@ let setBody (bytes : byte array) =
     fun (ctx : HttpContext) ->
         async {
             ctx.Response.Headers.["Content-Length"] <- StringValues(bytes.Length.ToString())
-            ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length)
-            |> Async.AwaitTask
-            |> ignore
+            do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length) |> Async.AwaitTask
             return Some ctx
         }
 

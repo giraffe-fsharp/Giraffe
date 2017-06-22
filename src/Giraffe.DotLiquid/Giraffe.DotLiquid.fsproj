@@ -1,8 +1,9 @@
 ﻿<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <AssemblyName>Giraffe.DotLiquid</AssemblyName>
     <Version>0.1.0-alpha001</Version>
-    <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
+    <Description>DotLiquid templating engine handlers for the Giraffe web framework.</Description>
     <Copyright>Copyright 2017 Dustin Moris Gorski</Copyright>
     <NeutralLanguage>en-GB</NeutralLanguage>
     <Authors>Dustin Moris Gorski and contributors</Authors>
@@ -12,7 +13,7 @@
     <Optimize>True</Optimize>
     <OutputType>Library</OutputType>
     <PackageId>Giraffe.DotLiquid</PackageId>
-    <PackageTags>Giraffe;ASP.NET Core;Lambda;FSharp;Functional;Http;Web;Framework;Micro;Service</PackageTags>
+    <PackageTags>Giraffe;DotLiquid;ASP.NET Core;Lambda;FSharp;Functional;Http;Web;Framework;Micro;Service</PackageTags>
     <PackageReleaseNotes>https://github.com/dustinmoris/giraffe/releases</PackageReleaseNotes>
     <PackageIconUrl>https://raw.githubusercontent.com/dustinmoris/giraffe/master/giraffe-64x64.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/dustinmoris/giraffe</PackageProjectUrl>
@@ -23,16 +24,19 @@
     <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
     <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netstandard1.6' ">$(PackageTargetFallback);portable-net45+win8;</PackageTargetFallback>
   </PropertyGroup>
+
   <ItemGroup>
-    <Compile Include="HttpHandlers.fs" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="DotLiquid" Version="2.0.*" />
     <PackageReference Include="FSharp.Core" Version="4.1.*" />
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="1.1.2" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="1.1.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="1.1.1" />
     <PackageReference Include="Microsoft.Extensions.Primitives" Version="1.1.*" />
+    <PackageReference Include="DotLiquid" Version="2.0.*" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="HttpHandlers.fs" />
+  </ItemGroup>
+
 </Project>

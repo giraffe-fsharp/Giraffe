@@ -13,6 +13,7 @@ open NSubstitute
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
 open Giraffe.HtmlEngine
+open Giraffe.DotLiquid.HttpHandlers
 open Giraffe.Tests.Asserts
 
 // ---------------------------------

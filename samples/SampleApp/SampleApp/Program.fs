@@ -14,6 +14,8 @@ open Microsoft.Extensions.DependencyInjection
 open Giraffe.HttpContextExtensions
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
+open Giraffe.Razor.HttpHandlers
+open Giraffe.Razor.Middleware
 open SampleApp.Models
 open SampleApp.HtmlViews
 

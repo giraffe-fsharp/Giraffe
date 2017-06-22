@@ -1,4 +1,5 @@
 ﻿<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <AssemblyName>Giraffe</AssemblyName>
     <Version>0.1.0-alpha019</Version>
@@ -24,6 +25,7 @@
     <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netstandard1.6' ">$(PackageTargetFallback);portable-net45+win8;</PackageTargetFallback>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="FSharp.Core" Version="4.1.*" />
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
@@ -33,6 +35,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="1.1.*" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.*" />
   </ItemGroup>
+
   <ItemGroup>
     <Compile Include="Common.fs" />
     <Compile Include="ComputationExpressions.fs" />
@@ -42,4 +45,5 @@
     <Compile Include="HttpHandlers.fs" />
     <Compile Include="Middleware.fs" />
   </ItemGroup>
+  
 </Project>

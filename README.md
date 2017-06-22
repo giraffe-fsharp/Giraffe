@@ -58,14 +58,17 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [negotiate](#negotiate)
     - [negotiateWith](#negotiatewith)
     - [htmlFile](#htmlfile)
-    - [dotLiquid](#dotliquid)
-    - [dotLiquidTemplate](#dotliquidtemplate)
-    - [dotLiquidHtmlView](#dotliquidhtmlview)
-    - [razorView](#razorview)
-    - [razorHtmlView](#razorhtmlview)
     - [renderHtml](#renderhtml)
     - [redirectTo](#redirectto)
     - [warbler](#warbler)
+- [Additional HttpHandlers](#additional-httphandlers)
+    - [Giraffe.Razor](#girafferazor)
+        - [razorView](#razorview)
+        - [razorHtmlView](#razorhtmlview)
+    - [Giraffe.DotLiquid](#giraffedotliquid)
+        - [dotLiquid](#dotliquid)
+        - [dotLiquidTemplate](#dotliquidtemplate)
+        - [dotLiquidHtmlView](#dotliquidhtmlview)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Model Binding](#model-binding)
     - [BindJson](#bindjson)
@@ -632,123 +635,6 @@ let app =
     ]
 ```
 
-### dotLiquid
-
-`dotLiquid` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
-
-The `dotLiquid` handler requires the content type and the actual template to be passed in as two string values together with an object model. This handler is supposed to be used as the base handler for other http handlers which want to utilize the DotLiquid template engine (e.g. you could create an SVG handler on top of it).
-
-#### Example:
-
-```fsharp
-type Person =
-    {
-        FirstName : string
-        LastName  : string
-    }
-
-let template = "<html><head><title>DotLiquid</title></head><body><p>First name: {{ firstName }}<br />Last name: {{ lastName }}</p></body></html>
-
-let app = 
-    choose [
-        route  "/foo" >=> dotLiquid "text/html" template { FirstName = "Foo"; LastName = "Bar" }
-    ]
-```
-
-### dotLiquidTemplate
-
-`dotLiquidTemplate` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
-
-This http handler takes a relative path of a template file, an associated model and the contentType of the response as parameters.
-
-#### Example:
-
-```fsharp
-type Person =
-    {
-        FirstName : string
-        LastName  : string
-    }
-
-let app = 
-    choose [
-        route  "/foo" >=> dotLiquidTemplate "text/html" "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
-    ]
-```
-
-### dotLiquidHtmlView
-
-`dotLiquidHtmlView` is the same as `dotLiquidTemplate` except that it automatically sets the response as `text/html`.
-
-#### Example:
-
-```fsharp
-type Person =
-    {
-        FirstName : string
-        LastName  : string
-    }
-
-let app = 
-    choose [
-        route  "/foo" >=> dotLiquidHtmlView "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
-    ]
-```
-
-### razorView
-
-`razorView` uses the official ASP.NET Core MVC Razor view engine to compile a page and set the body of the `HttpResponse`. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
-
-The `razorView` handler requires the view name, an object model and the contentType of the response to be passed in. It also requires to be enabled through the `AddRazorEngine` function during start-up.
-
-#### Example:
-Add the razor engine service during start-up:
-
-```fsharp
-type Startup() =
-    member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =    
-        let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
-        services.AddRazorEngine(viewsFolderPath) |> ignore
-```
-
-Use the razorView function:
-
-```fsharp
-let model = { WelcomeText = "Hello World" }
-
-let app = 
-    choose [
-        // Assuming there is a view called "Index.cshtml"
-        route  "/" >=> razorView "text/html" "Index" model
-    ]
-```
-
-### razorHtmlView
-
-`razorHtmlView` is the same as `razorView` except that it automatically sets the response as `text/html`.
-
-#### Example:
-Add the razor engine service during start-up:
-
-```fsharp
-type Startup() =
-    member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =    
-        let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
-        services.AddRazorEngine(viewsFolderPath) |> ignore
-```
-
-Use the razorView function:
-
-```fsharp
-let model = { WelcomeText = "Hello World" }
-
-let app = 
-    choose [
-        // Assuming there is a view called "Index.cshtml"
-        route  "/" >=> razorHtmlView "Index" model
-    ]
-```
-
 ### renderHtml
 
 `renderHtml` is a more functional way of generating HTML by composing HTML elements in F# to generate a rich Model-View output.
@@ -829,6 +715,135 @@ A warbler will help to evaluate the function every time the route is hit.
 ```fsharp
 // ('a -> 'a -> 'b) -> 'a -> 'b
 let warbler f a = f a a
+```
+
+## Additional HttpHandlers
+
+There's a few additional `HttpHandler` functions which you can get through referencing extra NuGet packages.
+
+### Giraffe.Razor
+
+The `Giraffe.Razor` NuGet package adds additional http handlers to render a Razor view from Giraffe.
+
+#### razorView
+
+`razorView` uses the official ASP.NET Core MVC Razor view engine to compile a page and set the body of the `HttpResponse`. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
+
+The `razorView` handler requires the view name, an object model and the contentType of the response to be passed in. It also requires to be enabled through the `AddRazorEngine` function during start-up.
+
+##### Example:
+Add the razor engine service during start-up:
+
+```fsharp
+type Startup() =
+    member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =    
+        let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
+        services.AddRazorEngine(viewsFolderPath) |> ignore
+```
+
+Use the razorView function:
+
+```fsharp
+let model = { WelcomeText = "Hello World" }
+
+let app = 
+    choose [
+        // Assuming there is a view called "Index.cshtml"
+        route  "/" >=> razorView "text/html" "Index" model
+    ]
+```
+
+#### razorHtmlView
+
+`razorHtmlView` is the same as `razorView` except that it automatically sets the response as `text/html`.
+
+##### Example:
+Add the razor engine service during start-up:
+
+```fsharp
+type Startup() =
+    member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =    
+        let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
+        services.AddRazorEngine(viewsFolderPath) |> ignore
+```
+
+Use the razorView function:
+
+```fsharp
+let model = { WelcomeText = "Hello World" }
+
+let app = 
+    choose [
+        // Assuming there is a view called "Index.cshtml"
+        route  "/" >=> razorHtmlView "Index" model
+    ]
+```
+
+### Giraffe.DotLiquid
+
+The `Giraffe.DotLiquid` NuGet package adds additional http handlers to render a DotLiquid template in Giraffe.
+
+#### dotLiquid
+
+`dotLiquid` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
+
+The `dotLiquid` handler requires the content type and the actual template to be passed in as two string values together with an object model. This handler is supposed to be used as the base handler for other http handlers which want to utilize the DotLiquid template engine (e.g. you could create an SVG handler on top of it).
+
+##### Example:
+
+```fsharp
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let template = "<html><head><title>DotLiquid</title></head><body><p>First name: {{ firstName }}<br />Last name: {{ lastName }}</p></body></html>
+
+let app = 
+    choose [
+        route  "/foo" >=> dotLiquid "text/html" template { FirstName = "Foo"; LastName = "Bar" }
+    ]
+```
+
+#### dotLiquidTemplate
+
+`dotLiquidTemplate` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
+
+This http handler takes a relative path of a template file, an associated model and the contentType of the response as parameters.
+
+##### Example:
+
+```fsharp
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let app = 
+    choose [
+        route  "/foo" >=> dotLiquidTemplate "text/html" "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
+    ]
+```
+
+#### dotLiquidHtmlView
+
+`dotLiquidHtmlView` is the same as `dotLiquidTemplate` except that it automatically sets the response as `text/html`.
+
+##### Example:
+
+```fsharp
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let app = 
+    choose [
+        route  "/foo" >=> dotLiquidHtmlView "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
+    ]
 ```
 
 ## Custom HttpHandlers

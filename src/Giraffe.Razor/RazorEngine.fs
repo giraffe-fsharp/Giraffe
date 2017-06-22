@@ -1,4 +1,4 @@
-module Giraffe.RazorEngine
+module Giraffe.Razor.Engine
 
 open System
 open System.IO

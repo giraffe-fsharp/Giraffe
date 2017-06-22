@@ -5,9 +5,10 @@
 param
 (
     [switch] $Release,
-    [switch] $IncludeTests,
-    [switch] $IncludeSamples,
-    [switch] $All,
+    [switch] $ExcludeRazor,
+    [switch] $ExcludeDotLiquid,
+    [switch] $ExcludeTests,
+    [switch] $ExcludeSamples,
     [switch] $Pack,
     [switch] $Run,
     [switch] $OnlyNetStandard
@@ -87,40 +88,50 @@ function Remove-OldBuildArtifacts
 # Main
 # ----------------------------------------------
 
-$giraffe = ".\src\Giraffe\Giraffe.fsproj"
+$giraffe          = ".\src\Giraffe\Giraffe.fsproj"
+$giraffeRazor     = ".\src\Giraffe.Razor\Giraffe.Razor.fsproj"
+$giraffeDotLiquid = ".\src\Giraffe.DotLiquid\Giraffe.DotLiquid.fsproj"
+$giraffeTests     = ".\tests\Giraffe.Tests\Giraffe.Tests.fsproj"
+$sampleApp        = ".\samples\SampleApp\SampleApp\SampleApp.fsproj"
+$sampleAppTests   = ".\samples\SampleApp\SampleApp.Tests\SampleApp.Tests.fsproj"
 
 Update-AppVeyorBuildVersion $giraffe
 Test-Version $giraffe
-
 Write-DotnetVersion
 Remove-OldBuildArtifacts
 
 $configuration = if ($Release.IsPresent) { "Release" } else { "Debug" }
+$framework     = if ($OnlyNetStandard.IsPresent) { "-f netstandard1.6" } else { "" }
 
 Write-Host "Building Giraffe..." -ForegroundColor Magenta
-
 dotnet-restore $giraffe
-
-$framework = if ($OnlyNetStandard.IsPresent) { "-f netstandard1.6" } else { "" }
 dotnet-build   $giraffe "-c $configuration $framework"
 
-if ($All.IsPresent -or $IncludeTests.IsPresent)
+if (!$ExcludeRazor.IsPresent)
+{
+    Write-Host "Building Giraffe.Razor..." -ForegroundColor Magenta
+    dotnet-restore $giraffeRazor
+    dotnet-build   $giraffeRazor "-c $configuration $framework"
+}
+
+if (!$ExcludeDotLiquid.IsPresent)
+{
+    Write-Host "Building Giraffe.DotLiquid..." -ForegroundColor Magenta
+    dotnet-restore $giraffeDotLiquid
+    dotnet-build   $giraffeDotLiquid "-c $configuration $framework"
+}
+
+if (!$ExcludeTests.IsPresent)
 {
     Write-Host "Building and running tests..." -ForegroundColor Magenta
-
-    $giraffeTests = ".\tests\Giraffe.Tests\Giraffe.Tests.fsproj"
-
     dotnet-restore $giraffeTests
     dotnet-build   $giraffeTests
     dotnet-test    $giraffeTests
 }
 
-if ($All.IsPresent -or $IncludeSamples.IsPresent)
+if (!$ExcludeSamples.IsPresent)
 {
-    Write-Host "Building and testing samples..." -ForegroundColor Magenta
-
-    $sampleApp      = ".\samples\SampleApp\SampleApp\SampleApp.fsproj"
-    $sampleAppTests = ".\samples\SampleApp\SampleApp.Tests\SampleApp.Tests.fsproj"
+    Write-Host "Building and testing samples..." -ForegroundColor Magenta 
 
     dotnet-restore $sampleApp
     dotnet-build   $sampleApp
@@ -133,9 +144,6 @@ if ($All.IsPresent -or $IncludeSamples.IsPresent)
 if ($Run.IsPresent)
 {
     Write-Host "Launching sample application..." -ForegroundColor Magenta
-
-    $sampleApp      = ".\samples\SampleApp\SampleApp\SampleApp.fsproj"
-
     dotnet-restore $sampleApp
     dotnet-build   $sampleApp
     dotnet-run     $sampleApp
@@ -143,8 +151,12 @@ if ($Run.IsPresent)
 
 if ($Pack.IsPresent)
 {
-    Write-Host "Packaging Giraffe and giraffe-template..." -ForegroundColor Magenta
+    Write-Host "Packaging all NuGet packages..." -ForegroundColor Magenta
 
     dotnet-pack $giraffe "-c $configuration"
+
+    if (!$ExcludeRazor.IsPresent) { dotnet-pack $giraffeRazor "-c $configuration" }    
+    if (!$ExcludeDotLiquid.IsPresent) { dotnet-pack $giraffeDotLiquid "-c $configuration" }
+
     Invoke-Cmd "nuget pack template/giraffe-template.nuspec"
 }

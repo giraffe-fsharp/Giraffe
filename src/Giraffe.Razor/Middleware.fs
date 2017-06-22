@@ -1,4 +1,4 @@
-module Giraffe.Middleware
+module Giraffe.Razor.Middleware
 
 open Microsoft.AspNetCore.Mvc.Razor
 open Microsoft.Extensions.DependencyInjection

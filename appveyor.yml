@@ -6,7 +6,7 @@ init:
   - git config --global core.autocrlf true
 build: off
 build_script:
-  - ps: .\build.ps1 -Release -All -Pack
+  - ps: .\build.ps1 -Release -Pack
 test: off
 artifacts:
   - path: '**\Giraffe.*.nupkg'
