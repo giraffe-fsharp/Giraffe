@@ -10,9 +10,9 @@ build_script:
 test: off
 artifacts:
   - path: '**\Giraffe.*.nupkg'
-    name: Giraffe
+    name: Giraffe NuGet packages
   - path: '**\giraffe-template.*.nupkg'
-    name: giraffe-template
+    name: Giraffe Template package
 nuget:
   account_feed: false
   project_feed: false

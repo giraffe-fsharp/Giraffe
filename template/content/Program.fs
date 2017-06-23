@@ -10,6 +10,8 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
+open Giraffe.Razor.HttpHandlers
+open Giraffe.Razor.Middleware
 open _AppName.Models
 
 // ---------------------------------
