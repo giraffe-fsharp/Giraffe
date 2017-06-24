@@ -79,55 +79,53 @@ type HttpContext with
         }
 
     member this.BindQueryString<'T>() =
-        async {
-            let query = this.Request.Query
-            let obj   = Activator.CreateInstance<'T>()
-            let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
-            props
-            |> Seq.iter (fun p ->
-                let strValue = ref (StringValues())
-                if query.TryGetValue(p.Name, strValue)
-                then
-                    let isOptionType = 
-                        p.PropertyType.GetTypeInfo().IsGenericType &&
-                        p.PropertyType.GetGenericTypeDefinition() = typedefof<Option<_>>
+        let query = this.Request.Query
+        let obj   = Activator.CreateInstance<'T>()
+        let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
+        props
+        |> Seq.iter (fun p ->
+            let strValue = ref (StringValues())
+            if query.TryGetValue(p.Name, strValue)
+            then
+                let isOptionType = 
+                    p.PropertyType.GetTypeInfo().IsGenericType &&
+                    p.PropertyType.GetGenericTypeDefinition() = typedefof<Option<_>>
 
-                    let propertyType =
-                        if isOptionType then
-                            p.PropertyType.GetGenericArguments().[0]
-                        else
-                            p.PropertyType
-
-                    let propertyType =
-                        if propertyType.GetTypeInfo().IsValueType then
-                            (typedefof<Nullable<_>>).MakeGenericType([|propertyType|])
-                        else
-                            propertyType
-
-                    let converter = TypeDescriptor.GetConverter propertyType
-
-                    let value = converter.ConvertFromInvariantString(strValue.Value.ToString())
-
+                let propertyType =
                     if isOptionType then
-                        let cases = FSharpType.GetUnionCases(p.PropertyType)
-                        let value =
-                            if isNull value then
-                                FSharpValue.MakeUnion(cases.[0], [||])
-                            else
-                                FSharpValue.MakeUnion(cases.[1], [|value|])
-                        p.SetValue(obj, value, null)
+                        p.PropertyType.GetGenericArguments().[0]
                     else
-                        p.SetValue(obj, value, null))
-            return obj
-        }
+                        p.PropertyType
+
+                let propertyType =
+                    if propertyType.GetTypeInfo().IsValueType then
+                        (typedefof<Nullable<_>>).MakeGenericType([|propertyType|])
+                    else
+                        propertyType
+
+                let converter = TypeDescriptor.GetConverter propertyType
+
+                let value = converter.ConvertFromInvariantString(strValue.Value.ToString())
+
+                if isOptionType then
+                    let cases = FSharpType.GetUnionCases(p.PropertyType)
+                    let value =
+                        if isNull value then
+                            FSharpValue.MakeUnion(cases.[0], [||])
+                        else
+                            FSharpValue.MakeUnion(cases.[1], [|value|])
+                    p.SetValue(obj, value, null)
+                else
+                    p.SetValue(obj, value, null))
+        obj
 
     member this.BindModel<'T>() =
         async {
             let method = this.Request.Method
-            return!
-                if method.Equals "POST" || method.Equals "PUT" then
-                    let original = this.Request.ContentType
-                    let parsed   = ref (MediaTypeHeaderValue("*/*"))
+            if method.Equals "POST" || method.Equals "PUT" then
+                let original = this.Request.ContentType
+                let parsed   = ref (MediaTypeHeaderValue("*/*"))
+                return!
                     match MediaTypeHeaderValue.TryParse(original, parsed) with
                     | false -> failwithf "Could not parse Content-Type HTTP header value '%s'" original
                     | true  ->
@@ -136,5 +134,5 @@ type HttpContext with
                         | "application/xml"                   -> this.BindXml<'T>()
                         | "application/x-www-form-urlencoded" -> this.BindForm<'T>()
                         | _ -> failwithf "Cannot bind model from Content-Type '%s'" original
-                else this.BindQueryString<'T>()
+            else return this.BindQueryString<'T>()
         }

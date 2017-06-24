@@ -181,11 +181,9 @@ let ``bindQueryString test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let queryHandler =
-        fun (ctx : HttpContext) -> 
-            async {
-                let! model = ctx.BindQueryString<Customer>()
-                return! text (model.ToString()) ctx
-            }
+        fun (ctx : HttpContext) ->
+            let model = ctx.BindQueryString<Customer>()
+            text (model.ToString()) ctx
 
     let app = GET >=> route "/query" >=> queryHandler
     
@@ -215,7 +213,7 @@ let ``bindQueryString with option property test`` () =
     let testRoute queryStr expected =
         let queryHandlerWithSome (ctx : HttpContext) =
             async {
-                let! model = ctx.BindQueryString<ModelWithOption>()
+                let model = ctx.BindQueryString<ModelWithOption>()
                 Assert.Equal(expected, model)
                 return! setStatusCode 200 ctx
             }

@@ -1125,7 +1125,7 @@ let submitCar =
     fun (ctx : HttpContext) ->
         async {
             // Binds a query string to a Car object
-            let! car = ctx.BindQueryString<Car>()
+            let car = ctx.BindQueryString<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
