@@ -127,13 +127,13 @@ The core combinator is the `bind` function which you might be familiar with:
 let bind (handler : HttpHandler) =
     fun (result : HttpHandlerResult) ->
         async {
-            let! ctx = result
-            match ctx with
-            | None   -> return None
-            | Some c ->
-                match c.HttpContext.Response.HasStarted with
-                | true  -> return  Some c
-                | false -> return! handler c
+            let! ctxOpt = result
+            match ctxOpt with
+            | None     -> return None
+            | Some ctx ->
+                match ctx.Response.HasStarted with
+                | true  -> return  Some ctx
+                | false -> return! handler ctx
         }
 
 let (>>=) = bind

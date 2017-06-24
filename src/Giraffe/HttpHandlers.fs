@@ -68,13 +68,13 @@ let private handlerWithRootedPath (path : string) (handler : HttpHandler) =
 let bind (handler : HttpHandler) =
     fun (result : HttpHandlerResult) ->
         async {
-            let! ctx = result
-            match ctx with
-            | None   -> return None
-            | Some c ->
-                match c.Response.HasStarted with
-                | true  -> return  Some c
-                | false -> return! handler c
+            let! ctxOpt = result
+            match ctxOpt with
+            | None     -> return None
+            | Some ctx ->
+                match ctx.Response.HasStarted with
+                | true  -> return  Some ctx
+                | false -> return! handler ctx
         }
 
 /// Combines two HttpHandler functions into one.

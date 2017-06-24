@@ -128,7 +128,7 @@ if (!$ExcludeDotLiquid.IsPresent)
     dotnet-build   $giraffeDotLiquid "-c $configuration $framework"
 }
 
-if (!$ExcludeTests.IsPresent)
+if (!$ExcludeTests.IsPresent -and !$Run.IsPresent)
 {
     Write-Host "Building and running tests..." -ForegroundColor Magenta
     dotnet-restore $giraffeTests
@@ -136,7 +136,7 @@ if (!$ExcludeTests.IsPresent)
     dotnet-test    $giraffeTests
 }
 
-if (!$ExcludeSamples.IsPresent)
+if (!$ExcludeSamples.IsPresent -and !$Run.IsPresent)
 {
     Write-Host "Building and testing samples..." -ForegroundColor Magenta 
 
