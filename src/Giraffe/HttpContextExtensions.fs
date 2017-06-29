@@ -38,6 +38,11 @@ type HttpContext with
         match this.Request.Headers.TryGetValue(key, strValue) with
         | true  -> Ok (strValue.Value.ToString())
         | false -> Error (sprintf "HTTP request header '%s' is missing." key)
+        
+    member this.TryGetQueryStringValue key =
+        match this.Request.Query.TryGetValue key with
+        | true, values -> Some values.[0]
+        | _ -> None
 
     /// ---------------------------
     /// Model binding
