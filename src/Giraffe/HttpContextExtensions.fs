@@ -41,8 +41,8 @@ type HttpContext with
         
     member this.TryGetQueryStringValue key =
         match this.Request.Query.TryGetValue key with
-        | true, values -> Ok values.[0]
-        | _ -> sprintf "query string value '%s' is missing." key |> Error
+        | true, values -> Some values.[0]
+        | _ -> None
 
     /// ---------------------------
     /// Model binding
