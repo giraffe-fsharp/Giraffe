@@ -1,3 +1,4 @@
+[<AutoOpenAttribute>]
 module Giraffe.HttpContextExtensions
 
 open System
@@ -28,21 +29,24 @@ type HttpContext with
     /// ---------------------------
 
     member this.TryGetRequestHeader (key : string) =
-        let strValue = ref (StringValues())
-        match this.Request.Headers.TryGetValue(key, strValue) with
-        | true  -> Some (strValue.Value.ToString())
-        | false -> None
+        match this.Request.Headers.TryGetValue key with
+        | true, value -> Some (value.ToString())
+        | _           -> None
 
     member this.GetRequestHeader (key : string) =
-        let strValue = ref (StringValues())
-        match this.Request.Headers.TryGetValue(key, strValue) with
-        | true  -> Ok (strValue.Value.ToString())
-        | false -> Error (sprintf "HTTP request header '%s' is missing." key)
+        match this.Request.Headers.TryGetValue key with
+        | true, value -> Ok (value.ToString())
+        | _           -> Error (sprintf "HTTP request header '%s' is missing." key)
         
-    member this.TryGetQueryStringValue key =
+    member this.TryGetQueryStringValue (key : string) =
         match this.Request.Query.TryGetValue key with
-        | true, values -> Some values.[0]
-        | _ -> None
+        | true, value -> Some (value.ToString())
+        | _           -> None
+        
+    member this.GetQueryStringValue (key : string) =
+        match this.Request.Query.TryGetValue key with
+        | true, value -> Ok (value.ToString())
+        | _           -> Error (sprintf "Query string value '%s' is missing." key)
 
     /// ---------------------------
     /// Model binding
@@ -89,9 +93,10 @@ type HttpContext with
         let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
         props
         |> Seq.iter (fun p ->
-            let strValue = ref (StringValues())
-            if query.TryGetValue(p.Name, strValue)
-            then
+            match this.TryGetQueryStringValue p.Name with
+            | None            -> ()
+            | Some queryValue ->
+
                 let isOptionType = 
                     p.PropertyType.GetTypeInfo().IsGenericType &&
                     p.PropertyType.GetGenericTypeDefinition() = typedefof<Option<_>>
@@ -110,7 +115,7 @@ type HttpContext with
 
                 let converter = TypeDescriptor.GetConverter propertyType
 
-                let value = converter.ConvertFromInvariantString(strValue.Value.ToString())
+                let value = converter.ConvertFromInvariantString(queryValue)
 
                 if isOptionType then
                     let cases = FSharpType.GetUnionCases(p.PropertyType)

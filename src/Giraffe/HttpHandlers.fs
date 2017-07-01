@@ -11,7 +11,6 @@ open Microsoft.Extensions.DependencyInjection
 open FSharp.Core.Printf
 open Giraffe.Common
 open Giraffe.FormatExpressions
-open Giraffe.HttpContextExtensions
 open Giraffe.HtmlEngine
 
 type HttpHandlerResult = Async<HttpContext option>

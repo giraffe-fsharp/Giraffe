@@ -40,6 +40,7 @@ let errorHandler (ex : Exception) (logger : ILogger) (ctx : HttpContext) =
 
 let configureApp (app : IApplicationBuilder) = 
     app.UseGiraffeErrorHandler errorHandler
+    app.UseStaticFiles() |> ignore
     app.UseGiraffe webApp
 
 let configureServices (services : IServiceCollection) =
@@ -49,13 +50,16 @@ let configureServices (services : IServiceCollection) =
     services.AddRazorEngine viewsFolderPath |> ignore
 
 let configureLogging (loggerFactory : ILoggerFactory) =
-    loggerFactory.AddConsole(LogLevel.Trace).AddDebug() |> ignore
+    loggerFactory.AddConsole(LogLevel.Error).AddDebug() |> ignore
 
 [<EntryPoint>]
-let main argv =                                
+let main argv =
+    let contentRoot = Directory.GetCurrentDirectory()
+    let webRoot     = Path.Combine(contentRoot, "WebRoot")
     WebHostBuilder()
         .UseKestrel()
-        .UseContentRoot(Directory.GetCurrentDirectory())
+        .UseContentRoot(contentRoot
+        .UseWebRoot(webRoot))
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(Action<IServiceCollection> configureServices)
         .ConfigureLogging(Action<ILoggerFactory> configureLogging)

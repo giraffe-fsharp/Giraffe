@@ -12,7 +12,6 @@ open Microsoft.AspNetCore.Http.Internal
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Giraffe.Common
-open Giraffe.HttpContextExtensions
 open Giraffe.HttpHandlers
 
 let assertFailf format args = 
@@ -49,7 +48,7 @@ type Customer =
             this.LoyaltyPoints
 
 [<Fact>]
-let ``bindJson test`` () =
+let ``BindJson test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let jsonHandler =
@@ -91,7 +90,7 @@ let ``bindJson test`` () =
         Assert.Equal(expected, body)
 
 [<Fact>]
-let ``bindXml test`` () =
+let ``BindXml test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let xmlHandler =
@@ -133,7 +132,7 @@ let ``bindXml test`` () =
         Assert.Equal(expected, body)
 
 [<Fact>]
-let ``bindForm test`` () =
+let ``BindForm test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let formHandler =
@@ -177,7 +176,7 @@ let ``bindForm test`` () =
         Assert.Equal(expected, body)
 
 [<Fact>]
-let ``bindQueryString test`` () =
+let ``BindQueryString test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let queryHandler =
@@ -209,7 +208,7 @@ let ``bindQueryString test`` () =
         Assert.Equal(expected, body)
 
 [<Fact>]
-let ``bindQueryString with option property test`` () =
+let ``BindQueryString with option property test`` () =
     let testRoute queryStr expected =
         let queryHandlerWithSome (ctx : HttpContext) =
             async {
@@ -237,7 +236,7 @@ let ``bindQueryString with option property test`` () =
     testRoute "?OptionalInt=&OptionalString=" { OptionalInt = None; OptionalString = Some "" }
 
 [<Fact>]
-let ``bindModel with JSON content returns correct result`` () =
+let ``BindModel with JSON content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
@@ -281,7 +280,7 @@ let ``bindModel with JSON content returns correct result`` () =
         Assert.Equal(expected, body)
 
 [<Fact>]
-let ``bindModel with XML content returns correct result`` () =
+let ``BindModel with XML content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
@@ -325,7 +324,7 @@ let ``bindModel with XML content returns correct result`` () =
         Assert.Equal(expected, body)
 
 [<Fact>]
-let ``bindModel with FORM content returns correct result`` () =
+let ``BindModel with FORM content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
@@ -371,7 +370,7 @@ let ``bindModel with FORM content returns correct result`` () =
         Assert.Equal(expected, body)
 
 [<Fact>]
-let ``bindModel with JSON content and a specific charset returns correct result`` () =
+let ``BindModel with JSON content and a specific charset returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
@@ -415,7 +414,7 @@ let ``bindModel with JSON content and a specific charset returns correct result`
         Assert.Equal(expected, body)
 
 [<Fact>]
-let ``bindModel during HTTP GET request with query string returns correct result`` () =
+let ``BindModel during HTTP GET request with query string returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
@@ -436,6 +435,73 @@ let ``bindModel during HTTP GET request with query string returns correct result
     ctx.Response.Body <- new MemoryStream()
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
+
+    let result = 
+        ctx
+        |> app
+        |> Async.RunSynchronously
+
+    match result with
+    | None     -> assertFailf "Result was expected to be %s" expected
+    | Some ctx ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+
+[<Fact>]
+let ``TryGetRequestHeader during HTTP GET request with returns correct resultd`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let testHandler =
+        fun (ctx : HttpContext) ->
+            match ctx.TryGetRequestHeader "X-Test" with
+            | Some value -> text value
+            | None       -> setStatusCode 400 >=> text "Bad Request"
+            <| ctx
+
+    let app = route "/test" >=> testHandler
+    
+    let headers = HeaderDictionary()
+    headers.Add("X-Test", StringValues("It works!"))
+    ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/test")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let expected = "It works!"
+
+    let result = 
+        ctx
+        |> app
+        |> Async.RunSynchronously
+
+    match result with
+    | None     -> assertFailf "Result was expected to be %s" expected
+    | Some ctx ->
+        let body = getBody ctx
+        Assert.Equal(expected, body)
+
+[<Fact>]
+let ``TryGetQueryStringValue during HTTP GET request with query string returns correct resultd`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let testHandler =
+        fun (ctx : HttpContext) ->
+            match ctx.TryGetQueryStringValue "BirthDate" with
+            | Some value -> text value
+            | None       -> setStatusCode 400 >=> text "Bad Request"
+            <| ctx
+
+    let app = route "/test" >=> testHandler
+    
+    let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
+    let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
+    let asdf = QueryCollection(query) :> IQueryCollection
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/test")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let expected = "1990-04-20"
 
     let result = 
         ctx
