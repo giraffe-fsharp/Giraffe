@@ -642,14 +642,14 @@ let app =
 It is based on [Suave's Experimental Html](https://github.com/SuaveIO/suave/blob/master/src/Experimental/Html.fs) and bears some resemblance with [Elm](http://elm-lang.org/examples).
 
 #### Example:
-Create a function that accepts a model and returns a `HtmlNode`:
+Create a function that accepts a model and returns an `XmlNode`:
 
 ```fsharp
-open Giraffe.HtmlEngine
+open Giraffe.XmlViewEngine
 
 let model = { Name = "John Doe" }
 
-let layout (content: HtmlNode list) =
+let layout (content: XmlNode list) =
     html [] [
         head [] [
             title [] (encodedText "Giraffe")

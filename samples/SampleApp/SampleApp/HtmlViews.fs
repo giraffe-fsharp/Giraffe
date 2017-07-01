@@ -1,9 +1,9 @@
 module SampleApp.HtmlViews
 
-open Giraffe.HtmlEngine
+open Giraffe.XmlViewEngine
 open SampleApp.Models
 
-let layout (content: HtmlNode list) =
+let layout (content: XmlNode list) =
     html [] [
         head [] [
             title [] (encodedText "Giraffe")

@@ -14,7 +14,7 @@
 /// Thanks to Suave (https://github.com/SuaveIO/suave) for letting us borrow their code
 /// and thanks to Florian Verdonck (https://github.com/nojaf) for porting it to Giraffe.
 
-module Giraffe.HtmlEngine
+module Giraffe.XmlViewEngine
 
 open System
 open System.Net
@@ -27,31 +27,32 @@ open System.Net
 /// - https://www.w3.org/TR/html5/syntax.html#void-elements
 /// ---------------------------
 
-type HtmlAttribute = string * string             // Key * Value
-type HtmlElement   = string * HtmlAttribute[]    // Name * HTML attributes
+type XmlAttribute = string * string            // Key * Value
+type XmlElement   = string * XmlAttribute[]    // Name * XML attributes
 
-type HtmlNode =
-    | ParentNode  of HtmlElement * HtmlNode list // A HTML element which contains nested HTML elements
-    | VoidElement of HtmlElement                 // A HTML element which cannot contain nested HTML (e.g. <hr /> or <br />)
-    | EncodedText of string                      // HTML encoded text content
-    | RawText     of string                      // Raw text content
+type XmlNode =
+    | ParentNode  of XmlElement * XmlNode list // An XML element which contains nested XML elements
+    | VoidElement of XmlElement                // An XML element which cannot contain nested XML (e.g. <hr /> or <br />)
+    | EncodedText of string                    // XML encoded text content
+    | RawText     of string                    // Raw text content
 
 /// ---------------------------
 /// Building blocks
 /// ---------------------------
 
 let tag (tagName    : string)
-        (attributes : HtmlAttribute list)
-        (contents   : HtmlNode list) =
+        (attributes : XmlAttribute list)
+        (contents   : XmlNode list) =
     ParentNode ((tagName, Array.ofList attributes), contents)
 
 let voidTag (tagName    : string)
-            (attributes : HtmlAttribute list) =
+            (attributes : XmlAttribute list) =
     VoidElement (tagName, Array.ofList attributes)
 
 let encodedText (content : string) = [ EncodedText content ]
 let rawText     (content : string) = [ RawText content ]
 let emptyText                      = rawText ""
+let comment     (content : string) = RawText (sprintf "<!-- %s -->" content)
 
 /// ---------------------------
 /// Default HTML elements
@@ -190,24 +191,32 @@ let menuitem   = voidTag "menuitem"
 let summary    = tag "summary"
 
 /// ---------------------------
-/// Render HTML string
+/// Render XML string
 /// ---------------------------
 
-let rec nodeToHtmlString (node : HtmlNode) =
-    let startElementToString (elemName, attributes) =
+let rec private nodeToString (htmlStyle : bool) (node : XmlNode) =
+    let startElementToString selfClosing (elemName, attributes) =
+        let closingBracket = 
+            match selfClosing with
+            | false -> ">"
+            | true ->
+                match htmlStyle with
+                | false -> " />"
+                | true  -> ">"        
         match attributes with
-        | [||] -> sprintf "<%s>" elemName
+        | [||] -> sprintf "<%s%s" elemName closingBracket
         | _    ->
             attributes
             |> Array.map (fun (k, v) -> sprintf " %s=\"%s\"" k (WebUtility.HtmlEncode v))
             |> String.Concat
-            |> sprintf "<%s%s>" elemName
+            |> sprintf "<%s%s%s" elemName
+            <| closingBracket
 
     let endElementToString (elemName, _) = sprintf "</%s>" elemName
 
-    let parentNodeToString (elem : HtmlElement, nodes : HtmlNode list) =
-        let innerContent = nodes |> List.map nodeToHtmlString |> String.Concat
-        let startTag     = elem  |> startElementToString
+    let parentNodeToString (elem : XmlElement, nodes : XmlNode list) =
+        let innerContent = nodes |> List.map (nodeToString htmlStyle) |> String.Concat
+        let startTag     = elem  |> startElementToString false
         let endTag       = elem  |> endElementToString
         sprintf "%s%s%s" startTag innerContent endTag
 
@@ -215,9 +224,12 @@ let rec nodeToHtmlString (node : HtmlNode) =
     | EncodedText text      -> WebUtility.HtmlEncode text
     | RawText text          -> text
     | ParentNode (e, nodes) -> parentNodeToString (e, nodes)
-    | VoidElement e         -> startElementToString e
+    | VoidElement e         -> startElementToString true e
 
-let renderHtmlDocument (document : HtmlNode) =
+let renderXmlString  = nodeToString false
+let renderHtmlString = nodeToString true
+
+let renderHtmlDocument (document : XmlNode) =
     document
-    |> nodeToHtmlString
+    |> renderHtmlString
     |> sprintf "<!DOCTYPE html>%s%s" Environment.NewLine

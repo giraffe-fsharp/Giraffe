@@ -1,8 +1,8 @@
-module Giraffe.HtmlEngineTests
+module Giraffe.XmlViewEngineTests
 
 open System
 open Xunit
-open Giraffe.HtmlEngine
+open Giraffe.XmlViewEngine
 
 let removeNewLines (html:string):string =
     html.Replace(Environment.NewLine, String.Empty)
@@ -20,13 +20,14 @@ let ``Single html root should compile`` () =
 let ``Anchor should contain href, target and content`` () =
     let anchor =
         a [ "href", "http://example.org"; "target", "_blank" ] (encodedText "Example")
-    let html = nodeToHtmlString anchor
+    let html = renderXmlString anchor
     Assert.Equal("<a href=\"http://example.org\" target=\"_blank\">Example</a>", html)
 
 [<Fact>]
 let ``Nested content should render correctly`` () =
     let nested =
         div [] [
+            comment "this is a test"
             h1 [] (encodedText "Header")
             p [] [
                 EncodedText "Lorem "
@@ -35,11 +36,16 @@ let ``Nested content should render correctly`` () =
         ] ]
     let html = 
         nested
-        |> nodeToHtmlString
+        |> renderXmlString
         |> removeNewLines
-    Assert.Equal("<div><h1>Header</h1><p>Lorem <strong>Ipsum</strong> dollar</p></div>", html)
+    Assert.Equal("<div><!-- this is a test --><h1>Header</h1><p>Lorem <strong>Ipsum</strong> dollar</p></div>", html)
 
 [<Fact>]
-let ``Void tag should be unary tag`` () =
-    let unary =  br [] |> nodeToHtmlString
+let ``Void tag in XML should be self closing tag`` () =
+    let unary =  br [] |> renderXmlString
+    Assert.Equal("<br />", unary)
+
+[<Fact>]
+let ``Void tag in HTML should be unary tag`` () =
+    let unary =  br [] |> renderHtmlString
     Assert.Equal("<br>", unary)

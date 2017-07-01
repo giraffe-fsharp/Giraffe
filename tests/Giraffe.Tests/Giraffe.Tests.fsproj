@@ -26,7 +26,7 @@
     <Compile Include="Asserts.fs" />
     <Compile Include="FormatExpressionTests.fs" />
     <Compile Include="HttpHandlerTests.fs" />
-    <Compile Include="HtmlEngineTests.fs" />
+    <Compile Include="XmlViewEngineTests.fs" />
     <Compile Include="HttpContextExtensionsTests.fs" />
   </ItemGroup>
 

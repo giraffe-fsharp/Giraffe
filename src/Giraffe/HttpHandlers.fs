@@ -11,7 +11,7 @@ open Microsoft.Extensions.DependencyInjection
 open FSharp.Core.Printf
 open Giraffe.Common
 open Giraffe.FormatExpressions
-open Giraffe.HtmlEngine
+open Giraffe.XmlViewEngine
 
 type HttpHandlerResult = Async<HttpContext option>
 
@@ -312,9 +312,9 @@ let htmlFile (relativeFilePath : string) =
                 >=> setBodyAsString html)
         }
 
-/// Uses the Giraffe.HtmlEngine to compile and render a HTML Document from
-/// a given HtmlNode. The HTTP response is of Content-Type text/html.
-let renderHtml (document : HtmlNode) =
+/// Uses the Giraffe.XmlViewEngine to compile and render a HTML Document from
+/// an given XmlNode. The HTTP response is of Content-Type text/html.
+let renderHtml (document : XmlNode) =
     setHttpHeader "Content-Type" "text/html"
     >=> (document
         |> renderHtmlDocument

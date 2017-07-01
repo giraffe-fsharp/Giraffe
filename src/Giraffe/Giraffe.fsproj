@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>Giraffe</AssemblyName>
-    <Version>0.1.0-alpha021</Version>
+    <Version>0.1.0-alpha022</Version>
     <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
     <Copyright>Copyright 2017 Dustin Moris Gorski</Copyright>
     <NeutralLanguage>en-GB</NeutralLanguage>
@@ -41,7 +41,7 @@
     <Compile Include="ComputationExpressions.fs" />
     <Compile Include="FormatExpressions.fs" />
     <Compile Include="HttpContextExtensions.fs" />
-    <Compile Include="HtmlEngine.fs" />
+    <Compile Include="XmlViewEngine.fs" />
     <Compile Include="HttpHandlers.fs" />
     <Compile Include="Middleware.fs" />
   </ItemGroup>
