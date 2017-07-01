@@ -314,13 +314,11 @@ let htmlFile (relativeFilePath : string) =
 
 /// Uses the Giraffe.HtmlEngine to compile and render a HTML Document from
 /// a given HtmlNode. The HTTP response is of Content-Type text/html.
-let renderHtml (document: HtmlNode) =
-    fun (ctx : HttpContext) ->
-        let htmlHandler =
-            document
-            |> renderHtmlDocument
-            |> setBodyAsString
-        ctx |> (setHttpHeader "Content-Type" "text/html" >=> htmlHandler)
+let renderHtml (document : HtmlNode) =
+    setHttpHeader "Content-Type" "text/html"
+    >=> (document
+        |> renderHtmlDocument
+        |> setBodyAsString)
 
 /// Checks the HTTP Accept header of the request and determines the most appropriate
 /// response type from a given set of negotiationRules. If the Accept header cannot be
