@@ -12,6 +12,7 @@ open FSharp.Core.Printf
 open Giraffe.Common
 open Giraffe.FormatExpressions
 open Giraffe.XmlViewEngine
+open System.Text.RegularExpressions
 
 type HttpHandlerResult = Async<HttpContext option>
 
@@ -220,6 +221,28 @@ let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
         |> function
             | None      -> async.Return None
             | Some args -> routeHandler args ctx
+
+/// Filters an incoming HTTP request based on the request path (case insensitive).
+/// The parameters from the string will be used to create a Map<string, string>
+/// and subsequently passed into the supplied routeHandler.
+let routeMap (route: string) routeHandler (ctx : HttpContext) =
+    let pattern = route.Replace("{", "(?<").Replace("}", ">.+)") |> sprintf "^%s$"
+    let regex = Regex(pattern, RegexOptions.IgnoreCase)
+    let mtch = regex.Match ctx.Request.Path.Value
+    match mtch.Success with
+    | true ->
+        let groups = mtch.Groups
+        let map =
+            regex.GetGroupNames()
+            |> Array.skip 1
+            |> Array.map (fun x -> x, groups.[x].Value)
+            |> Array.filter (fun (_, x) -> x.Length > 0)
+            |> Map.ofArray
+        routeHandler map ctx
+    | _ -> async.Return None
+
+let (?) (map : Map<string, string>) key = map.[key]
+
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
 let routeStartsWith (subPath : string) =
