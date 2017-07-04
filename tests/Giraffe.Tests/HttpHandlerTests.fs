@@ -1323,12 +1323,14 @@ let ``POST "/redirect" redirect to "/" `` () =
     | None     -> assertFail "It was expected that the request would be redirected"
     | Some ctx -> ctx.Response.Received().Redirect("/", true)
 
+type RouteBind = { Foo : string ; Bar : int ; Id : Guid }
+
 [<Fact>]
 let ``GET "/{foo}/{bar}" returns Hello World``() =
     let ctx = Substitute.For<HttpContext>()
-    let app = GET >=> routeMap "/{foo}/{bar}" (fun m -> sprintf "%s %s" m?foo m?bar |> text)
+    let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/World")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
     ctx.Response.Body <- new MemoryStream()
     let result =
         ctx
@@ -1336,7 +1338,7 @@ let ``GET "/{foo}/{bar}" returns Hello World``() =
         |> Async.RunSynchronously
 
     match result with
-    | None     -> assertFail "It was expected that the result would be Hello World"
+    | None     -> assertFail "It was expected that the result would be Hello 1"
     | Some ctx ->
         let body = getBody ctx
-        Assert.Equal("Hello World", body)
+        Assert.Equal("Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)

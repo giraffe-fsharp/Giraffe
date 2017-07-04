@@ -13,6 +13,7 @@ open Giraffe.Common
 open Giraffe.FormatExpressions
 open Giraffe.XmlViewEngine
 open System.Text.RegularExpressions
+open Newtonsoft.Json.Linq
 
 type HttpHandlerResult = Async<HttpContext option>
 
@@ -223,26 +224,25 @@ let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) =
             | Some args -> routeHandler args ctx
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
-/// The parameters from the string will be used to create a Map<string, string>
+/// The parameters from the string will be used to create an instance of 'T
 /// and subsequently passed into the supplied routeHandler.
-let routeMap (route: string) routeHandler (ctx : HttpContext) =
+let routeBind<'T> (route: string) (routeHandler : 'T -> HttpHandler) (ctx : HttpContext) =
     let pattern = route.Replace("{", "(?<").Replace("}", ">.+)") |> sprintf "^%s$"
     let regex = Regex(pattern, RegexOptions.IgnoreCase)
     let mtch = regex.Match ctx.Request.Path.Value
     match mtch.Success with
     | true ->
         let groups = mtch.Groups
-        let map =
+        let o =
             regex.GetGroupNames()
             |> Array.skip 1
             |> Array.map (fun x -> x, groups.[x].Value)
             |> Array.filter (fun (_, x) -> x.Length > 0)
-            |> Map.ofArray
-        routeHandler map ctx
+            |> dict
+            |> JObject.FromObject
+            |> fun jo -> jo.ToObject<'T>()
+        routeHandler o ctx
     | _ -> async.Return None
-
-let (?) (map : Map<string, string>) key = map.[key]
-
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
 let routeStartsWith (subPath : string) =
