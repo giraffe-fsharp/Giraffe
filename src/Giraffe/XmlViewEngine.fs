@@ -49,10 +49,10 @@ let voidTag (tagName    : string)
             (attributes : XmlAttribute list) =
     VoidElement (tagName, Array.ofList attributes)
 
-let encodedText (content : string) = [ EncodedText content ]
-let rawText     (content : string) = [ RawText content ]
+let encodedText (content : string) = EncodedText content
+let rawText     (content : string) = RawText content
 let emptyText                      = rawText ""
-let comment     (content : string) = RawText (sprintf "<!-- %s -->" content)
+let comment     (content : string) = rawText (sprintf "<!-- %s -->" content)
 
 /// ---------------------------
 /// Default HTML elements
@@ -226,10 +226,21 @@ let rec private nodeToString (htmlStyle : bool) (node : XmlNode) =
     | ParentNode (e, nodes) -> parentNodeToString (e, nodes)
     | VoidElement e         -> startElementToString true e
 
-let renderXmlString  = nodeToString false
-let renderHtmlString = nodeToString true
+let renderXmlNode = nodeToString false
+
+let renderXmlNodes (nodes : XmlNode list) =
+    nodes
+    |> List.map renderXmlNode
+    |> String.Concat
+
+let renderHtmlNode = nodeToString true
+
+let renderHtmlNodes (nodes : XmlNode list) =
+    nodes
+    |> List.map renderHtmlNode
+    |> String.Concat
 
 let renderHtmlDocument (document : XmlNode) =
     document
-    |> renderHtmlString
+    |> renderHtmlNode
     |> sprintf "<!DOCTYPE html>%s%s" Environment.NewLine

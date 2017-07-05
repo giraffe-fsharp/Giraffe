@@ -743,10 +743,10 @@ let ``GET "/person" returns rendered HTML view`` () =
     let personView model =
         html [] [
             head [] [
-                title [] (encodedText "Html Node")
+                title [] [ encodedText "Html Node" ]
             ]
             body [] [
-                p [] (sprintf "%s %s is %i years old." model.Foo model.Bar model.Age |> encodedText)
+                p [] [ sprintf "%s %s is %i years old." model.Foo model.Bar model.Age |> encodedText ]
             ]
         ]
 
