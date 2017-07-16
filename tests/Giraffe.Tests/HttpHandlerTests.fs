@@ -1323,7 +1323,7 @@ let ``POST "/redirect" redirect to "/" `` () =
     | None     -> assertFail "It was expected that the request would be redirected"
     | Some ctx -> ctx.Response.Received().Redirect("/", true)
 
-type RouteBind = { Foo : string ; Bar : int ; Id : Guid }
+type RouteBind = { Foo : string; Bar : int; Id : Guid }
 
 [<Fact>]
 let ``GET "/{foo}/{bar}" returns Hello World``() =

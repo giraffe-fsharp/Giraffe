@@ -44,6 +44,7 @@ The old NuGet package has been unlisted and will not receive any updates any mor
     - [routef](#routef)
     - [routeCi](#routeci)
     - [routeCif](#routecif)
+    - [routeBind](#routebind)
     - [routeStartsWith](#routestartswith)
     - [routeStartsWithCi](#routestartswithci)
     - [subRoute](#subroute)
@@ -83,6 +84,7 @@ The old NuGet package has been unlisted and will not receive any updates any mor
 - [Building and developing](#building-and-developing)
 - [Contributing](#contributing)
 - [Contributors](#contributors)
+- [Blog posts](#blog-posts)
 - [License](#license)
 
 ## About
@@ -162,7 +164,7 @@ The `choose` combinator function iterates through a list of `HttpHandler` functi
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     choose [
         route "/foo" >=> text "Foo"
         route "/bar" >=> text "Bar"
@@ -178,7 +180,7 @@ let app =
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     choose [
         GET  >=> route "/foo" >=> text "GET Foo"
         POST >=> route "/foo" >=> text "POST Foo"
@@ -193,7 +195,7 @@ let app =
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     mustAccept [ "text/plain"; "application/json" ] >=>
         choose [
             route "/foo" >=> text "Foo"
@@ -211,7 +213,7 @@ let app =
 let mustBeLoggedIn =
     requiresAuthentication (challenge "Cookie")
 
-let app = 
+let app =
     choose [
         route "/ping" >=> text "pong"
         route "/admin" >=> mustBeLoggedIn >=> text "You're an admin"
@@ -225,7 +227,7 @@ let app =
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     choose [
         route "/ping" >=> text "pong"
         route "/logout" >=> signOff "Cookie" >=> text "You have successfully logged out."
@@ -242,7 +244,7 @@ let app =
 let mustBeLoggedIn =
     requiresAuthentication (challenge "Cookie")
 
-let app = 
+let app =
     choose [
         route "/ping" >=> text "pong"
         route "/user" >=> mustBeLoggedIn >=> text "You're a logged in user."
@@ -258,11 +260,11 @@ let app =
 ```fsharp
 let accessDenied = setStatusCode 401 >=> text "Access Denied"
 
-let mustBeAdmin = 
-    requiresAuthentication accessDenied 
+let mustBeAdmin =
+    requiresAuthentication accessDenied
     >=> requiresRole "Admin" accessDenied
 
-let app = 
+let app =
     choose [
         route "/ping" >=> text "pong"
         route "/admin" >=> mustBeAdmin >=> text "You're an admin."
@@ -278,11 +280,11 @@ let app =
 ```fsharp
 let accessDenied = setStatusCode 401 >=> text "Access Denied"
 
-let mustBeSomeAdmin = 
-    requiresAuthentication accessDenied 
+let mustBeSomeAdmin =
+    requiresAuthentication accessDenied
     >=> requiresRoleOf [ "Admin"; "SuperAdmin"; "RootAdmin" ] accessDenied
 
-let app = 
+let app =
     choose [
         route "/ping" >=> text "pong"
         route "/admin" >=> mustBeSomeAdmin >=> text "You're an admin."
@@ -299,7 +301,7 @@ let app =
 let errorHandler (ex : Exception) (logger : ILogger) (ctx : HttpContext) =
     ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
 
-let webApp = 
+let webApp =
     choose [
         route "/foo" >=> text "Foo"
         route "/bar" >=> text "Bar"
@@ -320,7 +322,7 @@ type Startup() =
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     choose [
         route "/"    >=> text "Index path"
         route "/foo" >=> text "Foo"
@@ -344,7 +346,7 @@ The following format placeholders are currently supported:
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     choose [
         route  "/foo" >=> text "Foo"
         routef "/bar/%s/%i" (fun (name, age) ->
@@ -363,7 +365,7 @@ let app =
 ```fsharp
 // "/FoO", "/fOO", "/bAr", etc. will match as well
 
-let app = 
+let app =
     choose [
         routeCi "/"    >=> text "Index path"
         routeCi "/foo" >=> text "Foo"
@@ -378,11 +380,32 @@ let app =
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     choose [
         route  "/foo" >=> text "Foo"
         routeCif "/bar/%s/%i" (fun (name, age) ->
             text (sprintf "Name: %s, Age: %i" name age))
+    ]
+```
+
+### routeBind
+
+`routeBind` matches and parses a request path with a given object model. On success it will resolve the arguments from the route and create an instance of type `'T` and invoke the given `HttpHandler` with it.
+
+#### Example:
+
+```fsharp
+type Person =
+    {
+        FirstName : string
+        LastName : string
+    }
+
+let app =
+    choose [
+        route  "/foo/{firstName}/{lastName}" >=> routeBind<Person> (fun person ->
+            sprintf "%s %s" person.FirstName person.LastName
+            |> text)
     ]
 ```
 
@@ -393,7 +416,7 @@ let app =
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     routeStartsWith "/api/" >=>
         requiresAuthentication (challenge "Cookie") >=>
             choose [
@@ -409,7 +432,7 @@ let app =
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     routeStartsWithCi "/api/v1/" >=>
         choose [
             route "/api/v1/foo" >=> text "Foo"
@@ -424,7 +447,7 @@ let app =
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     subRoute "/api"
         (choose [
             subRoute "/v1"
@@ -444,7 +467,7 @@ let app =
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     subRouteCi "/api"
         (choose [
             subRouteCi "/v1"
@@ -464,7 +487,7 @@ let app =
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     choose [
         route  "/foo" >=> text "Foo"
         setStatusCode 404 >=> text "Not found"
@@ -478,7 +501,7 @@ let app =
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     choose [
         route  "/foo" >=> text "Foo"
         setStatusCode 404 >=> setHttpHeader "X-CustomHeader" "something" >=> text "Not found"
@@ -492,7 +515,7 @@ let app =
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     choose [
         route  "/foo" >=> setBody (Encoding.UTF8.GetBytes "Some string")
     ]
@@ -505,7 +528,7 @@ let app =
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     choose [
         route  "/foo" >=> setBodyAsString "Some string"
     ]
@@ -520,7 +543,7 @@ The different between `text` and `setBodyAsString` is that this http handler als
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     choose [
         route  "/foo" >=> text "Some string"
     ]
@@ -539,7 +562,7 @@ type Person =
         LastName  : string
     }
 
-let app = 
+let app =
     choose [
         route  "/foo" >=> json { FirstName = "Foo"; LastName = "Bar" }
     ]
@@ -559,7 +582,7 @@ type Person =
         LastName  : string
     }
 
-let app = 
+let app =
     choose [
         route  "/foo" >=> xml { FirstName = "Foo"; LastName = "Bar" }
     ]
@@ -584,7 +607,7 @@ type Person =
     override this.ToString() =
         sprintf "%s %s" this.FirstName this.LastNam
 
-let app = 
+let app =
     choose [
         route  "/foo" >=> negotiate { FirstName = "Foo"; LastName = "Bar" }
     ]
@@ -614,7 +637,7 @@ let rules =
         "application/xml" , xml
     ]
 
-let app = 
+let app =
     choose [
         route  "/foo" >=> negotiateWith rules { FirstName = "Foo"; LastName = "Bar" }
     ]
@@ -629,7 +652,7 @@ This http handler takes a relative path of a html file as input parameter and se
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     choose [
         route  "/" >=> htmlFile "index.html"
     ]
@@ -668,7 +691,7 @@ let personView model =
         div [] [partial()]
     ] |> layout
 
-let app = 
+let app =
     choose [
         route "/" >=> (personView model |> renderHtml)
     ]
@@ -681,7 +704,7 @@ let app =
 #### Example:
 
 ```fsharp
-let app = 
+let app =
     choose [
         route "/"          >=> redirectTo false "/foo"
         route "/permanent" >=> redirectTo true "http://example.org"
@@ -699,7 +722,7 @@ If your route is not returning a static response, then you should wrap your func
 let time() =
     System.DateTime.Now.ToString()
 
-let webApp = 
+let webApp =
     choose [
         GET >=>
             choose [
@@ -738,7 +761,7 @@ Add the razor engine service during start-up:
 open Giraffe.Razor.Middleware
 
 type Startup() =
-    member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =    
+    member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =
         let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
         services.AddRazorEngine(viewsFolderPath) |> ignore
 ```
@@ -750,7 +773,7 @@ open Giraffe.Razor.HttpHandlers
 
 let model = { WelcomeText = "Hello World" }
 
-let app = 
+let app =
     choose [
         // Assuming there is a view called "Index.cshtml"
         route  "/" >=> razorView "text/html" "Index" model
@@ -768,7 +791,7 @@ Add the razor engine service during start-up:
 open Giraffe.Razor.Middleware
 
 type Startup() =
-    member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =    
+    member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =
         let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
         services.AddRazorEngine(viewsFolderPath) |> ignore
 ```
@@ -780,7 +803,7 @@ open Giraffe.Razor.HttpHandlers
 
 let model = { WelcomeText = "Hello World" }
 
-let app = 
+let app =
     choose [
         // Assuming there is a view called "Index.cshtml"
         route  "/" >=> razorHtmlView "Index" model
@@ -810,7 +833,7 @@ type Person =
 
 let template = "<html><head><title>DotLiquid</title></head><body><p>First name: {{ firstName }}<br />Last name: {{ lastName }}</p></body></html>
 
-let app = 
+let app =
     choose [
         route  "/foo" >=> dotLiquid "text/html" template { FirstName = "Foo"; LastName = "Bar" }
     ]
@@ -833,7 +856,7 @@ type Person =
         LastName  : string
     }
 
-let app = 
+let app =
     choose [
         route  "/foo" >=> dotLiquidTemplate "text/html" "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
     ]
@@ -854,7 +877,7 @@ type Person =
         LastName  : string
     }
 
-let app = 
+let app =
     choose [
         route  "/foo" >=> dotLiquidHtmlView "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
     ]
@@ -873,7 +896,7 @@ Defining a custom HTTP handler to partially filter a route:
 ```fsharp
 let routeStartsWith (subPath : string) =
     fun (ctx : HttpContext) ->
-        if ctx.Request.Path.ToString().StartsWith subPath 
+        if ctx.Request.Path.ToString().StartsWith subPath
         then Some ctx
         else None
         |> async.Return
@@ -895,7 +918,7 @@ let requiresToken (expectedToken : string) (handler : HttpHandler) =
 Composing a web application from smaller HTTP handlers:
 
 ```fsharp
-let app = 
+let app =
     choose [
         route "/"       >=> htmlFile "index.html"
         route "/about"  >=> htmlFile "about.html"
@@ -1255,7 +1278,7 @@ Create a web application and plug it into the ASP.NET Core middleware:
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
 
-let webApp = 
+let webApp =
     choose [
         route "/ping"   >=> text "pong"
         route "/"       >=> htmlFile "/pages/index.html" ]
@@ -1264,13 +1287,15 @@ type Startup() =
     member __.Configure (app : IApplicationBuilder)
                         (env : IHostingEnvironment)
                         (loggerFactory : ILoggerFactory) =
-                
+
         app.UseGiraffe webApp
 ```
 
 ## Sample applications
 
 There is a basic sample application in the [`/samples/SampleApp`](https://github.com/dustinmoris/Giraffe/tree/develop/samples/SampleApp) folder.
+
+An example of a live website which uses Giraffe is [https://buildstats.info](https://buildstats.info). It uses the [XmlViewEngine](#renderhtml) to build dynamically rich SVG images and Docker to run the application in the Google Container Engine (see [GitHub repository](https://github.com/dustinmoris/CI-BuildStats)).
 
 More sample applications will be added in the future.
 
@@ -1301,7 +1326,7 @@ Examples:
 
 Only build the Giraffe project in `Debug` mode:
 ```
-PS > .\build.ps1 
+PS > .\build.ps1
 ```
 
 Build the Giraffe project in `Release` mode:
@@ -1343,7 +1368,7 @@ During development you can workaround this issue by invoking the build script wi
 
 ```
 PS > .\build.ps1 -OnlyNetStandard
-``` 
+```
 
 This switch will override the default configuration and allow a frictionless development experience.
 
@@ -1376,9 +1401,17 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Roman Melnikov](https://github.com/Neftedollar) (Added `redirectTo` route)
 - [Diego B. Fernandez](https://github.com/diegobfernandez) (Added support for the `Option<'T>` type in the query string model binding)
 - [Jimmy Byrd](https://github.com/TheAngryByrd) (Added Linux builds)
-- [Jon Canning](https://github.com/JonCanning) (Moved the Razor and DotLiquid http handlers into separate NuGet packages)
+- [Jon Canning](https://github.com/JonCanning) (Moved the Razor and DotLiquid http handlers into separate NuGet packages and added the `routeBind` handler as well as some useful `HttpContext` extensions)
+- [Andrew Grant](https://github.com/GraanJonlo) (Fixed bug in the `giraffe-template` NuGet package)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
+
+## Blog posts
+
+- [Functional ASP.NET Core](https://dusted.codes/functional-aspnet-core)
+- [Functional ASP.NET Core part 2 - Hello world from Giraffe](https://dusted.codes/functional-aspnet-core-part-2-hello-world-from-giraffe)
+
+If you have blogged about Giraffe, demonstrating a useful topic or some other tips or tricks then please feel free to submit a pull request and add your article to this list as a reference for other Giraffe users. Thank you!
 
 ## License
 
