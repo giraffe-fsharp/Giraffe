@@ -11,7 +11,7 @@ let removeNewLines (html:string):string =
 let ``Single html root should compile`` () =
     let doc  = html [] []
     let html =
-        doc 
+        doc
         |> renderHtmlDocument
         |> removeNewLines
     Assert.Equal("<!DOCTYPE html><html></html>", html)
@@ -19,9 +19,16 @@ let ``Single html root should compile`` () =
 [<Fact>]
 let ``Anchor should contain href, target and content`` () =
     let anchor =
-        a [ "href", "http://example.org"; "target", "_blank" ] [ encodedText "Example" ]
+        a [ attr "href" "http://example.org";  attr "target" "_blank" ] [ encodedText "Example" ]
     let html = renderXmlNode anchor
     Assert.Equal("<a href=\"http://example.org\" target=\"_blank\">Example</a>", html)
+
+[<Fact>]
+let ``Script should contain src, lang and async`` () =
+    let scriptFile =
+        script [ attr "src" "http://example.org/example.js";  attr "lang" "javascript"; flag "async" ] []
+    let html = renderXmlNode scriptFile
+    Assert.Equal("<script src=\"http://example.org/example.js\" lang=\"javascript\" async></script>", html)
 
 [<Fact>]
 let ``Nested content should render correctly`` () =
@@ -34,7 +41,7 @@ let ``Nested content should render correctly`` () =
                 strong [] [ encodedText "Ipsum" ]
                 RawText " dollar"
         ] ]
-    let html = 
+    let html =
         nested
         |> renderXmlNode
         |> removeNewLines

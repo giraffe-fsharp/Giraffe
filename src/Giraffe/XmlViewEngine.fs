@@ -27,7 +27,10 @@ open System.Net
 /// - https://www.w3.org/TR/html5/syntax.html#void-elements
 /// ---------------------------
 
-type XmlAttribute = string * string            // Key * Value
+type XmlAttribute =
+    | KeyValue of string * string
+    | Boolean  of string
+
 type XmlElement   = string * XmlAttribute[]    // Name * XML attributes
 
 type XmlNode =
@@ -39,6 +42,9 @@ type XmlNode =
 /// ---------------------------
 /// Building blocks
 /// ---------------------------
+
+let attr (key : string) (value : string) = KeyValue (key, value)
+let flag (key : string) = Boolean key
 
 let tag (tagName    : string)
         (attributes : XmlAttribute list)
@@ -195,19 +201,22 @@ let summary    = tag "summary"
 /// ---------------------------
 
 let rec private nodeToString (htmlStyle : bool) (node : XmlNode) =
-    let startElementToString selfClosing (elemName, attributes) =
-        let closingBracket = 
+    let startElementToString selfClosing (elemName, attributes : XmlAttribute array) =
+        let closingBracket =
             match selfClosing with
             | false -> ">"
             | true ->
                 match htmlStyle with
                 | false -> " />"
-                | true  -> ">"        
+                | true  -> ">"
         match attributes with
         | [||] -> sprintf "<%s%s" elemName closingBracket
         | _    ->
             attributes
-            |> Array.map (fun (k, v) -> sprintf " %s=\"%s\"" k (WebUtility.HtmlEncode v))
+            |> Array.map (fun attr ->
+                match attr with
+                | KeyValue (k, v) -> sprintf " %s=\"%s\"" k (WebUtility.HtmlEncode v)
+                | Boolean k       -> sprintf " %s" k)
             |> String.Concat
             |> sprintf "<%s%s%s" elemName
             <| closingBracket
