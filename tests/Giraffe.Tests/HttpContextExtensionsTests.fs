@@ -23,6 +23,8 @@ let getBody (ctx : HttpContext) =
     use reader = new StreamReader(ctx.Response.Body, Encoding.UTF8)
     reader.ReadToEnd()
 
+let next = (Some >> async.Return)
+
 [<CLIMutable>]
 type ModelWithOption =
     {
@@ -52,10 +54,10 @@ let ``BindJson test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let jsonHandler =
-        fun (ctx : HttpContext) -> 
+        fun next (ctx : HttpContext) -> 
             async {
                 let! model = ctx.BindJson<Customer>()
-                return! text (model.ToString()) ctx
+                return! text (model.ToString()) next ctx
             }
 
     let app = POST >=> route "/json" >=> jsonHandler
@@ -79,8 +81,8 @@ let ``BindJson test`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -94,10 +96,10 @@ let ``BindXml test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let xmlHandler =
-        fun (ctx : HttpContext) -> 
+        fun next (ctx : HttpContext) -> 
             async {
                 let! model = ctx.BindXml<Customer>()
-                return! text (model.ToString()) ctx
+                return! text (model.ToString()) next ctx
             }
 
     let app = POST >=> route "/xml" >=> xmlHandler
@@ -121,8 +123,8 @@ let ``BindXml test`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -136,10 +138,10 @@ let ``BindForm test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let formHandler =
-        fun (ctx : HttpContext) -> 
+        fun next (ctx : HttpContext) -> 
             async {
                 let! model = ctx.BindForm<Customer>()
-                return! text (model.ToString()) ctx
+                return! text (model.ToString()) next ctx
             }
 
     let app = POST >=> route "/form" >=> formHandler
@@ -165,8 +167,8 @@ let ``BindForm test`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -180,9 +182,9 @@ let ``BindQueryString test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let queryHandler =
-        fun (ctx : HttpContext) ->
+        fun next (ctx : HttpContext) ->
             let model = ctx.BindQueryString<Customer>()
-            text (model.ToString()) ctx
+            text (model.ToString()) next ctx
 
     let app = GET >=> route "/query" >=> queryHandler
     
@@ -197,8 +199,8 @@ let ``BindQueryString test`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -210,11 +212,11 @@ let ``BindQueryString test`` () =
 [<Fact>]
 let ``BindQueryString with option property test`` () =
     let testRoute queryStr expected =
-        let queryHandlerWithSome (ctx : HttpContext) =
+        let queryHandlerWithSome next (ctx : HttpContext) =
             async {
                 let model = ctx.BindQueryString<ModelWithOption>()
                 Assert.Equal(expected, model)
-                return! setStatusCode 200 ctx
+                return! setStatusCode 200 next ctx
             }
 
         let app = GET >=> route "/" >=> queryHandlerWithSome
@@ -226,8 +228,7 @@ let ``BindQueryString with option property test`` () =
         ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
         ctx.Response.Body <- new MemoryStream()
 
-        ctx
-        |> app
+        app next ctx
         |> Async.RunSynchronously
         |> ignore
 
@@ -240,10 +241,10 @@ let ``BindModel with JSON content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun (ctx : HttpContext) -> 
+        fun next (ctx : HttpContext) -> 
             async {
                 let! model = ctx.BindModel<Customer>()
-                return! text (model.ToString()) ctx
+                return! text (model.ToString()) next ctx
             }
 
     let app = route "/auto" >=> autoHandler
@@ -269,8 +270,8 @@ let ``BindModel with JSON content returns correct result`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -284,10 +285,10 @@ let ``BindModel with XML content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun (ctx : HttpContext) -> 
+        fun next (ctx : HttpContext) -> 
             async {
                 let! model = ctx.BindModel<Customer>()
-                return! text (model.ToString()) ctx
+                return! text (model.ToString()) next ctx
             }
 
     let app = route "/auto" >=> autoHandler
@@ -313,8 +314,8 @@ let ``BindModel with XML content returns correct result`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -328,10 +329,10 @@ let ``BindModel with FORM content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun (ctx : HttpContext) -> 
+        fun next (ctx : HttpContext) -> 
             async {
                 let! model = ctx.BindModel<Customer>()
-                return! text (model.ToString()) ctx
+                return! text (model.ToString()) next ctx
             }
 
     let app = route "/auto" >=> autoHandler
@@ -359,8 +360,8 @@ let ``BindModel with FORM content returns correct result`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -374,10 +375,10 @@ let ``BindModel with JSON content and a specific charset returns correct result`
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun (ctx : HttpContext) -> 
+        fun next (ctx : HttpContext) -> 
             async {
                 let! model = ctx.BindModel<Customer>()
-                return! text (model.ToString()) ctx
+                return! text (model.ToString()) next ctx
             }
 
     let app = route "/auto" >=> autoHandler
@@ -403,8 +404,8 @@ let ``BindModel with JSON content and a specific charset returns correct result`
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -418,10 +419,10 @@ let ``BindModel during HTTP GET request with query string returns correct result
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun (ctx : HttpContext) -> 
+        fun next (ctx : HttpContext) -> 
             async {
                 let! model = ctx.BindModel<Customer>()
-                return! text (model.ToString()) ctx
+                return! text (model.ToString()) next ctx
             }
 
     let app = route "/auto" >=> autoHandler
@@ -437,8 +438,8 @@ let ``BindModel during HTTP GET request with query string returns correct result
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result = 
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -452,11 +453,11 @@ let ``TryGetRequestHeader during HTTP GET request with returns correct resultd``
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
-        fun (ctx : HttpContext) ->
-            match ctx.TryGetRequestHeader "X-Test" with
+        fun next (ctx : HttpContext) ->
+            (match ctx.TryGetRequestHeader "X-Test" with
             | Some value -> text value
             | None       -> setStatusCode 400 >=> text "Bad Request"
-            <| ctx
+            ) next ctx  
 
     let app = route "/test" >=> testHandler
     
@@ -470,8 +471,8 @@ let ``TryGetRequestHeader during HTTP GET request with returns correct resultd``
     let expected = "It works!"
 
     let result = 
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -485,11 +486,11 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
-        fun (ctx : HttpContext) ->
-            match ctx.TryGetQueryStringValue "BirthDate" with
+        fun next (ctx : HttpContext) ->
+            (match ctx.TryGetQueryStringValue "BirthDate" with
             | Some value -> text value
             | None       -> setStatusCode 400 >=> text "Bad Request"
-            <| ctx
+            ) next ctx
 
     let app = route "/test" >=> testHandler
     
@@ -504,8 +505,8 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
     let expected = "1990-04-20"
 
     let result = 
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
