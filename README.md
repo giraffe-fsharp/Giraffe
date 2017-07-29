@@ -27,7 +27,6 @@ The old NuGet package has been unlisted and will not receive any updates any mor
 - [Basics](#basics)
     - [HttpHandler](#httphandler)
     - [Combinators](#combinators)
-        - [bind (>>=)](#bind-)
         - [compose (>=>)](#compose-)
         - [choose](#choose)
 - [Default HttpHandlers](#default-httphandlers)
@@ -105,57 +104,53 @@ You can think of [Giraffe](https://www.nuget.org/packages/Giraffe) as the functi
 
 ### HttpHandler
 
-The only building block in Giraffe is a so called `HttpHandler`:
+The main building block in Giraffe is a so called `HttpHandler`:
 
 ```fsharp
 type HttpHandlerResult = Async<HttpContext option>
 
-type HttpHandler = HttpContext -> HttpHandlerResult
+type HttpCont = HttpContext -> HttpHandlerResult
+
+// next -> ctx -> result
+type HttpHandler = HttpCont -> HttpContext -> HttpHandlerResult
 ```
 
-A `HttpHandler` is a simple function which takes in a `HttpContext` and returns a `HttpContext` (wrapped in an option and async workflow) when finished.
+A `HttpHandler` is a simple function which takes 2 curried arguments, a `HttpCont` continuation function and a `HttpContext`, and returns a `HttpContext` (wrapped in an option and async workflow) when finished.
 
 Inside that function it can process an incoming `HttpRequest` and make changes to the `HttpResponse` of the given `HttpContext`. By receiving and returning a `HttpContext` there's nothing which cannot be done from inside a `HttpHandler`.
 
+To process further down the handler pipeline, the `HttpHandler` function calls its `HttpCont` continuation function with its `HttpContext` as the argument. This removes the need to wrap/bind all the interim pipeline successful evaluation paths as the `HttpHandler` returns the async result of the next `HttpHandler` in the pipeline. To short circuit the pipeline and return early, just return option of `Some HttpContext`
+
 A `HttpHandler` can decide to not further process an incoming request and return `None` instead. In this case another `HttpHandler` might continue processing the request or the middleware will simply defer to the next `RequestDelegate` in the ASP.NET Core pipeline.
 
-### Combinators
+*Continuations are used to avoid wrapping sync computations in async as well as tail call optimiation of stack frames.*
 
-#### bind (>>=)
-
-The core combinator is the `bind` function which you might be familiar with:
-
+A typical `HttpHandler` definition would look something like:
 ```fsharp
-let bind (handler : HttpHandler) =
-    fun (result : HttpHandlerResult) ->
-        async {
-            let! ctxOpt = result
-            match ctxOpt with
-            | None     -> return None
-            | Some ctx ->
-                match ctx.Response.HasStarted with
-                | true  -> return  Some ctx
-                | false -> return! handler ctx
-        }
-
-let (>>=) = bind
+let handler predicate =
+    fun next ctx ->             // fun (next handler fn) (Httpcontext) ->
+        if predicate 
+        then next ctx           // success path need not be wrapped in async as 'next' continuation returns async
+        else async.Return None  // failed 'None' path must be async wrapped
 ```
 
-The `bind` function takes in a `HttpHandler` function and a `HttpHandlerResult`. It first evaluates the `HttpHandlerResult` and checks its return value. If there was `Some HttpContext` then it will pass it on to the `HttpHandler` function otherwise it will return `None`. If the response object inside the `HttpContext` has already been written, then it will skip the `HttpHandler` function as well and return the current `HttpContext` as the final result.
+### Combinators
 
 #### compose (>=>)
 
 The `compose` combinator combines two `HttpHandler` functions into one:
 
 ```fsharp
-let compose (handler : HttpHandler) (handler2 : HttpHandler) =
-    fun (ctx : HttpContext) ->
-        handler ctx |> bind handler2
+let compose (handler : HttpHandler) (handler2 : HttpHandler) : HttpHandler =
+    fun (next:HttpCont) (ctx:HttpContext) -> 
+        let child  = handler2 next // (next, passed down pipeline, will be 'Some ctx', the completion signal) 
+        let parent = handler child
+        parent ctx    // parent is a continuation of first handler embedded with a continuation of handler2  
 ```
 
-It is probably the more useful combinator as it allows composing many smaller `HttpHandler` functions into a bigger web application.
+It is the main combinator as it allows composing many smaller `HttpHandler` functions into a bigger web application.
 
-If you would like to learn more about the difference between `>>=` and `>=>` then please check out [Scott Wlaschin's blog post on Railway oriented programming](http://fsharpforfunandprofit.com/posts/recipe-part2/).
+If you would like to learn more about `>=>` then please check out [Scott Wlaschin's blog post on Railway oriented programming](http://fsharpforfunandprofit.com/posts/recipe-part2/).
 
 #### choose
 
@@ -895,24 +890,23 @@ Defining a custom HTTP handler to partially filter a route:
 
 ```fsharp
 let routeStartsWith (subPath : string) =
-    fun (ctx : HttpContext) ->
+    fun next (ctx : HttpContext) ->
         if ctx.Request.Path.ToString().StartsWith subPath
-        then Some ctx
-        else None
-        |> async.Return
+        then next ctx
+        else async.Return None
 ```
 
 Defining another custom HTTP handler to validate a mandatory HTTP header:
 
 ```fsharp
 let requiresToken (expectedToken : string) (handler : HttpHandler) =
-    fun (ctx : HttpContext) ->
+    fun next (ctx : HttpContext) ->
         let token    = ctx.Request.Headers.["X-Token"].ToString()
         let response =
             if token.Equals(expectedToken)
             then handler
             else setStatusCode 401 >=> text "Token wrong or missing"
-        response ctx
+        response next ctx
 ```
 
 Composing a web application from smaller HTTP handlers:
@@ -963,14 +957,14 @@ open Giraffe.HttpHandlers
 open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun (ctx : HttpContext) ->
+    fun next (ctx : HttpContext) ->
         async {
             // Binds a JSON payload to a Car object
             let! car = ctx.BindJson<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
-            return! json car ctx
+            return! json car next ctx
         }
 
 let webApp =
@@ -1022,14 +1016,14 @@ open Giraffe.HttpHandlers
 open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun (ctx : HttpContext) ->
+    fun next (ctx : HttpContext) ->
         async {
             // Binds an XML payload to a Car object
             let! car = ctx.BindXml<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
-            return! json car ctx
+            return! json car next ctx
         }
 
 let webApp =
@@ -1086,14 +1080,14 @@ open Giraffe.HttpHandlers
 open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun (ctx : HttpContext) ->
+    fun next (ctx : HttpContext) ->
         async {
             // Binds a form urlencoded payload to a Car object
             let! car = ctx.BindForm<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
-            return! json car ctx
+            return! json car next ctx
         }
 
 let webApp =
@@ -1145,14 +1139,14 @@ open Giraffe.HttpHandlers
 open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun (ctx : HttpContext) ->
+    fun next (ctx : HttpContext) ->
         async {
             // Binds a query string to a Car object
             let car = ctx.BindQueryString<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
-            return! json car ctx
+            return! json car next ctx
         }
 
 let webApp =
@@ -1200,14 +1194,14 @@ open Giraffe.HttpHandlers
 open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun (ctx : HttpContext) ->
+    fun next (ctx : HttpContext) ->
         async {
             // Binds a JSON, XML or form urlencoded payload to a Car object
             let! car = ctx.BindModel<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
-            return! json car ctx
+            return! json car next ctx
         }
 
 let webApp =
@@ -1234,9 +1228,9 @@ type ErrorHandler = exn -> ILogger -> HttpHandler
 For example you could create an error handler which logs the unhandled exception and returns a HTTP 500 response with the error message as plain text:
 
 ```fsharp
-let errorHandler (ex : Exception) (logger : ILogger) (ctx : HttpContext) =
+let errorHandler (ex : Exception) (logger : ILogger) (next:HttpCont) (ctx : HttpContext) =
     logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
-    ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
+    (clearResponse >=> setStatusCode 500 >=> text ex.Message) next ctx
 ```
 
 In order to enable the error handler you have to configure the error handler in your application startup:
