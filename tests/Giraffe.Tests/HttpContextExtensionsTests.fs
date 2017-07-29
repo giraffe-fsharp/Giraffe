@@ -23,7 +23,7 @@ let getBody (ctx : HttpContext) =
     use reader = new StreamReader(ctx.Response.Body, Encoding.UTF8)
     reader.ReadToEnd()
 
-let next = (Some >> async.Return)
+//let next = (Some >> async.Return)
 
 [<CLIMutable>]
 type ModelWithOption =
@@ -82,7 +82,7 @@ let ``BindJson test`` () =
 
     let result = 
 
-        app next ctx
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -124,7 +124,7 @@ let ``BindXml test`` () =
 
     let result = 
 
-        app next ctx
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -168,7 +168,7 @@ let ``BindForm test`` () =
 
     let result = 
 
-        app next ctx
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -200,7 +200,7 @@ let ``BindQueryString test`` () =
 
     let result = 
 
-        app next ctx
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -228,7 +228,7 @@ let ``BindQueryString with option property test`` () =
         ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
         ctx.Response.Body <- new MemoryStream()
 
-        app next ctx
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
         |> ignore
 
@@ -271,7 +271,7 @@ let ``BindModel with JSON content returns correct result`` () =
 
     let result = 
 
-        app next ctx
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -315,7 +315,7 @@ let ``BindModel with XML content returns correct result`` () =
 
     let result = 
 
-        app next ctx
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -361,7 +361,7 @@ let ``BindModel with FORM content returns correct result`` () =
 
     let result = 
 
-        app next ctx
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -405,7 +405,7 @@ let ``BindModel with JSON content and a specific charset returns correct result`
 
     let result = 
 
-        app next ctx
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -439,7 +439,7 @@ let ``BindModel during HTTP GET request with query string returns correct result
 
     let result = 
 
-        app next ctx
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -472,7 +472,7 @@ let ``TryGetRequestHeader during HTTP GET request with returns correct resultd``
 
     let result = 
 
-        app next ctx
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -506,7 +506,7 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
 
     let result = 
 
-        app next ctx
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with

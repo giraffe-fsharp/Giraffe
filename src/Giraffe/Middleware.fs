@@ -30,7 +30,7 @@ type GiraffeMiddleware (next          : RequestDelegate,
     do if isNull next then raise (ArgumentNullException("next"))
 
     // pre-compiles the handler continuation pipeline
-    let cont = handler (Some >> async.Return)
+    let cont : HttpCont = handler (Some >> async.Return)
 
     member __.Invoke (ctx : HttpContext) =
         async {
