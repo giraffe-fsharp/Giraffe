@@ -74,12 +74,15 @@ let private handlerWithRootedPath (path : string) (handler : HttpHandler) : Http
 /// **The 'next' continuation format removes the need to bind such that compose can compose continuations from next functions
 
 /// Combines two HttpHandler functions into one.
-let compose (handler : HttpHandler) (handler2 : HttpHandler) =
+let compose (handler : HttpHandler) (handler2 : HttpHandler) : HttpHandler =
     // the continuation can be pre-compied with next
     fun next -> 
         let child  = handler2 next // (next, passed down pipeline, will be 'Some ctx', the completion signal) 
         let parent = handler child
-        parent     // parent is continuation of first handler embedded with continuation of handler2  
+        fun ctx ->
+            match ctx.Response.HasStarted with
+            | true  -> next ctx    // short circuit case
+            | false -> parent ctx
 
 /// Adapts a HttpHandler function to accept a HttpHandlerResult.
 /// See bind for more information.
