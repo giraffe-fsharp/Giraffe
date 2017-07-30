@@ -37,6 +37,8 @@ let assertFailf format args =
     let msg = sprintf format args
     Assert.True(false, msg)
 
+let next = (Some >> async.Return)
+
 // ---------------------------------
 // Test Types
 // ---------------------------------
@@ -85,8 +87,7 @@ let ``GET "/" returns "Hello World"`` () =
     let expected = "Hello World"
 
     let result =
-        ctx
-        |> app
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -110,8 +111,8 @@ let ``GET "/foo" returns "bar"`` () =
     let expected = "bar"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -135,8 +136,8 @@ let ``GET "/FOO" returns 404 "Not found"`` () =
     let expected = "Not found"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -162,8 +163,8 @@ let ``GET "/json" returns json object`` () =
     let expected = "{\"Foo\":\"john\",\"Bar\":\"doe\",\"Age\":30}"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -191,8 +192,8 @@ let ``POST "/post/1" returns "1"`` () =
     let expected = "1"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -220,8 +221,8 @@ let ``POST "/post/2" returns "2"`` () =
     let expected = "2"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -249,8 +250,8 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
     let expected = "Not found"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -285,8 +286,8 @@ let ``GET "/dotLiquid" returns rendered html view`` () =
     let expected = "<html><head><title>DotLiquid</title></head><body><p>John Doe is 30 years old.</p></body></html>"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -319,8 +320,8 @@ let ``POST "/text" with supported Accept header returns "good"`` () =
     let expected = "text"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -353,8 +354,8 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
     let expected = "\"json\""
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -387,8 +388,8 @@ let ``POST "/either" with supported Accept header returns "either"`` () =
     let expected = "either"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -421,8 +422,8 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
     let expected = "Not found"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -449,8 +450,8 @@ let ``GET "/JSON" returns "BaR"`` () =
     let expected = "BaR"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -476,8 +477,8 @@ let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
     let expected = "blah%20blah"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -503,8 +504,8 @@ let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
     let expected = "Name: johndoe, Age: 59"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -531,8 +532,8 @@ let ``POST "/POsT/1" returns "1"`` () =
     let expected = "1"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -559,8 +560,8 @@ let ``POST "/POsT/523" returns "523"`` () =
     let expected = "523"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -591,8 +592,8 @@ let ``GET "/api" returns "api root"`` () =
     let expected = "api root"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -623,8 +624,8 @@ let ``GET "/api/users" returns "users"`` () =
     let expected = "users"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -655,8 +656,8 @@ let ``GET "/api/test" returns "test"`` () =
     let expected = "test"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -696,8 +697,8 @@ let ``GET "/api/v2/users" returns "users v2"`` () =
     let expected = "users v2"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -727,8 +728,8 @@ let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
     let expected = "yadayada"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -767,8 +768,8 @@ let ``GET "/person" returns rendered HTML view`` () =
     let expected = "<!DOCTYPE html><html><head><title>Html Node</title></head><body><p>John Doe is 30 years old.</p></body></html>"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -808,8 +809,8 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
     let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"left ear\",\"nose\"]}"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -849,8 +850,8 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
     let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"left ear\",\"nose\"]}"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -900,8 +901,8 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
 </Person>"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -951,8 +952,8 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
 </Person>"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -992,8 +993,8 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
     let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"ear\",\"nose\"]}"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -1043,8 +1044,8 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
 </Person>"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -1094,8 +1095,8 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
 </Person>"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -1139,8 +1140,8 @@ Height: 1.85
 Piercings: [|""ear""; ""nose""|]"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -1180,8 +1181,8 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
     let expected = "text/html is unacceptable by the server."
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -1221,8 +1222,8 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
     let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"ear\",\"nose\"]}"
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -1246,16 +1247,16 @@ let ``Warbler function should execute inner function each time`` () =
     ctx.Response.Body <- new MemoryStream()
 
     let result1 =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
         |> (fun res -> getBody res.Value)
 
     ctx.Response.Body <- new MemoryStream()
 
     let result2 =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
         |> (fun res -> getBody res.Value)
 
@@ -1265,16 +1266,16 @@ let ``Warbler function should execute inner function each time`` () =
     ctx.Response.Body <- new MemoryStream()
 
     let result3 =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
         |> (fun res -> getBody res.Value)
 
     ctx.Response.Body <- new MemoryStream()
 
     let result4 =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
         |> (fun res -> getBody res.Value)
 
@@ -1293,8 +1294,8 @@ let ``GET "/redirect" redirect to "/" `` () =
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/redirect")) |> ignore
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -1315,8 +1316,8 @@ let ``POST "/redirect" redirect to "/" `` () =
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/redirect")) |> ignore
 
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with
@@ -1333,8 +1334,8 @@ let ``GET "/{foo}/{bar}" returns Hello World``() =
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
     ctx.Response.Body <- new MemoryStream()
     let result =
-        ctx
-        |> app
+
+        app next ctx
         |> Async.RunSynchronously
 
     match result with

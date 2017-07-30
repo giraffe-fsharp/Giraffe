@@ -12,7 +12,7 @@ open DotLiquid
 /// with the compiled output as well as the Content-Type HTTP header to the given value.
 let dotLiquid (contentType : string) (template : string) (model : obj) =
     let view = Template.Parse template
-    fun (ctx : HttpContext) ->
+    fun (next:HttpContext -> Async<HttpContext option>) (ctx : HttpContext) ->
         async {
             let bytes =
                 model
@@ -22,20 +22,20 @@ let dotLiquid (contentType : string) (template : string) (model : obj) =
             ctx.Response.Headers.["Content-Type"] <- StringValues contentType
             ctx.Response.Headers.["Content-Length"] <- bytes.Length |> string |> StringValues
             do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length) |> Async.AwaitTask
-            return Some ctx
+            return! next ctx
         }
 
 /// Reads a dotLiquid template file from disk and compiles it with the given model and sets
 /// the compiled output as well as the given contentType as the HTTP reponse.
 let dotLiquidTemplate (contentType : string) (templatePath : string) (model : obj) =
-    fun (ctx : HttpContext) ->
+    fun (next:HttpContext -> Async<HttpContext option>) (ctx : HttpContext) ->
         async {
             let env = ctx.RequestServices.GetService<IHostingEnvironment>()
             let templatePath = env.ContentRootPath + templatePath
             use stream = new FileStream(templatePath, FileMode.Open)
             use reader = new StreamReader(stream)
             let! template = reader.ReadToEndAsync() |> Async.AwaitTask
-            return! dotLiquid contentType template model ctx
+            return! dotLiquid contentType template model next ctx
         }
 
 /// Reads a dotLiquid template file from disk and compiles it with the given model and sets

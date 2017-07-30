@@ -11,7 +11,7 @@ open Giraffe.Razor.Engine
 /// Reads a razor view from disk and compiles it with the given model and sets
 /// the compiled output as the HTTP reponse with the given contentType.
 let razorView (contentType : string) (viewName : string) (model : 'T) =
-    fun (ctx : HttpContext) ->
+    fun next (ctx : HttpContext) ->
         async {
             let engine = ctx.RequestServices.GetService<IRazorViewEngine>()
             let tempDataProvider = ctx.RequestServices.GetService<ITempDataProvider>()
@@ -23,7 +23,7 @@ let razorView (contentType : string) (viewName : string) (model : 'T) =
                 ctx.Response.Headers.["Content-Type"] <- StringValues contentType
                 ctx.Response.Headers.["Content-Length"] <- bytes.Length |> string |> StringValues
                 do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length) |> Async.AwaitTask
-                return Some ctx
+                return! next ctx
         }
 
 /// Reads a razor view from disk and compiles it with the given model and sets

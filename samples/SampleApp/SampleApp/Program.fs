@@ -23,9 +23,9 @@ open SampleApp.HtmlViews
 // Error handler
 // ---------------------------------
 
-let errorHandler (ex : Exception) (logger : ILogger) (ctx : HttpContext) =
+let errorHandler (ex : Exception) (logger : ILogger) =
     logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
-    ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
+    (clearResponse >=> setStatusCode 500 >=> text ex.Message)
 
 // ---------------------------------
 // Web app
@@ -42,7 +42,7 @@ let mustBeAdmin =
     >=> requiresRole "Admin" accessDenied
 
 let loginHandler =
-    fun (ctx : HttpContext) ->
+    fun (next : HttpCont) (ctx : HttpContext) ->
         async {
             let issuer = "http://localhost:5000"
             let claims =
@@ -56,18 +56,16 @@ let loginHandler =
 
             do! ctx.Authentication.SignInAsync(authScheme, user) |> Async.AwaitTask
             
-            return! text "Successfully logged in" ctx
+            return! text "Successfully logged in" next ctx
         }
 
 let userHandler =
-    fun (ctx : HttpContext) ->
-        text ctx.User.Identity.Name ctx
+    fun (next : HttpCont) (ctx : HttpContext) ->
+        text ctx.User.Identity.Name next ctx
 
 let showUserHandler id =
-    fun (ctx : HttpContext) ->
-        mustBeAdmin >=>
-        text (sprintf "User ID: %i" id)
-        <| ctx
+    mustBeAdmin >=>
+    text (sprintf "User ID: %i" id)
 
 let time() =
     System.DateTime.Now.ToString()
@@ -82,14 +80,14 @@ type Car =
     }
 
 let submitCar =
-    fun (ctx : HttpContext) ->
+    fun (next : HttpCont) (ctx : HttpContext) ->
         async {
             let! car = ctx.BindModel<Car>()
-            return! json car ctx
+            return! json car next ctx
         }
 
 let smallFileUploadHandler =
-    fun (ctx : HttpContext) ->
+    fun (next : HttpCont) (ctx : HttpContext) ->
         async {
             return!
                 (match ctx.Request.HasFormContentType with
@@ -97,18 +95,18 @@ let smallFileUploadHandler =
                 | true  ->
                     ctx.Request.Form.Files
                     |> Seq.fold (fun acc file -> sprintf "%s\n%s" acc file.FileName) ""
-                    |> text) ctx
+                    |> text) next ctx
         }
 
 let largeFileUploadHandler =
-    fun (ctx : HttpContext) ->
+    fun (next : HttpCont) (ctx : HttpContext) ->
         async {
             let formFeature = ctx.Features.Get<IFormFeature>()
             let! form = formFeature.ReadFormAsync CancellationToken.None |> Async.AwaitTask
             return!
                 (form.Files
                 |> Seq.fold (fun acc file -> sprintf "%s\n%s" acc file.FileName) ""
-                |> text) ctx
+                |> text) next ctx
         }
 
 let webApp = 
@@ -117,7 +115,7 @@ let webApp =
             choose [
                 route  "/"           >=> text "index"
                 route  "/ping"       >=> text "pong"
-                route  "/error"      >=> (fun _ -> failwith "Something went wrong!")
+                route  "/error"      >=> (fun _ _ -> failwith "Something went wrong!")
                 route  "/login"      >=> loginHandler
                 route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
                 route  "/user"       >=> mustBeUser >=> userHandler
