@@ -1389,6 +1389,7 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Jimmy Byrd](https://github.com/TheAngryByrd) (Added Linux builds)
 - [Jon Canning](https://github.com/JonCanning) (Moved the Razor and DotLiquid http handlers into separate NuGet packages and added the `routeBind` handler as well as some useful `HttpContext` extensions)
 - [Andrew Grant](https://github.com/GraanJonlo) (Fixed bug in the `giraffe-template` NuGet package)
+- [Gerard](https://github.com/gerardtoconnor) (Changed the API to continuations instead of binding HttpHandlers)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
 
