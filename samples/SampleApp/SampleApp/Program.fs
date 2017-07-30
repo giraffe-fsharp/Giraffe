@@ -24,8 +24,8 @@ open SampleApp.HtmlViews
 // ---------------------------------
 
 let errorHandler (ex : Exception) (logger : ILogger) =
-    logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
-    (clearResponse >=> setStatusCode 500 >=> text ex.Message)
+    logger.LogError(EventId(), ex, "An unhandled exception has occurred while executing the request.")
+    clearResponse >=> setStatusCode 500 >=> text ex.Message
 
 // ---------------------------------
 // Web app
@@ -37,12 +37,12 @@ let accessDenied = setStatusCode 401 >=> text "Access Denied"
 
 let mustBeUser = requiresAuthentication accessDenied
 
-let mustBeAdmin = 
-    requiresAuthentication accessDenied 
+let mustBeAdmin =
+    requiresAuthentication accessDenied
     >=> requiresRole "Admin" accessDenied
 
 let loginHandler =
-    fun (next : HttpCont) (ctx : HttpContext) ->
+    fun (next : HttpAction) (ctx : HttpContext) ->
         async {
             let issuer = "http://localhost:5000"
             let claims =
@@ -55,20 +55,19 @@ let loginHandler =
             let user     = ClaimsPrincipal(identity)
 
             do! ctx.Authentication.SignInAsync(authScheme, user) |> Async.AwaitTask
-            
+
             return! text "Successfully logged in" next ctx
         }
 
 let userHandler =
-    fun (next : HttpCont) (ctx : HttpContext) ->
+    fun (next : HttpAction) (ctx : HttpContext) ->
         text ctx.User.Identity.Name next ctx
 
 let showUserHandler id =
     mustBeAdmin >=>
     text (sprintf "User ID: %i" id)
 
-let time() =
-    System.DateTime.Now.ToString()
+let time() = System.DateTime.Now.ToString()
 
 [<CLIMutable>]
 type Car =
@@ -80,14 +79,14 @@ type Car =
     }
 
 let submitCar =
-    fun (next : HttpCont) (ctx : HttpContext) ->
+    fun (next : HttpAction) (ctx : HttpContext) ->
         async {
             let! car = ctx.BindModel<Car>()
             return! json car next ctx
         }
 
 let smallFileUploadHandler =
-    fun (next : HttpCont) (ctx : HttpContext) ->
+    fun (next : HttpAction) (ctx : HttpContext) ->
         async {
             return!
                 (match ctx.Request.HasFormContentType with
@@ -99,7 +98,7 @@ let smallFileUploadHandler =
         }
 
 let largeFileUploadHandler =
-    fun (next : HttpCont) (ctx : HttpContext) ->
+    fun (next : HttpAction) (ctx : HttpContext) ->
         async {
             let formFeature = ctx.Features.Get<IFormFeature>()
             let! form = formFeature.ReadFormAsync CancellationToken.None |> Async.AwaitTask
@@ -109,7 +108,7 @@ let largeFileUploadHandler =
                 |> text) next ctx
         }
 
-let webApp = 
+let webApp =
     choose [
         GET >=>
             choose [
@@ -133,6 +132,7 @@ let webApp =
         route "/car" >=> submitCar
         setStatusCode 404 >=> text "Not Found" ]
 
+
 // ---------------------------------
 // Main
 // ---------------------------------
@@ -148,7 +148,7 @@ let cookieAuth =
             ExpireTimeSpan          = TimeSpan.FromDays 7.0
     )
 
-let configureApp (app : IApplicationBuilder) = 
+let configureApp (app : IApplicationBuilder) =
     app.UseGiraffeErrorHandler errorHandler
     app.UseCookieAuthentication cookieAuth |> ignore
     app.UseStaticFiles() |> ignore

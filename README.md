@@ -2,7 +2,7 @@
 
 ![Giraffe](https://raw.githubusercontent.com/dustinmoris/Giraffe/develop/giraffe.png)
 
-A functional ASP.NET Core micro framework for building rich web applications.
+A functional ASP.NET Core micro web framework for building rich web applications.
 
 Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) for more information.
 
@@ -15,11 +15,9 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 #### ATTENTION:
 
- This project has been fairly stable for a while now and will be entering a beta phase relatively soon. Bigger API changes are less frequent now.
+Giraffe was formerly known as [ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) and has been later [renamed to Giraffe](https://github.com/dustinmoris/Giraffe/issues/15) to better distinguish from AWS Lambda and to establish its own unique brand.
 
-Giraffe was formerly known as [ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) and has been recently [renamed to better distinguish from AWS Lambda](https://github.com/dustinmoris/Giraffe/issues/15) as well as establish a more unique brand.
-
-The old NuGet package has been unlisted and will not receive any updates any more. Please use the new NuGet package [Giraffe](https://www.nuget.org/packages/Giraffe) going forward.
+The old NuGet package has been unlisted and will no longer receive any updates. Please use the [Giraffe NuGet package](https://www.nuget.org/packages/Giraffe) going forward.
 
 ## Table of contents
 
@@ -88,15 +86,15 @@ The old NuGet package has been unlisted and will not receive any updates any mor
 
 ## About
 
-[Giraffe](https://www.nuget.org/packages/Giraffe) is an F# web framework similar to Suave, but has been designed with [ASP.NET Core](https://www.asp.net/core) in mind and can be plugged into the ASP.NET Core pipeline via [middleware](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware). [Giraffe](https://www.nuget.org/packages/Giraffe) has been heavily inspired by [Suave](https://suave.io/) and its concept of web parts and the ability to compose many smaller web parts into a larger web application.
+[Giraffe](https://www.nuget.org/packages/Giraffe) is an F# micro web framework for building rich web applications. It has been heavily inspired and is similar to [Suave](https://suave.io/), but has been specifically designed with [ASP.NET Core](https://www.asp.net/core) in mind and can be plugged into the ASP.NET Core pipeline via [middleware](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware). Giraffe applications are composed of so called `HttpHandler` functions which can be thought of a mixture of Suave's WebParts and ASP.NET Core's middleware.
 
-If you'd like to learn more about the motivation of this project please read this [blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core).
+If you'd like to learn more about the motivation of this project please read my [blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) (please note that some code samples in this blog post might be outdated).
 
 ### Who is it for?
 
 [Giraffe](https://www.nuget.org/packages/Giraffe) is intended for developers who want to build rich web applications on top of ASP.NET Core in a functional first approach. ASP.NET Core is a powerful web platform which has support by Microsoft and a huge developer community behind it and Giraffe is aimed at F# developers who want to benefit from that eco system.
 
-It is not designed to be a competing web product which can be run standalone like NancyFx or Suave, but rather a lean micro framework which aims to complement ASP.NET Core where it comes short for functional developers at the moment. The fundamental idea is to build on top of the strong foundation of ASP.NET Core and re-use existing ASP.NET Core building blocks so F# developers can benefit from both worlds.
+It is not designed to be a competing web product which can be run standalone like NancyFx or Suave, but rather a lean micro framework which aims to complement ASP.NET Core where it comes short for functional developers. The fundamental idea is to build on top of the strong foundation of ASP.NET Core and re-use existing ASP.NET Core building blocks so F# developers can benefit from both worlds.
 
 You can think of [Giraffe](https://www.nuget.org/packages/Giraffe) as the functional counter part of the ASP.NET Core MVC framework.
 
@@ -107,32 +105,22 @@ You can think of [Giraffe](https://www.nuget.org/packages/Giraffe) as the functi
 The main building block in Giraffe is a so called `HttpHandler`:
 
 ```fsharp
-type HttpHandlerResult = Async<HttpContext option>
-
-type HttpCont = HttpContext -> HttpHandlerResult
-
-// next -> ctx -> result
-type HttpHandler = HttpCont -> HttpContext -> HttpHandlerResult
+type HttpActionResult = Async<HttpContext option>
+type HttpAction = HttpContext -> HttpActionResult
+type HttpHandler = HttpAction -> HttpContext -> HttpActionResult
 ```
 
-A `HttpHandler` is a simple function which takes 2 curried arguments, a `HttpCont` continuation function and a `HttpContext`, and returns a `HttpContext` (wrapped in an option and async workflow) when finished.
+A `HttpHandler` is a simple function which takes two curried arguments, a `HttpAction` and a `HttpContext`, and returns a `HttpContext` (wrapped in an `option` and `Async` workflow) when finished.
 
-Inside that function it can process an incoming `HttpRequest` and make changes to the `HttpResponse` of the given `HttpContext`. By receiving and returning a `HttpContext` there's nothing which cannot be done from inside a `HttpHandler`.
+Given that a `HttpHandler` receives and returns an ASP.NET Core `HttpContext` there is literally nothing which cannot be done from within a Giraffe web application which couldn't be done from a regular ASP.NET Core (MVC) application either.
 
-To process further down the handler pipeline, the `HttpHandler` function calls its `HttpCont` continuation function with its `HttpContext` as the argument. This removes the need to wrap/bind all the interim pipeline successful evaluation paths as the `HttpHandler` returns the async result of the next `HttpHandler` in the pipeline. To short circuit the pipeline and return early, just return option of `Some HttpContext`
+Each `HttpHandler` can process an incoming `HttpRequest` before passing it further down the pipeline by invoking the next `HttpAction` or short circuit the execution by returning an option of `Some HttpContext`.
 
-A `HttpHandler` can decide to not further process an incoming request and return `None` instead. In this case another `HttpHandler` might continue processing the request or the middleware will simply defer to the next `RequestDelegate` in the ASP.NET Core pipeline.
+If a `HttpHandler` decides to not process an incoming `HttpRequest` at all, then it can return `None` instead. In this case another `HttpHandler` might pick up the incoming `HttpRequest` or the middleware will defer to the next `RequestDelegate` from the ASP.NET Core pipeline.
 
-*Continuations are used to avoid wrapping sync computations in async as well as tail call optimiation of stack frames.*
+The easiest way to understand a Giraffe `HttpHandler` is to think of it like a functional ASP.NET Core middleware. Each handler has the full `HttpContext` at its disposal and can decide if it wants to return `Some HttpContext`, `None` or pass it on to the "next" `HttpAction`.
 
-A typical `HttpHandler` definition would look something like:
-```fsharp
-let handler predicate =
-    fun next ctx ->             // fun (next handler fn) (Httpcontext) ->
-        if predicate 
-        then next ctx           // success path need not be wrapped in async as 'next' continuation returns async
-        else async.Return None  // failed 'None' path must be async wrapped
-```
+Please check out the [sample applications](#sample-applications) for demo as well as real world examples.
 
 ### Combinators
 
@@ -141,16 +129,18 @@ let handler predicate =
 The `compose` combinator combines two `HttpHandler` functions into one:
 
 ```fsharp
-let compose (handler : HttpHandler) (handler2 : HttpHandler) : HttpHandler =
-    fun (next:HttpCont) (ctx:HttpContext) -> 
-        let child  = handler2 next // (next, passed down pipeline, will be 'Some ctx', the completion signal) 
-        let parent = handler child
-        parent ctx    // parent is a continuation of first handler embedded with a continuation of handler2  
+let compose (handler1 : HttpHandler) (handler2 : HttpHandler) : HttpHandler =
+    fun (next : HttpAction) ->
+        let action = next |> handler2 |> handler1
+        fun (ctx : HttpContext) ->
+            match ctx.Response.HasStarted with
+            | true  -> next ctx
+            | false -> action ctx
 ```
 
 It is the main combinator as it allows composing many smaller `HttpHandler` functions into a bigger web application.
 
-If you would like to learn more about `>=>` then please check out [Scott Wlaschin's blog post on Railway oriented programming](http://fsharpforfunandprofit.com/posts/recipe-part2/).
+If you would like to learn more about the `>=>` (fish) operator then please check out [Scott Wlaschin's blog post on Railway oriented programming](http://fsharpforfunandprofit.com/posts/recipe-part2/).
 
 #### choose
 
@@ -293,8 +283,10 @@ let app =
 #### Example:
 
 ```fsharp
-let errorHandler (ex : Exception) (logger : ILogger) (ctx : HttpContext) =
-    ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
+let errorHandler (ex : Exception) (logger : ILogger) =
+    clearResponse
+    >=> setStatusCode 500
+    >=> text ex.Message
 
 let webApp =
     choose [
@@ -306,8 +298,8 @@ type Startup() =
     member __.Configure (app : IApplicationBuilder)
                         (env : IHostingEnvironment)
                         (loggerFactory : ILoggerFactory) =
-        app.UseGiraffeErrorHandler(errorHandler)
-        app.UseGiraffe(webApp)
+        app.UseGiraffeErrorHandler errorHandler
+        app.UseGiraffe webApp
 ```
 
 ### route
@@ -890,7 +882,7 @@ Defining a custom HTTP handler to partially filter a route:
 
 ```fsharp
 let routeStartsWith (subPath : string) =
-    fun next (ctx : HttpContext) ->
+    fun (next : HttpAction) (ctx : HttpContext) ->
         if ctx.Request.Path.ToString().StartsWith subPath
         then next ctx
         else async.Return None
@@ -900,7 +892,7 @@ Defining another custom HTTP handler to validate a mandatory HTTP header:
 
 ```fsharp
 let requiresToken (expectedToken : string) (handler : HttpHandler) =
-    fun next (ctx : HttpContext) ->
+    fun (next : HttpAction) (ctx : HttpContext) ->
         let token    = ctx.Request.Headers.["X-Token"].ToString()
         let response =
             if token.Equals(expectedToken)
@@ -957,7 +949,7 @@ open Giraffe.HttpHandlers
 open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun next (ctx : HttpContext) ->
+    fun (next : HttpAction) (ctx : HttpContext) ->
         async {
             // Binds a JSON payload to a Car object
             let! car = ctx.BindJson<Car>()
@@ -1016,7 +1008,7 @@ open Giraffe.HttpHandlers
 open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun next (ctx : HttpContext) ->
+    fun (next : HttpAction) (ctx : HttpContext) ->
         async {
             // Binds an XML payload to a Car object
             let! car = ctx.BindXml<Car>()
@@ -1080,7 +1072,7 @@ open Giraffe.HttpHandlers
 open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun next (ctx : HttpContext) ->
+    fun (next : HttpAction) (ctx : HttpContext) ->
         async {
             // Binds a form urlencoded payload to a Car object
             let! car = ctx.BindForm<Car>()
@@ -1139,7 +1131,7 @@ open Giraffe.HttpHandlers
 open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun next (ctx : HttpContext) ->
+    fun (next : HttpAction) (ctx : HttpContext) ->
         async {
             // Binds a query string to a Car object
             let car = ctx.BindQueryString<Car>()
@@ -1194,7 +1186,7 @@ open Giraffe.HttpHandlers
 open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun next (ctx : HttpContext) ->
+    fun (next : HttpAction) (ctx : HttpContext) ->
         async {
             // Binds a JSON, XML or form urlencoded payload to a Car object
             let! car = ctx.BindModel<Car>()

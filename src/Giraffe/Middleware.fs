@@ -29,14 +29,14 @@ type GiraffeMiddleware (next          : RequestDelegate,
 
     do if isNull next then raise (ArgumentNullException("next"))
 
-    // pre-compiles the handler continuation pipeline
-    let cont : HttpCont = handler (Some >> async.Return)
+    // pre-compile the handler pipeline
+    let action : HttpAction = handler (Some >> async.Return)
 
     member __.Invoke (ctx : HttpContext) =
         async {
-            let! result = cont ctx
+            let! result = action ctx
+            let  logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
 
-            let logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
             if logger.IsEnabled LogLevel.Debug then
                 match result with
                 | Some _ -> sprintf "Giraffe returned Some for %s" (getRequestInfo ctx)
@@ -44,9 +44,7 @@ type GiraffeMiddleware (next          : RequestDelegate,
                 |> logger.LogDebug
 
             if (result.IsNone) then
-                return!
-                    next.Invoke ctx
-                    |> Async.AwaitTask
+                return! next.Invoke ctx |> Async.AwaitTask
         } |> Async.StartAsTask
 
 /// ---------------------------
@@ -61,16 +59,12 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
 
     member __.Invoke (ctx : HttpContext) =
         async {
-            try
-                return!
-                    next.Invoke ctx
-                    |> Async.AwaitTask
+            try return! next.Invoke ctx |> Async.AwaitTask
             with ex ->
                 let logger = loggerFactory.CreateLogger<GiraffeErrorHandlerMiddleware>()
                 try
-                    return!
-                        errorHandler ex logger (Some >> async.Return) ctx
-                        |> Async.Ignore
+                    let action = Some >> async.Return
+                    return! errorHandler ex logger action ctx |> Async.Ignore
                 with ex2 ->
                     logger.LogError(EventId(0), ex,  "An unhandled exception has occurred while executing the request.")
                     logger.LogError(EventId(0), ex2, "An exception was thrown attempting to handle the original exception.")
@@ -82,9 +76,9 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
 
 type IApplicationBuilder with
     member this.UseGiraffe (handler : HttpHandler) =
-        this.UseMiddleware<GiraffeMiddleware>(handler)
+        this.UseMiddleware<GiraffeMiddleware> handler
         |> ignore
 
     member this.UseGiraffeErrorHandler (handler : ErrorHandler) =
-        this.UseMiddleware<GiraffeErrorHandlerMiddleware>(handler)
+        this.UseMiddleware<GiraffeErrorHandlerMiddleware> handler
         |> ignore

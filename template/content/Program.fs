@@ -18,7 +18,7 @@ open _AppName.Models
 // Web app
 // ---------------------------------
 
-let webApp = 
+let webApp =
     choose [
         GET >=>
             choose [
@@ -30,15 +30,15 @@ let webApp =
 // Error handler
 // ---------------------------------
 
-let errorHandler (ex : Exception) (logger : ILogger) (ctx : HttpContext) =
-    logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
-    ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
+let errorHandler (ex : Exception) (logger : ILogger) =
+    logger.LogError(EventId(), ex, "An unhandled exception has occurred while executing the request.")
+    clearResponse >=> setStatusCode 500 >=> text ex.Message
 
 // ---------------------------------
 // Config and Main
 // ---------------------------------
 
-let configureApp (app : IApplicationBuilder) = 
+let configureApp (app : IApplicationBuilder) =
     app.UseGiraffeErrorHandler errorHandler
     app.UseStaticFiles() |> ignore
     app.UseGiraffe webApp
