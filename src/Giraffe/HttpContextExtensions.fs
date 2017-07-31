@@ -37,12 +37,12 @@ type HttpContext with
         match this.Request.Headers.TryGetValue key with
         | true, value -> Ok (value.ToString())
         | _           -> Error (sprintf "HTTP request header '%s' is missing." key)
-        
+
     member this.TryGetQueryStringValue (key : string) =
         match this.Request.Query.TryGetValue key with
         | true, value -> Some (value.ToString())
         | _           -> None
-        
+
     member this.GetQueryStringValue (key : string) =
         match this.Request.Query.TryGetValue key with
         | true, value -> Ok (value.ToString())
@@ -97,7 +97,7 @@ type HttpContext with
             | None            -> ()
             | Some queryValue ->
 
-                let isOptionType = 
+                let isOptionType =
                     p.PropertyType.GetTypeInfo().IsGenericType &&
                     p.PropertyType.GetGenericTypeDefinition() = typedefof<Option<_>>
 

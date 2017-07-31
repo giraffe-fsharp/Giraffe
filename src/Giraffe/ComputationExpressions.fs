@@ -5,6 +5,7 @@ open System
 type OptionBuilder() =
     member x.Bind(v, f) = Option.bind f v
     member x.Return v   = Some v
+    member x.Zero()     = None
 
 let opt = OptionBuilder()
 
