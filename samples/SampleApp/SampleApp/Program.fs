@@ -132,7 +132,6 @@ let webApp =
         route "/car" >=> submitCar
         setStatusCode 404 >=> text "Not Found" ]
 
-
 // ---------------------------------
 // Main
 // ---------------------------------
@@ -165,7 +164,6 @@ let configureServices (services : IServiceCollection) =
 
 let configureLogging (loggerFactory : ILoggerFactory) =
     loggerFactory.AddConsole(LogLevel.Trace).AddDebug() |> ignore
-
 
 [<EntryPoint>]
 let main argv =

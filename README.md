@@ -88,7 +88,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
 
 [Giraffe](https://www.nuget.org/packages/Giraffe) is an F# micro web framework for building rich web applications. It has been heavily inspired and is similar to [Suave](https://suave.io/), but has been specifically designed with [ASP.NET Core](https://www.asp.net/core) in mind and can be plugged into the ASP.NET Core pipeline via [middleware](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware). Giraffe applications are composed of so called `HttpHandler` functions which can be thought of a mixture of Suave's WebParts and ASP.NET Core's middleware.
 
-If you'd like to learn more about the motivation of this project please read my [blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) (please note that some code samples in this blog post might be outdated).
+If you'd like to learn more about the motivation of this project please read my [blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) (some code samples in this blog post might be outdated today).
 
 ### Who is it for?
 
@@ -118,9 +118,9 @@ Each `HttpHandler` can process an incoming `HttpRequest` before passing it furth
 
 If a `HttpHandler` decides to not process an incoming `HttpRequest` at all, then it can return `None` instead. In this case another `HttpHandler` might pick up the incoming `HttpRequest` or the middleware will defer to the next `RequestDelegate` from the ASP.NET Core pipeline.
 
-The easiest way to understand a Giraffe `HttpHandler` is to think of it like a functional ASP.NET Core middleware. Each handler has the full `HttpContext` at its disposal and can decide if it wants to return `Some HttpContext`, `None` or pass it on to the "next" `HttpAction`.
+The easiest way to get your head around a Giraffe `HttpHandler` is to think of it like a functional ASP.NET Core middleware. Each handler has the full `HttpContext` at its disposal and can decide whether it wants to return `Some HttpContext`, `None` or pass it on to the "next" `HttpAction`.
 
-Please check out the [sample applications](#sample-applications) for demo as well as real world examples.
+Please check out the [sample applications](#sample-applications) for a demo as well as a real world example.
 
 ### Combinators
 
@@ -142,11 +142,17 @@ It is the main combinator as it allows composing many smaller `HttpHandler` func
 
 If you would like to learn more about the `>=>` (fish) operator then please check out [Scott Wlaschin's blog post on Railway oriented programming](http://fsharpforfunandprofit.com/posts/recipe-part2/).
 
+##### Example:
+
+```fsharp
+let app = route "/" >=> setStatusCode 200 >=> text "Hello World"
+```
+
 #### choose
 
 The `choose` combinator function iterates through a list of `HttpHandler` functions and invokes each individual handler until the first `HttpHandler` returns a result.
 
-#### Example:
+##### Example:
 
 ```fsharp
 let app =
@@ -1209,9 +1215,9 @@ let webApp =
 
 ## Error Handling
 
-Similar to defining a web application in Giraffe you can also set a global error handler, which can react to unhandled server exceptions.
+Similar to building a web application in Giraffe you can also set a global error handler, which can react to any unhandled exception of your web application.
 
-The `ErrorHandler` is a function which accepts the unhandled exception object and a default logger and returns a `HttpHandler` function which essentially works the same way as the `HttpHandler` functions of a web application:
+The `ErrorHandler` is a function which accepts an exception object and a default logger and returns a `HttpHandler` function which is the same as all other `HttpHandler` functions in Giraffe:
 
 ```fsharp
 type ErrorHandler = exn -> ILogger -> HttpHandler
@@ -1220,9 +1226,11 @@ type ErrorHandler = exn -> ILogger -> HttpHandler
 For example you could create an error handler which logs the unhandled exception and returns a HTTP 500 response with the error message as plain text:
 
 ```fsharp
-let errorHandler (ex : Exception) (logger : ILogger) (next:HttpCont) (ctx : HttpContext) =
-    logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
-    (clearResponse >=> setStatusCode 500 >=> text ex.Message) next ctx
+let errorHandler (ex : Exception) (logger : ILogger) =
+    logger.LogError(EventId(), ex, "An unhandled exception has occurred while executing the request.")
+    clearResponse
+    >=> setStatusCode 500
+    >=> text ex.Message
 ```
 
 In order to enable the error handler you have to configure the error handler in your application startup:
@@ -1236,7 +1244,7 @@ type Startup() =
         app.UseGiraffe webApp
 ```
 
-It is recommended to set the error handler as the first middleware in the pipeline, so that any exception from a following middleware can be caught by the error handling function.
+It is recommended to set the error handler as the first middleware in the pipeline, so that any unhandled exception from a later middleware can be caught and processed by the error handling function.
 
 ## Installation
 

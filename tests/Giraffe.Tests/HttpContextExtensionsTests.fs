@@ -14,7 +14,7 @@ open Microsoft.Extensions.Logging
 open Giraffe.Common
 open Giraffe.HttpHandlers
 
-let assertFailf format args = 
+let assertFailf format args =
     let msg = sprintf format args
     Assert.True(false, msg)
 
@@ -23,7 +23,7 @@ let getBody (ctx : HttpContext) =
     use reader = new StreamReader(ctx.Response.Body, Encoding.UTF8)
     reader.ReadToEnd()
 
-//let next = (Some >> async.Return)
+let endAction : HttpAction = Some >> async.Return
 
 [<CLIMutable>]
 type ModelWithOption =
@@ -54,14 +54,14 @@ let ``BindJson test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let jsonHandler =
-        fun next (ctx : HttpContext) -> 
+        fun (next : HttpAction) (ctx : HttpContext) ->
             async {
                 let! model = ctx.BindJson<Customer>()
                 return! text (model.ToString()) next ctx
             }
 
     let app = POST >=> route "/json" >=> jsonHandler
-    
+
     let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
     let stream = new MemoryStream()
     let writer = new StreamWriter(stream, Encoding.UTF8)
@@ -80,9 +80,9 @@ let ``BindJson test`` () =
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-
-        app (Some >> async.Return) ctx
+    let result =
+        (endAction, ctx)
+        ||> app
         |> Async.RunSynchronously
 
     match result with
@@ -96,14 +96,14 @@ let ``BindXml test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let xmlHandler =
-        fun next (ctx : HttpContext) -> 
+        fun (next : HttpAction) (ctx : HttpContext) ->
             async {
                 let! model = ctx.BindXml<Customer>()
                 return! text (model.ToString()) next ctx
             }
 
     let app = POST >=> route "/xml" >=> xmlHandler
-    
+
     let postContent = "<Customer><Name>John Doe</Name><IsVip>true</IsVip><BirthDate>1990-04-20</BirthDate><Balance>150000.5</Balance><LoyaltyPoints>137</LoyaltyPoints></Customer>"
     let stream = new MemoryStream()
     let writer = new StreamWriter(stream, Encoding.UTF8)
@@ -113,7 +113,7 @@ let ``BindXml test`` () =
 
     let headers = HeaderDictionary()
     headers.Add("Content-Type", StringValues("application/xml"))
-    headers.Add("Content-Length", StringValues(stream.Length.ToString()))    
+    headers.Add("Content-Length", StringValues(stream.Length.ToString()))
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/xml")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
@@ -122,9 +122,9 @@ let ``BindXml test`` () =
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-
-        app (Some >> async.Return) ctx
+    let result =
+        (endAction, ctx)
+        ||> app
         |> Async.RunSynchronously
 
     match result with
@@ -138,7 +138,7 @@ let ``BindForm test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let formHandler =
-        fun next (ctx : HttpContext) -> 
+        fun (next : HttpAction) (ctx : HttpContext) ->
             async {
                 let! model = ctx.BindForm<Customer>()
                 return! text (model.ToString()) next ctx
@@ -149,7 +149,7 @@ let ``BindForm test`` () =
     let headers = HeaderDictionary()
     headers.Add("Content-Type", StringValues("application/x-www-form-urlencoded"))
     ctx.Request.HasFormContentType.ReturnsForAnyArgs true |> ignore
-    let form = 
+    let form =
         dict [
             "Name", StringValues("John Doe")
             "IsVip", StringValues("true")
@@ -166,9 +166,9 @@ let ``BindForm test`` () =
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-
-        app (Some >> async.Return) ctx
+    let result =
+        (endAction, ctx)
+        ||> app
         |> Async.RunSynchronously
 
     match result with
@@ -182,12 +182,12 @@ let ``BindQueryString test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let queryHandler =
-        fun next (ctx : HttpContext) ->
+        fun (next : HttpAction) (ctx : HttpContext) ->
             let model = ctx.BindQueryString<Customer>()
             text (model.ToString()) next ctx
 
     let app = GET >=> route "/query" >=> queryHandler
-    
+
     let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
     let asdf = QueryCollection(query) :> IQueryCollection
@@ -198,9 +198,9 @@ let ``BindQueryString test`` () =
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-
-        app (Some >> async.Return) ctx
+    let result =
+        (endAction, ctx)
+        ||> app
         |> Async.RunSynchronously
 
     match result with
@@ -228,7 +228,8 @@ let ``BindQueryString with option property test`` () =
         ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
         ctx.Response.Body <- new MemoryStream()
 
-        app (Some >> async.Return) ctx
+        (endAction, ctx)
+        ||> app
         |> Async.RunSynchronously
         |> ignore
 
@@ -241,14 +242,14 @@ let ``BindModel with JSON content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun next (ctx : HttpContext) -> 
+        fun (next : HttpAction) (ctx : HttpContext) ->
             async {
                 let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) next ctx
             }
 
     let app = route "/auto" >=> autoHandler
-    
+
     let contentType = "application/json"
     let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
     let stream = new MemoryStream()
@@ -269,9 +270,9 @@ let ``BindModel with JSON content returns correct result`` () =
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-
-        app (Some >> async.Return) ctx
+    let result =
+        (endAction, ctx)
+        ||> app
         |> Async.RunSynchronously
 
     match result with
@@ -285,14 +286,14 @@ let ``BindModel with XML content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun next (ctx : HttpContext) -> 
+        fun (next : HttpAction) (ctx : HttpContext) ->
             async {
                 let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) next ctx
             }
 
     let app = route "/auto" >=> autoHandler
-    
+
     let contentType = "application/xml"
     let postContent = "<Customer><Name>John Doe</Name><IsVip>true</IsVip><BirthDate>1990-04-20</BirthDate><Balance>150000.5</Balance><LoyaltyPoints>137</LoyaltyPoints></Customer>"
     let stream = new MemoryStream()
@@ -313,9 +314,9 @@ let ``BindModel with XML content returns correct result`` () =
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-
-        app (Some >> async.Return) ctx
+    let result =
+        (endAction, ctx)
+        ||> app
         |> Async.RunSynchronously
 
     match result with
@@ -329,19 +330,19 @@ let ``BindModel with FORM content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun next (ctx : HttpContext) -> 
+        fun (next : HttpAction) (ctx : HttpContext) ->
             async {
                 let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) next ctx
             }
 
     let app = route "/auto" >=> autoHandler
-    
+
     let contentType = "application/x-www-form-urlencoded"
     let headers = HeaderDictionary()
     headers.Add("Content-Type", StringValues(contentType))
     ctx.Request.HasFormContentType.ReturnsForAnyArgs true |> ignore
-    let form = 
+    let form =
         dict [
             "Name", StringValues("John Doe")
             "IsVip", StringValues("true")
@@ -359,9 +360,9 @@ let ``BindModel with FORM content returns correct result`` () =
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-
-        app (Some >> async.Return) ctx
+    let result =
+        (endAction, ctx)
+        ||> app
         |> Async.RunSynchronously
 
     match result with
@@ -375,14 +376,14 @@ let ``BindModel with JSON content and a specific charset returns correct result`
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun next (ctx : HttpContext) -> 
+        fun (next : HttpAction) (ctx : HttpContext) ->
             async {
                 let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) next ctx
             }
 
     let app = route "/auto" >=> autoHandler
-    
+
     let contentType = "application/json; charset=utf-8"
     let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
     let stream = new MemoryStream()
@@ -403,9 +404,9 @@ let ``BindModel with JSON content and a specific charset returns correct result`
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-
-        app (Some >> async.Return) ctx
+    let result =
+        (endAction, ctx)
+        ||> app
         |> Async.RunSynchronously
 
     match result with
@@ -419,14 +420,14 @@ let ``BindModel during HTTP GET request with query string returns correct result
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun next (ctx : HttpContext) -> 
+        fun (next : HttpAction) (ctx : HttpContext) ->
             async {
                 let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) next ctx
             }
 
     let app = route "/auto" >=> autoHandler
-    
+
     let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
     let asdf = QueryCollection(query) :> IQueryCollection
@@ -437,9 +438,9 @@ let ``BindModel during HTTP GET request with query string returns correct result
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
-    let result = 
-
-        app (Some >> async.Return) ctx
+    let result =
+        (endAction, ctx)
+        ||> app
         |> Async.RunSynchronously
 
     match result with
@@ -453,14 +454,14 @@ let ``TryGetRequestHeader during HTTP GET request with returns correct resultd``
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
-        fun next (ctx : HttpContext) ->
+        fun (next : HttpAction) (ctx : HttpContext) ->
             (match ctx.TryGetRequestHeader "X-Test" with
             | Some value -> text value
             | None       -> setStatusCode 400 >=> text "Bad Request"
-            ) next ctx  
+            ) next ctx
 
     let app = route "/test" >=> testHandler
-    
+
     let headers = HeaderDictionary()
     headers.Add("X-Test", StringValues("It works!"))
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
@@ -470,9 +471,9 @@ let ``TryGetRequestHeader during HTTP GET request with returns correct resultd``
 
     let expected = "It works!"
 
-    let result = 
-
-        app (Some >> async.Return) ctx
+    let result =
+        (endAction, ctx)
+        ||> app
         |> Async.RunSynchronously
 
     match result with
@@ -486,14 +487,14 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
-        fun next (ctx : HttpContext) ->
+        fun (next : HttpAction) (ctx : HttpContext) ->
             (match ctx.TryGetQueryStringValue "BirthDate" with
             | Some value -> text value
             | None       -> setStatusCode 400 >=> text "Bad Request"
             ) next ctx
 
     let app = route "/test" >=> testHandler
-    
+
     let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
     let asdf = QueryCollection(query) :> IQueryCollection
@@ -504,9 +505,9 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
 
     let expected = "1990-04-20"
 
-    let result = 
-
-        app (Some >> async.Return) ctx
+    let result =
+        (endAction, ctx)
+        ||> app
         |> Async.RunSynchronously
 
     match result with
