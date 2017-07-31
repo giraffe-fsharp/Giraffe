@@ -1,4 +1,4 @@
-module Giraffe.ModelBindingTests
+module Giraffe.HttpContextExtensionsTests
 
 open System
 open System.Collections.Generic
@@ -22,8 +22,6 @@ let getBody (ctx : HttpContext) =
     ctx.Response.Body.Position <- 0L
     use reader = new StreamReader(ctx.Response.Body, Encoding.UTF8)
     reader.ReadToEnd()
-
-let endAction : HttpAction = Some >> async.Return
 
 [<CLIMutable>]
 type ModelWithOption =
@@ -81,8 +79,7 @@ let ``BindJson test`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result =
-        (endAction, ctx)
-        ||> app
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -123,8 +120,7 @@ let ``BindXml test`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result =
-        (endAction, ctx)
-        ||> app
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -167,8 +163,7 @@ let ``BindForm test`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result =
-        (endAction, ctx)
-        ||> app
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -199,8 +194,7 @@ let ``BindQueryString test`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result =
-        (endAction, ctx)
-        ||> app
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -228,8 +222,7 @@ let ``BindQueryString with option property test`` () =
         ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
         ctx.Response.Body <- new MemoryStream()
 
-        (endAction, ctx)
-        ||> app
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
         |> ignore
 
@@ -271,8 +264,7 @@ let ``BindModel with JSON content returns correct result`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result =
-        (endAction, ctx)
-        ||> app
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -315,8 +307,7 @@ let ``BindModel with XML content returns correct result`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result =
-        (endAction, ctx)
-        ||> app
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -361,8 +352,7 @@ let ``BindModel with FORM content returns correct result`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result =
-        (endAction, ctx)
-        ||> app
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -405,8 +395,7 @@ let ``BindModel with JSON content and a specific charset returns correct result`
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result =
-        (endAction, ctx)
-        ||> app
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -439,8 +428,7 @@ let ``BindModel during HTTP GET request with query string returns correct result
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     let result =
-        (endAction, ctx)
-        ||> app
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -472,8 +460,7 @@ let ``TryGetRequestHeader during HTTP GET request with returns correct resultd``
     let expected = "It works!"
 
     let result =
-        (endAction, ctx)
-        ||> app
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
@@ -506,8 +493,7 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
     let expected = "1990-04-20"
 
     let result =
-        (endAction, ctx)
-        ||> app
+        app (Some >> async.Return) ctx
         |> Async.RunSynchronously
 
     match result with
