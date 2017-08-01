@@ -52,7 +52,7 @@ let ``BindJson test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let jsonHandler =
-        fun (next : HttpAction) (ctx : HttpContext) ->
+        fun (next : HttpFunc) (ctx : HttpContext) ->
             async {
                 let! model = ctx.BindJson<Customer>()
                 return! text (model.ToString()) next ctx
@@ -93,7 +93,7 @@ let ``BindXml test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let xmlHandler =
-        fun (next : HttpAction) (ctx : HttpContext) ->
+        fun (next : HttpFunc) (ctx : HttpContext) ->
             async {
                 let! model = ctx.BindXml<Customer>()
                 return! text (model.ToString()) next ctx
@@ -134,7 +134,7 @@ let ``BindForm test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let formHandler =
-        fun (next : HttpAction) (ctx : HttpContext) ->
+        fun (next : HttpFunc) (ctx : HttpContext) ->
             async {
                 let! model = ctx.BindForm<Customer>()
                 return! text (model.ToString()) next ctx
@@ -177,7 +177,7 @@ let ``BindQueryString test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let queryHandler =
-        fun (next : HttpAction) (ctx : HttpContext) ->
+        fun (next : HttpFunc) (ctx : HttpContext) ->
             let model = ctx.BindQueryString<Customer>()
             text (model.ToString()) next ctx
 
@@ -235,7 +235,7 @@ let ``BindModel with JSON content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun (next : HttpAction) (ctx : HttpContext) ->
+        fun (next : HttpFunc) (ctx : HttpContext) ->
             async {
                 let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) next ctx
@@ -278,7 +278,7 @@ let ``BindModel with XML content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun (next : HttpAction) (ctx : HttpContext) ->
+        fun (next : HttpFunc) (ctx : HttpContext) ->
             async {
                 let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) next ctx
@@ -321,7 +321,7 @@ let ``BindModel with FORM content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun (next : HttpAction) (ctx : HttpContext) ->
+        fun (next : HttpFunc) (ctx : HttpContext) ->
             async {
                 let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) next ctx
@@ -366,7 +366,7 @@ let ``BindModel with JSON content and a specific charset returns correct result`
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun (next : HttpAction) (ctx : HttpContext) ->
+        fun (next : HttpFunc) (ctx : HttpContext) ->
             async {
                 let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) next ctx
@@ -409,7 +409,7 @@ let ``BindModel during HTTP GET request with query string returns correct result
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
-        fun (next : HttpAction) (ctx : HttpContext) ->
+        fun (next : HttpFunc) (ctx : HttpContext) ->
             async {
                 let! model = ctx.BindModel<Customer>()
                 return! text (model.ToString()) next ctx
@@ -442,7 +442,7 @@ let ``TryGetRequestHeader during HTTP GET request with returns correct resultd``
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
-        fun (next : HttpAction) (ctx : HttpContext) ->
+        fun (next : HttpFunc) (ctx : HttpContext) ->
             (match ctx.TryGetRequestHeader "X-Test" with
             | Some value -> text value
             | None       -> setStatusCode 400 >=> text "Bad Request"
@@ -474,7 +474,7 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
-        fun (next : HttpAction) (ctx : HttpContext) ->
+        fun (next : HttpFunc) (ctx : HttpContext) ->
             (match ctx.TryGetQueryStringValue "BirthDate" with
             | Some value -> text value
             | None       -> setStatusCode 400 >=> text "Bad Request"

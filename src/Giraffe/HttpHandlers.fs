@@ -15,10 +15,10 @@ open Giraffe.XmlViewEngine
 open System.Text.RegularExpressions
 open Newtonsoft.Json.Linq
 
-type HttpActionResult = Async<HttpContext option>
-type HttpAction       = HttpContext -> HttpActionResult
-type HttpHandler      = HttpAction  -> HttpAction
-type ErrorHandler     = exn -> ILogger -> HttpHandler
+type HttpFuncResult = Async<HttpContext option>
+type HttpFunc       = HttpContext -> HttpFuncResult
+type HttpHandler    = HttpFunc  -> HttpFunc
+type ErrorHandler   = exn -> ILogger -> HttpHandler
 
 /// ---------------------------
 /// Globally useful functions
@@ -44,7 +44,7 @@ let private getPath (ctx : HttpContext) =
     | None   -> ctx.Request.Path.ToString()
 
 let private handlerWithRootedPath (path : string) (handler : HttpHandler) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             let savedSubPath = getSavedSubPath ctx
             try
@@ -62,12 +62,12 @@ let private handlerWithRootedPath (path : string) (handler : HttpHandler) : Http
 
 /// Combines two HttpHandler functions into one.
 let compose (handler1 : HttpHandler) (handler2 : HttpHandler) : HttpHandler =
-    fun (next : HttpAction) ->
-        let action = next |> handler2 |> handler1
+    fun (next : HttpFunc) ->
+        let func = next |> handler2 |> handler1
         fun (ctx : HttpContext) ->
             match ctx.Response.HasStarted with
             | true  -> next ctx
-            | false -> action ctx
+            | false -> func ctx
 
 /// Combines two HttpHandler functions into one.
 /// See compose for more information.
@@ -76,7 +76,7 @@ let (>=>) = compose
 /// Iterates through a list of HttpHandler functions and returns the
 /// result of the first HttpHandler which outcome is Some HttpContext
 let rec choose (handlers : HttpHandler list) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             match handlers with
             | [] -> return None
@@ -89,7 +89,7 @@ let rec choose (handlers : HttpHandler list) : HttpHandler =
 
 /// Filters an incoming HTTP request based on the HTTP verb
 let httpVerb (verb : string) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         if ctx.Request.Method.Equals verb
         then next ctx
         else async.Return None
@@ -103,7 +103,7 @@ let DELETE : HttpHandler = httpVerb "DELETE"
 /// Filters an incoming HTTP request based on the accepted
 /// mime types of the client.
 let mustAccept (mimeTypes : string list) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         let headers = ctx.Request.GetTypedHeaders()
         headers.Accept
         |> Seq.map    (fun h -> h.ToString())
@@ -114,7 +114,7 @@ let mustAccept (mimeTypes : string list) : HttpHandler =
 
 /// Challenges the client to authenticate with a given authentication scheme.
 let challenge (authScheme : string) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             let auth = ctx.Authentication
             do! auth.ChallengeAsync authScheme |> Async.AwaitTask
@@ -123,7 +123,7 @@ let challenge (authScheme : string) : HttpHandler =
 
 /// Signs off the current user.
 let signOff (authScheme : string) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             let auth = ctx.Authentication
             do! auth.SignOutAsync authScheme |> Async.AwaitTask
@@ -133,7 +133,7 @@ let signOff (authScheme : string) : HttpHandler =
 /// Validates if a user is authenticated.
 /// If not it will proceed with the authFailedHandler.
 let requiresAuthentication (authFailedHandler : HttpHandler) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         if isNotNull ctx.User && ctx.User.Identity.IsAuthenticated
         then next ctx
         else authFailedHandler next ctx
@@ -141,7 +141,7 @@ let requiresAuthentication (authFailedHandler : HttpHandler) : HttpHandler =
 /// Validates if a user is in a specific role.
 /// If not it will proceed with the authFailedHandler.
 let requiresRole (role : string) (authFailedHandler : HttpHandler) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         if ctx.User.IsInRole role
         then next ctx
         else authFailedHandler next ctx
@@ -149,7 +149,7 @@ let requiresRole (role : string) (authFailedHandler : HttpHandler) : HttpHandler
 /// Validates if a user has at least one of the specified roles.
 /// If not it will proceed with the authFailedHandler.
 let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         roles
         |> List.exists ctx.User.IsInRole
         |> function
@@ -160,13 +160,13 @@ let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) : Htt
 /// This can be useful inside an error handler when the response
 /// needs to be overwritten in the case of a failure.
 let clearResponse : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.Response.Clear()
         next ctx
 
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 let route (path : string) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         if (getPath ctx).Equals path
         then next ctx
         else async.Return None
@@ -175,7 +175,7 @@ let route (path : string) : HttpHandler =
 /// The arguments from the format string will be automatically resolved when the
 /// route matches and subsequently passed into the supplied routeHandler.
 let routef (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) false
         |> function
             | None      -> async.Return None
@@ -183,7 +183,7 @@ let routef (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : Htt
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 let routeCi (path : string) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         if String.Equals(getPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
         then next ctx
         else async.Return None
@@ -192,7 +192,7 @@ let routeCi (path : string) : HttpHandler =
 /// The arguments from the format string will be automatically resolved when the
 /// route matches and subsequently passed into the supplied routeHandler.
 let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) true
         |> function
             | None      -> async.Return None
@@ -202,7 +202,7 @@ let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : H
 /// The parameters from the string will be used to create an instance of 'T
 /// and subsequently passed into the supplied routeHandler.
 let routeBind<'T> (route: string) (routeHandler : 'T -> HttpHandler) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         let pattern = route.Replace("{", "(?<").Replace("}", ">.+)") |> sprintf "^%s$"
         let regex = Regex(pattern, RegexOptions.IgnoreCase)
         let mtch = regex.Match ctx.Request.Path.Value
@@ -222,14 +222,14 @@ let routeBind<'T> (route: string) (routeHandler : 'T -> HttpHandler) : HttpHandl
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
 let routeStartsWith (subPath : string) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         if (getPath ctx).StartsWith subPath
         then next ctx
         else async.Return None
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
 let routeStartsWithCi (subPath : string) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         if (getPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase)
         then next ctx
         else async.Return None
@@ -248,19 +248,19 @@ let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
 
 /// Sets the HTTP response status code.
 let setStatusCode (statusCode : int) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.Response.StatusCode <- statusCode
         next ctx
 
 /// Sets a HTTP header in the HTTP response.
 let setHttpHeader (key : string) (value : obj) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.Response.Headers.[key] <- StringValues(value.ToString())
         next ctx
 
 /// Writes to the body of the HTTP response and sets the HTTP header Content-Length accordingly.
 let setBody (bytes : byte array) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             ctx.Response.Headers.["Content-Length"] <- StringValues(bytes.Length.ToString())
             do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length) |> Async.AwaitTask
@@ -293,7 +293,7 @@ let xml (dataObj : obj) : HttpHandler =
 /// Reads a HTML file from disk and writes its contents to the body of the HTTP response
 /// with a Content-Type of text/html.
 let htmlFile (relativeFilePath : string) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             let env = ctx.GetService<IHostingEnvironment>()
             let filePath = env.ContentRootPath + relativeFilePath
@@ -325,7 +325,7 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
                   (unacceptableHandler : HttpHandler)
                   (responseObj         : obj)
                   : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         (ctx.Request.GetTypedHeaders()).Accept
         |> fun acceptedMimeTypes ->
             match isNull acceptedMimeTypes || acceptedMimeTypes.Count = 0 with
@@ -367,7 +367,7 @@ let negotiate (responseObj : obj) : HttpHandler =
             "text/plain"      , fun x -> x.ToString() |> text
         ])
         // Default unacceptable HttpHandler
-        (fun (next : HttpAction) (ctx : HttpContext) ->
+        (fun (next : HttpFunc) (ctx : HttpContext) ->
             (setStatusCode 406
             >=> ((ctx.Request.Headers.["Accept"]).ToString()
                 |> sprintf "%s is unacceptable by the server."
@@ -377,6 +377,6 @@ let negotiate (responseObj : obj) : HttpHandler =
 
 ///Redirects to a different location with a 302 or 301 (when permanent) HTTP status code.
 let redirectTo (permanent : bool) (location : string) : HttpHandler  =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.Response.Redirect(location, permanent)
         next ctx

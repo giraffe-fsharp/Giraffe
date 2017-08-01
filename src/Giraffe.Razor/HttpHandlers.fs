@@ -12,7 +12,7 @@ open Giraffe.Razor.Engine
 /// Reads a razor view from disk and compiles it with the given model and sets
 /// the compiled output as the HTTP reponse with the given contentType.
 let razorView (contentType : string) (viewName : string) (model : 'T) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             let engine = ctx.RequestServices.GetService<IRazorViewEngine>()
             let tempDataProvider = ctx.RequestServices.GetService<ITempDataProvider>()

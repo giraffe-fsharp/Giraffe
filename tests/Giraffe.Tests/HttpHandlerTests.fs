@@ -37,7 +37,7 @@ let assertFailf format args =
     let msg = sprintf format args
     Assert.True(false, msg)
 
-let next : HttpAction = Some >> async.Return
+let next : HttpFunc = Some >> async.Return
 
 // ---------------------------------
 // Test Types

@@ -30,11 +30,11 @@ type GiraffeMiddleware (next          : RequestDelegate,
     do if isNull next then raise (ArgumentNullException("next"))
 
     // pre-compile the handler pipeline
-    let action : HttpAction = handler (Some >> async.Return)
+    let func : HttpFunc = handler (Some >> async.Return)
 
     member __.Invoke (ctx : HttpContext) =
         async {
-            let! result = action ctx
+            let! result = func ctx
             let  logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
 
             if logger.IsEnabled LogLevel.Debug then
@@ -63,8 +63,8 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
             with ex ->
                 let logger = loggerFactory.CreateLogger<GiraffeErrorHandlerMiddleware>()
                 try
-                    let action = Some >> async.Return
-                    return! errorHandler ex logger action ctx |> Async.Ignore
+                    let func = Some >> async.Return
+                    return! errorHandler ex logger func ctx |> Async.Ignore
                 with ex2 ->
                     logger.LogError(EventId(0), ex,  "An unhandled exception has occurred while executing the request.")
                     logger.LogError(EventId(0), ex2, "An exception was thrown attempting to handle the original exception.")

@@ -105,20 +105,20 @@ You can think of [Giraffe](https://www.nuget.org/packages/Giraffe) as the functi
 The main building block in Giraffe is a so called `HttpHandler`:
 
 ```fsharp
-type HttpActionResult = Async<HttpContext option>
-type HttpAction = HttpContext -> HttpActionResult
-type HttpHandler = HttpAction -> HttpContext -> HttpActionResult
+type HttpFuncResult = Async<HttpContext option>
+type HttpFunc = HttpContext -> HttpFuncResult
+type HttpHandler = HttpFunc -> HttpContext -> HttpFuncResult
 ```
 
-A `HttpHandler` is a simple function which takes two curried arguments, a `HttpAction` and a `HttpContext`, and returns a `HttpContext` (wrapped in an `option` and `Async` workflow) when finished.
+A `HttpHandler` is a simple function which takes two curried arguments, a `HttpFunc` and a `HttpContext`, and returns a `HttpContext` (wrapped in an `option` and `Async` workflow) when finished.
 
 Given that a `HttpHandler` receives and returns an ASP.NET Core `HttpContext` there is literally nothing which cannot be done from within a Giraffe web application which couldn't be done from a regular ASP.NET Core (MVC) application either.
 
-Each `HttpHandler` can process an incoming `HttpRequest` before passing it further down the pipeline by invoking the next `HttpAction` or short circuit the execution by returning an option of `Some HttpContext`.
+Each `HttpHandler` can process an incoming `HttpRequest` before passing it further down the pipeline by invoking the next `HttpFunc` or short circuit the execution by returning an option of `Some HttpContext`.
 
 If a `HttpHandler` decides to not process an incoming `HttpRequest` at all, then it can return `None` instead. In this case another `HttpHandler` might pick up the incoming `HttpRequest` or the middleware will defer to the next `RequestDelegate` from the ASP.NET Core pipeline.
 
-The easiest way to get your head around a Giraffe `HttpHandler` is to think of it like a functional ASP.NET Core middleware. Each handler has the full `HttpContext` at its disposal and can decide whether it wants to return `Some HttpContext`, `None` or pass it on to the "next" `HttpAction`.
+The easiest way to get your head around a Giraffe `HttpHandler` is to think of it like a functional ASP.NET Core middleware. Each handler has the full `HttpContext` at its disposal and can decide whether it wants to return `Some HttpContext`, `None` or pass it on to the "next" `HttpFunc`.
 
 Please check out the [sample applications](#sample-applications) for a demo as well as a real world example.
 
@@ -130,12 +130,12 @@ The `compose` combinator combines two `HttpHandler` functions into one:
 
 ```fsharp
 let compose (handler1 : HttpHandler) (handler2 : HttpHandler) : HttpHandler =
-    fun (next : HttpAction) ->
-        let action = next |> handler2 |> handler1
+    fun (next : HttpFunc) ->
+        let func = next |> handler2 |> handler1
         fun (ctx : HttpContext) ->
             match ctx.Response.HasStarted with
             | true  -> next ctx
-            | false -> action ctx
+            | false -> func ctx
 ```
 
 It is the main combinator as it allows composing many smaller `HttpHandler` functions into a bigger web application.
@@ -888,7 +888,7 @@ Defining a custom HTTP handler to partially filter a route:
 
 ```fsharp
 let routeStartsWith (subPath : string) =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         if ctx.Request.Path.ToString().StartsWith subPath
         then next ctx
         else async.Return None
@@ -898,7 +898,7 @@ Defining another custom HTTP handler to validate a mandatory HTTP header:
 
 ```fsharp
 let requiresToken (expectedToken : string) (handler : HttpHandler) =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         let token    = ctx.Request.Headers.["X-Token"].ToString()
         let response =
             if token.Equals(expectedToken)
@@ -955,7 +955,7 @@ open Giraffe.HttpHandlers
 open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             // Binds a JSON payload to a Car object
             let! car = ctx.BindJson<Car>()
@@ -1014,7 +1014,7 @@ open Giraffe.HttpHandlers
 open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             // Binds an XML payload to a Car object
             let! car = ctx.BindXml<Car>()
@@ -1078,7 +1078,7 @@ open Giraffe.HttpHandlers
 open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             // Binds a form urlencoded payload to a Car object
             let! car = ctx.BindForm<Car>()
@@ -1137,7 +1137,7 @@ open Giraffe.HttpHandlers
 open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             // Binds a query string to a Car object
             let car = ctx.BindQueryString<Car>()
@@ -1192,7 +1192,7 @@ open Giraffe.HttpHandlers
 open Giraffe.HttpContextExtensions
 
 let submitCar =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             // Binds a JSON, XML or form urlencoded payload to a Car object
             let! car = ctx.BindModel<Car>()

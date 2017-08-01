@@ -4,8 +4,10 @@ A sample application for Giraffe.
 
 This is a small sample app which only contains some basics:
 
-- Routing.
-- Cookie authentication.
-- Error handling.
+- Routing
+- Cookie authentication
+- Error handling
 - Razor pages
-- Integration Testing.
+- File uploads
+- Model binding
+- Integration Testing

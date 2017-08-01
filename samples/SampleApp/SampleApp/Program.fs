@@ -42,7 +42,7 @@ let mustBeAdmin =
     >=> requiresRole "Admin" accessDenied
 
 let loginHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             let issuer = "http://localhost:5000"
             let claims =
@@ -60,7 +60,7 @@ let loginHandler =
         }
 
 let userHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         text ctx.User.Identity.Name next ctx
 
 let showUserHandler id =
@@ -79,14 +79,14 @@ type Car =
     }
 
 let submitCar =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             let! car = ctx.BindModel<Car>()
             return! json car next ctx
         }
 
 let smallFileUploadHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             return!
                 (match ctx.Request.HasFormContentType with
@@ -98,7 +98,7 @@ let smallFileUploadHandler =
         }
 
 let largeFileUploadHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             let formFeature = ctx.Features.Get<IFormFeature>()
             let! form = formFeature.ReadFormAsync CancellationToken.None |> Async.AwaitTask

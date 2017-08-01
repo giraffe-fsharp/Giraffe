@@ -14,7 +14,7 @@ open Giraffe.HttpHandlers
 /// with the compiled output as well as the Content-Type HTTP header to the given value.
 let dotLiquid (contentType : string) (template : string) (model : obj) : HttpHandler =
     let view = Template.Parse template
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             let bytes =
                 model
@@ -28,7 +28,7 @@ let dotLiquid (contentType : string) (template : string) (model : obj) : HttpHan
 /// Reads a dotLiquid template file from disk and compiles it with the given model and sets
 /// the compiled output as well as the given contentType as the HTTP reponse.
 let dotLiquidTemplate (contentType : string) (templatePath : string) (model : obj) : HttpHandler =
-    fun (next : HttpAction) (ctx : HttpContext) ->
+    fun (next : HttpFunc) (ctx : HttpContext) ->
         async {
             let env = ctx.RequestServices.GetService<IHostingEnvironment>()
             let path = env.ContentRootPath + templatePath
