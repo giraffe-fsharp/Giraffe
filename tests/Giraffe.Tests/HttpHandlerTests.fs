@@ -4,6 +4,7 @@ open System
 open System.Collections.Generic
 open System.IO
 open System.Text
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
@@ -15,6 +16,7 @@ open Giraffe.Middleware
 open Giraffe.XmlViewEngine
 open Giraffe.DotLiquid.HttpHandlers
 open Giraffe.Tests.Asserts
+open Giraffe.Tasks
 
 // ---------------------------------
 // Helper functions
@@ -37,7 +39,7 @@ let assertFailf format args =
     let msg = sprintf format args
     Assert.True(false, msg)
 
-let next : HttpFunc = Some >> async.Return
+let next : HttpFunc = Some >> Task.FromResult
 
 // ---------------------------------
 // Test Types
@@ -86,15 +88,15 @@ let ``GET "/" returns "Hello World"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "Hello World"
 
-    let result =
-        app next ctx
-        |> Async.RunSynchronously
+    task { 
+    let! result = app next ctx
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+    }
 
 [<Fact>]
 let ``GET "/foo" returns "bar"`` () =
@@ -110,16 +112,15 @@ let ``GET "/foo" returns "bar"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "bar"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task { 
+    let! result = app next ctx
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+    }
 
 [<Fact>]
 let ``GET "/FOO" returns 404 "Not found"`` () =
@@ -135,10 +136,8 @@ let ``GET "/FOO" returns 404 "Not found"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "Not found"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -146,6 +145,7 @@ let ``GET "/FOO" returns 404 "Not found"`` () =
         let body = getBody ctx
         Assert.Equal(expected, body)
         Assert.Equal(404, ctx.Response.StatusCode)
+    }
 
 [<Fact>]
 let ``GET "/json" returns json object`` () =
@@ -162,16 +162,15 @@ let ``GET "/json" returns json object`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "{\"Foo\":\"john\",\"Bar\":\"doe\",\"Age\":30}"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+    }
 
 [<Fact>]
 let ``POST "/post/1" returns "1"`` () =
@@ -191,16 +190,15 @@ let ``POST "/post/1" returns "1"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "1"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+    }
 
 [<Fact>]
 let ``POST "/post/2" returns "2"`` () =
@@ -220,16 +218,15 @@ let ``POST "/post/2" returns "2"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "2"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+    }
 
 [<Fact>]
 let ``PUT "/post/2" returns 404 "Not found"`` () =
@@ -249,10 +246,8 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "Not found"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -260,6 +255,7 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
         let body = getBody ctx
         Assert.Equal(expected, body)
         Assert.Equal(404, ctx.Response.StatusCode)
+    }
 
 [<Fact>]
 let ``GET "/dotLiquid" returns rendered html view`` () =
@@ -285,10 +281,8 @@ let ``GET "/dotLiquid" returns rendered html view`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "<html><head><title>DotLiquid</title></head><body><p>John Doe is 30 years old.</p></body></html>"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -296,6 +290,7 @@ let ``GET "/dotLiquid" returns rendered html view`` () =
         let body = getBody ctx
         Assert.Equal(expected, body)
         Assert.Equal("text/html", ctx.Response |> getContentType)
+    }
 
 [<Fact>]
 let ``POST "/text" with supported Accept header returns "good"`` () =
@@ -319,10 +314,8 @@ let ``POST "/text" with supported Accept header returns "good"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "text"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -330,6 +323,7 @@ let ``POST "/text" with supported Accept header returns "good"`` () =
         let body = getBody ctx
         Assert.Equal(expected, body)
         Assert.Equal("text/plain", ctx.Response |> getContentType)
+    }
 
 [<Fact>]
 let ``POST "/json" with supported Accept header returns "json"`` () =
@@ -353,10 +347,8 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "\"json\""
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -364,6 +356,7 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
         let body = getBody ctx
         Assert.Equal(expected, body)
         Assert.Equal("application/json", ctx.Response |> getContentType)
+    }
 
 [<Fact>]
 let ``POST "/either" with supported Accept header returns "either"`` () =
@@ -387,10 +380,8 @@ let ``POST "/either" with supported Accept header returns "either"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "either"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -398,6 +389,7 @@ let ``POST "/either" with supported Accept header returns "either"`` () =
         let body = getBody ctx
         Assert.Equal(expected, body)
         Assert.Equal("text/plain", ctx.Response |> getContentType)
+    }
 
 [<Fact>]
 let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` () =
@@ -421,10 +413,8 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
     ctx.Response.Body <- new MemoryStream()
     let expected = "Not found"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
@@ -432,6 +422,7 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
         let body = getBody ctx
         Assert.Equal(expected, body)
         Assert.Equal(404, ctx.Response.StatusCode)
+    }
 
 [<Fact>]
 let ``GET "/JSON" returns "BaR"`` () =
@@ -449,17 +440,17 @@ let ``GET "/JSON" returns "BaR"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "BaR"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task { 
+        let! result = app next ctx
+        //|> Async.RunSynchronously
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
-
+    }
+    
 [<Fact>]
 let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
     let ctx = Substitute.For<HttpContext>()
@@ -476,16 +467,15 @@ let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "blah%20blah"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+    }
 
 [<Fact>]
 let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
@@ -503,16 +493,15 @@ let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "Name: johndoe, Age: 59"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+    }
 
 [<Fact>]
 let ``POST "/POsT/1" returns "1"`` () =
@@ -531,16 +520,15 @@ let ``POST "/POsT/1" returns "1"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "1"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None     -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+    }
 
 [<Fact>]
 let ``POST "/POsT/523" returns "523"`` () =
@@ -559,16 +547,15 @@ let ``POST "/POsT/523" returns "523"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "523"
 
-    let result =
+    task {
+        let! result = app next ctx
 
-        app next ctx
-        |> Async.RunSynchronously
-
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+    }
 
 [<Fact>]
 let ``GET "/api" returns "api root"`` () =
@@ -591,16 +578,15 @@ let ``GET "/api" returns "api root"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "api root"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+    }
 
 [<Fact>]
 let ``GET "/api/users" returns "users"`` () =
@@ -623,48 +609,17 @@ let ``GET "/api/users" returns "users"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "users"
 
-    let result =
+    task {
+        let! result = app next ctx
 
-        app next ctx
-        |> Async.RunSynchronously
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+    }
 
-    match result with
-    | None -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
-
-[<Fact>]
-let ``GET "/api/test" returns "test"`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let app =
-        GET >=> choose [
-            route "/"    >=> text "Hello World"
-            route "/foo" >=> text "bar"
-            subRoute "/api" (
-                choose [
-                    route ""       >=> text "api root"
-                    route "/admin" >=> text "admin"
-                    route "/users" >=> text "users" ] )
-            route "/api/test" >=> text "test"
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/test")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "test"
-
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
-
-    match result with
-    | None -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+// ``GET "/api/test" returns "test"``
 
 [<Fact>]
 let ``GET "/api/v2/users" returns "users v2"`` () =
@@ -696,16 +651,15 @@ let ``GET "/api/v2/users" returns "users v2"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "users v2"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+    }
 
 [<Fact>]
 let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
@@ -727,16 +681,15 @@ let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "yadayada"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
     | Some ctx ->
         let body = getBody ctx
         Assert.Equal(expected, body)
+    }
 
 [<Fact>]
 let ``GET "/person" returns rendered HTML view`` () =
@@ -767,17 +720,51 @@ let ``GET "/person" returns rendered HTML view`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "<!DOCTYPE html><html><head><title>Html Node</title></head><body><p>John Doe is 30 years old.</p></body></html>"
 
-    let result =
+    task {
+        let! result = app next ctx
 
-        app next ctx
-        |> Async.RunSynchronously
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = (getBody ctx).Replace(Environment.NewLine, String.Empty)
+            Assert.Equal(expected, body)
+            Assert.Equal("text/html", ctx.Response |> getContentType)
+    }
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = (getBody ctx).Replace(Environment.NewLine, String.Empty)
-        Assert.Equal(expected, body)
-        Assert.Equal("text/html", ctx.Response |> getContentType)
+[<Fact>]
+let ``GET "/api/test" returns "test"`` () =
+
+    task {
+        let ctx = Substitute.For<HttpContext>()
+
+        let app =
+            GET >=> choose [
+                route "/"    >=> text "Hello World"
+                route "/foo" >=> text "bar"
+                subRoute "/api" (
+                    choose [
+                        route ""       >=> text "api root"
+                        route "/admin" >=> text "admin"
+                        route "/users" >=> text "users" ] )
+                route "/api/test" >=> text "test"
+                setStatusCode 404 >=> text "Not found" ]
+
+        let handler = app next
+
+        ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+        ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+        ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/test")) |> ignore
+        ctx.Response.Body <- new MemoryStream()
+        let expected = "test"
+    
+        let! result = handler ctx
+
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+    }
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "application/json" returns JSON object`` () =
@@ -808,10 +795,8 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
 
     let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"left ear\",\"nose\"]}"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -819,6 +804,7 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
         let body = getBody ctx
         Assert.Equal(expected, body)
         Assert.Equal("application/json", ctx.Response |> getContentType)
+    }
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/json" returns JSON object`` () =
@@ -849,10 +835,8 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
 
     let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"left ear\",\"nose\"]}"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -860,6 +844,7 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
         let body = getBody ctx
         Assert.Equal(expected, body)
         Assert.Equal("application/json", ctx.Response |> getContentType)
+    }
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "application/xml" returns XML object`` () =
@@ -900,10 +885,8 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
   </Piercings>
 </Person>"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -911,6 +894,7 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
         let body = getBody ctx
         XmlAssert.equals expected body
         Assert.Equal("application/xml", ctx.Response |> getContentType)
+    }
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "application/xml, application/json" returns XML object`` () =
@@ -951,10 +935,8 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
   </Piercings>
 </Person>"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -962,6 +944,7 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
         let body = getBody ctx
         XmlAssert.equals expected body
         Assert.Equal("application/xml", ctx.Response |> getContentType)
+    }
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "application/json, application/xml" returns JSON object`` () =
@@ -992,10 +975,8 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
 
     let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"ear\",\"nose\"]}"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -1003,6 +984,7 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
         let body = getBody ctx
         Assert.Equal(expected, body)
         Assert.Equal("application/json", ctx.Response |> getContentType)
+    }
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xml" returns XML object`` () =
@@ -1043,10 +1025,8 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
   </Piercings>
 </Person>"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -1054,6 +1034,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
         let body = getBody ctx
         XmlAssert.equals expected body
         Assert.Equal("application/xml", ctx.Response |> getContentType)
+    }
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xml; q=0.6" returns XML object`` () =
@@ -1094,10 +1075,8 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
   </Piercings>
 </Person>"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -1105,6 +1084,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
         let body = getBody ctx
         XmlAssert.equals expected body
         Assert.Equal("application/xml", ctx.Response |> getContentType)
+    }
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0.6" returns text object`` () =
@@ -1139,10 +1119,8 @@ Birth date: 1990-07-12
 Height: 1.85
 Piercings: [|""ear""; ""nose""|]"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -1150,6 +1128,7 @@ Piercings: [|""ear""; ""nose""|]"
         let body = getBody ctx
         Assert.Equal(expected, body)
         Assert.Equal("text/plain", ctx.Response |> getContentType)
+    }
 
 [<Fact>]
 let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () =
@@ -1180,10 +1159,8 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
 
     let expected = "text/html is unacceptable by the server."
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -1192,6 +1169,7 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
         Assert.Equal(406, getStatusCode ctx)
         Assert.Equal(expected, body)
         Assert.Equal("text/plain", ctx.Response |> getContentType)
+    }
 
 [<Fact>]
 let ``Get "/auto" without an Accept header returns a JSON object`` () =
@@ -1221,10 +1199,8 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
 
     let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"ear\",\"nose\"]}"
 
-    let result =
-
-        app next ctx
-        |> Async.RunSynchronously
+    task {
+    let! result = app next ctx
 
     match result with
     | None -> assertFailf "Result was expected to be %s" expected
@@ -1232,6 +1208,7 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
         let body = getBody ctx
         Assert.Equal(expected, body)
         Assert.Equal("application/json", ctx.Response |> getContentType)
+    }
 
 [<Fact>]
 let ``Warbler function should execute inner function each time`` () =
@@ -1246,40 +1223,31 @@ let ``Warbler function should execute inner function each time`` () =
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo")) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let result1 =
+    task {
 
-        app next ctx
-        |> Async.RunSynchronously
-        |> (fun res -> getBody res.Value)
+        let! res1 = app next ctx 
+        let result1 = getBody res1.Value
 
-    ctx.Response.Body <- new MemoryStream()
+        ctx.Response.Body <- new MemoryStream()
 
-    let result2 =
+        let! res2 = app next ctx
+        let result2 = getBody res2.Value
 
-        app next ctx
-        |> Async.RunSynchronously
-        |> (fun res -> getBody res.Value)
+        Assert.Equal(result1, result2)
 
-    Assert.Equal(result1, result2)
+        ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo2")) |> ignore
+        ctx.Response.Body <- new MemoryStream()
 
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo2")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
+        let! res3 = app next ctx 
+        let result3 = getBody res3.Value
 
-    let result3 =
+        ctx.Response.Body <- new MemoryStream()
 
-        app next ctx
-        |> Async.RunSynchronously
-        |> (fun res -> getBody res.Value)
+        let! res4 = app next ctx 
+        let result4 = getBody res4.Value
 
-    ctx.Response.Body <- new MemoryStream()
-
-    let result4 =
-
-        app next ctx
-        |> Async.RunSynchronously
-        |> (fun res -> getBody res.Value)
-
-    Assert.False(result3.Equals result4)
+        Assert.False(result3.Equals result4)
+    }
 
 [<Fact>]
 let ``GET "/redirect" redirect to "/" `` () =
@@ -1293,15 +1261,14 @@ let ``GET "/redirect" redirect to "/" `` () =
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/redirect")) |> ignore
 
-    let result =
+    task {
+        let! result = app next ctx
 
-        app next ctx
-        |> Async.RunSynchronously
+        match result with
+        | None     -> assertFail "It was expected that the request would be redirected"
+        | Some ctx -> ctx.Response.Received().Redirect("/", false)
 
-    match result with
-    | None     -> assertFail "It was expected that the request would be redirected"
-    | Some ctx -> ctx.Response.Received().Redirect("/", false)
-
+    }
 
 [<Fact>]
 let ``POST "/redirect" redirect to "/" `` () =
@@ -1315,14 +1282,13 @@ let ``POST "/redirect" redirect to "/" `` () =
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/redirect")) |> ignore
 
-    let result =
+    task {
+        let! result = app next ctx
 
-        app next ctx
-        |> Async.RunSynchronously
-
-    match result with
-    | None     -> assertFail "It was expected that the request would be redirected"
-    | Some ctx -> ctx.Response.Received().Redirect("/", true)
+        match result with
+        | None     -> assertFail "It was expected that the request would be redirected"
+        | Some ctx -> ctx.Response.Received().Redirect("/", true)
+    }
 
 type RouteBind = { Foo : string; Bar : int; Id : Guid }
 
@@ -1333,13 +1299,12 @@ let ``GET "/{foo}/{bar}" returns Hello World``() =
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let result =
+    task {
+        let! result = app next ctx
 
-        app next ctx
-        |> Async.RunSynchronously
-
-    match result with
-    | None     -> assertFail "It was expected that the result would be Hello 1"
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal("Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
+        match result with
+        | None     -> assertFail "It was expected that the result would be Hello 1"
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal("Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
+    }

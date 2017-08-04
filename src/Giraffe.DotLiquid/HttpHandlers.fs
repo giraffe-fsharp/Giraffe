@@ -9,13 +9,14 @@ open Microsoft.Extensions.Primitives
 open DotLiquid
 open Giraffe.Common
 open Giraffe.HttpHandlers
+open Giraffe.Tasks
 
 /// Renders a model and a template with the DotLiquid template engine and sets the HTTP response
 /// with the compiled output as well as the Content-Type HTTP header to the given value.
 let dotLiquid (contentType : string) (template : string) (model : obj) : HttpHandler =
     let view = Template.Parse template
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             let bytes =
                 model
                 |> Hash.FromAnonymousObject
@@ -29,7 +30,7 @@ let dotLiquid (contentType : string) (template : string) (model : obj) : HttpHan
 /// the compiled output as well as the given contentType as the HTTP reponse.
 let dotLiquidTemplate (contentType : string) (templatePath : string) (model : obj) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             let env = ctx.RequestServices.GetService<IHostingEnvironment>()
             let path = env.ContentRootPath + templatePath
             let! template = readFileAsString path

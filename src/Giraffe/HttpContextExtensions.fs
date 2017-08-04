@@ -53,27 +53,27 @@ type HttpContext with
     /// ---------------------------
 
     member this.ReadBodyFromRequest() =
-        async {
+        task {
             let body = this.Request.Body
             use reader = new StreamReader(body, true)
-            return! reader.ReadToEndAsync() |> Async.AwaitTask
+            return! reader.ReadToEndAsync()
         }
 
     member this.BindJson<'T>() =
-        async {
+        task {
             let! body = this.ReadBodyFromRequest()
             return deserializeJson<'T> body
         }
 
     member this.BindXml<'T>() =
-        async {
+        task {
             let! body = this.ReadBodyFromRequest()
             return deserializeXml<'T> body
         }
 
     member this.BindForm<'T>() =
-        async {
-            let! form = this.Request.ReadFormAsync() |> Async.AwaitTask
+        task {
+            let! form = this.Request.ReadFormAsync()
             let obj   = Activator.CreateInstance<'T>()
             let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
             props
@@ -130,7 +130,7 @@ type HttpContext with
         obj
 
     member this.BindModel<'T>() =
-        async {
+        task {
             let method = this.Request.Method
             if method.Equals "POST" || method.Equals "PUT" then
                 let original = this.Request.ContentType
