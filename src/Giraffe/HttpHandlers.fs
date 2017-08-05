@@ -45,17 +45,34 @@ let private getPath (ctx : HttpContext) =
     | Some p -> ctx.Request.Path.ToString().[p.Length..]
     | None   -> ctx.Request.Path.ToString()
 
+// let private handlerWithRootedPath (path : string) (handler : HttpHandler) : HttpHandler =
+//     fun (next : HttpFunc) (ctx : HttpContext) ->
+//         task {
+//             let savedSubPath = getSavedSubPath ctx
+//             try
+//                 ctx.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
+//                 return! handler next ctx
+//             finally
+//                 printfn "saved subpath finalising is: %A on path %s" savedSubPath path 
+//                 match savedSubPath with
+//                 | Some savedSubPath -> ctx.Items.Item   RouteKey <- savedSubPath.Substring(0,savedSubPath.Length - path.Length)
+//                 | None              -> ctx.Items.Remove RouteKey |> ignore
+//         }
+
 let private handlerWithRootedPath (path : string) (handler : HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             let savedSubPath = getSavedSubPath ctx
-            try
-                ctx.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
-                return! handler next ctx
-            finally
+            ctx.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
+            let rtask = handler next ctx
+            let! result = rtask
+            match result with
+            | Some _ -> () 
+            | None ->
                 match savedSubPath with
-                | Some savedSubPath -> ctx.Items.Item RouteKey <- savedSubPath
+                | Some savedSubPath -> ctx.Items.Item   RouteKey <- savedSubPath.Substring(0,savedSubPath.Length - path.Length)
                 | None              -> ctx.Items.Remove RouteKey |> ignore
+            return! rtask
         }
 
 /// ---------------------------
@@ -75,6 +92,7 @@ let compose (handler1 : HttpHandler) (handler2 : HttpHandler) : HttpHandler =
 /// See compose for more information.
 let (>=>) = compose
 
+// allows pre-complied list of HttpFuncs to be tested, by pre-applying next to handler list passed from choose
 let rec private subChoose (funcs : HttpFunc list) : HttpFunc =
     fun (ctx : HttpContext) ->
         task {
@@ -86,7 +104,6 @@ let rec private subChoose (funcs : HttpFunc list) : HttpFunc =
                 | Some c -> return Some c
                 | None   -> return! subChoose tail ctx
         }
-
 /// Iterates through a list of HttpHandler functions and returns the
 /// result of the first HttpHandler which outcome is Some HttpContext
 let choose (handlers : HttpHandler list) : HttpHandler =

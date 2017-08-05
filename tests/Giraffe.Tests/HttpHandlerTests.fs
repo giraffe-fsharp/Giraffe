@@ -740,13 +740,14 @@ let ``GET "/api/test" returns "test"`` () =
         let app =
             GET >=> choose [
                 route "/"    >=> text "Hello World"
-                route "/foo" >=> text "bar"
+                //route "/foo" >=> text "bar"
                 subRoute "/api" (
                     choose [
                         route ""       >=> text "api root"
                         route "/admin" >=> text "admin"
                         route "/users" >=> text "users" ] )
-                route "/api/test" >=> text "test"
+                route "/foo" >=> text "bar"
+                route "/api/test" >=> text "test" //repositioned
                 setStatusCode 404 >=> text "Not found" ]
 
         let handler = app next

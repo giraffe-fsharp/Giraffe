@@ -1,4 +1,4 @@
-// Task.fs - TPL task computation expressions for F#
+// Tasks.fs - TPL task computation expressions for F#
 //
 // Written in 2016 by Robert Peele (humbobst@gmail.com)
 //
