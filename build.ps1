@@ -86,7 +86,7 @@ function Remove-OldBuildArtifacts
     Write-Host "Deleting old build artifacts..." -ForegroundColor Magenta
 
     Get-ChildItem -Include "bin", "obj" -Recurse -Directory `
-    | ForEach-Object { 
+    | ForEach-Object {
         Write-Host "Removing folder $_" -ForegroundColor DarkGray
         Remove-Item $_ -Recurse -Force }
 }
@@ -99,6 +99,7 @@ $giraffe          = ".\src\Giraffe\Giraffe.fsproj"
 $giraffeRazor     = ".\src\Giraffe.Razor\Giraffe.Razor.fsproj"
 $giraffeDotLiquid = ".\src\Giraffe.DotLiquid\Giraffe.DotLiquid.fsproj"
 $giraffeTests     = ".\tests\Giraffe.Tests\Giraffe.Tests.fsproj"
+$identityApp      = ".\samples\SampleApp\SampleApp\SampleApp.fsproj"
 $sampleApp        = ".\samples\SampleApp\SampleApp\SampleApp.fsproj"
 $sampleAppTests   = ".\samples\SampleApp\SampleApp.Tests\SampleApp.Tests.fsproj"
 
@@ -138,11 +139,14 @@ if (!$ExcludeTests.IsPresent -and !$Run.IsPresent)
 
 if (!$ExcludeSamples.IsPresent -and !$Run.IsPresent)
 {
-    Write-Host "Building and testing samples..." -ForegroundColor Magenta 
+    Write-Host "Building and testing samples..." -ForegroundColor Magenta
+
+    dotnet-restore $identityApp
+    dotnet-build   $identityApp
 
     dotnet-restore $sampleApp
     dotnet-build   $sampleApp
-    
+
     dotnet-restore $sampleAppTests
     dotnet-build   $sampleAppTests
     dotnet-test    $sampleAppTests
@@ -162,7 +166,7 @@ if ($Pack.IsPresent)
 
     dotnet-pack $giraffe "-c $configuration"
 
-    if (!$ExcludeRazor.IsPresent) { dotnet-pack $giraffeRazor "-c $configuration" }    
+    if (!$ExcludeRazor.IsPresent) { dotnet-pack $giraffeRazor "-c $configuration" }
     if (!$ExcludeDotLiquid.IsPresent) { dotnet-pack $giraffeDotLiquid "-c $configuration" }
 
     Invoke-Cmd "nuget pack template/giraffe-template.nuspec"
