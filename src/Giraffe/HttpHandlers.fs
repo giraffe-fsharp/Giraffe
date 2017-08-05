@@ -379,4 +379,4 @@ let negotiate (responseObj : obj) : HttpHandler =
 let redirectTo (permanent : bool) (location : string) : HttpHandler  =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.Response.Redirect(location, permanent)
-        next ctx
+        async.Return (Some ctx)
