@@ -619,7 +619,41 @@ let ``GET "/api/users" returns "users"`` () =
             Assert.Equal(expected, body)
     }
 
-// ``GET "/api/test" returns "test"``
+[<Fact>]
+let ``GET "/api/test" returns "test"`` () =
+
+    task {
+        let ctx = Substitute.For<HttpContext>()
+
+        let app =
+            GET >=> choose [
+                route "/"    >=> text "Hello World"
+                //route "/foo" >=> text "bar"
+                subRoute "/api" (
+                    choose [
+                        route ""       >=> text "api root"
+                        route "/admin" >=> text "admin"
+                        route "/users" >=> text "users" ] )
+                route "/foo" >=> text "bar"
+                route "/api/test" >=> text "test" //repositioned
+                setStatusCode 404 >=> text "Not found" ]
+
+        let handler = app next
+
+        ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+        ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+        ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/test")) |> ignore
+        ctx.Response.Body <- new MemoryStream()
+        let expected = "test"
+    
+        let! result = handler ctx
+
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+    }
 
 [<Fact>]
 let ``GET "/api/v2/users" returns "users v2"`` () =
@@ -729,42 +763,6 @@ let ``GET "/person" returns rendered HTML view`` () =
             let body = (getBody ctx).Replace(Environment.NewLine, String.Empty)
             Assert.Equal(expected, body)
             Assert.Equal("text/html", ctx.Response |> getContentType)
-    }
-
-[<Fact>]
-let ``GET "/api/test" returns "test"`` () =
-
-    task {
-        let ctx = Substitute.For<HttpContext>()
-
-        let app =
-            GET >=> choose [
-                route "/"    >=> text "Hello World"
-                //route "/foo" >=> text "bar"
-                subRoute "/api" (
-                    choose [
-                        route ""       >=> text "api root"
-                        route "/admin" >=> text "admin"
-                        route "/users" >=> text "users" ] )
-                route "/foo" >=> text "bar"
-                route "/api/test" >=> text "test" //repositioned
-                setStatusCode 404 >=> text "Not found" ]
-
-        let handler = app next
-
-        ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
-        ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-        ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/test")) |> ignore
-        ctx.Response.Body <- new MemoryStream()
-        let expected = "test"
-    
-        let! result = handler ctx
-
-        match result with
-        | None -> assertFailf "Result was expected to be %s" expected
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal(expected, body)
     }
 
 [<Fact>]
