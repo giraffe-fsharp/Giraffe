@@ -891,7 +891,7 @@ let routeStartsWith (subPath : string) =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if ctx.Request.Path.ToString().StartsWith subPath
         then next ctx
-        else async.Return None
+        else Task.FromResult None
 ```
 
 Defining another custom HTTP handler to validate a mandatory HTTP header:
@@ -956,7 +956,7 @@ open Giraffe.HttpContextExtensions
 
 let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             // Binds a JSON payload to a Car object
             let! car = ctx.BindJson<Car>()
 
@@ -1015,7 +1015,7 @@ open Giraffe.HttpContextExtensions
 
 let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             // Binds an XML payload to a Car object
             let! car = ctx.BindXml<Car>()
 
@@ -1079,7 +1079,7 @@ open Giraffe.HttpContextExtensions
 
 let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             // Binds a form urlencoded payload to a Car object
             let! car = ctx.BindForm<Car>()
 
@@ -1138,7 +1138,7 @@ open Giraffe.HttpContextExtensions
 
 let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             // Binds a query string to a Car object
             let car = ctx.BindQueryString<Car>()
 
@@ -1193,7 +1193,7 @@ open Giraffe.HttpContextExtensions
 
 let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             // Binds a JSON, XML or form urlencoded payload to a Car object
             let! car = ctx.BindModel<Car>()
 
