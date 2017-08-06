@@ -53,7 +53,7 @@ let private getPath (ctx : HttpContext) =
 //                 ctx.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
 //                 return! handler next ctx
 //             finally
-//                 printfn "saved subpath finalising is: %A on path %s" savedSubPath path 
+//                 printfn "saved subpath finalising is: %A on path %s" savedSubPath path
 //                 match savedSubPath with
 //                 | Some savedSubPath -> ctx.Items.Item   RouteKey <- savedSubPath.Substring(0,savedSubPath.Length - path.Length)
 //                 | None              -> ctx.Items.Remove RouteKey |> ignore
@@ -67,7 +67,7 @@ let private handlerWithRootedPath (path : string) (handler : HttpHandler) : Http
             let rtask = handler next ctx
             let! result = rtask
             match result with
-            | Some _ -> () 
+            | Some _ -> ()
             | None ->
                 match savedSubPath with
                 | Some savedSubPath -> ctx.Items.Item   RouteKey <- savedSubPath.Substring(0,savedSubPath.Length - path.Length)
@@ -404,4 +404,4 @@ let negotiate (responseObj : obj) : HttpHandler =
 let redirectTo (permanent : bool) (location : string) : HttpHandler  =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.Response.Redirect(location, permanent)
-        async.Return (Some ctx)
+        Task.FromResult (Some ctx)
