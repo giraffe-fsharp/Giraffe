@@ -1,6 +1,7 @@
 module Giraffe.Middleware
 
 open System
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
@@ -30,10 +31,10 @@ type GiraffeMiddleware (next          : RequestDelegate,
     do if isNull next then raise (ArgumentNullException("next"))
 
     // pre-compile the handler pipeline
-    let func : HttpFunc = handler (Some >> async.Return)
+    let func : HttpFunc = handler (Some >> Task.FromResult)
 
     member __.Invoke (ctx : HttpContext) =
-        async {
+        task {
             let! result = func ctx
             let  logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
 
@@ -44,8 +45,8 @@ type GiraffeMiddleware (next          : RequestDelegate,
                 |> logger.LogDebug
 
             if (result.IsNone) then
-                return! next.Invoke ctx |> Async.AwaitTask
-        } |> Async.StartAsTask
+                return! next.Invoke ctx
+        } :> Task
 
 /// ---------------------------
 /// Error Handling middleware
@@ -56,19 +57,19 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
                                     loggerFactory : ILoggerFactory) =
 
     do if isNull next then raise (ArgumentNullException("next"))
-
+    let func = (Some >> Task.FromResult)
     member __.Invoke (ctx : HttpContext) =
-        async {
-            try return! next.Invoke ctx |> Async.AwaitTask
+        task {
+            try return! next.Invoke ctx
             with ex ->
                 let logger = loggerFactory.CreateLogger<GiraffeErrorHandlerMiddleware>()
                 try
-                    let func = Some >> async.Return
-                    return! errorHandler ex logger func ctx |> Async.Ignore
+                    let! _ = errorHandler ex logger func ctx
+                    return ()
                 with ex2 ->
                     logger.LogError(EventId(0), ex,  "An unhandled exception has occurred while executing the request.")
                     logger.LogError(EventId(0), ex2, "An exception was thrown attempting to handle the original exception.")
-        } |> Async.StartAsTask
+        } :> Task
 
 /// ---------------------------
 /// Extension methods for convenience

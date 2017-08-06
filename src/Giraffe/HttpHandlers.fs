@@ -3,6 +3,7 @@ module Giraffe.HttpHandlers
 open System
 open System.Text
 open System.Collections.Generic
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
@@ -14,8 +15,9 @@ open Giraffe.FormatExpressions
 open Giraffe.XmlViewEngine
 open System.Text.RegularExpressions
 open Newtonsoft.Json.Linq
+open Giraffe.Tasks
 
-type HttpFuncResult = Async<HttpContext option>
+type HttpFuncResult = Task<HttpContext option>
 type HttpFunc       = HttpContext -> HttpFuncResult
 type HttpHandler    = HttpFunc  -> HttpFunc
 type ErrorHandler   = exn -> ILogger -> HttpHandler
@@ -43,17 +45,34 @@ let private getPath (ctx : HttpContext) =
     | Some p -> ctx.Request.Path.ToString().[p.Length..]
     | None   -> ctx.Request.Path.ToString()
 
+// let private handlerWithRootedPath (path : string) (handler : HttpHandler) : HttpHandler =
+//     fun (next : HttpFunc) (ctx : HttpContext) ->
+//         task {
+//             let savedSubPath = getSavedSubPath ctx
+//             try
+//                 ctx.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
+//                 return! handler next ctx
+//             finally
+//                 printfn "saved subpath finalising is: %A on path %s" savedSubPath path 
+//                 match savedSubPath with
+//                 | Some savedSubPath -> ctx.Items.Item   RouteKey <- savedSubPath.Substring(0,savedSubPath.Length - path.Length)
+//                 | None              -> ctx.Items.Remove RouteKey |> ignore
+//         }
+
 let private handlerWithRootedPath (path : string) (handler : HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             let savedSubPath = getSavedSubPath ctx
-            try
-                ctx.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
-                return! handler next ctx
-            finally
+            ctx.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
+            let rtask = handler next ctx
+            let! result = rtask
+            match result with
+            | Some _ -> () 
+            | None ->
                 match savedSubPath with
-                | Some savedSubPath -> ctx.Items.Item RouteKey <- savedSubPath
+                | Some savedSubPath -> ctx.Items.Item   RouteKey <- savedSubPath.Substring(0,savedSubPath.Length - path.Length)
                 | None              -> ctx.Items.Remove RouteKey |> ignore
+            return! rtask
         }
 
 /// ---------------------------
@@ -73,26 +92,32 @@ let compose (handler1 : HttpHandler) (handler2 : HttpHandler) : HttpHandler =
 /// See compose for more information.
 let (>=>) = compose
 
-/// Iterates through a list of HttpHandler functions and returns the
-/// result of the first HttpHandler which outcome is Some HttpContext
-let rec choose (handlers : HttpHandler list) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
-            match handlers with
+// allows pre-complied list of HttpFuncs to be tested, by pre-applying next to handler list passed from choose
+let rec private subChoose (funcs : HttpFunc list) : HttpFunc =
+    fun (ctx : HttpContext) ->
+        task {
+            match funcs with
             | [] -> return None
-            | handler :: tail ->
-                let! result = handler next ctx
+            | func :: tail ->
+                let! result = func ctx
                 match result with
                 | Some c -> return Some c
-                | None   -> return! choose tail next ctx
+                | None   -> return! subChoose tail ctx
         }
+/// Iterates through a list of HttpHandler functions and returns the
+/// result of the first HttpHandler which outcome is Some HttpContext
+let choose (handlers : HttpHandler list) : HttpHandler =
+    fun (next : HttpFunc) ->
+        let funcs = handlers |> List.map (fun h -> h next)
+        fun (ctx : HttpContext) ->
+            subChoose funcs ctx
 
 /// Filters an incoming HTTP request based on the HTTP verb
 let httpVerb (verb : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if ctx.Request.Method.Equals verb
         then next ctx
-        else async.Return None
+        else Task.FromResult None
 
 let GET    : HttpHandler = httpVerb "GET"
 let POST   : HttpHandler = httpVerb "POST"
@@ -110,23 +135,23 @@ let mustAccept (mimeTypes : string list) : HttpHandler =
         |> Seq.exists (fun h -> mimeTypes |> Seq.contains h)
         |> function
             | true  -> next ctx
-            | false -> async.Return None
+            | false -> Task.FromResult None
 
 /// Challenges the client to authenticate with a given authentication scheme.
 let challenge (authScheme : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             let auth = ctx.Authentication
-            do! auth.ChallengeAsync authScheme |> Async.AwaitTask
+            do! auth.ChallengeAsync authScheme
             return! next ctx
         }
 
 /// Signs off the current user.
 let signOff (authScheme : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             let auth = ctx.Authentication
-            do! auth.SignOutAsync authScheme |> Async.AwaitTask
+            do! auth.SignOutAsync authScheme
             return! next ctx
         }
 
@@ -169,7 +194,7 @@ let route (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (getPath ctx).Equals path
         then next ctx
-        else async.Return None
+        else Task.FromResult None
 
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 /// The arguments from the format string will be automatically resolved when the
@@ -178,7 +203,7 @@ let routef (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : Htt
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) false
         |> function
-            | None      -> async.Return None
+            | None      -> Task.FromResult None
             | Some args -> routeHandler args next ctx
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
@@ -186,7 +211,7 @@ let routeCi (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if String.Equals(getPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
         then next ctx
-        else async.Return None
+        else Task.FromResult None
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 /// The arguments from the format string will be automatically resolved when the
@@ -195,7 +220,7 @@ let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : H
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) true
         |> function
-            | None      -> async.Return None
+            | None      -> Task.FromResult None
             | Some args -> routeHandler args next ctx
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
@@ -218,21 +243,21 @@ let routeBind<'T> (route: string) (routeHandler : 'T -> HttpHandler) : HttpHandl
                 |> JObject.FromObject
                 |> fun jo -> jo.ToObject<'T>()
             routeHandler o next ctx
-        | _ -> async.Return None
+        | _ -> Task.FromResult None
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
 let routeStartsWith (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (getPath ctx).StartsWith subPath
         then next ctx
-        else async.Return None
+        else Task.FromResult None
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
 let routeStartsWithCi (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (getPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase)
         then next ctx
-        else async.Return None
+        else Task.FromResult None
 
 /// Filters an incoming HTTP request based on a part of the request path (case sensitive).
 /// Subsequent route handlers inside the given handler function should omit the already validated path.
@@ -261,9 +286,9 @@ let setHttpHeader (key : string) (value : obj) : HttpHandler =
 /// Writes to the body of the HTTP response and sets the HTTP header Content-Length accordingly.
 let setBody (bytes : byte array) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             ctx.Response.Headers.["Content-Length"] <- StringValues(bytes.Length.ToString())
-            do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length) |> Async.AwaitTask
+            do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length)
             return! next ctx
         }
 
@@ -294,7 +319,7 @@ let xml (dataObj : obj) : HttpHandler =
 /// with a Content-Type of text/html.
 let htmlFile (relativeFilePath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             let env = ctx.GetService<IHostingEnvironment>()
             let filePath = env.ContentRootPath + relativeFilePath
             let! html = readFileAsString filePath
