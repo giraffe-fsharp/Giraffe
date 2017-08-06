@@ -105,12 +105,12 @@ You can think of [Giraffe](https://www.nuget.org/packages/Giraffe) as the functi
 The main building block in Giraffe is a so called `HttpHandler`:
 
 ```fsharp
-type HttpFuncResult = Async<HttpContext option>
+type HttpFuncResult = Task<HttpContext option>
 type HttpFunc = HttpContext -> HttpFuncResult
 type HttpHandler = HttpFunc -> HttpContext -> HttpFuncResult
 ```
 
-A `HttpHandler` is a simple function which takes two curried arguments, a `HttpFunc` and a `HttpContext`, and returns a `HttpContext` (wrapped in an `option` and `Async` workflow) when finished.
+A `HttpHandler` is a simple function which takes two curried arguments, a `HttpFunc` and a `HttpContext`, and returns a `HttpContext` (wrapped in an `option` and `Task` workflow) when finished.
 
 Given that a `HttpHandler` receives and returns an ASP.NET Core `HttpContext` there is literally nothing which cannot be done from within a Giraffe web application which couldn't be done from a regular ASP.NET Core (MVC) application either.
 
@@ -878,7 +878,7 @@ let app =
 
 ## Custom HttpHandlers
 
-Defining a new `HttpHandler` is fairly easy. All you need to do is to create a new function which matches the signature of `HttpContext -> Async<HttpContext option>`. Through currying your custom `HttpHandler` can extend the original signature as long as the partial application of your function will still return a function of `HttpContext -> Async<HttpContext option>`.
+Defining a new `HttpHandler` is fairly easy. All you need to do is to create a new function which matches the signature of `HttpFunc -> HttpContext -> Task<HttpContext option>`. Through currying your custom `HttpHandler` can extend the original signature as long as the partial application of your function will still return a function of `HttpFunc -> HttpContext -> Task<HttpContext option>` (`HttpFunc -> HttpFunc`).
 
 ### Example:
 
