@@ -239,7 +239,7 @@ let configureServices (services : IServiceCollection) =
         ) |> ignore
 
 let configureLogging (loggerFactory : ILoggerFactory) =
-    loggerFactory.AddConsole(LogLevel.Trace).AddDebug() |> ignore
+    loggerFactory.AddConsole(LogLevel.Error).AddDebug() |> ignore
 
 [<EntryPoint>]
 let main argv =
