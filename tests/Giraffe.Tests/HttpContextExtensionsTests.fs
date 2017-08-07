@@ -50,7 +50,6 @@ type Customer =
             this.LoyaltyPoints
 
 [<Fact>]
-
 let ``BindJson test`` () =
     let ctx = Substitute.For<HttpContext>()
 
@@ -82,18 +81,14 @@ let ``BindJson test`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
-    let! result = app (Some >> Task.FromResult) ctx
+        let! result = app (Some >> Task.FromResult) ctx
 
-
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
-
 let ``BindXml test`` () =
     let ctx = Substitute.For<HttpContext>()
 
@@ -125,18 +120,14 @@ let ``BindXml test`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
-    let! result = app (Some >> Task.FromResult) ctx
+        let! result = app (Some >> Task.FromResult) ctx
 
-
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
-
 let ``BindForm test`` () =
     let ctx = Substitute.For<HttpContext>()
 
@@ -172,16 +163,12 @@ let ``BindForm test`` () =
     task {
         let! result = app (Some >> Task.FromResult) ctx
 
-
         match result with
         | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal(expected, body)
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
-
 let ``BindQueryString test`` () =
     let ctx = Substitute.For<HttpContext>()
 
@@ -203,18 +190,14 @@ let ``BindQueryString test`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
-    let! result = app (Some >> Task.FromResult) ctx
+        let! result = app (Some >> Task.FromResult) ctx
 
-
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
-
 let ``BindQueryString with option property test`` () =
     let testRoute queryStr expected =
         let queryHandlerWithSome next (ctx : HttpContext) =
@@ -234,7 +217,7 @@ let ``BindQueryString with option property test`` () =
         ctx.Response.Body <- new MemoryStream()
 
         app (Some >> Task.FromResult) ctx
-    
+
     task {
         let! _ = testRoute "?OptionalInt=1&OptionalString=Hi" { OptionalInt = Some 1; OptionalString = Some "Hi" }
         let! _ = testRoute "?" { OptionalInt = None; OptionalString = None }
@@ -243,7 +226,6 @@ let ``BindQueryString with option property test`` () =
 
 
 [<Fact>]
-
 let ``BindModel with JSON content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
@@ -277,17 +259,14 @@ let ``BindModel with JSON content returns correct result`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
-    let! result = app (Some >> Task.FromResult) ctx
+        let! result = app (Some >> Task.FromResult) ctx
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
-
 let ``BindModel with XML content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
@@ -321,18 +300,14 @@ let ``BindModel with XML content returns correct result`` () =
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
-    let! result = app (Some >> Task.FromResult) ctx
+        let! result = app (Some >> Task.FromResult) ctx
 
-
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
-
 let ``BindModel with FORM content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
@@ -370,16 +345,12 @@ let ``BindModel with FORM content returns correct result`` () =
     task {
         let! result = app (Some >> Task.FromResult) ctx
 
-
         match result with
         | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal(expected, body)
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
-
 let ``BindModel with JSON content and a specific charset returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
@@ -413,18 +384,14 @@ let ``BindModel with JSON content and a specific charset returns correct result`
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
-    let! result = app (Some >> Task.FromResult) ctx
+        let! result = app (Some >> Task.FromResult) ctx
 
-
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
-
 let ``BindModel during HTTP GET request with query string returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
@@ -448,18 +415,14 @@ let ``BindModel during HTTP GET request with query string returns correct result
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
-    let! result = app (Some >> Task.FromResult) ctx
+        let! result = app (Some >> Task.FromResult) ctx
 
-
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
-
 let ``TryGetRequestHeader during HTTP GET request with returns correct resultd`` () =
     let ctx = Substitute.For<HttpContext>()
 
@@ -482,18 +445,14 @@ let ``TryGetRequestHeader during HTTP GET request with returns correct resultd``
     let expected = "It works!"
 
     task {
-    let! result = app (Some >> Task.FromResult) ctx
+        let! result = app (Some >> Task.FromResult) ctx
 
-
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
-
 let ``TryGetQueryStringValue during HTTP GET request with query string returns correct resultd`` () =
     let ctx = Substitute.For<HttpContext>()
 
@@ -517,12 +476,9 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
     let expected = "1990-04-20"
 
     task {
-    let! result = app (Some >> Task.FromResult) ctx
+        let! result = app (Some >> Task.FromResult) ctx
 
-
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }

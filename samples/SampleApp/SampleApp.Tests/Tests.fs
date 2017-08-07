@@ -25,8 +25,8 @@ let createHost() =
 // Helper functions
 // ---------------------------------
 
-let runTask task = 
-    task 
+let runTask task =
+    task
     |> Async.AwaitTask
     |> Async.RunSynchronously
 
@@ -93,9 +93,8 @@ let ``Test /error returns status code 500`` () =
     get client "/error"
     |> isStatus HttpStatusCode.InternalServerError
     |> readText
-    //|> shouldEqual "One or more errors occurred. (Something went wrong!)"
     |> shouldEqual "Something went wrong!"
-    
+
 [<Fact>]
 let ``Test /user returns error when not logged in`` () =
     use server = new TestServer(createHost())
@@ -107,7 +106,7 @@ let ``Test /user returns error when not logged in`` () =
     |> shouldEqual "Access Denied"
 
 [<Fact>]
-let ``Test /user/{id} returns success when logged in as user`` () = 
+let ``Test /user/{id} returns success when logged in as user`` () =
     use server = new TestServer(createHost())
     use client = server.CreateClient()
 
@@ -131,7 +130,7 @@ let ``Test /user/{id} returns success when logged in as user`` () =
     |> shouldEqual "User ID: 1"
 
 [<Fact>]
-let ``Test /razor returns html content`` () = 
+let ``Test /razor returns html content`` () =
     use server = new TestServer(createHost())
     use client = server.CreateClient()
 
@@ -143,7 +142,7 @@ let ``Test /razor returns html content`` () =
     <link rel=""stylesheet"" type=""text/css"" href=""main.css"">
 </head>
 <body>
-    
+
 <div>
     <h3>Hello, Razor</h3>
 </div>

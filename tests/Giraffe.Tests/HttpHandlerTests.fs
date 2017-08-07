@@ -88,14 +88,12 @@ let ``GET "/" returns "Hello World"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "Hello World"
 
-    task { 
-    let! result = app next ctx
+    task {
+        let! result = app next ctx
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
@@ -112,14 +110,12 @@ let ``GET "/foo" returns "bar"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "bar"
 
-    task { 
-    let! result = app next ctx
+    task {
+        let! result = app next ctx
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
@@ -137,14 +133,14 @@ let ``GET "/FOO" returns 404 "Not found"`` () =
     let expected = "Not found"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
-        Assert.Equal(404, ctx.Response.StatusCode)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal(404, ctx.Response.StatusCode)
     }
 
 [<Fact>]
@@ -163,13 +159,11 @@ let ``GET "/json" returns json object`` () =
     let expected = "{\"Foo\":\"john\",\"Bar\":\"doe\",\"Age\":30}"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
@@ -191,13 +185,11 @@ let ``POST "/post/1" returns "1"`` () =
     let expected = "1"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
@@ -219,13 +211,11 @@ let ``POST "/post/2" returns "2"`` () =
     let expected = "2"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
@@ -247,14 +237,14 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
     let expected = "Not found"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
-        Assert.Equal(404, ctx.Response.StatusCode)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal(404, ctx.Response.StatusCode)
     }
 
 [<Fact>]
@@ -282,14 +272,14 @@ let ``GET "/dotLiquid" returns rendered html view`` () =
     let expected = "<html><head><title>DotLiquid</title></head><body><p>John Doe is 30 years old.</p></body></html>"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
-        Assert.Equal("text/html", ctx.Response |> getContentType)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal("text/html", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -315,14 +305,14 @@ let ``POST "/text" with supported Accept header returns "good"`` () =
     let expected = "text"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
-        Assert.Equal("text/plain", ctx.Response |> getContentType)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal("text/plain", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -348,14 +338,14 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
     let expected = "\"json\""
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
-        Assert.Equal("application/json", ctx.Response |> getContentType)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal("application/json", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -381,14 +371,14 @@ let ``POST "/either" with supported Accept header returns "either"`` () =
     let expected = "either"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
-        Assert.Equal("text/plain", ctx.Response |> getContentType)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal("text/plain", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -414,14 +404,14 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
     let expected = "Not found"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
-        Assert.Equal(404, ctx.Response.StatusCode)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal(404, ctx.Response.StatusCode)
     }
 
 [<Fact>]
@@ -440,17 +430,14 @@ let ``GET "/JSON" returns "BaR"`` () =
     ctx.Response.Body <- new MemoryStream()
     let expected = "BaR"
 
-    task { 
+    task {
         let! result = app next ctx
-        //|> Async.RunSynchronously
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
-    
+
 [<Fact>]
 let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
     let ctx = Substitute.For<HttpContext>()
@@ -468,13 +455,11 @@ let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
     let expected = "blah%20blah"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
@@ -494,13 +479,11 @@ let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
     let expected = "Name: johndoe, Age: 59"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
@@ -521,13 +504,11 @@ let ``POST "/POsT/1" returns "1"`` () =
     let expected = "1"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None     -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
@@ -552,9 +533,7 @@ let ``POST "/POsT/523" returns "523"`` () =
 
         match result with
         | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal(expected, body)
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
@@ -579,13 +558,11 @@ let ``GET "/api" returns "api root"`` () =
     let expected = "api root"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
@@ -613,10 +590,8 @@ let ``GET "/api/users" returns "users"`` () =
         let! result = app next ctx
 
         match result with
-        | None -> assertFailf "Result was expected to be %s" expected
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal(expected, body)
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
@@ -628,31 +603,26 @@ let ``GET "/api/test" returns "test"`` () =
         let app =
             GET >=> choose [
                 route "/"    >=> text "Hello World"
-                //route "/foo" >=> text "bar"
+                route "/foo" >=> text "bar"
                 subRoute "/api" (
                     choose [
                         route ""       >=> text "api root"
                         route "/admin" >=> text "admin"
                         route "/users" >=> text "users" ] )
-                route "/foo" >=> text "bar"
-                route "/api/test" >=> text "test" //repositioned
+                route "/api/test" >=> text "test"
                 setStatusCode 404 >=> text "Not found" ]
-
-        let handler = app next
 
         ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
         ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
         ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/test")) |> ignore
         ctx.Response.Body <- new MemoryStream()
         let expected = "test"
-    
-        let! result = handler ctx
+
+        let! result = app next ctx
 
         match result with
-        | None -> assertFailf "Result was expected to be %s" expected
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal(expected, body)
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
@@ -686,13 +656,11 @@ let ``GET "/api/v2/users" returns "users v2"`` () =
     let expected = "users v2"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
@@ -716,13 +684,11 @@ let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
     let expected = "yadayada"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
 [<Fact>]
@@ -758,7 +724,7 @@ let ``GET "/person" returns rendered HTML view`` () =
         let! result = app next ctx
 
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx ->
             let body = (getBody ctx).Replace(Environment.NewLine, String.Empty)
             Assert.Equal(expected, body)
@@ -795,14 +761,14 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
     let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"left ear\",\"nose\"]}"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
-        Assert.Equal("application/json", ctx.Response |> getContentType)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal("application/json", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -835,14 +801,14 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
     let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"left ear\",\"nose\"]}"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
-        Assert.Equal("application/json", ctx.Response |> getContentType)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal("application/json", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -885,14 +851,14 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
 </Person>"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        XmlAssert.equals expected body
-        Assert.Equal("application/xml", ctx.Response |> getContentType)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            XmlAssert.equals expected body
+            Assert.Equal("application/xml", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -935,14 +901,14 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
 </Person>"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        XmlAssert.equals expected body
-        Assert.Equal("application/xml", ctx.Response |> getContentType)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            XmlAssert.equals expected body
+            Assert.Equal("application/xml", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -975,14 +941,14 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
     let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"ear\",\"nose\"]}"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
-        Assert.Equal("application/json", ctx.Response |> getContentType)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal("application/json", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -1025,14 +991,14 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
 </Person>"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        XmlAssert.equals expected body
-        Assert.Equal("application/xml", ctx.Response |> getContentType)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            XmlAssert.equals expected body
+            Assert.Equal("application/xml", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -1075,14 +1041,14 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
 </Person>"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        XmlAssert.equals expected body
-        Assert.Equal("application/xml", ctx.Response |> getContentType)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            XmlAssert.equals expected body
+            Assert.Equal("application/xml", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -1119,14 +1085,14 @@ Height: 1.85
 Piercings: [|""ear""; ""nose""|]"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
-        Assert.Equal("text/plain", ctx.Response |> getContentType)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal("text/plain", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -1159,15 +1125,15 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
     let expected = "text/html is unacceptable by the server."
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(406, getStatusCode ctx)
-        Assert.Equal(expected, body)
-        Assert.Equal("text/plain", ctx.Response |> getContentType)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(406, getStatusCode ctx)
+            Assert.Equal(expected, body)
+            Assert.Equal("text/plain", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -1199,14 +1165,14 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
     let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"ear\",\"nose\"]}"
 
     task {
-    let! result = app next ctx
+        let! result = app next ctx
 
-    match result with
-    | None -> assertFailf "Result was expected to be %s" expected
-    | Some ctx ->
-        let body = getBody ctx
-        Assert.Equal(expected, body)
-        Assert.Equal("application/json", ctx.Response |> getContentType)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal("application/json", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -1223,8 +1189,7 @@ let ``Warbler function should execute inner function each time`` () =
     ctx.Response.Body <- new MemoryStream()
 
     task {
-
-        let! res1 = app next ctx 
+        let! res1 = app next ctx
         let result1 = getBody res1.Value
 
         ctx.Response.Body <- new MemoryStream()
@@ -1237,12 +1202,12 @@ let ``Warbler function should execute inner function each time`` () =
         ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo2")) |> ignore
         ctx.Response.Body <- new MemoryStream()
 
-        let! res3 = app next ctx 
+        let! res3 = app next ctx
         let result3 = getBody res3.Value
 
         ctx.Response.Body <- new MemoryStream()
 
-        let! res4 = app next ctx 
+        let! res4 = app next ctx
         let result4 = getBody res4.Value
 
         Assert.False(result3.Equals result4)

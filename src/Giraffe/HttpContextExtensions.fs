@@ -53,11 +53,9 @@ type HttpContext with
     /// ---------------------------
 
     member this.ReadBodyFromRequest() =
-        task {
-            let body = this.Request.Body
-            use reader = new StreamReader(body, true)
-            return! reader.ReadToEndAsync()
-        }
+        let body = this.Request.Body
+        use reader = new StreamReader(body, true)
+        reader.ReadToEndAsync()
 
     member this.BindJson<'T>() =
         task {

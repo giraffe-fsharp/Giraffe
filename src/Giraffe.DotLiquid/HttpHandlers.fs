@@ -14,17 +14,14 @@ open Giraffe.Tasks
 /// Renders a model and a template with the DotLiquid template engine and sets the HTTP response
 /// with the compiled output as well as the Content-Type HTTP header to the given value.
 let dotLiquid (contentType : string) (template : string) (model : obj) : HttpHandler =
-    let view = Template.Parse template
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        task {
-            let bytes =
-                model
-                |> Hash.FromAnonymousObject
-                |> view.Render
-                |> Encoding.UTF8.GetBytes
-
-            return! (setHttpHeader "Content-Type" contentType >=> setBody bytes) next ctx
-        }
+    let view  = Template.Parse template
+    let bytes =
+        model
+        |> Hash.FromAnonymousObject
+        |> view.Render
+        |> Encoding.UTF8.GetBytes
+    setHttpHeader "Content-Type" contentType
+    >=> setBody bytes
 
 /// Reads a dotLiquid template file from disk and compiles it with the given model and sets
 /// the compiled output as well as the given contentType as the HTTP reponse.
