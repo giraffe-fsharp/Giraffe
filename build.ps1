@@ -99,7 +99,7 @@ $giraffe          = ".\src\Giraffe\Giraffe.fsproj"
 $giraffeRazor     = ".\src\Giraffe.Razor\Giraffe.Razor.fsproj"
 $giraffeDotLiquid = ".\src\Giraffe.DotLiquid\Giraffe.DotLiquid.fsproj"
 $giraffeTests     = ".\tests\Giraffe.Tests\Giraffe.Tests.fsproj"
-$identityApp      = ".\samples\SampleApp\SampleApp\SampleApp.fsproj"
+$identityApp      = ".\samples\IdentityApp\IdentityApp\IdentityApp.fsproj"
 $sampleApp        = ".\samples\SampleApp\SampleApp\SampleApp.fsproj"
 $sampleAppTests   = ".\samples\SampleApp\SampleApp.Tests\SampleApp.Tests.fsproj"
 

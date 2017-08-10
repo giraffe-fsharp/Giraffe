@@ -15,6 +15,7 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.AspNetCore.Identity
 open Microsoft.AspNetCore.Identity.EntityFrameworkCore
 open Microsoft.EntityFrameworkCore
+open Giraffe.Tasks
 open Giraffe.HttpContextExtensions
 open Giraffe.XmlViewEngine
 open Giraffe.HttpHandlers
@@ -123,26 +124,26 @@ let showErrors (errors : IdentityError seq) =
 
 let registerHandler : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             let! model       = ctx.BindForm<RegisterModel>()
             let  user        = IdentityUser(UserName = model.UserName, Email = model.Email)
             let  userManager = ctx.GetService<UserManager<IdentityUser>>()
-            let! result      = userManager.CreateAsync(user, model.Password) |> Async.AwaitTask
+            let! result      = userManager.CreateAsync(user, model.Password)
 
             match result.Succeeded with
             | false -> return! showErrors result.Errors next ctx
             | true  ->
                 let signInManager = ctx.GetService<SignInManager<IdentityUser>>()
-                do! signInManager.SignInAsync(user, true) |> Async.AwaitTask
+                do! signInManager.SignInAsync(user, true)
                 return! redirectTo false "/user" next ctx
         }
 
 let loginHandler : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             let! model = ctx.BindForm<LoginModel>()
             let signInManager = ctx.GetService<SignInManager<IdentityUser>>()
-            let! result = signInManager.PasswordSignInAsync(model.UserName, model.Password, true, false) |> Async.AwaitTask
+            let! result = signInManager.PasswordSignInAsync(model.UserName, model.Password, true, false)
             match result.Succeeded with
             | true  -> return! redirectTo false "/user" next ctx
             | false -> return! renderHtml (loginPage true) next ctx
@@ -150,9 +151,9 @@ let loginHandler : HttpHandler =
 
 let userHandler : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             let userManager = ctx.GetService<UserManager<IdentityUser>>()
-            let! user = userManager.GetUserAsync ctx.User |> Async.AwaitTask
+            let! user = userManager.GetUserAsync ctx.User
             return! (user |> userPage |> renderHtml) next ctx
         }
 
@@ -161,9 +162,9 @@ let mustBeLoggedIn : HttpHandler =
 
 let logoutHandler : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             let signInManager = ctx.GetService<SignInManager<IdentityUser>>()
-            do! signInManager.SignOutAsync() |> Async.AwaitTask
+            do! signInManager.SignOutAsync()
             return! (redirectTo false "/") next ctx
         }
 

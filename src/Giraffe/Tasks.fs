@@ -9,6 +9,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 namespace Giraffe
+
 open System
 open System.Threading.Tasks
 open System.Runtime.CompilerServices
@@ -54,7 +55,7 @@ module TaskBuilder =
         member __.Run() =
             methodBuilder.Start(&self)
             methodBuilder.Task
-    
+
         interface IAsyncStateMachine with
             /// Proceed to one of three states: result, failure, or awaiting.
             /// If awaiting, MoveNext() will be called again when the awaitable completes.
@@ -62,7 +63,7 @@ module TaskBuilder =
                 let mutable await = nextAwaitable()
                 if not (isNull await) then
                     // Tell the builder to call us again when this thing is done.
-                    methodBuilder.AwaitUnsafeOnCompleted(&await, &self)    
+                    methodBuilder.AwaitUnsafeOnCompleted(&await, &self)
             member __.SetStateMachine(_) = () // Doesn't really apply since we're a reference type.
 
     let unwrapException (agg : AggregateException) =
@@ -90,7 +91,7 @@ module TaskBuilder =
 
         static member inline GenericAwait< ^abl, ^awt, ^inp
                                             when ^abl : (member GetAwaiter : unit -> ^awt)
-                                            and ^awt :> ICriticalNotifyCompletion 
+                                            and ^awt :> ICriticalNotifyCompletion
                                             and ^awt : (member get_IsCompleted : unit -> bool)
                                             and ^awt : (member GetResult : unit -> ^inp) >
             (abl : ^abl, continuation : ^inp -> 'out Step) : 'out Step =
@@ -103,7 +104,7 @@ module TaskBuilder =
         static member inline GenericAwaitConfigureFalse< ^tsk, ^abl, ^awt, ^inp
                                                         when ^tsk : (member ConfigureAwait : bool -> ^abl)
                                                         and ^abl : (member GetAwaiter : unit -> ^awt)
-                                                        and ^awt :> ICriticalNotifyCompletion 
+                                                        and ^awt :> ICriticalNotifyCompletion
                                                         and ^awt : (member get_IsCompleted : unit -> bool)
                                                         and ^awt : (member GetResult : unit -> ^inp) >
             (tsk : ^tsk, continuation : ^inp -> 'out Step) : 'out Step =
@@ -273,7 +274,7 @@ module Tasks =
             TaskBuilder.Binder<_>.GenericAwait(taskLike, TaskBuilder.ret)
         member inline this.Bind(taskLike, continuation : _ -> 'a TaskBuilder.Step) : 'a TaskBuilder.Step =
             TaskBuilder.Binder<'a>.GenericAwait(taskLike, continuation)
-    
+
     [<AutoOpen>]
     module HigherPriorityBinds =
         // When it's possible for these to work, the compiler should prefer them since they shadow the ones above.

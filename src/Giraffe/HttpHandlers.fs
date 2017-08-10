@@ -28,6 +28,8 @@ type ErrorHandler   = exn -> ILogger -> HttpHandler
 
 let inline warbler f a = f a a
 
+let shortCircuit : HttpFuncResult = Task.FromResult None
+
 /// ---------------------------
 /// Sub route helper functions
 /// ---------------------------
@@ -104,7 +106,7 @@ let httpVerb (verb : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if ctx.Request.Method.Equals verb
         then next ctx
-        else Task.FromResult None
+        else shortCircuit
 
 let GET    : HttpHandler = httpVerb "GET"
 let POST   : HttpHandler = httpVerb "POST"
@@ -122,7 +124,7 @@ let mustAccept (mimeTypes : string list) : HttpHandler =
         |> Seq.exists (fun h -> mimeTypes |> Seq.contains h)
         |> function
             | true  -> next ctx
-            | false -> Task.FromResult None
+            | false -> shortCircuit
 
 /// Challenges the client to authenticate with a given authentication scheme.
 let challenge (authScheme : string) : HttpHandler =
@@ -181,7 +183,7 @@ let route (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (getPath ctx).Equals path
         then next ctx
-        else Task.FromResult None
+        else shortCircuit
 
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 /// The arguments from the format string will be automatically resolved when the
@@ -190,7 +192,7 @@ let routef (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : Htt
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) false
         |> function
-            | None      -> Task.FromResult None
+            | None      -> shortCircuit
             | Some args -> routeHandler args next ctx
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
@@ -198,7 +200,7 @@ let routeCi (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if String.Equals(getPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
         then next ctx
-        else Task.FromResult None
+        else shortCircuit
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 /// The arguments from the format string will be automatically resolved when the
@@ -207,7 +209,7 @@ let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : H
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) true
         |> function
-            | None      -> Task.FromResult None
+            | None      -> shortCircuit
             | Some args -> routeHandler args next ctx
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
@@ -230,21 +232,21 @@ let routeBind<'T> (route: string) (routeHandler : 'T -> HttpHandler) : HttpHandl
                 |> JObject.FromObject
                 |> fun jo -> jo.ToObject<'T>()
             routeHandler o next ctx
-        | _ -> Task.FromResult None
+        | _ -> shortCircuit
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
 let routeStartsWith (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (getPath ctx).StartsWith subPath
         then next ctx
-        else Task.FromResult None
+        else shortCircuit
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
 let routeStartsWithCi (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (getPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase)
         then next ctx
-        else Task.FromResult None
+        else shortCircuit
 
 /// Filters an incoming HTTP request based on a part of the request path (case sensitive).
 /// Subsequent route handlers inside the given handler function should omit the already validated path.
