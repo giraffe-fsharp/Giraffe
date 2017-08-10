@@ -1,12 +1,15 @@
 // Tasks.fs - TPL task computation expressions for F#
 //
 // Written in 2016 by Robert Peele (humbobst@gmail.com)
+// Original: https://github.com/rspeele/TaskBuilder.fs/blob/master/TaskBuilder.fs
 //
 // To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights
 // to this software to the public domain worldwide. This software is distributed without any warranty.
 //
 // You should have received a copy of the CC0 Public Domain Dedication along with this software.
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
+//
+// This is a slightly modified version to better fit an ASP.NET Core Giraffe web application.
 
 namespace Giraffe
 
@@ -233,7 +236,10 @@ module TaskBuilder =
             src.SetException(exn)
             src.Task
 
-
+    /// Builds a `System.Threading.Tasks.Task<'a>` similarly to a C# async/await method, but with
+    /// all awaited tasks automatically configured *not* to resume on the captured context.
+    /// This is often preferable when writing library code that is not context-aware, but undesirable when writing
+    /// e.g. code that must interact with user interface controls on the same thread as its caller.
     type ContextInsensitiveTaskBuilder() =
         // These methods are consistent between the two builders.
         // Unfortunately, inline members do not work with inheritance.
