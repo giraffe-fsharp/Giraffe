@@ -1415,3 +1415,7 @@ If you have blogged about Giraffe, demonstrating a useful topic or some other ti
 ## License
 
 [Apache 2.0](https://raw.githubusercontent.com/dustinmoris/Giraffe/master/LICENSE)
+
+## Contact and Slack Channel
+
+If you have any further questions feel free to reach out to me via any of the mentioned social media on [https://dusted.codes/about](https://dusted.codes/about) or join the `#giraffe` Slack channel in the [Functional Programming Slack Team](https://functionalprogramming.slack.com/).
