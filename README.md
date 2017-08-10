@@ -28,7 +28,6 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
         - [compose (>=>)](#compose-)
         - [choose](#choose)
 - [Default HttpHandlers](#default-httphandlers)
-    - [choose](#choose)
     - [GET, POST, PUT, PATCH, DELETE](#get-post-put-patch-delete)
     - [mustAccept](#mustaccept)
     - [challenge](#challenge)

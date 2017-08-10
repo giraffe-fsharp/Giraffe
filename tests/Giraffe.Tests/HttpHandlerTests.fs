@@ -537,7 +537,7 @@ let ``POST "/POsT/523" returns "523"`` () =
     }
 
 [<Fact>]
-let ``GET "/api" returns "api root"`` () =
+let ``Sub route with empty route`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
@@ -566,7 +566,7 @@ let ``GET "/api" returns "api root"`` () =
     }
 
 [<Fact>]
-let ``GET "/api/users" returns "users"`` () =
+let ``Sub route with non empty route`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
@@ -595,7 +595,7 @@ let ``GET "/api/users" returns "users"`` () =
     }
 
 [<Fact>]
-let ``GET "/api/test" returns "test"`` () =
+let ``Route after sub route with same beginning of path`` () =
 
     task {
         let ctx = Substitute.For<HttpContext>()
@@ -626,7 +626,7 @@ let ``GET "/api/test" returns "test"`` () =
     }
 
 [<Fact>]
-let ``GET "/api/v2/users" returns "users v2"`` () =
+let ``Nested sub routes`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
@@ -654,6 +654,85 @@ let ``GET "/api/v2/users" returns "users v2"`` () =
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/v2/users")) |> ignore
     ctx.Response.Body <- new MemoryStream()
     let expected = "users v2"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``Route after nested sub routes with same beginning of path`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            route "/"    >=> text "Hello World"
+            route "/foo" >=> text "bar"
+            subRoute "/api" (
+                choose [
+                    route ""       >=> text "api root"
+                    route "/admin" >=> text "admin"
+                    route "/users" >=> text "users"
+                    subRoute "/v2" (
+                        choose [
+                            route ""       >=> text "api root v2"
+                            route "/admin" >=> text "admin v2"
+                            route "/users" >=> text "users v2"
+                        ]
+                    )
+                    route "/yada" >=> text "yada"
+                ]
+            )
+            route "/api/test"   >=> text "test"
+            route "/api/v2/else" >=> text "else"
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/v2/else")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "else"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``Multiple nested sub routes`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            route "/"    >=> text "Hello World"
+            route "/foo" >=> text "bar"
+            subRoute "/api" (
+                choose [
+                    route "/users" >=> text "users"
+                    subRoute "/v2" (
+                        choose [
+                            route "/admin" >=> text "admin v2"
+                            route "/users" >=> text "users v2"
+                        ]
+                    )
+                    subRoute "/v2" (
+                        route "/admin2" >=> text "correct admin2"
+                    )
+                ]
+            )
+            route "/api/test"   >=> text "test"
+            route "/api/v2/else" >=> text "else"
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/v2/admin2")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "correct admin2"
 
     task {
         let! result = app next ctx
