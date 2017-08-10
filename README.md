@@ -82,6 +82,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
 - [Contributors](#contributors)
 - [Blog posts](#blog-posts)
 - [License](#license)
+- [Contact and Slack Channel](#contact-and-slack-channel)
 
 ## About
 
