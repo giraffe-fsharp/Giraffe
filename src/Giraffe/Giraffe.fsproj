@@ -37,6 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Tasks.fs" />
     <Compile Include="Common.fs" />
     <Compile Include="ComputationExpressions.fs" />
     <Compile Include="FormatExpressions.fs" />

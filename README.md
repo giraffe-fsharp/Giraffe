@@ -27,8 +27,8 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [Combinators](#combinators)
         - [compose (>=>)](#compose-)
         - [choose](#choose)
+    - [Tasks](#tasks)
 - [Default HttpHandlers](#default-httphandlers)
-    - [choose](#choose)
     - [GET, POST, PUT, PATCH, DELETE](#get-post-put-patch-delete)
     - [mustAccept](#mustaccept)
     - [challenge](#challenge)
@@ -83,6 +83,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
 - [Contributors](#contributors)
 - [Blog posts](#blog-posts)
 - [License](#license)
+- [Contact and Slack Channel](#contact-and-slack-channel)
 
 ## About
 
@@ -105,12 +106,12 @@ You can think of [Giraffe](https://www.nuget.org/packages/Giraffe) as the functi
 The main building block in Giraffe is a so called `HttpHandler`:
 
 ```fsharp
-type HttpFuncResult = Async<HttpContext option>
+type HttpFuncResult = Task<HttpContext option>
 type HttpFunc = HttpContext -> HttpFuncResult
 type HttpHandler = HttpFunc -> HttpContext -> HttpFuncResult
 ```
 
-A `HttpHandler` is a simple function which takes two curried arguments, a `HttpFunc` and a `HttpContext`, and returns a `HttpContext` (wrapped in an `option` and `Async` workflow) when finished.
+A `HttpHandler` is a simple function which takes two curried arguments, a `HttpFunc` and a `HttpContext`, and returns a `HttpContext` (wrapped in an `option` and `Task` workflow) when finished.
 
 Given that a `HttpHandler` receives and returns an ASP.NET Core `HttpContext` there is literally nothing which cannot be done from within a Giraffe web application which couldn't be done from a regular ASP.NET Core (MVC) application either.
 
@@ -161,6 +162,63 @@ let app =
         route "/bar" >=> text "Bar"
     ]
 ```
+
+### Tasks
+
+Another important aspect to Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core works only with tasks out of the box).
+
+For this purpose Giraffe has it's own `task {}` workflow which comes with the `Giraffe.Tasks` module. Syntactically it works identical to F#'s async workflows:
+
+```fsharp
+open Giraffe.Tasks
+open Giraffe.HttpHandlers
+
+let personHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            let! person = ctx.BindModel<Person>()
+            return! json person next ctx
+        }
+```
+
+The `task {}` workflow is not strictly tied to Giraffe and can be used from anywhere in an F# application:
+
+```fsharp
+open Giraffe.Tasks
+
+let readFileAndDoSomething (filePath : string) =
+    task {
+        use stream = new FileStream(filePath, FileMode.Open)
+        use reader = new StreamReader(stream)
+        let! contents = reader.ReadToEndAsync()
+
+        // do something with contents
+
+        return contents
+    }
+```
+
+If you were to write the same code with F#'s async workflow it would look something like this:
+
+
+```fsharp
+let readFileAndDoSomething (filePath : string) =
+    async {
+        use stream = new FileStream(filePath, FileMode.Open)
+        use reader = new StreamReader(stream)
+        let! contents =
+            reader.ReadToEndAsync()
+            |> Async.AwaitTask
+
+        // do something with contents
+
+        return contents
+    }
+```
+
+Apart from the convenience of not having to convert from a `Task<'T>` into an `Async<'T>` workflow and then back again into a `Task<'T>` when returning back to the ASP.NET Core pipeline it also proved to improve overall performance by two figure % in comparison to F#'s async implementation.
+
+The original code for Giraffe's task implementation has been taken from [Robert Peele](https://github.com/rspeele)'s [TaskBuilder.fs](https://github.com/rspeele/TaskBuilder.fs) and gradually modified to better fit Giraffe's use case for a highly scalable ASP.NET Core web application.
 
 ## Default HttpHandlers
 
@@ -878,7 +936,7 @@ let app =
 
 ## Custom HttpHandlers
 
-Defining a new `HttpHandler` is fairly easy. All you need to do is to create a new function which matches the signature of `HttpContext -> Async<HttpContext option>`. Through currying your custom `HttpHandler` can extend the original signature as long as the partial application of your function will still return a function of `HttpContext -> Async<HttpContext option>`.
+Defining a new `HttpHandler` is fairly easy. All you need to do is to create a new function which matches the signature of `HttpFunc -> HttpContext -> Task<HttpContext option>`. Through currying your custom `HttpHandler` can extend the original signature as long as the partial application of your function will still return a function of `HttpFunc -> HttpContext -> Task<HttpContext option>` (`HttpFunc -> HttpFunc`).
 
 ### Example:
 
@@ -891,7 +949,7 @@ let routeStartsWith (subPath : string) =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if ctx.Request.Path.ToString().StartsWith subPath
         then next ctx
-        else async.Return None
+        else Task.FromResult None
 ```
 
 Defining another custom HTTP handler to validate a mandatory HTTP header:
@@ -956,7 +1014,7 @@ open Giraffe.HttpContextExtensions
 
 let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             // Binds a JSON payload to a Car object
             let! car = ctx.BindJson<Car>()
 
@@ -1015,7 +1073,7 @@ open Giraffe.HttpContextExtensions
 
 let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             // Binds an XML payload to a Car object
             let! car = ctx.BindXml<Car>()
 
@@ -1079,7 +1137,7 @@ open Giraffe.HttpContextExtensions
 
 let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             // Binds a form urlencoded payload to a Car object
             let! car = ctx.BindForm<Car>()
 
@@ -1138,7 +1196,7 @@ open Giraffe.HttpContextExtensions
 
 let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             // Binds a query string to a Car object
             let car = ctx.BindQueryString<Car>()
 
@@ -1193,7 +1251,7 @@ open Giraffe.HttpContextExtensions
 
 let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             // Binds a JSON, XML or form urlencoded payload to a Car object
             let! car = ctx.BindModel<Car>()
 
@@ -1287,7 +1345,11 @@ type Startup() =
 
 ## Sample applications
 
-There is a basic sample application in the [`/samples/SampleApp`](https://github.com/dustinmoris/Giraffe/tree/develop/samples/SampleApp) folder.
+### Demo apps
+
+There are two basic sample applications in the [`/samples`](https://github.com/dustinmoris/Giraffe/tree/develop/samples) folder. The [IdentityApp](https://github.com/dustinmoris/Giraffe/tree/develop/samples/IdentityApp) demonstrates how ASP.NET Core Identity can be used with Giraffe and the [SampleApp](https://github.com/dustinmoris/Giraffe/tree/develop/samples/SampleApp) is a generic sample application covering multiple features.
+
+### Live apps
 
 An example of a live website which uses Giraffe is [https://buildstats.info](https://buildstats.info). It uses the [XmlViewEngine](#renderhtml) to build dynamically rich SVG images and Docker to run the application in the Google Container Engine (see [GitHub repository](https://github.com/dustinmoris/CI-BuildStats)).
 
@@ -1397,7 +1459,7 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Jimmy Byrd](https://github.com/TheAngryByrd) (Added Linux builds)
 - [Jon Canning](https://github.com/JonCanning) (Moved the Razor and DotLiquid http handlers into separate NuGet packages and added the `routeBind` handler as well as some useful `HttpContext` extensions)
 - [Andrew Grant](https://github.com/GraanJonlo) (Fixed bug in the `giraffe-template` NuGet package)
-- [Gerard](https://github.com/gerardtoconnor) (Changed the API to continuations instead of binding HttpHandlers)
+- [Gerard](https://github.com/gerardtoconnor) (Changed the API to continuations instead of binding HttpHandlers and to tasks from async)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
 
@@ -1412,3 +1474,7 @@ If you have blogged about Giraffe, demonstrating a useful topic or some other ti
 ## License
 
 [Apache 2.0](https://raw.githubusercontent.com/dustinmoris/Giraffe/master/LICENSE)
+
+## Contact and Slack Channel
+
+If you have any further questions feel free to reach out to me via any of the mentioned social media on [https://dusted.codes/about](https://dusted.codes/about) or join the `#giraffe` Slack channel in the [Functional Programming Slack Team](https://functionalprogramming.slack.com/). Please use [this link](https://fpchat-invite.herokuapp.com/) to request an invitation to the Functional Programming Slack Team.

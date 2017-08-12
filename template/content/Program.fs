@@ -59,6 +59,7 @@ let main argv =
     WebHostBuilder()
         .UseKestrel()
         .UseContentRoot(contentRoot)
+        .UseIISIntegration()
         .UseWebRoot(webRoot)
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(Action<IServiceCollection> configureServices)

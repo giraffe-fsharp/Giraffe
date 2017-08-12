@@ -11,6 +11,7 @@ open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Features
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
+open Giraffe.Tasks
 open Giraffe.HttpContextExtensions
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
@@ -43,7 +44,7 @@ let mustBeAdmin =
 
 let loginHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             let issuer = "http://localhost:5000"
             let claims =
                 [
@@ -54,7 +55,7 @@ let loginHandler =
             let identity = ClaimsIdentity(claims, authScheme)
             let user     = ClaimsPrincipal(identity)
 
-            do! ctx.Authentication.SignInAsync(authScheme, user) |> Async.AwaitTask
+            do! ctx.Authentication.SignInAsync(authScheme, user)
 
             return! text "Successfully logged in" next ctx
         }
@@ -80,14 +81,14 @@ type Car =
 
 let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             let! car = ctx.BindModel<Car>()
             return! json car next ctx
         }
 
 let smallFileUploadHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             return!
                 (match ctx.Request.HasFormContentType with
                 | false -> setStatusCode 400 >=> text "Bad request"
@@ -99,9 +100,9 @@ let smallFileUploadHandler =
 
 let largeFileUploadHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             let formFeature = ctx.Features.Get<IFormFeature>()
-            let! form = formFeature.ReadFormAsync CancellationToken.None |> Async.AwaitTask
+            let! form = formFeature.ReadFormAsync CancellationToken.None
             return!
                 (form.Files
                 |> Seq.fold (fun acc file -> sprintf "%s\n%s" acc file.FileName) ""
@@ -163,7 +164,7 @@ let configureServices (services : IServiceCollection) =
     services.AddRazorEngine viewsFolderPath |> ignore
 
 let configureLogging (loggerFactory : ILoggerFactory) =
-    loggerFactory.AddConsole(LogLevel.Trace).AddDebug() |> ignore
+    loggerFactory.AddConsole(LogLevel.Error).AddDebug() |> ignore
 
 [<EntryPoint>]
 let main argv =

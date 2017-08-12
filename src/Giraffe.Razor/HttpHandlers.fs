@@ -6,6 +6,7 @@ open Microsoft.AspNetCore.Mvc.Razor
 open Microsoft.AspNetCore.Mvc.ViewFeatures
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Primitives
+open Giraffe.Tasks
 open Giraffe.HttpHandlers
 open Giraffe.Razor.Engine
 
@@ -13,7 +14,7 @@ open Giraffe.Razor.Engine
 /// the compiled output as the HTTP reponse with the given contentType.
 let razorView (contentType : string) (viewName : string) (model : 'T) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        async {
+        task {
             let engine = ctx.RequestServices.GetService<IRazorViewEngine>()
             let tempDataProvider = ctx.RequestServices.GetService<ITempDataProvider>()
             let! result = renderRazorView engine tempDataProvider ctx viewName model
