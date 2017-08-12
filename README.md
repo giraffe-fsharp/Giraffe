@@ -27,6 +27,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [Combinators](#combinators)
         - [compose (>=>)](#compose-)
         - [choose](#choose)
+    - [Tasks](#tasks)
 - [Default HttpHandlers](#default-httphandlers)
     - [GET, POST, PUT, PATCH, DELETE](#get-post-put-patch-delete)
     - [mustAccept](#mustaccept)
@@ -161,6 +162,63 @@ let app =
         route "/bar" >=> text "Bar"
     ]
 ```
+
+### Tasks
+
+Another important aspect to Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core works only with tasks out of the box).
+
+For this purpose Giraffe has it's own `task {}` workflow which comes with the `Giraffe.Tasks` module. Syntactically it works identical to F#'s async workflows:
+
+```fsharp
+open Giraffe.Tasks
+open Giraffe.HttpHandlers
+
+let personHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            let! person = ctx.BindModel<Person>()
+            return! json person next ctx
+        }
+```
+
+The `task {}` workflow is not strictly tied to Giraffe and can be used from anywhere in an F# application:
+
+```fsharp
+open Giraffe.Tasks
+
+let readFileAndDoSomething (filePath : string) =
+    task {
+        use stream = new FileStream(filePath, FileMode.Open)
+        use reader = new StreamReader(stream)
+        let! contents = reader.ReadToEndAsync()
+
+        // do something with contents
+
+        return contents
+    }
+```
+
+If you were to write the same code with F#'s async workflow it would look something like this:
+
+
+```fsharp
+let readFileAndDoSomething (filePath : string) =
+    async {
+        use stream = new FileStream(filePath, FileMode.Open)
+        use reader = new StreamReader(stream)
+        let! contents =
+            reader.ReadToEndAsync()
+            |> Async.AwaitTask
+
+        // do something with contents
+
+        return contents
+    }
+```
+
+Apart from the convenience of not having to convert from a `Task<'T>` into an `Async<'T>` workflow and then back again into a `Task<'T>` when returning back to the ASP.NET Core pipeline it also proved to improve overall performance by two figure % in comparison to F#'s async implementation.
+
+The original code for Giraffe's task implementation has been taken from [Robert Peele](https://github.com/rspeele)'s [TaskBuilder.fs](https://github.com/rspeele/TaskBuilder.fs) and gradually modified to better fit Giraffe's use case for a highly scalable ASP.NET Core web application.
 
 ## Default HttpHandlers
 
