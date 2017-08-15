@@ -5,6 +5,7 @@ open System.IO
 open System.Text
 open System.Xml
 open System.Xml.Serialization
+open Microsoft.Extensions.Primitives
 open Newtonsoft.Json
 
 /// ---------------------------
@@ -20,6 +21,9 @@ let readFileAsString (filePath : string) =
     use stream = new FileStream(filePath, FileMode.Open)
     use reader = new StreamReader(stream)
     reader.ReadToEndAsync()
+
+let strSegment (str : string) =
+    StringSegment(str)
 
 /// ---------------------------
 /// Serializers

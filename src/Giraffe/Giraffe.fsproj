@@ -7,7 +7,7 @@
     <Copyright>Copyright 2017 Dustin Moris Gorski</Copyright>
     <NeutralLanguage>en-GB</NeutralLanguage>
     <Authors>Dustin Moris Gorski and contributors</Authors>
-    <TargetFrameworks>net46;netstandard1.6</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <DebugType>portable</DebugType>
     <WarningsAsErrors>1</WarningsAsErrors>
     <Optimize>True</Optimize>
@@ -21,18 +21,17 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/dustinmoris/giraffe</RepositoryUrl>
-    <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
-    <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netstandard1.6' ">$(PackageTargetFallback);portable-net45+win8;</PackageTargetFallback>
+    <NetStandardImplicitPackageVersion>2.0</NetStandardImplicitPackageVersion>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FSharp.Core" Version="4.1.*" />
+    <PackageReference Include="FSharp.Core" Version="4.2.*" />
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.*" />
     <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="1.1.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="1.1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.0.*" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.*" />
   </ItemGroup>
 
