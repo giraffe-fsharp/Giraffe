@@ -1,4 +1,4 @@
-﻿<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>Giraffe</AssemblyName>
@@ -26,12 +26,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FSharp.Core" Version="4.2.*" />
-    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
-    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.*" />
-    <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.0.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Primitives" Version="2.0.*" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.*" />
   </ItemGroup>
 
