@@ -26,7 +26,7 @@ type ErrorHandler   = exn -> ILogger -> HttpHandler
 /// Globally useful functions
 /// ---------------------------
 
-let inline warbler f a = f a a
+let inline warbler f a b = (f a b) a b
 
 let shortCircuit : HttpFuncResult = Task.FromResult None
 

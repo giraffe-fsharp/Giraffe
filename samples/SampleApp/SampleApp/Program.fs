@@ -124,7 +124,7 @@ let webApp =
                 route  "/fileupload" >=> razorHtmlView "FileUpload" ""
                 route  "/person"     >=> (personView { Name = "Html Node" } |> renderHtml)
                 route  "/once"       >=> (time() |> text)
-                route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
+                route  "/everytime"  >=> warbler (fun _ _ -> (time() |> text))
             ]
         POST >=>
             choose [
