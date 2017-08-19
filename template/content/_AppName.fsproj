@@ -23,7 +23,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="1.1.*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="1.1.*" />
     <PackageReference Include="Giraffe" Version="0.1.0-beta-001" />
-    <PackageReference Include="Giraffe.Razor" Version="0.1.0-beta-001" />
+    <PackageReference Include="Giraffe.Razor" Version="0.1.0-beta-002" />
   </ItemGroup>
 
   <ItemGroup>
