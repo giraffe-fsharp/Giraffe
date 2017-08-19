@@ -1351,3 +1351,29 @@ let ``GET "/{foo}/{bar}" returns Hello World``() =
             let body = getBody ctx
             Assert.Equal("Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
     }
+
+[<Fact>]
+let ``Test Async bind overloading of task compuation expresssion``() =
+    let ctx = Substitute.For<HttpContext>()
+    let asyncHandler : HttpHandler =
+        fun next ctx -> task {
+            do! Async.Sleep 500
+            return! next ctx
+        }
+    let app =
+        GET >=> choose [
+            route "/"    >=> asyncHandler >=> text "Hello World"
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "Hello World"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
