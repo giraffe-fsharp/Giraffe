@@ -198,6 +198,8 @@ let readFileAndDoSomething (filePath : string) =
     }
 ```
 
+Note, you can still continue to use regular `Async<'T>` workflows from within the `task{}` computation expression without having to manually convert back into a `Task<'T>`.
+
 If you were to write the same code with F#'s async workflow it would look something like this:
 
 
