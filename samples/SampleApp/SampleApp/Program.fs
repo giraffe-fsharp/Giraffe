@@ -5,6 +5,8 @@ open System.IO
 open System.Security.Claims
 open System.Collections.Generic
 open System.Threading
+open Microsoft.AspNetCore.Authentication
+open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
@@ -32,7 +34,7 @@ let errorHandler (ex : Exception) (logger : ILogger) =
 // Web app
 // ---------------------------------
 
-let authScheme = "Cookie"
+let authScheme = CookieAuthenticationDefaults.AuthenticationScheme
 
 let accessDenied = setStatusCode 401 >=> text "Access Denied"
 
@@ -137,20 +139,15 @@ let webApp =
 // Main
 // ---------------------------------
 
-let cookieAuth =
-    new CookieAuthenticationOptions(
-            AuthenticationScheme    = authScheme,
-            AutomaticAuthenticate   = true,
-            AutomaticChallenge      = false,
-            CookieHttpOnly          = true,
-            CookieSecure            = CookieSecurePolicy.SameAsRequest,
-            SlidingExpiration       = true,
-            ExpireTimeSpan          = TimeSpan.FromDays 7.0
-    )
+let cookieAuth (o: CookieAuthenticationOptions) =
+    do
+        o.Cookie.HttpOnly <- true
+        o.Cookie.SecurePolicy <- CookieSecurePolicy.SameAsRequest
+        o.SlidingExpiration <- true
+        o.ExpireTimeSpan <- TimeSpan.FromDays 7.0
 
 let configureApp (app : IApplicationBuilder) =
     app.UseGiraffeErrorHandler errorHandler
-    app.UseCookieAuthentication cookieAuth |> ignore
     app.UseStaticFiles() |> ignore
     app.UseGiraffe webApp
 
@@ -159,12 +156,16 @@ let configureServices (services : IServiceCollection) =
     let env = sp.GetService<IHostingEnvironment>()
     let viewsFolderPath = Path.Combine(env.ContentRootPath, "Views")
 
+    services
+        .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+        .AddCookie(cookieAuth) |> ignore
+
     services.AddAuthentication() |> ignore
     services.AddDataProtection() |> ignore
-    services.AddRazorEngine viewsFolderPath |> ignore
+    services.AddRazorEngine viewsFolderPath |> ignore 
 
-let configureLogging (loggerFactory : ILoggerFactory) =
-    loggerFactory.AddConsole(LogLevel.Error).AddDebug() |> ignore
+let configureLogging (loggerBuilder : ILoggingBuilder) =
+    loggerBuilder.AddConsole().AddFilter("System", LogLevel.Debug) |> ignore
 
 [<EntryPoint>]
 let main argv =
@@ -176,7 +177,7 @@ let main argv =
         .UseWebRoot(webRoot)
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(Action<IServiceCollection> configureServices)
-        .ConfigureLogging(Action<ILoggerFactory> configureLogging)
+        .ConfigureLogging(configureLogging)
         .Build()
         .Run()
     0

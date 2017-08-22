@@ -350,7 +350,7 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
                 |> fun handler   -> handler responseObj next ctx
             | false ->
                 List.ofSeq acceptedMimeTypes
-                |> List.filter (fun x -> negotiationRules.ContainsKey x.MediaType)
+                |> List.filter (fun x -> negotiationRules.ContainsKey x.MediaType.Value)
                 |> fun mimeTypes ->
                     match mimeTypes.Length with
                     | 0 -> unacceptableHandler next ctx
@@ -358,7 +358,7 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
                         mimeTypes
                         |> List.sortByDescending (fun x -> if x.Quality.HasValue then x.Quality.Value else 1.0)
                         |> List.head
-                        |> fun mimeType -> negotiationRules.[mimeType.MediaType]
+                        |> fun mimeType -> negotiationRules.[mimeType.MediaType.Value]
                         |> fun handler  -> handler responseObj next ctx
 
 /// Same as negotiateWith except that it specifies a default set of negotiation rules

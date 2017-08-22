@@ -1,0 +1,788 @@
+/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CrossTargeting.targets(128,3): warning MSB4011: "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/15.0/Microsoft.Common.targets/ImportAfter/Microsoft.NuGet.ImportAfter.targets" cannot be imported again. It was already imported at "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CurrentVersion.targets (5819,3)". This is most likely a build authoring error. This subsequent import will be ignored. [/Users/jonbanashek/Projects/fs/forks/Giraffe/tests/Giraffe.Tests/Giraffe.Tests.fsproj]
+/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CrossTargeting.targets(157,3): warning MSB4011: "/Users/jonbanashek/Projects/fs/forks/Giraffe/tests/Giraffe.Tests/obj/Giraffe.Tests.fsproj.nuget.g.targets" cannot be imported again. It was already imported at "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.targets (127,3)". This is most likely a build authoring error. This subsequent import will be ignored. [/Users/jonbanashek/Projects/fs/forks/Giraffe/tests/Giraffe.Tests/Giraffe.Tests.fsproj]
+/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CrossTargeting.targets(157,3): warning MSB4011: "/Users/jonbanashek/Projects/fs/forks/Giraffe/tests/Giraffe.Tests/obj/Giraffe.Tests.fsproj.proj-info.targets" cannot be imported again. It was already imported at "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.targets (127,3)". This is most likely a build authoring error. This subsequent import will be ignored. [/Users/jonbanashek/Projects/fs/forks/Giraffe/tests/Giraffe.Tests/Giraffe.Tests.fsproj]
+/Users/jonbanashek/Projects/fs/forks/Giraffe/tests/Giraffe.Tests/Giraffe.Tests.fsproj : warning NU1603: Castle.Core 4.0.0 depends on System.ComponentModel.TypeConverter (>= 4.0.1) but System.ComponentModel.TypeConverter 4.0.1 was not found. An approximate best match of System.ComponentModel.TypeConverter 4.1.0 was resolved.
+/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CrossTargeting.targets(128,3): warning MSB4011: "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/15.0/Microsoft.Common.targets/ImportAfter/Microsoft.NuGet.ImportAfter.targets" cannot be imported again. It was already imported at "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CurrentVersion.targets (5819,3)". This is most likely a build authoring error. This subsequent import will be ignored. [/Users/jonbanashek/Projects/fs/forks/Giraffe/tests/Giraffe.Tests/Giraffe.Tests.fsproj]
+/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CrossTargeting.targets(157,3): warning MSB4011: "/Users/jonbanashek/Projects/fs/forks/Giraffe/tests/Giraffe.Tests/obj/Giraffe.Tests.fsproj.nuget.g.targets" cannot be imported again. It was already imported at "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.targets (127,3)". This is most likely a build authoring error. This subsequent import will be ignored. [/Users/jonbanashek/Projects/fs/forks/Giraffe/tests/Giraffe.Tests/Giraffe.Tests.fsproj]
+/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CrossTargeting.targets(157,3): warning MSB4011: "/Users/jonbanashek/Projects/fs/forks/Giraffe/tests/Giraffe.Tests/obj/Giraffe.Tests.fsproj.proj-info.targets" cannot be imported again. It was already imported at "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.targets (127,3)". This is most likely a build authoring error. This subsequent import will be ignored. [/Users/jonbanashek/Projects/fs/forks/Giraffe/tests/Giraffe.Tests/Giraffe.Tests.fsproj]
+Build started, please wait...
+/Users/jonbanashek/Projects/fs/forks/Giraffe/tests/Giraffe.Tests/Giraffe.Tests.fsproj : warning NU1603: Castle.Core 4.0.0 depends on System.ComponentModel.TypeConverter (>= 4.0.1) but System.ComponentModel.TypeConverter 4.0.1 was not found. An approximate best match of System.ComponentModel.TypeConverter 4.1.0 was resolved.
+/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CrossTargeting.targets(128,3): warning MSB4011: "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/15.0/Microsoft.Common.targets/ImportAfter/Microsoft.NuGet.ImportAfter.targets" cannot be imported again. It was already imported at "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CurrentVersion.targets (5819,3)". This is most likely a build authoring error. This subsequent import will be ignored. [/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe/Giraffe.fsproj]
+/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CrossTargeting.targets(157,3): warning MSB4011: "/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe/obj/Giraffe.fsproj.nuget.g.targets" cannot be imported again. It was already imported at "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.targets (127,3)". This is most likely a build authoring error. This subsequent import will be ignored. [/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe/Giraffe.fsproj]
+/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CrossTargeting.targets(157,3): warning MSB4011: "/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe/obj/Giraffe.fsproj.proj-info.targets" cannot be imported again. It was already imported at "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.targets (127,3)". This is most likely a build authoring error. This subsequent import will be ignored. [/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe/Giraffe.fsproj]
+/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CrossTargeting.targets(128,3): warning MSB4011: "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/15.0/Microsoft.Common.targets/ImportAfter/Microsoft.NuGet.ImportAfter.targets" cannot be imported again. It was already imported at "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CurrentVersion.targets (5819,3)". This is most likely a build authoring error. This subsequent import will be ignored. [/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe.DotLiquid/Giraffe.DotLiquid.fsproj]
+/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CrossTargeting.targets(157,3): warning MSB4011: "/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe.DotLiquid/obj/Giraffe.DotLiquid.fsproj.nuget.g.targets" cannot be imported again. It was already imported at "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.targets (127,3)". This is most likely a build authoring error. This subsequent import will be ignored. [/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe.DotLiquid/Giraffe.DotLiquid.fsproj]
+/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CrossTargeting.targets(157,3): warning MSB4011: "/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe.DotLiquid/obj/Giraffe.DotLiquid.fsproj.proj-info.targets" cannot be imported again. It was already imported at "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.targets (127,3)". This is most likely a build authoring error. This subsequent import will be ignored. [/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe.DotLiquid/Giraffe.DotLiquid.fsproj]
+/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CrossTargeting.targets(128,3): warning MSB4011: "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/15.0/Microsoft.Common.targets/ImportAfter/Microsoft.NuGet.ImportAfter.targets" cannot be imported again. It was already imported at "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CurrentVersion.targets (5819,3)". This is most likely a build authoring error. This subsequent import will be ignored. [/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe/Giraffe.fsproj]
+/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CrossTargeting.targets(157,3): warning MSB4011: "/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe/obj/Giraffe.fsproj.nuget.g.targets" cannot be imported again. It was already imported at "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.targets (127,3)". This is most likely a build authoring error. This subsequent import will be ignored. [/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe/Giraffe.fsproj]
+/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.CrossTargeting.targets(157,3): warning MSB4011: "/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe/obj/Giraffe.fsproj.proj-info.targets" cannot be imported again. It was already imported at "/usr/local/share/dotnet/sdk/2.0.1-servicing-006924/Microsoft.Common.targets (127,3)". This is most likely a build authoring error. This subsequent import will be ignored. [/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe/Giraffe.fsproj]
+/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe/HttpHandlers.fs(133,24): warning FS0044: This construct is deprecated. This is obsolete and will be removed in a future version. The recommended alternative is to use Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions. See https://go.microsoft.com/fwlink/?linkid=845470. [/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe/Giraffe.fsproj]
+/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe/HttpHandlers.fs(142,24): warning FS0044: This construct is deprecated. This is obsolete and will be removed in a future version. The recommended alternative is to use Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions. See https://go.microsoft.com/fwlink/?linkid=845470. [/Users/jonbanashek/Projects/fs/forks/Giraffe/src/Giraffe/Giraffe.fsproj]
+/Users/jonbanashek/Projects/fs/forks/Giraffe/tests/Giraffe.Tests/HttpContextExtensionsTests.fs(484,6): warning FS0988: Main module of program is empty: nothing will happen when it is run [/Users/jonbanashek/Projects/fs/forks/Giraffe/tests/Giraffe.Tests/Giraffe.Tests.fsproj]
+Build completed.
+
+Test run for /Users/jonbanashek/Projects/fs/forks/Giraffe/tests/Giraffe.Tests/bin/Debug/netcoreapp2.0/Giraffe.Tests.dll(.NETCoreApp,Version=v2.0)
+Microsoft (R) Test Execution Command Line Tool Version 15.3.0-preview-20170628-02
+Copyright (c) Microsoft Corporation.  All rights reserved.
+
+Starting test execution, please wait...
+[xUnit.net 00:00:00.9864950]   Discovering: Giraffe.Tests
+[xUnit.net 00:00:01.2194090]   Discovered:  Giraffe.Tests
+[xUnit.net 00:00:01.3172910]   Starting:    Giraffe.Tests
+[xUnit.net 00:00:01.5747320]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.6014580]       System.MissingMethodException : Method not found: 'XmlAttribute Giraffe.XmlViewEngine.attr(System.String, System.String)'.
+[xUnit.net 00:00:01.6019600]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6043330]       System.MissingMethodException : Method not found: 'XmlNode Giraffe.XmlViewEngine.comment(System.String)'.
+[xUnit.net 00:00:01.6083970]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6087310]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6090300]       System.MissingMethodException : Method not found: 'XmlAttribute Giraffe.XmlViewEngine.attr(System.String, System.String)'.
+Failed   Giraffe.HttpHandlerTests.POST "/text" with supported Accept header returns "good"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.XmlViewEngineTests.Anchor should contain href, target and content
+Error Message:
+ System.MissingMethodException : Method not found: 'XmlAttribute Giraffe.XmlViewEngine.attr(System.String, System.String)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%f" matches "-45.342"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.XmlViewEngineTests.Nested content should render correctly
+Error Message:
+ System.MissingMethodException : Method not found: 'XmlNode Giraffe.XmlViewEngine.comment(System.String)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%f" matches "0.0"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%b" matches "False"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.XmlViewEngineTests.Script should contain src, lang and async
+Error Message:
+ System.MissingMethodException : Method not found: 'XmlAttribute Giraffe.XmlViewEngine.attr(System.String, System.String)'.
+
+[xUnit.net 00:00:01.6288600]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.6302070]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<XmlNode,System.String> Giraffe.XmlViewEngine.get_renderHtmlNode()'.
+[xUnit.net 00:00:01.6307400]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6310370]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.6314160]       System.MissingMethodException : Method not found: 'System.String Giraffe.XmlViewEngine.renderHtmlDocument(XmlNode)'.
+[xUnit.net 00:00:01.6316750]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6319570]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+Failed   Giraffe.HttpHandlerTests.GET "/person" returns rendered HTML view
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.XmlViewEngineTests.Void tag in HTML should be unary tag
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<XmlNode,System.String> Giraffe.XmlViewEngine.get_renderHtmlNode()'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with regex symbols returns correct tuple
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.HttpHandlerTests.Get "/auto" with Accept header of "text/html" returns a 406 response
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.XmlViewEngineTests.Single html root should compile
+Error Message:
+ System.MissingMethodException : Method not found: 'System.String Giraffe.XmlViewEngine.renderHtmlDocument(XmlNode)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%i" matches int32 max value
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.HttpHandlerTests.POST "/either" with supported Accept header returns "either"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+[xUnit.net 00:00:01.6387620]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6391560]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<XmlNode,System.String> Giraffe.XmlViewEngine.get_renderXmlNode()'.
+[xUnit.net 00:00:01.6394500]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6397470]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.6401140]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.6404860]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.6408120]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6420090]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+Failed   Giraffe.FormatExpressionTests.Format string with single "%f" matches "0.5"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.XmlViewEngineTests.Void tag in XML should be self closing tag
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<XmlNode,System.String> Giraffe.XmlViewEngine.get_renderXmlNode()'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%b" matches "tRuE"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.HttpHandlerTests.Sub route with empty route
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.PUT "/post/2" returns 404 "Not found"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.Get "/auto" with Accept header of "application/json, application/xml" returns JSON object
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%i" doesn't match int32 max value + 1
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.HttpHandlerTests.Route after nested sub routes with same beginning of path
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+[xUnit.net 00:00:01.6505970]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6508280]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.6510520]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6512390]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6514280]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.6516280]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6517880]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.6520090]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+Failed   Giraffe.FormatExpressionTests.Format string with single "%f" matches "100500.7895"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.HttpHandlerTests.Get "/auto" with Accept header of "application/json" returns JSON object
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%b" matches "True"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%i" matches int32 min value
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.HttpHandlerTests.Get "/auto" with Accept header of "application/xml, application/json" returns XML object
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%i" matches "0"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.HttpHandlerTests.GET "/foo" returns "bar"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%b" matches "TRUE"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+[xUnit.net 00:00:01.6585670]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.6588780]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6591830]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6593630]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.6596840]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6599070]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.6601830]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6604610]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+Failed   Giraffe.HttpHandlerTests.POST "/post/1" returns "1"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%d" matches int64 min value
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%b" matches "FALSE"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.HttpHandlerTests.GET "/foo/blah blah/bar" returns "blah blah"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%b" matches "true"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.HttpHandlerTests.GET "/json" returns json object
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%s" matches a single string
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.HttpHandlerTests.GET "/api/foo/bar/yadayada" returns "yadayada"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+[xUnit.net 00:00:01.6669270]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6672160]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6675560]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6678230]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6680700]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6683340]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.6686070]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+[xUnit.net 00:00:01.9261680]       System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.routeBind(System.String, Microsoft.FSharp.Core.FSharpFunc`2<!!0,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>>>, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+[xUnit.net 00:00:01.9267340]       Stack Trace:
+[xUnit.net 00:00:01.9287840]            at Giraffe.HttpHandlerTests.app@1341-324.Invoke(FSharpFunc`2 next, HttpContext ctx)
+[xUnit.net 00:00:01.9289490]            at Giraffe.HttpHandlerTests.GET --{foo}-{bar}- returns Hello World@1346.Invoke(Unit unitVar)
+[xUnit.net 00:00:01.9290310]            at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+[xUnit.net 00:00:01.9290990]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:01.9292220]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:01.9293080]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:01.9293670]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:01.9294160]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:01.9295570]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:01.9296160]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:01.9296690]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:01.9297630]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:01.9358220]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+Failed   Giraffe.FormatExpressionTests.Format string with single "%s" doesn't matches empty string
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.FormatExpressionTests.Simple matching format string returns correct tuple
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with escaped "%" returns correct tuple
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%d" matches int64 max value
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%b" matches "false"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%f" doesn't match "0"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.FormatExpressionTests.Format string with single "%d" matches "0"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpOption`1<!!1> Giraffe.FormatExpressions.tryMatchInput(Microsoft.FSharp.Core.PrintfFormat`4<!!0,Microsoft.FSharp.Core.Unit,System.String,!!1>, System.String, Boolean)'.
+
+Failed   Giraffe.HttpHandlerTests.GET "/{foo}/{bar}" returns Hello World
+Error Message:
+ System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.routeBind(System.String, Microsoft.FSharp.Core.FSharpFunc`2<!!0,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>>>, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+Stack Trace:
+   at Giraffe.HttpHandlerTests.app@1341-324.Invoke(FSharpFunc`2 next, HttpContext ctx)
+   at Giraffe.HttpHandlerTests.GET --{foo}-{bar}- returns Hello World@1346.Invoke(Unit unitVar)
+   at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+Failed   Giraffe.HttpHandlerTests.POST "/either" with unsupported Accept header returns 404 "Not found"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+[xUnit.net 00:00:01.9434860]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9438070]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9440870]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9443610]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9446270]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9448900]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9452330]       System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+[xUnit.net 00:00:01.9453540]       Stack Trace:
+[xUnit.net 00:00:01.9454290]            at Giraffe.HttpContextExtensionsTests.app@102-326.Invoke(FSharpFunc`2 next, HttpContext ctx)
+[xUnit.net 00:00:01.9454940]            at Giraffe.HttpContextExtensionsTests.BindXml test@123.Invoke(Unit unitVar)
+[xUnit.net 00:00:01.9455470]            at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+[xUnit.net 00:00:01.9455930]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:01.9456460]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:01.9457120]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:01.9457580]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:01.9458120]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:01.9458770]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:01.9459240]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:01.9459870]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:01.9460560]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:01.9463670]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+Failed   Giraffe.HttpHandlerTests.Multiple nested sub routes
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.GET "/JSON" returns "BaR"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.POST "/post/2" returns "2"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.Sub route with non empty route
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.POST "/json" with supported Accept header returns "json"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.GET "/FOO" returns 404 "Not found"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpContextExtensionsTests.BindXml test
+Error Message:
+ System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+Stack Trace:
+   at Giraffe.HttpContextExtensionsTests.app@102-326.Invoke(FSharpFunc`2 next, HttpContext ctx)
+   at Giraffe.HttpContextExtensionsTests.BindXml test@123.Invoke(Unit unitVar)
+   at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+Failed   Giraffe.HttpHandlerTests.Nested sub routes
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+[xUnit.net 00:00:01.9538700]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9541330]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9543920]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9567140]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9589800]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9669570]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9671890]       Stack Trace:
+[xUnit.net 00:00:01.9672810]            at Giraffe.HttpHandlerTests.Route after sub route with same beginning of path@601.Invoke(Unit unitVar)
+[xUnit.net 00:00:01.9673300]            at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+[xUnit.net 00:00:01.9673710]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:01.9674200]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:01.9674690]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:01.9675030]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:01.9675760]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:01.9676620]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:01.9677200]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:01.9678130]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:01.9678820]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:01.9702750]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9707390]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9735820]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+Failed   Giraffe.HttpHandlerTests.POST "/redirect" redirect to "/" 
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.POST "/POsT/1" returns "1"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.Get "/auto" without an Accept header returns a JSON object
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.POST "/POsT/523" returns "523"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.Get "/auto" with Accept header of "application/json; q=0.5, application/xml; q=0.6" returns XML object
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.Route after sub route with same beginning of path
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+Stack Trace:
+   at Giraffe.HttpHandlerTests.Route after sub route with same beginning of path@601.Invoke(Unit unitVar)
+   at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+Failed   Giraffe.HttpHandlerTests.GET "/redirect" redirect to "/" 
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.Warbler function should execute inner function each time
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.GET "/" returns "Hello World"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+[xUnit.net 00:00:01.9818190]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9830620]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9851880]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9868470]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9891260]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:01.9905220]       System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+[xUnit.net 00:00:01.9909820]       Stack Trace:
+[xUnit.net 00:00:01.9912880]            at Giraffe.HttpContextExtensionsTests.app@210-329.Invoke(FSharpFunc`2 next, HttpContext ctx)
+[xUnit.net 00:00:01.9915730]            at Giraffe.HttpContextExtensionsTests.BindQueryString with option property test@222.Invoke(Unit unitVar)
+[xUnit.net 00:00:01.9917900]            at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+[xUnit.net 00:00:01.9919380]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:01.9921140]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:01.9922090]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:01.9922890]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:01.9923640]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:01.9924410]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:01.9924920]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:01.9925630]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:01.9926490]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:01.9930510]       System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+[xUnit.net 00:00:02.0708220]       System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+[xUnit.net 00:00:02.0710770]       Stack Trace:
+[xUnit.net 00:00:02.0712130]            at Giraffe.HttpContextExtensionsTests.app@321-332.Invoke(FSharpFunc`2 next, HttpContext ctx)
+[xUnit.net 00:00:02.0713480]            at Giraffe.HttpContextExtensionsTests.BindModel with FORM content returns correct result@346.Invoke(Unit unitVar)
+[xUnit.net 00:00:02.0714330]            at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+[xUnit.net 00:00:02.0721450]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.0723380]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.0724440]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.0725050]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.0725510]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.0726160]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.0727020]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.0727690]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.0728730]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.0805880]       System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+[xUnit.net 00:00:02.0807590]       Stack Trace:
+[xUnit.net 00:00:02.0808360]            at Giraffe.HttpContextExtensionsTests.app@280-331.Invoke(FSharpFunc`2 next, HttpContext ctx)
+[xUnit.net 00:00:02.0809040]            at Giraffe.HttpContextExtensionsTests.BindModel with XML content returns correct result@303.Invoke(Unit unitVar)
+[xUnit.net 00:00:02.0811340]            at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+[xUnit.net 00:00:02.0812040]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.0812600]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.0813120]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.0813430]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.0813890]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.0814660]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.0815210]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.0815870]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.0816590]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+Failed   Giraffe.HttpHandlerTests.Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0.6" returns text object
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.Get "/auto" with Accept header of "application/json; q=0.5, application/xml" returns XML object
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.GET "/dotLiquid" returns rendered html view
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpHandlerTests.Get "/auto" with Accept header of "application/xml" returns XML object
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpContextExtensionsTests.BindQueryString with option property test
+Error Message:
+ System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+Stack Trace:
+   at Giraffe.HttpContextExtensionsTests.app@210-329.Invoke(FSharpFunc`2 next, HttpContext ctx)
+   at Giraffe.HttpContextExtensionsTests.BindQueryString with option property test@222.Invoke(Unit unitVar)
+   at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+Failed   Giraffe.HttpHandlerTests.Get "/auto" with Accept header of "application/xml; q=0.9, application/json" returns JSON object
+Error Message:
+ System.MissingMethodException : Method not found: 'Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>,Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>> Giraffe.HttpHandlers.text(System.String)'.
+
+Failed   Giraffe.HttpContextExtensionsTests.BindModel with FORM content returns correct result
+Error Message:
+ System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+Stack Trace:
+   at Giraffe.HttpContextExtensionsTests.app@321-332.Invoke(FSharpFunc`2 next, HttpContext ctx)
+   at Giraffe.HttpContextExtensionsTests.BindModel with FORM content returns correct result@346.Invoke(Unit unitVar)
+   at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+Failed   Giraffe.HttpContextExtensionsTests.BindModel with XML content returns correct result
+Error Message:
+ System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+Stack Trace:
+   at Giraffe.HttpContextExtensionsTests.app@280-331.Invoke(FSharpFunc`2 next, HttpContext ctx)
+   at Giraffe.HttpContextExtensionsTests.BindModel with XML content returns correct result@303.Invoke(Unit unitVar)
+   at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.0975980]       System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+[xUnit.net 00:00:02.0977670]       Stack Trace:
+[xUnit.net 00:00:02.0978670]            at Giraffe.HttpContextExtensionsTests.app@364-333.Invoke(FSharpFunc`2 next, HttpContext ctx)
+[xUnit.net 00:00:02.0979480]            at Giraffe.HttpContextExtensionsTests.BindModel with JSON content and a specific charset returns correct result@387.Invoke(Unit unitVar)
+[xUnit.net 00:00:02.0980100]            at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+[xUnit.net 00:00:02.0980890]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.0981650]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.0982510]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.0983090]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.0983910]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.0984570]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.0985010]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.0985660]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.0986490]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1061600]       System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+[xUnit.net 00:00:02.1063520]       Stack Trace:
+[xUnit.net 00:00:02.1064430]            at Giraffe.HttpContextExtensionsTests.app@239-330.Invoke(FSharpFunc`2 next, HttpContext ctx)
+[xUnit.net 00:00:02.1066030]            at Giraffe.HttpContextExtensionsTests.BindModel with JSON content returns correct result@262.Invoke(Unit unitVar)
+[xUnit.net 00:00:02.1067040]            at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+[xUnit.net 00:00:02.1067670]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1068460]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1069130]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1069740]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1070750]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1071520]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1072160]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1072820]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1073760]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1142000]       System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+[xUnit.net 00:00:02.1144550]       Stack Trace:
+[xUnit.net 00:00:02.1148730]            at Giraffe.HttpContextExtensionsTests.app@466-336.Invoke(FSharpFunc`2 next, HttpContext ctx)
+[xUnit.net 00:00:02.1156340]            at Giraffe.HttpContextExtensionsTests.TryGetQueryStringValue during HTTP GET request with query string returns correct resultd@479.Invoke(Unit unitVar)
+[xUnit.net 00:00:02.1174400]            at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+[xUnit.net 00:00:02.1175870]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1177140]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1178410]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1180060]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1181120]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1182040]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1182930]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1184120]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1184810]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1259420]       System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+[xUnit.net 00:00:02.1262570]       Stack Trace:
+[xUnit.net 00:00:02.1266630]            at Giraffe.HttpContextExtensionsTests.app@436-335.Invoke(FSharpFunc`2 next, HttpContext ctx)
+[xUnit.net 00:00:02.1267600]            at Giraffe.HttpContextExtensionsTests.TryGetRequestHeader during HTTP GET request with returns correct resultd@448.Invoke(Unit unitVar)
+[xUnit.net 00:00:02.1268370]            at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+[xUnit.net 00:00:02.1268970]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1269680]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1270760]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1271370]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1272590]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1273560]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1274570]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1275210]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1276050]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1368270]       System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+[xUnit.net 00:00:02.1370210]       Stack Trace:
+[xUnit.net 00:00:02.1371480]            at Giraffe.HttpContextExtensionsTests.app@180-328.Invoke(FSharpFunc`2 next, HttpContext ctx)
+[xUnit.net 00:00:02.1373890]            at Giraffe.HttpContextExtensionsTests.BindQueryString test@193.Invoke(Unit unitVar)
+[xUnit.net 00:00:02.1374750]            at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+[xUnit.net 00:00:02.1375560]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1376680]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1378550]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1379200]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1379770]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1381240]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1382280]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1384360]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1385380]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1496940]       System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+[xUnit.net 00:00:02.1499010]       Stack Trace:
+[xUnit.net 00:00:02.1500040]            at Giraffe.HttpContextExtensionsTests.app@141-327.Invoke(FSharpFunc`2 next, HttpContext ctx)
+[xUnit.net 00:00:02.1502320]            at Giraffe.HttpContextExtensionsTests.BindForm test@164.Invoke(Unit unitVar)
+[xUnit.net 00:00:02.1502930]            at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+[xUnit.net 00:00:02.1503410]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1504960]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1505850]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1506390]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1506970]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1507690]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1508340]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1509160]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1510280]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1593040]       System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+[xUnit.net 00:00:02.1594990]       Stack Trace:
+[xUnit.net 00:00:02.1596030]            at Giraffe.HttpContextExtensionsTests.app@63-325.Invoke(FSharpFunc`2 next, HttpContext ctx)
+[xUnit.net 00:00:02.1597020]            at Giraffe.HttpContextExtensionsTests.BindJson test@84.Invoke(Unit unitVar)
+[xUnit.net 00:00:02.1598560]            at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+[xUnit.net 00:00:02.1599650]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1600500]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1601330]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1602800]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1603660]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1605210]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1606040]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1607420]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1608160]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1678620]       System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+[xUnit.net 00:00:02.1681320]       Stack Trace:
+[xUnit.net 00:00:02.1682770]            at Giraffe.HttpContextExtensionsTests.app@405-334.Invoke(FSharpFunc`2 next, HttpContext ctx)
+[xUnit.net 00:00:02.1683970]            at Giraffe.HttpContextExtensionsTests.BindModel during HTTP GET request with query string returns correct result@418.Invoke(Unit unitVar)
+[xUnit.net 00:00:02.1686900]            at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+[xUnit.net 00:00:02.1687560]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1688430]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1689300]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1689800]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1690610]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1691230]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1691780]         --- End of stack trace from previous location where exception was thrown ---
+[xUnit.net 00:00:02.1692740]            at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+[xUnit.net 00:00:02.1693710]            at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+[xUnit.net 00:00:02.1750170]   Finished:    Giraffe.Tests
+Failed   Giraffe.HttpContextExtensionsTests.BindModel with JSON content and a specific charset returns correct result
+Error Message:
+ System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+Stack Trace:
+   at Giraffe.HttpContextExtensionsTests.app@364-333.Invoke(FSharpFunc`2 next, HttpContext ctx)
+   at Giraffe.HttpContextExtensionsTests.BindModel with JSON content and a specific charset returns correct result@387.Invoke(Unit unitVar)
+   at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+Failed   Giraffe.HttpContextExtensionsTests.BindModel with JSON content returns correct result
+Error Message:
+ System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+Stack Trace:
+   at Giraffe.HttpContextExtensionsTests.app@239-330.Invoke(FSharpFunc`2 next, HttpContext ctx)
+   at Giraffe.HttpContextExtensionsTests.BindModel with JSON content returns correct result@262.Invoke(Unit unitVar)
+   at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+Failed   Giraffe.HttpContextExtensionsTests.TryGetQueryStringValue during HTTP GET request with query string returns correct resultd
+Error Message:
+ System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+Stack Trace:
+   at Giraffe.HttpContextExtensionsTests.app@466-336.Invoke(FSharpFunc`2 next, HttpContext ctx)
+   at Giraffe.HttpContextExtensionsTests.TryGetQueryStringValue during HTTP GET request with query string returns correct resultd@479.Invoke(Unit unitVar)
+   at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+Failed   Giraffe.HttpContextExtensionsTests.TryGetRequestHeader during HTTP GET request with returns correct resultd
+Error Message:
+ System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+Stack Trace:
+   at Giraffe.HttpContextExtensionsTests.app@436-335.Invoke(FSharpFunc`2 next, HttpContext ctx)
+   at Giraffe.HttpContextExtensionsTests.TryGetRequestHeader during HTTP GET request with returns correct resultd@448.Invoke(Unit unitVar)
+   at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+Failed   Giraffe.HttpContextExtensionsTests.BindQueryString test
+Error Message:
+ System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+Stack Trace:
+   at Giraffe.HttpContextExtensionsTests.app@180-328.Invoke(FSharpFunc`2 next, HttpContext ctx)
+   at Giraffe.HttpContextExtensionsTests.BindQueryString test@193.Invoke(Unit unitVar)
+   at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+Failed   Giraffe.HttpContextExtensionsTests.BindForm test
+Error Message:
+ System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+Stack Trace:
+   at Giraffe.HttpContextExtensionsTests.app@141-327.Invoke(FSharpFunc`2 next, HttpContext ctx)
+   at Giraffe.HttpContextExtensionsTests.BindForm test@164.Invoke(Unit unitVar)
+   at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+Failed   Giraffe.HttpContextExtensionsTests.BindJson test
+Error Message:
+ System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+Stack Trace:
+   at Giraffe.HttpContextExtensionsTests.app@63-325.Invoke(FSharpFunc`2 next, HttpContext ctx)
+   at Giraffe.HttpContextExtensionsTests.BindJson test@84.Invoke(Unit unitVar)
+   at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+Failed   Giraffe.HttpContextExtensionsTests.BindModel during HTTP GET request with query string returns correct result
+Error Message:
+ System.MissingMethodException : Method not found: 'System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>> Giraffe.HttpHandlers.route(System.String, Microsoft.FSharp.Core.FSharpFunc`2<Microsoft.AspNetCore.Http.HttpContext,System.Threading.Tasks.Task`1<Microsoft.FSharp.Core.FSharpOption`1<Microsoft.AspNetCore.Http.HttpContext>>>, Microsoft.AspNetCore.Http.HttpContext)'.
+Stack Trace:
+   at Giraffe.HttpContextExtensionsTests.app@405-334.Invoke(FSharpFunc`2 next, HttpContext ctx)
+   at Giraffe.HttpContextExtensionsTests.BindModel during HTTP GET request with query string returns correct result@418.Invoke(Unit unitVar)
+   at Giraffe.TaskBuilder.run[a](FSharpFunc`2 firstStep)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+
+Total tests: 81. Passed: 0. Failed: 81. Skipped: 0.
+Test execution time: 3.3653 Seconds
