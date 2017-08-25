@@ -16,11 +16,12 @@ let inline isNotNull x = isNull x |> not
 let inline strOption (str : string) =
     if String.IsNullOrEmpty str then None else Some str
 
-let readFileAsString (filePath : string) = task {
-    use stream = new FileStream(filePath, FileMode.Open)
-    use reader = new StreamReader(stream)
-    return! reader.ReadToEndAsync()
-}
+let readFileAsString (filePath : string) =
+    task {
+        use stream = new FileStream(filePath, FileMode.Open)
+        use reader = new StreamReader(stream)
+        return! reader.ReadToEndAsync()
+    }
 
 /// ---------------------------
 /// Serializers
