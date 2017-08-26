@@ -6,6 +6,7 @@ open System.Text
 open System.Security.Claims
 open System.Collections.Generic
 open System.Threading
+open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
@@ -200,7 +201,7 @@ let errorHandler (ex : Exception) (logger : ILogger) =
 
 let configureApp (app : IApplicationBuilder) =
     app.UseGiraffeErrorHandler errorHandler
-    app.UseIdentity() |> ignore
+    app.UseAuthentication() |> ignore
     app.UseGiraffe webApp
 
 let configureServices (services : IServiceCollection) =
@@ -216,31 +217,36 @@ let configureServices (services : IServiceCollection) =
         .AddDefaultTokenProviders()
         |> ignore
 
+    // Cookie setting
+    services.ConfigureApplicationCookie(
+        fun o ->
+            // Cookie settings
+            o.ExpireTimeSpan <- TimeSpan.FromDays 150.0
+            o.LoginPath      <- PathString "/login"
+            o.LogoutPath     <- PathString "/logout"
+    ) |> ignore
+
      // Configure Identity
     services.Configure<IdentityOptions>(
-        fun options ->
+        fun (o:IdentityOptions) ->
             // Password settings
-            options.Password.RequireDigit   <- true
-            options.Password.RequiredLength <- 8
-            options.Password.RequireNonAlphanumeric <- false
-            options.Password.RequireUppercase <- true
-            options.Password.RequireLowercase <- false
+            o.Password.RequireDigit   <- true
+            o.Password.RequiredLength <- 8
+            o.Password.RequireNonAlphanumeric <- false
+            o.Password.RequireUppercase <- true
+            o.Password.RequireLowercase <- false
 
             // Lockout settings
-            options.Lockout.DefaultLockoutTimeSpan  <- TimeSpan.FromMinutes 30.0
-            options.Lockout.MaxFailedAccessAttempts <- 10
-
-            // Cookie settings
-            options.Cookies.ApplicationCookie.ExpireTimeSpan <- TimeSpan.FromDays 150.0
-            options.Cookies.ApplicationCookie.LoginPath      <- PathString "/login"
-            options.Cookies.ApplicationCookie.LogoutPath     <- PathString "/logout"
+            o.Lockout.DefaultLockoutTimeSpan  <- TimeSpan.FromMinutes 30.0
+            o.Lockout.MaxFailedAccessAttempts <- 10
 
             // User settings
-            options.User.RequireUniqueEmail <- true
-        ) |> ignore
+            o.User.RequireUniqueEmail <- true
+    ) |> ignore
+        
 
-let configureLogging (loggerFactory : ILoggerFactory) =
-    loggerFactory.AddConsole(LogLevel.Error).AddDebug() |> ignore
+let configureLogging (context: WebHostBuilderContext) (loggingBuilder: ILoggingBuilder) =
+    loggingBuilder.AddConsole().AddDebug() |> ignore
 
 [<EntryPoint>]
 let main argv =
@@ -249,7 +255,7 @@ let main argv =
         .UseContentRoot(Directory.GetCurrentDirectory())
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(Action<IServiceCollection> configureServices)
-        .ConfigureLogging(Action<ILoggerFactory> configureLogging)
+        .ConfigureLogging(configureLogging)
         .Build()
         .Run()
     0
