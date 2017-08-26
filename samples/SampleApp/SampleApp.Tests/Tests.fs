@@ -156,3 +156,16 @@ let ``Test /razor returns html content`` () =
     |> isOfType "text/html"
     |> readText
     |> shouldEqual expected
+
+[<Fact>]
+let ``Test /razorHello returns html content based on _ViewStart file`` () =
+    use server = new TestServer(createHost())
+    use client = server.CreateClient()
+
+    let expected = "Hello from _ViewStart file"
+
+    get client "/razorHello"
+    |> ensureSuccess
+    |> isOfType "text/html"
+    |> readText
+    |> shouldEqual expected

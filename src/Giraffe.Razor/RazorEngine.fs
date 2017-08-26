@@ -19,7 +19,7 @@ let renderRazorView (razorViewEngine   : IRazorViewEngine)
                     (model             : 'T) =
     task {
         let actionContext    = ActionContext(httpContext, RouteData(), ActionDescriptor())
-        let viewEngineResult = razorViewEngine.FindView(actionContext, viewName, false)
+        let viewEngineResult = razorViewEngine.FindView(actionContext, viewName, true)
 
         match viewEngineResult.Success with
         | false ->

@@ -121,6 +121,7 @@ let webApp =
                 route  "/user"       >=> mustBeUser >=> userHandler
                 routef "/user/%i"    showUserHandler
                 route  "/razor"      >=> razorHtmlView "Person" { Name = "Razor" }
+                route  "/razorHello" >=> razorHtmlView "Hello" ""
                 route  "/fileupload" >=> razorHtmlView "FileUpload" ""
                 route  "/person"     >=> (personView { Name = "Html Node" } |> renderHtml)
                 route  "/once"       >=> (time() |> text)
