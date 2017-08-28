@@ -49,8 +49,9 @@ let configureServices (services : IServiceCollection) =
     let viewsFolderPath = Path.Combine(env.ContentRootPath, "Views")
     services.AddRazorEngine viewsFolderPath |> ignore
 
-let configureLogging (loggerFactory : ILoggerFactory) =
-    loggerFactory.AddConsole(LogLevel.Error).AddDebug() |> ignore
+let configureLogging (builder : ILoggingBuilder) =
+    let filter (l : LogLevel) = l.Equals LogLevel.Error
+    builder.AddFilter(filter).AddConsole().AddDebug() |> ignore
 
 [<EntryPoint>]
 let main argv =
@@ -62,8 +63,8 @@ let main argv =
         .UseIISIntegration()
         .UseWebRoot(webRoot)
         .Configure(Action<IApplicationBuilder> configureApp)
-        .ConfigureServices(Action<IServiceCollection> configureServices)
-        .ConfigureLogging(Action<ILoggerFactory> configureLogging)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
         .Build()
         .Run()
     0

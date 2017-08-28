@@ -200,14 +200,14 @@ let errorHandler (ex : Exception) (logger : ILogger) =
 
 let configureApp (app : IApplicationBuilder) =
     app.UseGiraffeErrorHandler errorHandler
-    app.UseIdentity() |> ignore
+    app.UseAuthentication() |> ignore
     app.UseGiraffe webApp
 
 let configureServices (services : IServiceCollection) =
     // Configure InMemory Db for sample application
     services.AddDbContext<IdentityDbContext<IdentityUser>>(
         fun options ->
-            options.UseInMemoryDatabase(Guid.NewGuid().ToString()) |> ignore
+            options.UseInMemoryDatabase("NameOfDatabase") |> ignore
         ) |> ignore
 
     // Register Identity Dependencies
@@ -216,7 +216,7 @@ let configureServices (services : IServiceCollection) =
         .AddDefaultTokenProviders()
         |> ignore
 
-     // Configure Identity
+    // Configure Identity
     services.Configure<IdentityOptions>(
         fun options ->
             // Password settings
@@ -230,17 +230,21 @@ let configureServices (services : IServiceCollection) =
             options.Lockout.DefaultLockoutTimeSpan  <- TimeSpan.FromMinutes 30.0
             options.Lockout.MaxFailedAccessAttempts <- 10
 
-            // Cookie settings
-            options.Cookies.ApplicationCookie.ExpireTimeSpan <- TimeSpan.FromDays 150.0
-            options.Cookies.ApplicationCookie.LoginPath      <- PathString "/login"
-            options.Cookies.ApplicationCookie.LogoutPath     <- PathString "/logout"
-
             // User settings
             options.User.RequireUniqueEmail <- true
         ) |> ignore
 
-let configureLogging (loggerFactory : ILoggerFactory) =
-    loggerFactory.AddConsole(LogLevel.Error).AddDebug() |> ignore
+    // Configure app cookie
+    services.ConfigureApplicationCookie(
+        fun options ->
+            options.ExpireTimeSpan <- TimeSpan.FromDays 150.0
+            options.LoginPath      <- PathString "/login"
+            options.LogoutPath     <- PathString "/logout"
+        ) |> ignore
+
+let configureLogging (builder : ILoggingBuilder) =
+    let filter (l : LogLevel) = l.Equals LogLevel.Error
+    builder.AddFilter(filter).AddConsole().AddDebug() |> ignore
 
 [<EntryPoint>]
 let main argv =
@@ -248,8 +252,8 @@ let main argv =
         .UseKestrel()
         .UseContentRoot(Directory.GetCurrentDirectory())
         .Configure(Action<IApplicationBuilder> configureApp)
-        .ConfigureServices(Action<IServiceCollection> configureServices)
-        .ConfigureLogging(Action<ILoggerFactory> configureLogging)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
         .Build()
         .Run()
     0

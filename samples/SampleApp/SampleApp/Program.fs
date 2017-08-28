@@ -9,6 +9,8 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Features
+open Microsoft.AspNetCore.Authentication
+open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe.Tasks
@@ -32,7 +34,7 @@ let errorHandler (ex : Exception) (logger : ILogger) =
 // Web app
 // ---------------------------------
 
-let authScheme = "Cookie"
+let authScheme = CookieAuthenticationDefaults.AuthenticationScheme
 
 let accessDenied = setStatusCode 401 >=> text "Access Denied"
 
@@ -55,7 +57,7 @@ let loginHandler =
             let identity = ClaimsIdentity(claims, authScheme)
             let user     = ClaimsPrincipal(identity)
 
-            do! ctx.Authentication.SignInAsync(authScheme, user)
+            do! ctx.SignInAsync(authScheme, user)
 
             return! text "Successfully logged in" next ctx
         }
@@ -138,21 +140,17 @@ let webApp =
 // Main
 // ---------------------------------
 
-let cookieAuth =
-    new CookieAuthenticationOptions(
-            AuthenticationScheme    = authScheme,
-            AutomaticAuthenticate   = true,
-            AutomaticChallenge      = false,
-            CookieHttpOnly          = true,
-            CookieSecure            = CookieSecurePolicy.SameAsRequest,
-            SlidingExpiration       = true,
-            ExpireTimeSpan          = TimeSpan.FromDays 7.0
-    )
+let cookieAuth (o : CookieAuthenticationOptions) =
+    do
+        o.Cookie.HttpOnly     <- true
+        o.Cookie.SecurePolicy <- CookieSecurePolicy.SameAsRequest
+        o.SlidingExpiration   <- true
+        o.ExpireTimeSpan      <- TimeSpan.FromDays 7.0
 
 let configureApp (app : IApplicationBuilder) =
     app.UseGiraffeErrorHandler errorHandler
-    app.UseCookieAuthentication cookieAuth |> ignore
     app.UseStaticFiles() |> ignore
+    app.UseAuthentication() |> ignore
     app.UseGiraffe webApp
 
 let configureServices (services : IServiceCollection) =
@@ -160,12 +158,18 @@ let configureServices (services : IServiceCollection) =
     let env = sp.GetService<IHostingEnvironment>()
     let viewsFolderPath = Path.Combine(env.ContentRootPath, "Views")
 
-    services.AddAuthentication() |> ignore
-    services.AddDataProtection() |> ignore
+    services
+        .AddAuthentication(authScheme)
+        .AddCookie(cookieAuth)
+    |> ignore
+
+    services.AddDataProtection()            |> ignore
     services.AddRazorEngine viewsFolderPath |> ignore
 
-let configureLogging (loggerFactory : ILoggerFactory) =
-    loggerFactory.AddConsole(LogLevel.Error).AddDebug() |> ignore
+let configureLogging (loggerBuilder : ILoggingBuilder) =
+    loggerBuilder.AddFilter(fun lvl -> lvl.Equals LogLevel.Error)
+                 .AddConsole()
+                 .AddDebug() |> ignore
 
 [<EntryPoint>]
 let main argv =
@@ -176,8 +180,8 @@ let main argv =
         .UseContentRoot(contentRoot)
         .UseWebRoot(webRoot)
         .Configure(Action<IApplicationBuilder> configureApp)
-        .ConfigureServices(Action<IServiceCollection> configureServices)
-        .ConfigureLogging(Action<ILoggerFactory> configureLogging)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
         .Build()
         .Run()
     0

@@ -131,16 +131,16 @@ type HttpContext with
         task {
             let method = this.Request.Method
             if method.Equals "POST" || method.Equals "PUT" then
-                let original = this.Request.ContentType
-                let parsed   = ref (MediaTypeHeaderValue("*/*"))
+                let original = StringSegment(this.Request.ContentType)
+                let parsed   = ref (MediaTypeHeaderValue(StringSegment("*/*")))
                 return!
                     match MediaTypeHeaderValue.TryParse(original, parsed) with
-                    | false -> failwithf "Could not parse Content-Type HTTP header value '%s'" original
+                    | false -> failwithf "Could not parse Content-Type HTTP header value '%s'" original.Value
                     | true  ->
-                        match parsed.Value.MediaType with
+                        match parsed.Value.MediaType.Value with
                         | "application/json"                  -> this.BindJson<'T>()
                         | "application/xml"                   -> this.BindXml<'T>()
                         | "application/x-www-form-urlencoded" -> this.BindForm<'T>()
-                        | _ -> failwithf "Cannot bind model from Content-Type '%s'" original
+                        | _ -> failwithf "Cannot bind model from Content-Type '%s'" original.Value
             else return this.BindQueryString<'T>()
         }

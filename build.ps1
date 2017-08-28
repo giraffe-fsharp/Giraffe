@@ -11,7 +11,8 @@ param
     [switch] $ExcludeSamples,
     [switch] $Pack,
     [switch] $Run,
-    [switch] $OnlyNetStandard
+    [switch] $OnlyNetStandard,
+    [switch] $ClearOnly
 )
 
 $ErrorActionPreference = "Stop"
@@ -95,6 +96,11 @@ function Remove-OldBuildArtifacts
 # Main
 # ----------------------------------------------
 
+if ($ClearOnly.IsPresent) {
+    Remove-OldBuildArtifacts
+    return
+}
+
 $giraffe          = ".\src\Giraffe\Giraffe.fsproj"
 $giraffeRazor     = ".\src\Giraffe.Razor\Giraffe.Razor.fsproj"
 $giraffeDotLiquid = ".\src\Giraffe.DotLiquid\Giraffe.DotLiquid.fsproj"
@@ -109,7 +115,7 @@ Write-DotnetVersion
 Remove-OldBuildArtifacts
 
 $configuration = if ($Release.IsPresent) { "Release" } else { "Debug" }
-$framework     = if ($OnlyNetStandard.IsPresent) { "-f netstandard1.6" } else { "" }
+$framework     = if ($OnlyNetStandard.IsPresent) { "-f netstandard2.0" } else { "" }
 
 Write-Host "Building Giraffe..." -ForegroundColor Magenta
 dotnet-restore $giraffe
