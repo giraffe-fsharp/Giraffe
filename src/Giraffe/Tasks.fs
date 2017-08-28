@@ -262,6 +262,11 @@ module TaskBuilder =
         member inline __.Bind(task : 'a Task, continuation : 'a -> 'b Step) : 'b Step =
             bindTaskConfigureFalse task continuation
 
+        // Async overload bind
+        member inline __.Bind(work : 'a Async, continuation : 'a -> 'b Step) : 'b Step =
+            let task = Async.StartAsTask work 
+            bindTaskConfigureFalse task continuation
+
 // Don't warn about our use of the "obsolete" module we just defined (see notes at start of file).
 #nowarn "44"
 

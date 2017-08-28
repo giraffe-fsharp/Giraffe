@@ -1,6 +1,6 @@
-language: csharp  
-sudo: required  
-dist: trusty  
+language: csharp
+sudo: required
+dist: trusty
 
 dotnet: 2.0.0
 mono:
@@ -8,7 +8,7 @@ mono:
   - 4.8.1
   - 5.0.1
 
-os:  
+os:
   - linux
 
 before_install:

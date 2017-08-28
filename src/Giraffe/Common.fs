@@ -5,7 +5,6 @@ open System.IO
 open System.Text
 open System.Xml
 open System.Xml.Serialization
-open Microsoft.Extensions.Primitives
 open Newtonsoft.Json
 
 /// ---------------------------
@@ -18,12 +17,11 @@ let inline strOption (str : string) =
     if String.IsNullOrEmpty str then None else Some str
 
 let readFileAsString (filePath : string) =
-    use stream = new FileStream(filePath, FileMode.Open)
-    use reader = new StreamReader(stream)
-    reader.ReadToEndAsync()
-
-let strSegment (str : string) =
-    StringSegment(str)
+    task {
+        use stream = new FileStream(filePath, FileMode.Open)
+        use reader = new StreamReader(stream)
+        return! reader.ReadToEndAsync()
+    }
 
 /// ---------------------------
 /// Serializers

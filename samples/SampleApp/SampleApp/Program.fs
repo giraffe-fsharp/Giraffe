@@ -5,12 +5,12 @@ open System.IO
 open System.Security.Claims
 open System.Collections.Generic
 open System.Threading
-open Microsoft.AspNetCore.Authentication
-open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Features
+open Microsoft.AspNetCore.Authentication
+open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe.Tasks
@@ -57,7 +57,7 @@ let loginHandler =
             let identity = ClaimsIdentity(claims, authScheme)
             let user     = ClaimsPrincipal(identity)
 
-            do! ctx.Authentication.SignInAsync(authScheme, user)
+            do! ctx.SignInAsync(authScheme, user)
 
             return! text "Successfully logged in" next ctx
         }
@@ -123,6 +123,7 @@ let webApp =
                 route  "/user"       >=> mustBeUser >=> userHandler
                 routef "/user/%i"    showUserHandler
                 route  "/razor"      >=> razorHtmlView "Person" { Name = "Razor" }
+                route  "/razorHello" >=> razorHtmlView "Hello" ""
                 route  "/fileupload" >=> razorHtmlView "FileUpload" ""
                 route  "/person"     >=> (personView { Name = "Html Node" } |> renderHtml)
                 route  "/once"       >=> (time() |> text)
@@ -139,16 +140,17 @@ let webApp =
 // Main
 // ---------------------------------
 
-let cookieAuth (o: CookieAuthenticationOptions) =
+let cookieAuth (o : CookieAuthenticationOptions) =
     do
-        o.Cookie.HttpOnly <- true
+        o.Cookie.HttpOnly     <- true
         o.Cookie.SecurePolicy <- CookieSecurePolicy.SameAsRequest
-        o.SlidingExpiration <- true
-        o.ExpireTimeSpan <- TimeSpan.FromDays 7.0
+        o.SlidingExpiration   <- true
+        o.ExpireTimeSpan      <- TimeSpan.FromDays 7.0
 
 let configureApp (app : IApplicationBuilder) =
     app.UseGiraffeErrorHandler errorHandler
     app.UseStaticFiles() |> ignore
+    app.UseAuthentication() |> ignore
     app.UseGiraffe webApp
 
 let configureServices (services : IServiceCollection) =
@@ -157,15 +159,17 @@ let configureServices (services : IServiceCollection) =
     let viewsFolderPath = Path.Combine(env.ContentRootPath, "Views")
 
     services
-        .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-        .AddCookie(cookieAuth) |> ignore
+        .AddAuthentication(authScheme)
+        .AddCookie(cookieAuth)
+    |> ignore
 
-    services.AddAuthentication() |> ignore
-    services.AddDataProtection() |> ignore
-    services.AddRazorEngine viewsFolderPath |> ignore 
+    services.AddDataProtection()            |> ignore
+    services.AddRazorEngine viewsFolderPath |> ignore
 
 let configureLogging (loggerBuilder : ILoggingBuilder) =
-    loggerBuilder.AddConsole().AddFilter("System", LogLevel.Debug) |> ignore
+    loggerBuilder.AddFilter(fun lvl -> lvl.Equals LogLevel.Error)
+                 .AddConsole()
+                 .AddDebug() |> ignore
 
 [<EntryPoint>]
 let main argv =
@@ -176,7 +180,7 @@ let main argv =
         .UseContentRoot(contentRoot)
         .UseWebRoot(webRoot)
         .Configure(Action<IApplicationBuilder> configureApp)
-        .ConfigureServices(Action<IServiceCollection> configureServices)
+        .ConfigureServices(configureServices)
         .ConfigureLogging(configureLogging)
         .Build()
         .Run()

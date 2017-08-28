@@ -6,7 +6,7 @@
     <AssemblyName>SampleApp</AssemblyName>
     <OutputType>Exe</OutputType>
     <PackageId>SampleApp</PackageId>
-    <RuntimeFrameworkVersion>2.0</RuntimeFrameworkVersion>
+    <RuntimeFrameworkVersion>2.0.0</RuntimeFrameworkVersion>
     <EnableDefaultContentItems>false</EnableDefaultContentItems>
     <RunWorkingDirectory>$(MSBuildThisFileDirectory)</RunWorkingDirectory>
   </PropertyGroup>

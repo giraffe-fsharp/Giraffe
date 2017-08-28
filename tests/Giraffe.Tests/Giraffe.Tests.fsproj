@@ -1,20 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.0</TargetFrameworks>
+    <TargetFrameworks>net461;netcoreapp2.0</TargetFrameworks>
     <AssemblyName>Giraffe.Tests</AssemblyName>
     <DebugType>portable</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- <PackageReference Include="FSharp.Core" Version="4.2.*" />
-    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" /> -->
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0-preview-*" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.0-*" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.0-preview-*" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.0.*" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.*" />
     <PackageReference Include="xunit" Version="2.3.0-*" />
-    <PackageReference Include="NSubstitute" Version="2.0.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.0-*" />
+    <PackageReference Include="NSubstitute" Version="2.0.*" />
   </ItemGroup>
 
   <ItemGroup>

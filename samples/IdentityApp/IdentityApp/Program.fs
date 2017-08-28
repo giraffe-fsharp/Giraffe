@@ -6,7 +6,6 @@ open System.Text
 open System.Security.Claims
 open System.Collections.Generic
 open System.Threading
-open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
@@ -208,7 +207,7 @@ let configureServices (services : IServiceCollection) =
     // Configure InMemory Db for sample application
     services.AddDbContext<IdentityDbContext<IdentityUser>>(
         fun options ->
-            options.UseInMemoryDatabase(Guid.NewGuid().ToString()) |> ignore
+            options.UseInMemoryDatabase("NameOfDatabase") |> ignore
         ) |> ignore
 
     // Register Identity Dependencies
@@ -217,36 +216,34 @@ let configureServices (services : IServiceCollection) =
         .AddDefaultTokenProviders()
         |> ignore
 
-    // Cookie setting
-    services.ConfigureApplicationCookie(
-        fun o ->
-            // Cookie settings
-            o.ExpireTimeSpan <- TimeSpan.FromDays 150.0
-            o.LoginPath      <- PathString "/login"
-            o.LogoutPath     <- PathString "/logout"
-    ) |> ignore
-
-     // Configure Identity
+    // Configure Identity
     services.Configure<IdentityOptions>(
-        fun (o:IdentityOptions) ->
+        fun options ->
             // Password settings
-            o.Password.RequireDigit   <- true
-            o.Password.RequiredLength <- 8
-            o.Password.RequireNonAlphanumeric <- false
-            o.Password.RequireUppercase <- true
-            o.Password.RequireLowercase <- false
+            options.Password.RequireDigit   <- true
+            options.Password.RequiredLength <- 8
+            options.Password.RequireNonAlphanumeric <- false
+            options.Password.RequireUppercase <- true
+            options.Password.RequireLowercase <- false
 
             // Lockout settings
-            o.Lockout.DefaultLockoutTimeSpan  <- TimeSpan.FromMinutes 30.0
-            o.Lockout.MaxFailedAccessAttempts <- 10
+            options.Lockout.DefaultLockoutTimeSpan  <- TimeSpan.FromMinutes 30.0
+            options.Lockout.MaxFailedAccessAttempts <- 10
 
             // User settings
-            o.User.RequireUniqueEmail <- true
-    ) |> ignore
-        
+            options.User.RequireUniqueEmail <- true
+        ) |> ignore
 
-let configureLogging (context: WebHostBuilderContext) (loggingBuilder: ILoggingBuilder) =
-    loggingBuilder.AddConsole().AddDebug() |> ignore
+    // Configure app cookie
+    services.ConfigureApplicationCookie(
+        fun options ->
+            options.ExpireTimeSpan <- TimeSpan.FromDays 150.0
+            options.LoginPath      <- PathString "/login"
+            options.LogoutPath     <- PathString "/logout"
+        ) |> ignore
+
+let configureLogging (builder : ILoggingBuilder) =
+    builder.AddFilter(fun l -> l.Equals LogLevel.Error).AddConsole().AddDebug() |> ignore
 
 [<EntryPoint>]
 let main argv =
@@ -254,7 +251,7 @@ let main argv =
         .UseKestrel()
         .UseContentRoot(Directory.GetCurrentDirectory())
         .Configure(Action<IApplicationBuilder> configureApp)
-        .ConfigureServices(Action<IServiceCollection> configureServices)
+        .ConfigureServices(configureServices)
         .ConfigureLogging(configureLogging)
         .Build()
         .Run()

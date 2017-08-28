@@ -4,18 +4,19 @@ open System
 open System.Text
 open System.Collections.Generic
 open System.Threading.Tasks
+open System.Text.RegularExpressions
+open Microsoft.AspNetCore.Authentication
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open FSharp.Core.Printf
+open Newtonsoft.Json.Linq
+open Giraffe.Tasks
 open Giraffe.Common
 open Giraffe.FormatExpressions
 open Giraffe.XmlViewEngine
-open System.Text.RegularExpressions
-open Newtonsoft.Json.Linq
-open Giraffe.Tasks
 
 type HttpFuncResult = Task<HttpContext option>
 type HttpFunc       = HttpContext -> HttpFuncResult
@@ -26,9 +27,10 @@ type ErrorHandler   = exn -> ILogger -> HttpHandler
 /// Globally useful functions
 /// ---------------------------
 
-let inline warbler f a = f a a
+let inline warbler f (next : HttpFunc) (ctx : HttpContext) = f (next, ctx) next ctx
 
-let shortCircuit : HttpFuncResult = Task.FromResult None
+let private abort  : HttpFuncResult = Task.FromResult None
+let private finish : HttpFunc       = Some >> Task.FromResult
 
 /// ---------------------------
 /// Sub route helper functions
@@ -106,7 +108,7 @@ let httpVerb (verb : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if ctx.Request.Method.Equals verb
         then next ctx
-        else shortCircuit
+        else abort
 
 let GET    : HttpHandler = httpVerb "GET"
 let POST   : HttpHandler = httpVerb "POST"
@@ -124,14 +126,13 @@ let mustAccept (mimeTypes : string list) : HttpHandler =
         |> Seq.exists (fun h -> mimeTypes |> Seq.contains h)
         |> function
             | true  -> next ctx
-            | false -> shortCircuit
+            | false -> abort
 
 /// Challenges the client to authenticate with a given authentication scheme.
 let challenge (authScheme : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
-            let auth = ctx.Authentication
-            do! auth.ChallengeAsync authScheme
+            do! ctx.ChallengeAsync authScheme
             return! next ctx
         }
 
@@ -139,8 +140,7 @@ let challenge (authScheme : string) : HttpHandler =
 let signOff (authScheme : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
-            let auth = ctx.Authentication
-            do! auth.SignOutAsync authScheme
+            do! ctx.SignOutAsync authScheme
             return! next ctx
         }
 
@@ -150,7 +150,7 @@ let requiresAuthentication (authFailedHandler : HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if isNotNull ctx.User && ctx.User.Identity.IsAuthenticated
         then next ctx
-        else authFailedHandler next ctx
+        else authFailedHandler finish ctx
 
 /// Validates if a user is in a specific role.
 /// If not it will proceed with the authFailedHandler.
@@ -158,7 +158,7 @@ let requiresRole (role : string) (authFailedHandler : HttpHandler) : HttpHandler
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if ctx.User.IsInRole role
         then next ctx
-        else authFailedHandler next ctx
+        else authFailedHandler finish ctx
 
 /// Validates if a user has at least one of the specified roles.
 /// If not it will proceed with the authFailedHandler.
@@ -168,7 +168,7 @@ let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) : Htt
         |> List.exists ctx.User.IsInRole
         |> function
             | true  -> next ctx
-            | false -> authFailedHandler next ctx
+            | false -> authFailedHandler finish ctx
 
 /// Attempts to clear the current HttpResponse object.
 /// This can be useful inside an error handler when the response
@@ -183,7 +183,7 @@ let route (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (getPath ctx).Equals path
         then next ctx
-        else shortCircuit
+        else abort
 
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 /// The arguments from the format string will be automatically resolved when the
@@ -192,7 +192,7 @@ let routef (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : Htt
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) false
         |> function
-            | None      -> shortCircuit
+            | None      -> abort
             | Some args -> routeHandler args next ctx
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
@@ -200,7 +200,7 @@ let routeCi (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if String.Equals(getPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
         then next ctx
-        else shortCircuit
+        else abort
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 /// The arguments from the format string will be automatically resolved when the
@@ -209,7 +209,7 @@ let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : H
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) true
         |> function
-            | None      -> shortCircuit
+            | None      -> abort
             | Some args -> routeHandler args next ctx
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
@@ -232,21 +232,21 @@ let routeBind<'T> (route: string) (routeHandler : 'T -> HttpHandler) : HttpHandl
                 |> JObject.FromObject
                 |> fun jo -> jo.ToObject<'T>()
             routeHandler o next ctx
-        | _ -> shortCircuit
+        | _ -> abort
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
 let routeStartsWith (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (getPath ctx).StartsWith subPath
         then next ctx
-        else shortCircuit
+        else abort
 
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
 let routeStartsWithCi (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (getPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase)
         then next ctx
-        else shortCircuit
+        else abort
 
 /// Filters an incoming HTTP request based on a part of the request path (case sensitive).
 /// Subsequent route handlers inside the given handler function should omit the already validated path.
@@ -278,7 +278,7 @@ let setBody (bytes : byte array) : HttpHandler =
         task {
             ctx.Response.Headers.["Content-Length"] <- StringValues(bytes.Length.ToString())
             do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length)
-            return! next ctx
+            return Some ctx
         }
 
 /// Writes a string to the body of the HTTP response and sets the HTTP header Content-Length accordingly.

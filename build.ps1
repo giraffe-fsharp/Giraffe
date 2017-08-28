@@ -109,7 +109,7 @@ Write-DotnetVersion
 Remove-OldBuildArtifacts
 
 $configuration = if ($Release.IsPresent) { "Release" } else { "Debug" }
-$framework     = if ($OnlyNetStandard.IsPresent) { "-f netstandard1.6" } else { "" }
+$framework     = if ($OnlyNetStandard.IsPresent) { "-f netstandard2.0" } else { "" }
 
 Write-Host "Building Giraffe..." -ForegroundColor Magenta
 dotnet-restore $giraffe
