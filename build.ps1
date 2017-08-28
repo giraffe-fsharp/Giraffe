@@ -11,7 +11,8 @@ param
     [switch] $ExcludeSamples,
     [switch] $Pack,
     [switch] $Run,
-    [switch] $OnlyNetStandard
+    [switch] $OnlyNetStandard,
+    [switch] $ClearOnly
 )
 
 $ErrorActionPreference = "Stop"
@@ -94,6 +95,11 @@ function Remove-OldBuildArtifacts
 # ----------------------------------------------
 # Main
 # ----------------------------------------------
+
+if ($ClearOnly.IsPresent) {
+    Remove-OldBuildArtifacts
+    return
+}
 
 $giraffe          = ".\src\Giraffe\Giraffe.fsproj"
 $giraffeRazor     = ".\src\Giraffe.Razor\Giraffe.Razor.fsproj"

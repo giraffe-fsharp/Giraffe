@@ -6,9 +6,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceRoot}/samples/SampleApp/SampleApp/bin/Debug/netcoreapp1.1/SampleApp.dll",
+            "program": "${workspaceRoot}/samples/SampleApp/SampleApp/bin/Debug/netcoreapp2.0/SampleApp.dll",
             "args": [],
-            "cwd": "${workspaceRoot}/samples/SampleApp/SampleApp/bin/Debug/netcoreapp1.1",
+            "cwd": "${workspaceRoot}/samples/SampleApp/SampleApp/bin/Debug/netcoreapp2.0",
             "stopAtEntry": false,
             "console": "internalConsole"
         },
@@ -17,9 +17,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceRoot}/samples/SampleApp/SampleApp/bin/Debug/netcoreapp1.1/SampleApp.dll",
+            "program": "${workspaceRoot}/samples/SampleApp/SampleApp/bin/Debug/netcoreapp2.0/SampleApp.dll",
             "args": [],
-            "cwd": "${workspaceRoot}/samples/SampleApp/SampleApp/bin/Debug/netcoreapp1.1",
+            "cwd": "${workspaceRoot}/samples/SampleApp/SampleApp/bin/Debug/netcoreapp2.0",
             "stopAtEntry": false,
             "launchBrowser": {
                 "enabled": true,
