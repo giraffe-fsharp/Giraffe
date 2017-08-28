@@ -1466,6 +1466,8 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Ody Mbegbu](https://github.com/odytrice) (Helped to improve the giraffe-template)
 - [Reed Mullanix](https://github.com/TOTBWF) (Helped with bug fixes)
 - [Lukas Nordin](https://github.com/lukethenuke) (Helped with bug fixes)
+- [Banashek](https://github.com/Banashek) (Migrated Giraffe to .NET Core 2.0)
+- [Yevhenii Tsalko](https://github.com/YTsalko) (Migrated sample app to .NET Core 2.0)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
 
