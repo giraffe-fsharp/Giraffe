@@ -12,6 +12,7 @@ open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open FSharp.Core.Printf
+open Newtonsoft.Json
 open Newtonsoft.Json.Linq
 open Giraffe.Tasks
 open Giraffe.Common
@@ -292,11 +293,19 @@ let text (str : string) : HttpHandler =
     setHttpHeader "Content-Type" "text/plain"
     >=> setBodyAsString str
 
+let private makeJsonHandler serializer (dataObj : obj) : HttpHandler =
+    setHttpHeader "Content-Type" "application/json"
+    >=> setBodyAsString (serializeJson serializer dataObj)
+
 /// Serializes an object to JSON and writes it to the body of the HTTP response.
 /// It also sets the HTTP header Content-Type: application/json and sets the Content-Length header accordingly.
 let json (dataObj : obj) : HttpHandler =
-    setHttpHeader "Content-Type" "application/json"
-    >=> setBodyAsString (serializeJson dataObj)
+    makeJsonHandler (JsonSerializer.CreateDefault()) dataObj
+
+/// Serializes an object to JSON and writes it to the body of the HTTP response.
+/// It also sets the HTTP header Content-Type: application/json and sets the Content-Length header accordingly.
+let customJson (settings : JsonSerializerSettings) (dataObj : obj) : HttpHandler =
+    makeJsonHandler (JsonSerializer.Create(settings)) dataObj
 
 /// Serializes an object to XML and writes it to the body of the HTTP response.
 /// It also sets the HTTP header Content-Type: application/xml and sets the Content-Length header accordingly.
