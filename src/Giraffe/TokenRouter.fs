@@ -480,20 +480,20 @@ let private processPath (rs:RouteState) (root:Node) : HttpHandler =
             rs.pos <- pos
             ctx.Items.[routerKey] <- rs 
 
-        let rec processEnd (fns:EndCont list) pos args =
+        let rec processEnd (fns:EndCont list, pos, args) =
             match fns with
-            | [] -> Task.FromResult None
+            | [] -> notFound next ctx
             | h :: t ->
                 match h with                    
                 | HandlerMap fn -> fn next ctx // run function with all parameters
                 | MatchComplete (i,fn) -> createResult args i fn 
 
-        let rec processMid (fns:MidCont list) pos args =
+        let rec processMid (fns:MidCont list,pos, args) =
             
             let applyMatchAndComplete pos acc ( f,i,fn ) tail =
                 match formatMap.[f].Invoke(path,pos,last) with
                 | struct(true, o) -> createResult (o :: acc) i fn
-                | struct(false,_) -> processMid tail pos acc // ??????????????????
+                | struct(false,_) -> processMid(tail, pos, acc) // ??????????????????
             
             let rec applyMatch (f:char,ca:char[],n) pos acc tail  =
                 match getNodeCompletion ca pos n with
@@ -501,15 +501,14 @@ let private processPath (rs:RouteState) (root:Node) : HttpHandler =
                     match formatMap.[f].Invoke(path, pos, fpos) with
                     | struct(true, o) -> 
                         if npos - 1 = last then //if have reached end of path through nodes, run HandlerFn
-                            processEnd cnode.EndFns npos (o::acc)
+                            processEnd(cnode.EndFns, npos, o::acc )
                         else
-                            processMid cnode.MidFns npos (o::acc)
-                    | struct(false,_) -> processMid tail pos acc // keep trying    
-                | struct(false,_,_,_) -> processMid tail pos acc // subsequent match could not complete so fail
+                            processMid(cnode.MidFns, npos, o::acc )
+                    | struct(false,_) -> processMid(tail, pos, acc) // keep trying    
+                | struct(false,_,_,_) -> processMid(tail, pos, acc) // subsequent match could not complete so fail
             
             match fns with
-            | [] -> 
-                notFound next ctx 
+            | [] -> notFound next ctx 
             | h :: t ->
                 match h with
                 | ApplyMatch x -> applyMatch x pos args t
@@ -523,25 +522,25 @@ let private processPath (rs:RouteState) (root:Node) : HttpHandler =
             if cp = node.Token.Length then
                 let nxtChar = pos + node.Token.Length 
                 if (nxtChar - 1 ) = last then //if have reached end of path through nodes, run HandlerFn
-                    processEnd node.EndFns pos []
+                    processEnd(node.EndFns, pos, [] )
                 else
                     match node.TryGetValue path.[nxtChar] with
                     | true, cnode ->
                         if (pos + cnode.Token.Length ) = last then //if have reached end of path through nodes, run HandlerFn
-                            processEnd cnode.EndFns (pos + node.Token.Length) []
+                            processEnd(cnode.EndFns, pos + node.Token.Length, [] )
                         else                //need to continue down chain till get to end of path
                             crawl (nxtChar) cnode
                     | false, _ ->
                         // no further nodes, either a static url didnt match or there is a pattern match required            
-                        processMid node.MidFns nxtChar []
+                        processMid( node.MidFns, nxtChar, [] )
             else 
-                printfn ">> failed to match %s path with %s token, commonPath=%i" (path.Substring(pos)) (node.Token) (commonPathIndex path pos node.Token)
+                //printfn ">> failed to match %s path with %s token, commonPath=%i" (path.Substring(pos)) (node.Token) (commonPathIndex path pos node.Token)
                 notFound next ctx          
 
         crawl ipos root
 
 let router (fns:(Node->Node) list) : HttpHandler =
-    let root = Node("/")
+    let root = Node("")
     // precompile the route functions into node trie
     let rec go ls =
         match ls with
