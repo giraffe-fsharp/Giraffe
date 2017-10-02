@@ -1,4 +1,4 @@
-module Giraffe.HttpHandlerTests
+module Giraffe.TokenRouterTests
 
 open System
 open System.Collections.Generic
@@ -17,7 +17,7 @@ open Giraffe.XmlViewEngine
 open Giraffe.DotLiquid.HttpHandlers
 open Giraffe.Tests.Asserts
 open Giraffe.Tasks
-open Giraffe.BasicRouter
+open Giraffe.TokenRouter
 
 // ---------------------------------
 // Helper functions
@@ -79,10 +79,9 @@ type Person =
 let ``GET "/" returns "Hello World"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> choose [
-            route "/"    >=> text "Hello World"
-            route "/foo" >=> text "bar"
-            setStatusCode 404 >=> text "Not found" ]
+        GET >=> router [
+            route "/" => text "Hello World"
+            route "/foo" => text "bar" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
@@ -101,10 +100,9 @@ let ``GET "/" returns "Hello World"`` () =
 let ``GET "/foo" returns "bar"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> choose [
-            route "/"    >=> text "Hello World"
-            route "/foo" >=> text "bar"
-            setStatusCode 404 >=> text "Not found" ]
+        GET >=> router [
+            route "/"    => text "Hello World"
+            route "/foo" => text "bar"]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo")) |> ignore

@@ -16,6 +16,7 @@ open Microsoft.Extensions.DependencyInjection
 open Giraffe.Tasks
 open Giraffe.HttpContextExtensions
 open Giraffe.HttpHandlers
+open Giraffe.BasicRouter
 open Giraffe.Middleware
 open Giraffe.Razor.HttpHandlers
 open Giraffe.Razor.Middleware
