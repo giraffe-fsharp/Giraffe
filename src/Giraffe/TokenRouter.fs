@@ -7,6 +7,7 @@ open Microsoft.AspNetCore.Http
 open System.Collections.Generic
 open Microsoft.FSharp.Reflection
 open Giraffe.HttpHandlers
+open System.Text
 
 // implimenation of (router) Trie Node
 // assumptions: memory and compile time not relevant, all about execution speed, initially testing with Dictionary edges
@@ -236,6 +237,24 @@ type Node(token:string) =
         with get () = edges.Count
     member x.GetEdgeKeys = edges.Keys
     member x.TryGetValue v = edges.TryGetValue v
+
+    override x.ToString() =
+        let sb = StringBuilder()
+        x.ToString sb
+        sb.ToString()
+
+    member x.ToString (sb:StringBuilder) =
+        sb.Append("[")          |> ignore
+        for kvp in edges do
+            sb.Append("(")      |> ignore
+            sb.Append(kvp.Key)  |> ignore
+            sb.Append(",")      |> ignore
+            kvp.Value.ToString sb
+            sb.Append(",")      |> ignore
+            sb.Append(sprintf "%A" midFns)      |> ignore
+            sb.Append(sprintf "%A" endFns)      |> ignore
+            sb.Append(")\n")    |> ignore
+        sb.Append("]")          |> ignore
 
     static member AddFn (node:Node) fn =
         match fn with
@@ -549,6 +568,8 @@ let router (fns:(Node->Node) list) : HttpHandler =
             h root |> ignore
             go t
     go fns
+
+    printfn "%A" root
 
     fun next ctx ->
         //get path progress (if any so far)
