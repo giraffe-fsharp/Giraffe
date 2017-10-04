@@ -121,7 +121,7 @@ let ``GET "/foo" returns "bar"`` () =
 let ``GET "/FOO" returns 404 "Not found"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router [    //<< FAIL 0 instead of 404!?
+        GET >=> router [    //<<FAIL 0 instead of 404!?
             route "/"    => text "Hello World"
             route "/foo" => text "bar"
             ]
