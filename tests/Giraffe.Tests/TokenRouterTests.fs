@@ -121,7 +121,7 @@ let ``GET "/foo" returns "bar"`` () =
 let ``GET "/FOO" returns 404 "Not found"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router [
+        GET >=> router [    //<< FAIL 0 instead of 404!?
             route "/"    => text "Hello World"
             route "/foo" => text "bar"
             ]
@@ -444,7 +444,7 @@ let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
         GET >=> router [
             route   "/"       => text "Hello World"
             route   "/foo"    => text "bar"
-            routef "/foo/%s/bar" text
+            routef "/foo/%s/bar" text   //<<FAIL
             routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
             ]
 
@@ -544,7 +544,7 @@ let ``Sub route with empty route`` () =
             route "/foo" => text "bar"
             subRoute "/api" (
                 router [
-                    route ""       => text "api root"
+                    route ""       => text "api root"   //<<FAIL
                     route "/admin" => text "admin"
                     route "/users" => text "users" ] )
             route "/api/test" => text "test"
@@ -575,7 +575,7 @@ let ``Sub route with non empty route`` () =
                 router [
                     route ""       => text "api root"
                     route "/admin" => text "admin"
-                    route "/users" => text "users" ] )
+                    route "/users" => text "users" ] ) //<<FAIL (Not found)
             route "/api/test" => text "test"
             ]
 
@@ -640,7 +640,7 @@ let ``Nested sub routes`` () =
                         router [
                             route ""       => text "api root v2"
                             route "/admin" => text "admin v2"
-                            route "/users" => text "users v2"
+                            route "/users" => text "users v2"   //<<FAIL (Not found)
                         ]
                     )
                 ]
@@ -716,7 +716,7 @@ let ``Multiple nested sub routes`` () =
                         router [
                             route "/admin" => text "admin v2"
                             route "/users" => text "users v2"
-                            route "/admin2" => text "correct admin2" // << HACK
+                            route "/admin2" => text "correct admin2" // <<FAIL & HACK
                         ]
                     )
                     // subRoute "/v2" (
@@ -754,7 +754,7 @@ let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
             subRoute "/api" (
                 router [
                     route  "" => text "api root"
-                    routef "/foo/bar/%s" text ] )
+                    routef "/foo/bar/%s" text ] )   //<<FAIL (Not found)
             route "/api/test" => text "test"
             ]
 
