@@ -7,6 +7,7 @@ open System.Security.Claims
 open System.Collections.Generic
 open System.Threading
 open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Cors.Infrastructure
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Features
@@ -198,7 +199,11 @@ let errorHandler (ex : Exception) (logger : ILogger) =
 // Main
 // ---------------------------------
 
+let configureCors (builder : CorsPolicyBuilder) =
+    builder.WithOrigins("http://localhost:8080").AllowAnyMethod().AllowAnyHeader() |> ignore
+    
 let configureApp (app : IApplicationBuilder) =
+    app.UseCors configureCors |> ignore
     app.UseGiraffeErrorHandler errorHandler
     app.UseAuthentication() |> ignore
     app.UseGiraffe webApp
@@ -241,6 +246,9 @@ let configureServices (services : IServiceCollection) =
             options.LoginPath      <- PathString "/login"
             options.LogoutPath     <- PathString "/logout"
         ) |> ignore
+
+    // Enable CORS
+    services.AddCors |> ignore
 
 let configureLogging (builder : ILoggingBuilder) =
     let filter (l : LogLevel) = l.Equals LogLevel.Error

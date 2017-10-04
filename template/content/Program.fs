@@ -4,6 +4,7 @@ open System
 open System.IO
 open System.Collections.Generic
 open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Cors.Infrastructure
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
@@ -38,7 +39,11 @@ let errorHandler (ex : Exception) (logger : ILogger) =
 // Config and Main
 // ---------------------------------
 
+let configureCors (builder : CorsPolicyBuilder) =
+    builder.WithOrigins("http://localhost:8080").AllowAnyMethod().AllowAnyHeader() |> ignore
+    
 let configureApp (app : IApplicationBuilder) =
+    app.UseCors configureCors |> ignore
     app.UseGiraffeErrorHandler errorHandler
     app.UseStaticFiles() |> ignore
     app.UseGiraffe webApp
@@ -48,6 +53,7 @@ let configureServices (services : IServiceCollection) =
     let env = sp.GetService<IHostingEnvironment>()
     let viewsFolderPath = Path.Combine(env.ContentRootPath, "Views")
     services.AddRazorEngine viewsFolderPath |> ignore
+    services.AddCors |> ignore
 
 let configureLogging (builder : ILoggingBuilder) =
     let filter (l : LogLevel) = l.Equals LogLevel.Error
