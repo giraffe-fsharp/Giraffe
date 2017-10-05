@@ -1,39 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>Giraffe</AssemblyName>
-    <Version>0.1.0-beta-100</Version>
-    <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
-    <Copyright>Copyright 2017 Dustin Moris Gorski</Copyright>
-    <NeutralLanguage>en-GB</NeutralLanguage>
-    <Authors>Dustin Moris Gorski and contributors</Authors>
-    <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
-    <DebugType>portable</DebugType>
-    <WarningsAsErrors>1</WarningsAsErrors>
-    <Optimize>True</Optimize>
     <OutputType>Library</OutputType>
-    <PackageId>Giraffe</PackageId>
-    <PackageTags>Giraffe;ASP.NET Core;Lambda;FSharp;Functional;Http;Web;Framework;Micro;Service</PackageTags>
-    <PackageReleaseNotes>https://github.com/dustinmoris/giraffe/releases</PackageReleaseNotes>
-    <PackageIconUrl>https://raw.githubusercontent.com/dustinmoris/giraffe/master/giraffe-64x64.png</PackageIconUrl>
-    <PackageProjectUrl>https://github.com/dustinmoris/giraffe</PackageProjectUrl>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/dustinmoris/giraffe/master/LICENSE</PackageLicenseUrl>
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/dustinmoris/giraffe</RepositoryUrl>
-    <NetStandardImplicitPackageVersion>2.0</NetStandardImplicitPackageVersion>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.*" />
-    <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.0.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.0.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.0.*" />
-    <PackageReference Include="Newtonsoft.Json" Version="10.0.*" />
-  </ItemGroup>
-
   <ItemGroup>
     <Compile Include="Tasks.fs" />
     <Compile Include="Common.fs" />
@@ -42,7 +12,16 @@
     <Compile Include="HttpContextExtensions.fs" />
     <Compile Include="XmlViewEngine.fs" />
     <Compile Include="HttpHandlers.fs" />
+    <Compile Include="BasicRouter.fs" />
+    <Compile Include="TokenRouter.fs" />
     <Compile Include="Middleware.fs" />
   </ItemGroup>
-
+  <ItemGroup>
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.*" />
+    <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.0.*" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.*" />
+  </ItemGroup>
 </Project>

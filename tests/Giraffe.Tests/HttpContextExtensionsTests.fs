@@ -15,6 +15,7 @@ open Microsoft.Extensions.Logging
 open Giraffe.Common
 open Giraffe.HttpHandlers
 open Giraffe.Tasks
+open Giraffe.BasicRouter
 
 let assertFailf format args =
     let msg = sprintf format args

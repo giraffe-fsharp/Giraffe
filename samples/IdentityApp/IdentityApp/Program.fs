@@ -20,6 +20,7 @@ open Giraffe.HttpContextExtensions
 open Giraffe.XmlViewEngine
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
+open Giraffe.BasicRouter
 
 // ---------------------------------
 // View engine
