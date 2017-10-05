@@ -1262,18 +1262,19 @@ let ``Warbler function should execute inner function each time`` () =
         GET >=> choose [
             route "/foo"  >=> text (inner())
             route "/foo2" >=> warbler (fun _ -> text (inner())) ]
+        <| next
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo")) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
     task {
-        let! res1 = app next ctx
+        let! res1 = app ctx
         let result1 = getBody res1.Value
 
         ctx.Response.Body <- new MemoryStream()
 
-        let! res2 = app next ctx
+        let! res2 = app ctx
         let result2 = getBody res2.Value
 
         Assert.Equal(result1, result2)
@@ -1281,12 +1282,12 @@ let ``Warbler function should execute inner function each time`` () =
         ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo2")) |> ignore
         ctx.Response.Body <- new MemoryStream()
 
-        let! res3 = app next ctx
+        let! res3 = app ctx
         let result3 = getBody res3.Value
 
         ctx.Response.Body <- new MemoryStream()
 
-        let! res4 = app next ctx
+        let! res4 = app ctx
         let result4 = getBody res4.Value
 
         Assert.False(result3.Equals result4)

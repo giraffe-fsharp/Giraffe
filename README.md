@@ -198,6 +198,8 @@ let readFileAndDoSomething (filePath : string) =
     }
 ```
 
+Note, you can still continue to use regular `Async<'T>` workflows from within the `task{}` computation expression without having to manually convert back into a `Task<'T>`.
+
 If you were to write the same code with F#'s async workflow it would look something like this:
 
 
@@ -1365,7 +1367,7 @@ Please check out [Jimmy Byrd](https://github.com/TheAngryByrd)'s [dotnet-web-ben
 
 Giraffe is built with the latest [.NET Core SDK](https://www.microsoft.com/net/download/core).
 
-You can either install [Visual Studio 2017](https://www.visualstudio.com/vs/) which comes with the latest SDK or manually download and install the [.NET SDK 1.1](https://www.microsoft.com/net/download/core).
+You can either install [Visual Studio 2017](https://www.visualstudio.com/vs/) which comes with the latest SDK or manually download and install the [.NET SDK 2.0](https://www.microsoft.com/net/download/core).
 
 After installation you should be able to run the `.\build.ps1` script to successfully build, test and package the library.
 
@@ -1460,6 +1462,12 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Jon Canning](https://github.com/JonCanning) (Moved the Razor and DotLiquid http handlers into separate NuGet packages and added the `routeBind` handler as well as some useful `HttpContext` extensions)
 - [Andrew Grant](https://github.com/GraanJonlo) (Fixed bug in the `giraffe-template` NuGet package)
 - [Gerard](https://github.com/gerardtoconnor) (Changed the API to continuations instead of binding HttpHandlers and to tasks from async)
+- [Mitchell Tilbrook](https://github.com/marukami) (Helped to fix documentation)
+- [Ody Mbegbu](https://github.com/odytrice) (Helped to improve the giraffe-template)
+- [Reed Mullanix](https://github.com/TOTBWF) (Helped with bug fixes)
+- [Lukas Nordin](https://github.com/lukethenuke) (Helped with bug fixes)
+- [Banashek](https://github.com/Banashek) (Migrated Giraffe to .NET Core 2.0)
+- [Yevhenii Tsalko](https://github.com/YTsalko) (Migrated sample app to .NET Core 2.0)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
 

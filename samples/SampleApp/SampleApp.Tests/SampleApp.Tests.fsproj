@@ -1,26 +1,24 @@
-﻿<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp1.1</TargetFramework>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
     <AssemblyName>SampleApp.Tests</AssemblyName>
     <DebugType>portable</DebugType>
     <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FSharp.Core" Version="4.1.*" />
-    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0-preview-*" />
-    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="1.1.*" />
-    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="1.1.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="1.1.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="1.1.*" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="1.1.*" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="1.1.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="1.1.*" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="1.1.*" />
-    <PackageReference Include="xunit" Version="2.2.*" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.2.*" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.0-preview-*" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.0.*" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.0.*" />
+    <PackageReference Include="xunit" Version="2.3.0-*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.0-*" />
   </ItemGroup>
 
   <ItemGroup>
