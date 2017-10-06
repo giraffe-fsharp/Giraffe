@@ -1440,7 +1440,7 @@ When contributing to this repository, please first discuss the change you wish t
 
 Please be aware that Giraffe strictly aims to remain as light as possible while providing generic functionality for building functional web applications. New feature work must be applicable to a broader user base and if this requirement cannot be met sufficiently then a pull request might get rejected. In the case of doubt the maintainer will rather reject a potentially useful feature than adding one too many. This measure is to protect the repository from feature bloat over time and shall not be taken personally.
 
-When making changes please use existing code as a guideline for coding style and documentation. If you intend to add or change an existing `HttpHandler` then please update the README.md file to reflect these changes there as well. If applicable unit tests must be be added or updated and the project must successfully build before a pull request can be accepted.
+When making changes please use existing code as a guideline for coding style and documentation. If you intend to add or change an existing `HttpHandler` then please update the README.md file to reflect these changes there as well. If applicable unit tests must be added or updated and the project must successfully build before a pull request can be accepted.
 
 If you have any further questions please let me know.
 
