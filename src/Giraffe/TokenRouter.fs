@@ -1,6 +1,6 @@
 module Giraffe.TokenRouter
 
-open NonStructuralComparison
+
 open System.Threading.Tasks
 open FSharp.Core.Printf
 open Microsoft.AspNetCore.Http
@@ -12,7 +12,8 @@ open System.Text
 // implimenation of (router) Trie Node
 // assumptions: memory and compile time not relevant, all about execution speed, initially testing with Dictionary edges
 
-open OptimizedClosures // needed for parser performance, non boxing of struct equality
+open NonStructuralComparison // needed for parser performance, non boxing of struct equality
+open OptimizedClosures       // needed to apply multi-curry args at once with adapt (invoke method)
 
 type Parser = FSharpFunc<string,int,int,struct(bool*obj)>
 
@@ -158,8 +159,16 @@ let formatMap =
 /////////////////////////////////////////////////////
 
 let routerKey = "router_pos"
-
-let notFound next ctx = (setStatusCode 404 next |> text "Not found") ctx 
+let notFound : HttpHandler = setStatusCode 404 >=> text "Not found"
+    // fun next ctx ->
+    //     task {
+    //         ctx.Response.StatusCode <- 404
+    //         ctx.Response.Headers.["Content-Type"] <- StringValues("text/plain")
+    //         let bytes = Encoding.UTF8.GetBytes "Not found"          
+    //         ctx.Response.Headers.["Content-Length"] <- StringValues(bytes.Length.ToString())
+    //         do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length)
+    //         return Some ctx
+    //     }
 
 type RouteState(path:string) =
     member val path = path with get
@@ -244,19 +253,19 @@ type Node(token:string) =
         sb.ToString()
 
     member x.ToString (depth:int, sb:StringBuilder) =
-        if edges.Count > 0 then
+        if x.Edges.Count > 0 then
             for i = 0 to depth do sb.Append("\t") |> ignore
             sb.Append("[\n")          |> ignore
-            for kvp in edges do
+            for kvp in x.Edges do
                 for i = 0 to depth do sb.Append("\t") |> ignore
                 sb.Append("(")      |> ignore
                 sb.Append(kvp.Key)  |> ignore
-                sb.Append(",")      |> ignore
+                sb.Append(",{")      |> ignore
                 sb.Append(sprintf "%A" midFns)      |> ignore
                 sb.Append("|")                      |> ignore
                 sb.Append(sprintf "%A" endFns)      |> ignore
                 
-                sb.Append(",")      |> ignore
+                sb.Append("},")      |> ignore
                 kvp.Value.ToString(depth + 1,sb)    |> ignore
                 sb.Append(")\n")    |> ignore
             for i = 0 to depth do sb.Append("\t")   |> ignore
