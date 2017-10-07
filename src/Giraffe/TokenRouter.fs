@@ -606,15 +606,6 @@ let router (fns:(Node->Node) list) : HttpHandler =
     let root = Node("")
     // precompile the route functions into node trie
     mapNode fns root
-    // let rec go ls =
-    //     match ls with
-    //     | [] -> ()
-    //     | h :: t ->
-    //         h root |> ignore
-    //         go t
-    // go fns
-
-    printfn "%A" root
 
     fun next ctx ->
         //get path progress (if any so far)
