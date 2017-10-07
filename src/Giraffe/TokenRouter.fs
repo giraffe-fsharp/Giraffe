@@ -240,21 +240,29 @@ type Node(token:string) =
 
     override x.ToString() =
         let sb = StringBuilder()
-        x.ToString sb
+        x.ToString(0, sb)
         sb.ToString()
 
-    member x.ToString (sb:StringBuilder) =
-        sb.Append("[")          |> ignore
-        for kvp in edges do
-            sb.Append("(")      |> ignore
-            sb.Append(kvp.Key)  |> ignore
-            sb.Append(",")      |> ignore
-            kvp.Value.ToString sb
-            sb.Append(",")      |> ignore
-            sb.Append(sprintf "%A" midFns)      |> ignore
-            sb.Append(sprintf "%A" endFns)      |> ignore
-            sb.Append(")\n")    |> ignore
-        sb.Append("]")          |> ignore
+    member x.ToString (depth:int, sb:StringBuilder) =
+        if edges.Count > 0 then
+            for i = 0 to depth do sb.Append("\t") |> ignore
+            sb.Append("[\n")          |> ignore
+            for kvp in edges do
+                for i = 0 to depth do sb.Append("\t") |> ignore
+                sb.Append("(")      |> ignore
+                sb.Append(kvp.Key)  |> ignore
+                sb.Append(",")      |> ignore
+                sb.Append(sprintf "%A" midFns)      |> ignore
+                sb.Append("|")                      |> ignore
+                sb.Append(sprintf "%A" endFns)      |> ignore
+                
+                sb.Append(",")      |> ignore
+                kvp.Value.ToString(depth + 1,sb)    |> ignore
+                sb.Append(")\n")    |> ignore
+            for i = 0 to depth do sb.Append("\t")   |> ignore
+            sb.Append("]")          |> ignore
+        else
+            sb.Append("[]") |> ignore
 
     static member AddFn (node:Node) fn =
         match fn with
