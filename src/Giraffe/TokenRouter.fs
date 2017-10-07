@@ -75,10 +75,10 @@ let private int64Parse (path:string) ipos fpos =
     | _ -> go (ipos)
 
 
-let decPower = [|1.;10.;100.;1000.;10000.;100000.;1000000.;10000000.;100000000.;100000000.|] 
-let decDivide = [|1.;10.;100.;1000.;10000.;100000.;1000000.;10000000.;100000000.;100000000.|] |> Array.map (fun d -> 1. / d) // precompute inverse once at compile time
+let private decPower = [|1.;10.;100.;1000.;10000.;100000.;1000000.;10000000.;100000000.;100000000.|] 
+let private decDivide = [|1.;10.;100.;1000.;10000.;100000.;1000000.;10000000.;100000000.;100000000.|] |> Array.map (fun d -> 1. / d) // precompute inverse once at compile time
     
-let floatParse (path:string) ipos fpos =
+let private floatParse (path:string) ipos fpos =
     let mutable result = 0.
     let mutable decPlaces = 0
     let mutable negNumber = false
@@ -181,7 +181,7 @@ type RouteState(path:string) =
 /// Tail Clip: clip end of 'str' string staring from int pos -> end
 let inline (-|) (str:string) (from:int) = str.Substring(from,str.Length - from)
 
-let commonPathIndex (str1:string) (idx1:int) (str2:string) =
+let private commonPathIndex (str1:string) (idx1:int) (str2:string) =
     let rec go i j =
         if i < str1.Length && j < str2.Length then
             if str1.[i] = str2.[j] 
@@ -190,7 +190,7 @@ let commonPathIndex (str1:string) (idx1:int) (str2:string) =
         else j
     go idx1 0 
 
-let commonPath (str1:string) (str2:string) =
+let private commonPath (str1:string) (str2:string) =
     let rec go i =
         if i < str1.Length && i < str2.Length then
             if str1.[i] = str2.[i] 
@@ -207,7 +207,7 @@ type PathMatch =
 | ZeroMatch
 | FullMatch
 
-let getPathMatch (path:string) (token:string) =
+let private getPathMatch (path:string) (token:string) =
     if token.Length = 0 then ZeroToken
     else
         let cp = commonPath path token
@@ -253,26 +253,25 @@ type Node(token:string) =
         sb.ToString()
 
     member x.ToString (depth:int, sb:StringBuilder) =
-        if x.Edges.Count > 0 then
-            for i = 0 to depth do sb.Append("\t") |> ignore
-            sb.Append("[\n")          |> ignore
-            for kvp in x.Edges do
+            sb  .Append("(")      
+                .Append(x.Token)        
+                .Append(",{")      
+                .Append(sprintf "%A" midFns)      
+                .Append("|")                      
+                .Append(sprintf "%A" endFns)      
+                .Append("},[")          |> ignore
+            if x.Edges.Count = 0 then                  
+                sb.Append("])\n")          |> ignore
+            else
+                sb.Append("\n")         |> ignore
+                for kvp in x.Edges do
+                    for i = 0 to depth do sb.Append("\t") |> ignore
+                    sb  .Append(kvp.Key)
+                        .Append(" => ") |> ignore
+                    kvp.Value.ToString(depth + 1,sb)
                 for i = 0 to depth do sb.Append("\t") |> ignore
-                sb.Append("(")      |> ignore
-                sb.Append(kvp.Key)  |> ignore
-                sb.Append(",{")      |> ignore
-                sb.Append(sprintf "%A" midFns)      |> ignore
-                sb.Append("|")                      |> ignore
-                sb.Append(sprintf "%A" endFns)      |> ignore
-                
-                sb.Append("},")      |> ignore
-                kvp.Value.ToString(depth + 1,sb)    |> ignore
-                sb.Append(")\n")    |> ignore
-            for i = 0 to depth do sb.Append("\t")   |> ignore
-            sb.Append("]")          |> ignore
-        else
-            sb.Append("[]") |> ignore
-
+                sb.Append("])\n")    |> ignore
+    
     static member AddFn (node:Node) fn =
         match fn with
         | Empty -> ()
@@ -299,6 +298,9 @@ type Node(token:string) =
         node.EndFns <- List.empty 
 
     static member AddPath (node:Node) (path:string) (rc:ContType) =
+
+        //printfn "'%s' -> %s" path (node.ToString())
+
         match getPathMatch path node.Token with
         | ZeroToken ->
             // if node empty/root
@@ -306,8 +308,20 @@ type Node(token:string) =
             Node.AddFn node rc
             node
         | ZeroMatch ->
-            //failwith <| sprintf "path passed to node with non-matching start in error:%s" path
-            node
+            if path = "" then
+                Node.AddFn node rc
+                node
+            else
+                // special case adding subroute (ignore subroute token)
+                match node.TryGetValue path.[0] with
+                | true, cnode ->
+                    Node.AddPath cnode path rc // recursive path scan
+                | fales, _    ->
+                    let nnode = Node(path)
+                    node.Edges.Add(path.[0], nnode)
+                    Node.AddFn nnode rc
+                    nnode
+                //failwith <| sprintf "path passed to node with non-matching start in error:%s -> %s\n\n%s\n" path node.Token (node.ToString())
         | FullMatch -> 
             Node.AddFn node rc
             node
@@ -366,7 +380,7 @@ and ContType =
 // temporary compose out handler to allow composition out of route functions, same as wraping in () or using <|
 let inline (=>) (a:HttpHandler -> Node -> Node) (b:HttpHandler) = a b
 
-let addCharArray (c:char) (ary:char []) =
+let private addCharArray (c:char) (ary:char []) =
     if ary |> Array.exists (fun v -> v = c) then
         ary
     else 
@@ -376,7 +390,7 @@ let addCharArray (c:char) (ary:char []) =
         nAry
 
 // helper to get child node of same match format (slow for now, needs optimisation)
-let getPostMatchNode fmt (nxt:char) (ils:MidCont list) = 
+let private getPostMatchNode fmt (nxt:char) (ils:MidCont list) = 
     let rec go (ls:MidCont list) (acc:MidCont list) (no:Node option) =
         match ls with
         | [] -> 
@@ -403,8 +417,8 @@ let getPostMatchNode fmt (nxt:char) (ils:MidCont list) =
 let route (path:string) (fn:HttpHandler) (root:Node) = 
     Node.AddPath root path (fn |> HandlerMap |> End)
 
-let subRoute (path:string) (fn:HttpHandler) (root:Node) =
-    Node.AddPath root path (fn |> SubRouteMap |> Mid)  
+let subRouteOld (path:string) (fn:HttpHandler) (root:Node) =
+    Node.AddPath root path (fn |> SubRouteMap |> Mid)
 
 // parsing route that iterates down nodes, parses, and then continues down further notes if needed
 let routef (path : StringFormat<_,'T>) (fn:'T -> HttpHandler) (root:Node)=
@@ -492,7 +506,7 @@ let private processPath (rs:RouteState) (root:Node) : HttpHandler =
         let createResult (args:obj list) (argCount:int) (fn:obj -> HttpHandler) =
             let input =  
                 match argCount with
-                | 0 -> Unchecked.defaultof<obj> //HACK: need routeF to throw error on zero args
+                | 0 -> failwith "Error: tried to create a parse result with zero arguments collected" //Unchecked.defaultof<obj> //HACK: need routeF to throw error on zero args
                 | 1 -> args.Head // HACK: look into performant way to safely extract
                 | _ ->
                     let values = Array.zeroCreate<obj>(argCount) //<<< this can be pooled?
@@ -514,7 +528,7 @@ let private processPath (rs:RouteState) (root:Node) : HttpHandler =
 
         let saveRouteState pos = 
             rs.pos <- pos
-            ctx.Items.[routerKey] <- rs 
+            ctx.Items.[routerKey] <- rs // probably redundant as rs ref persisted in dict
 
         let rec processEnd (fns:EndCont list, pos, args) =
             match fns with
@@ -575,16 +589,30 @@ let private processPath (rs:RouteState) (root:Node) : HttpHandler =
 
         crawl ipos root
 
-let router (fns:(Node->Node) list) : HttpHandler =
-    let root = Node("")
-    // precompile the route functions into node trie
+let private mapNode (fns:(Node->Node) list) (parent:Node) =
     let rec go ls =
         match ls with
         | [] -> ()
         | h :: t ->
-            h root |> ignore
+            h parent |> ignore
             go t
     go fns
+let subRoute (path:string) (fns:(Node->Node) list) (parent:Node) : Node =
+    let child = Node.AddPath parent path Empty
+    mapNode fns child
+    child
+    
+let router (fns:(Node->Node) list) : HttpHandler =
+    let root = Node("")
+    // precompile the route functions into node trie
+    mapNode fns root
+    // let rec go ls =
+    //     match ls with
+    //     | [] -> ()
+    //     | h :: t ->
+    //         h root |> ignore
+    //         go t
+    // go fns
 
     printfn "%A" root
 

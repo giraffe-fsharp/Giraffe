@@ -13,8 +13,8 @@
     <Compile Include="XmlViewEngine.fs" />
     <Compile Include="HttpHandlers.fs" />
     <Compile Include="BasicRouter.fs" />
-    <Compile Include="TokenRouter.fs" />
     <Compile Include="Middleware.fs" />
+    <Compile Include="TokenRouter.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.*" />

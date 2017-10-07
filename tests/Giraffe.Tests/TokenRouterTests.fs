@@ -542,11 +542,10 @@ let ``Sub route with empty route`` () =
         GET >=> router [
             route "/"    => text "Hello World"
             route "/foo" => text "bar"
-            subRoute "/api" (
-                router [
+            subRoute "/api" [
                     route ""       => text "api root"   //<<FAIL
                     route "/admin" => text "admin"
-                    route "/users" => text "users" ] )
+                    route "/users" => text "users" ]
             route "/api/test" => text "test"
             ]
 
@@ -571,11 +570,10 @@ let ``Sub route with non empty route`` () =
         GET >=> router [
             route "/"    => text "Hello World"
             route "/foo" => text "bar"
-            subRoute "/api" (
-                router [
+            subRoute "/api" [
                     route ""       => text "api root"
                     route "/admin" => text "admin"
-                    route "/users" => text "users" ] ) //<<FAIL (Not found)
+                    route "/users" => text "users" ] //<<FAIL (Not found)
             route "/api/test" => text "test"
             ]
 
@@ -631,20 +629,16 @@ let ``Nested sub routes`` () =
         GET >=> router [
             route "/"    => text "Hello World"
             route "/foo" => text "bar"
-            subRoute "/api" (
-                router [
+            subRoute "/api" [
                     route ""       => text "api root"
                     route "/admin" => text "admin"
                     route "/users" => text "users"
-                    subRoute "/v2" (
-                        router [
+                    subRoute "/v2" [
                             route ""       => text "api root v2"
                             route "/admin" => text "admin v2"
                             route "/users" => text "users v2"   //<<FAIL (Not found)
                         ]
-                    )
                 ]
-            )
             route "/api/test" => text "test"
             ]
 
@@ -709,22 +703,15 @@ let ``Multiple nested sub routes`` () =
         GET >=> router [
             route "/"    => text "Hello World"
             route "/foo" => text "bar"
-            subRoute "/api" (
-                router [
+            subRoute "/api" [
                     route "/users" => text "users"
-                    subRoute "/v2" (
-                        router [
+                    subRoute "/v2" [
                             route "/admin" => text "admin v2"
                             route "/users" => text "users v2"
-                            route "/admin2" => text "correct admin2" // <<FAIL & HACK
                         ]
-                    )
-                    // subRoute "/v2" (
-                    //     router [
-                    //         route "/admin2" => text "correct admin2" ]
-                    // )
+                    subRoute "/v2" [
+                            route "/admin2" => text "correct admin2" ]
                 ]
-            )
             route "/api/test"   => text "test"
             route "/api/v2/else" => text "else"
             ]
@@ -751,10 +738,9 @@ let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
         GET >=> router [
             route "/"    => text "Hello World"
             route "/foo" => text "bar"
-            subRoute "/api" (
-                router [
+            subRoute "/api" [
                     route  "" => text "api root"
-                    routef "/foo/bar/%s" text ] )   //<<FAIL (Not found)
+                    routef "/foo/bar/%s" text ]   //<<FAIL (Not found)
             route "/api/test" => text "test"
             ]
 

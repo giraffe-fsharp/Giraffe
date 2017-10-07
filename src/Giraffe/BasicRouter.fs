@@ -18,7 +18,8 @@ let private finish : HttpFunc       = Some >> Task.FromResult
 /// ---------------------------
 /// Sub route helper functions
 /// ---------------------------
-[<Literal>] let private RouteKey = "giraffe_route"
+[<Literal>] 
+let private RouteKey = "giraffe_route"
 
 let private getSavedSubPath (ctx : HttpContext) =
     if ctx.Items.ContainsKey RouteKey

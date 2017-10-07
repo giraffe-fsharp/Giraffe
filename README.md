@@ -37,6 +37,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [requiresRole](#requiresrole)
     - [requiresRoleOf](#requiresroleof)
     - [clearResponse](#clearResponse)
+- [Basic Routing](#basic-routing)
     - [route](#route)
     - [routef](#routef)
     - [routeCi](#routeci)
@@ -46,6 +47,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [routeStartsWithCi](#routestartswithci)
     - [subRoute](#subroute)
     - [subRouteCi](#subrouteci)
+- [Response Writing HttpHandlers](#response-writing-httphandlers)
     - [setStatusCode](#setstatuscode)
     - [setHttpHeader](#sethttpheader)
     - [setBody](#setbody)
@@ -59,6 +61,8 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [renderHtml](#renderhtml)
     - [redirectTo](#redirectto)
     - [warbler](#warbler)
+- [Performance Routing](#performance-routing)
+    - [token subRoute](#token-subroute)
 - [Additional HttpHandlers](#additional-httphandlers)
     - [Giraffe.Razor](#girafferazor)
         - [razorView](#razorview)
@@ -368,6 +372,11 @@ type Startup() =
         app.UseGiraffe webApp
 ```
 
+## Basic Routing
+
+In most cases basic routing can be used by including the namespace
+`Giraffe.BasicRouter` and includes the following routing functions:
+
 ### route
 
 `route` compares a given path with the actual request path and short circuits if it doesn't match.
@@ -532,6 +541,8 @@ let app =
                     route "/foo" >=> text "Foo 2"
                     route "/bar" >=> text "Bar 2" ]) ])
 ```
+
+## Response Writing HttpHandlers
 
 ### setStatusCode
 
@@ -792,6 +803,71 @@ A warbler will help to evaluate the function every time the route is hit.
 // ('a -> 'a -> 'b) -> 'a -> 'b
 let warbler f a = f a a
 ```
+
+## Performance Routing
+
+If you have performance requirements in your application, use the Token Performance Router instead by opening namespace 
+`Giraffe.TokenRouter`.
+
+#### Example:
+```fsharp
+let app =
+    router [
+        route  "/foo" (text "Foo")
+        routef "/parse/%s" text
+    ]
+``` 
+
+Instead of using `choose` to select routes, with the Token router, you use the `router` function and provide it a list of route map functions:
+- route (functions the same as the basic `choose` router, `path` & `HttpHandler`)
+- routef (also functions the same as the basic `choose` router, `format parse path` & `parse value HttpHandler`)
+- subRoute (this is slightly different from the basic router and detailed next)
+
+### token subRoute
+
+`subRoute` in the TokenRouter takes a sub-path string and list of sub-routes.
+
+#### Example:
+
+```fsharp
+let app = 
+    router [
+        route "/"    (text "Hello World")
+        route "/foo" (text "bar")
+        subRoute "/api" [
+                route  "" (text "api root")
+                routef "/foo/bar/%s" text ]  
+        route "/api/test" (text "test")
+    ]
+
+``` 
+To avoid wrapping the `HttpHandler` functions in parentheses `()` each time, the alternative `<|` or `=>` operators can be used to pipe it into the routing functions.
+
+#### Example:
+
+```fsharp
+let app = 
+    router [ 
+        route  "/foo" <| text "Foo"
+        route  "/bar" => text "bar"
+    ]
+``` 
+
+The Token performance router will implicitly write a `404 Not found` when routes are not found so unlike using `choose` and `Giraffe.BasicRouter`, you do not explicitly have to add a fallback `setStatusCode` route at the end.
+
+If you choose to use `Giraffe.TokenRouter`, you are still able to use `choose` for all non-routing related decision trees.
+
+#### Example :
+
+```fsharp
+let app = 
+    router [ 
+        route "/foo" ( choose [ 
+                GET >=> text "Get Foo"
+                POST >=> text "Post Foo" ])
+        route  "/bar" ( text "bar" )
+    ]
+``` 
 
 ## Additional HttpHandlers
 
