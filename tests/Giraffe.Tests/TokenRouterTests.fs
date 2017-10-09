@@ -601,11 +601,10 @@ let ``Route after sub route with same beginning of path`` () =
             GET >=> router [
                 route "/"    => text "Hello World"
                 route "/foo" => text "bar"
-                subRoute "/api" (
-                    router [
+                subRoute "/api" [
                         route ""       => text "api root"
                         route "/admin" => text "admin"
-                        route "/users" => text "users" ] )
+                        route "/users" => text "users" ]
                 route "/api/test" => text "test"
                 ]
 
@@ -663,21 +662,17 @@ let ``Route after nested sub routes with same beginning of path`` () =
         GET >=> router [
             route "/"    => text "Hello World"
             route "/foo" => text "bar"
-            subRoute "/api" (
-                router [
+            subRoute "/api" [
                     route ""       => text "api root"
                     route "/admin" => text "admin"
                     route "/users" => text "users"
-                    subRoute "/v2" (
-                        router [
+                    subRoute "/v2" [
                             route ""       => text "api root v2"
                             route "/admin" => text "admin v2"
                             route "/users" => text "users v2"
                         ]
-                    )
                     route "/yada" => text "yada"
                 ]
-            )
             route "/api/test"   => text "test"
             route "/api/v2/else" => text "else"
             ]

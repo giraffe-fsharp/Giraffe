@@ -413,15 +413,35 @@ let private getPostMatchNode fmt (nxt:char) (ils:MidCont list) =
 // Routing Node Map Functions used to build trie
 ////////////////////////////////////////////////////
 
-// Simple route that iterates down nodes and if function found, execute as normal
+
+
+///**Description**
+/// if url path value matches request, the HttpHandler function is run.
+///**Parameters**
+///  * `path` : `string` - the route path to match to the incoming request
+///  * `fn` : `HttpHandler` - function that accepts `HttpFunc` (Continuation), and `HttpContext`  
+///
+///**Output Type**
+///  * `parent` : `Node` - This parameter is applied by `router`, and is ommitted when building api such that function is partially applied fn
+///  * `Node`
 let route (path:string) (fn:HttpHandler) (root:Node) = 
+    // Simple route that iterates down nodes and if function found, execute as normal
     Node.AddPath root path (fn |> HandlerMap |> End)
 
 let subRouteOld (path:string) (fn:HttpHandler) (root:Node) =
     Node.AddPath root path (fn |> SubRouteMap |> Mid)
 
-// parsing route that iterates down nodes, parses, and then continues down further notes if needed
+///**Description**
+/// Matches and parses url values from a route using `printf` string formatting, results are passes to function as tuple.
+///**Parameters**
+///  * `path` : `StringFormat<'a,'T>` - the route to match & parse using wildcard format of `printf`
+///  * `fn` : `'T -> HttpHandler` - function that accepts the parsed tuple value and returns HttpHandler  
+///
+///**Output Type**
+///  * `parent` : `Node` - This parameter is applied by `router`, and is ommitted when building api such that function is partially applied fn
+///  * `Node`
 let routef (path : StringFormat<_,'T>) (fn:'T -> HttpHandler) (root:Node)=
+// parsing route that iterates down nodes, parses, and then continues down further notes if needed
     let last = path.Value.Length - 1
 
     let rec go i ts pcount (node:Node) =
@@ -597,11 +617,28 @@ let private mapNode (fns:(Node->Node) list) (parent:Node) =
             h parent |> ignore
             go t
     go fns
+
+///**Description**
+/// Subroute allows a group of routes with a common prefix to be grouped together in a subroute to avoid restating prefix each time.
+///**Parameters**
+///  * `path` : `string` - the prefix subroute path eg: "\api\"
+///  * `fns` : `(Node -> Node) list` - A list of routing functions that are to be prefixed with path
+///
+///**Output Type**
+///  * `parent` : `Node` - This parameter is applied by `router`, and is ommitted when building api such that function is partially applied fn
+///  * `Node`
 let subRoute (path:string) (fns:(Node->Node) list) (parent:Node) : Node =
     let child = Node.AddPath parent path Empty
     mapNode fns child
-    child
-    
+    child  
+
+///**Description**
+/// HttpHandler funtion that accepts a list of route mapping functions and builds a route tree for fast processing of request routes 
+///**Parameters**
+///  * `fns` : `(Node -> Node) list` - list of routing functions to route
+///
+///**Output Type**
+///  * `HttpHandler`
 let router (fns:(Node->Node) list) : HttpHandler =
     let root = Node("")
     // precompile the route functions into node trie
