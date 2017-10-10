@@ -5,12 +5,14 @@ open System.IO
 open System.Security.Claims
 open System.Collections.Generic
 open System.Threading
+open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Features
 open Microsoft.AspNetCore.Authentication
 open Microsoft.AspNetCore.Authentication.Cookies
+open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe.Tasks
@@ -70,6 +72,11 @@ let showUserHandler id =
     mustBeAdmin >=>
     text (sprintf "User ID: %i" id)
 
+let configuredHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let configuration = ctx.GetService<IConfiguration>()
+        text configuration.["HelloMessage"] next ctx
+
 let time() = System.DateTime.Now.ToString()
 
 [<CLIMutable>]
@@ -128,6 +135,7 @@ let webApp =
                 route  "/person"     >=> (personView { Name = "Html Node" } |> renderHtml)
                 route  "/once"       >=> (time() |> text)
                 route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
+                route  "/configured"  >=> configuredHandler
             ]
         POST >=>
             choose [
@@ -175,9 +183,7 @@ let configureLogging (loggerBuilder : ILoggingBuilder) =
 let main argv =
     let contentRoot = Directory.GetCurrentDirectory()
     let webRoot     = Path.Combine(contentRoot, "WebRoot")
-    WebHostBuilder()
-        .UseKestrel()
-        .UseContentRoot(contentRoot)
+    WebHost.CreateDefaultBuilder()
         .UseWebRoot(webRoot)
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(configureServices)
