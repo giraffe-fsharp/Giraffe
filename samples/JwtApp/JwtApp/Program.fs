@@ -1,29 +1,48 @@
-module _AppName.App
+module JwtApp.App
 
 open System
-open System.IO
 open System.Collections.Generic
+open System.IO
+open System.Security.Claims
+open Microsoft.AspNetCore.Authentication
+open Microsoft.AspNetCore.Authentication.JwtBearer
 open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Cors.Infrastructure
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
+open Microsoft.IdentityModel.Tokens
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
-open Giraffe.Razor.HttpHandlers
-open Giraffe.Razor.Middleware
-open _AppName.Models
 
 // ---------------------------------
 // Web app
 // ---------------------------------
 
+type SimpleClaim = { Type: string; Value: string } 
+
+let authorize =
+    requiresAuthentication (challenge JwtBearerDefaults.AuthenticationScheme)
+
+let greet =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let claim = ctx.User.FindFirst "name"
+        let name = claim.Value
+        text ("Hello " + name) next ctx
+    
+let showClaims =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let claims = ctx.User.Claims
+        let simpleClaims = Seq.map (fun (i : Claim) -> {Type = i.Type; Value = i.Value}) claims
+        json simpleClaims next ctx
+    
 let webApp =
     choose [
         GET >=>
             choose [
-                route "/" >=> razorHtmlView "Index" { Text = "Hello world, from Giraffe!" }
+                route "/" >=> text "Public endpoint."
+                route "/greet" >=> authorize >=> greet
+                route "/claims" >=> authorize >=> showClaims
             ]
         setStatusCode 404 >=> text "Not Found" ]
 
@@ -39,21 +58,29 @@ let errorHandler (ex : Exception) (logger : ILogger) =
 // Config and Main
 // ---------------------------------
 
-let configureCors (builder : CorsPolicyBuilder) =
-    builder.WithOrigins("http://localhost:8080").AllowAnyMethod().AllowAnyHeader() |> ignore
-    
 let configureApp (app : IApplicationBuilder) =
-    app.UseCors configureCors |> ignore
+    app.UseAuthentication() |> ignore
     app.UseGiraffeErrorHandler errorHandler
     app.UseStaticFiles() |> ignore
     app.UseGiraffe webApp
 
+let authenticationOptions (o : AuthenticationOptions) =
+    o.DefaultAuthenticateScheme <- JwtBearerDefaults.AuthenticationScheme
+    o.DefaultChallengeScheme <- JwtBearerDefaults.AuthenticationScheme
+
+let jwtBearerOptions (cfg : JwtBearerOptions) =
+    cfg.SaveToken <- true
+    cfg.IncludeErrorDetails <- true
+    cfg.Authority <- "https://accounts.google.com"
+    cfg.Audience <- "your-oauth-2.0-client-id.apps.googleusercontent.com"
+    cfg.TokenValidationParameters <- new TokenValidationParameters (
+        ValidIssuer = "accounts.google.com"
+    )
+
 let configureServices (services : IServiceCollection) =
-    let sp  = services.BuildServiceProvider()
-    let env = sp.GetService<IHostingEnvironment>()
-    let viewsFolderPath = Path.Combine(env.ContentRootPath, "Views")
-    services.AddRazorEngine viewsFolderPath |> ignore
-    services.AddCors |> ignore
+    services
+        .AddAuthentication(authenticationOptions)
+        .AddJwtBearer(Action<JwtBearerOptions> jwtBearerOptions) |> ignore
 
 let configureLogging (builder : ILoggingBuilder) =
     let filter (l : LogLevel) = l.Equals LogLevel.Error

@@ -452,7 +452,7 @@ let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/blah blah/bar")) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "blah%20blah"
+    let expected = "blah blah"
 
     task {
         let! result = app next ctx

@@ -106,6 +106,7 @@ $giraffeRazor     = ".\src\Giraffe.Razor\Giraffe.Razor.fsproj"
 $giraffeDotLiquid = ".\src\Giraffe.DotLiquid\Giraffe.DotLiquid.fsproj"
 $giraffeTests     = ".\tests\Giraffe.Tests\Giraffe.Tests.fsproj"
 $identityApp      = ".\samples\IdentityApp\IdentityApp\IdentityApp.fsproj"
+$jwtApp           = ".\samples\JwtApp\JwtApp\JwtApp.fsproj"
 $sampleApp        = ".\samples\SampleApp\SampleApp\SampleApp.fsproj"
 $sampleAppTests   = ".\samples\SampleApp\SampleApp.Tests\SampleApp.Tests.fsproj"
 
@@ -149,6 +150,9 @@ if (!$ExcludeSamples.IsPresent -and !$Run.IsPresent)
 
     dotnet-restore $identityApp
     dotnet-build   $identityApp
+
+    dotnet-restore $jwtApp
+    dotnet-build   $jwtApp
 
     dotnet-restore $sampleApp
     dotnet-build   $sampleApp
