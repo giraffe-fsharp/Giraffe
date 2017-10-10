@@ -1459,7 +1459,7 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Roman Melnikov](https://github.com/Neftedollar) (Added `redirectTo` route)
 - [Diego B. Fernandez](https://github.com/diegobfernandez) (Added support for the `Option<'T>` type in the query string model binding)
 - [Jimmy Byrd](https://github.com/TheAngryByrd) (Added Linux builds)
-- [Jon Canning](https://github.com/JonCanning) (Moved the Razor and DotLiquid http handlers into separate NuGet packages and added the `routeBind` handler as well as some useful `HttpContext` extensions)
+- [Jon Canning](https://github.com/JonCanning) (Moved the Razor and DotLiquid http handlers into separate NuGet packages and added the `routeBind` handler as well as some useful `HttpContext` extensions and bug fixes)
 - [Andrew Grant](https://github.com/GraanJonlo) (Fixed bug in the `giraffe-template` NuGet package)
 - [Gerard](https://github.com/gerardtoconnor) (Changed the API to continuations instead of binding HttpHandlers and to tasks from async)
 - [Mitchell Tilbrook](https://github.com/marukami) (Helped to fix documentation)
@@ -1468,6 +1468,8 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Lukas Nordin](https://github.com/lukethenuke) (Helped with bug fixes)
 - [Banashek](https://github.com/Banashek) (Migrated Giraffe to .NET Core 2.0)
 - [Yevhenii Tsalko](https://github.com/YTsalko) (Migrated sample app to .NET Core 2.0)
+- [Tor Hovland](https://github.com/torhovland) (Helped with the sample applications, demonstrating CORS, JWT and configuration options)
+- [dawedawe](https://github.com/dawedawe) (README fixes)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
 
