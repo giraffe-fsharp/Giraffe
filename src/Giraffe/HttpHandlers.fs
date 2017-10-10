@@ -46,9 +46,9 @@ let private getSavedSubPath (ctx : HttpContext) =
 
 let private getPath (ctx : HttpContext) =
     match getSavedSubPath ctx with
-    | Some p -> ctx.Request.Path.ToString().[p.Length..]
-    | None   -> ctx.Request.Path.ToString()
-
+    | Some p when ctx.Request.Path.Value.Contains p -> ctx.Request.Path.Value.[p.Length..]
+    | _   -> ctx.Request.Path.Value
+    
 let private handlerWithRootedPath (path : string) (handler : HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
