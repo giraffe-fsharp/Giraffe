@@ -1352,3 +1352,37 @@ let ``GET "/{foo}/{bar}" returns Hello World``() =
             let body = getBody ctx
             Assert.Equal("Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
     }
+
+[<Fact>]
+let ``GET "/{foo}/{bar}/" ignores a trailing slash``() =
+    let ctx = Substitute.For<HttpContext>()
+    let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}" (fun m -> sprintf "%s %i" m.Foo m.Bar |> text)
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/1/")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFail "It was expected that the result would be Hello 1"
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal("Hello 1", body)
+    }
+
+[<Fact>]
+let ``GET "/{foo}/{bar}////" ignores trailing slashes``() =
+    let ctx = Substitute.For<HttpContext>()
+    let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}" (fun m -> sprintf "%s %i" m.Foo m.Bar |> text)
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/1////")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFail "It was expected that the result would be Hello 1"
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal("Hello 1", body)
+    }
