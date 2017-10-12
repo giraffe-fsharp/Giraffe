@@ -213,13 +213,14 @@ let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : H
             | Some args -> routeHandler args next ctx
 
 /// Filters an incoming HTTP request based on the request path (case insensitive).
+/// The filter ignores any trailing slashes on the path.
 /// The parameters from the string will be used to create an instance of 'T
 /// and subsequently passed into the supplied routeHandler.
 let routeBind<'T> (route: string) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let pattern = route.Replace("{", "(?<").Replace("}", ">.+)") |> sprintf "^%s$"
         let regex = Regex(pattern, RegexOptions.IgnoreCase)
-        let mtch = regex.Match ctx.Request.Path.Value
+        let mtch = regex.Match (ctx.Request.Path.Value.TrimEnd('/'))
         match mtch.Success with
         | true ->
             let groups = mtch.Groups
