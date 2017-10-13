@@ -30,7 +30,7 @@ let masterPage (pageTitle : string) (content : XmlNode list) =
     html [] [
         head [] [
             title [] [ encodedText pageTitle ]
-            style [] [ rawText "label { display: inline-box; widht: 80px; }" ]
+            style [] [ rawText "label { display: inline-block; width: 80px; }" ]
         ]
         body [] [
             h1 [] [ encodedText pageTitle ]
