@@ -1337,7 +1337,7 @@ let ``POST "/redirect" redirect to "/" `` () =
 type RouteBind = { Foo : string; Bar : int; Id : Guid }
 
 [<Fact>]
-let ``GET "/{foo}/{bar}" returns Hello World``() =
+let ``GET "/{foo}/{bar}/{id}" returns Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
     let ctx = Substitute.For<HttpContext>()
     let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -1351,4 +1351,55 @@ let ``GET "/{foo}/{bar}" returns Hello World``() =
         | Some ctx ->
             let body = getBody ctx
             Assert.Equal("Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
+    }
+
+[<Fact>]
+let ``GET "/{foo}/{bar}/{id}/" returns Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
+    let ctx = Substitute.For<HttpContext>()
+    let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}/" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d/")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFail "It was expected that the result would be Hello 1f40580b1-d55b-4fe2-b6fb-ca4f90749a9d"
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal("Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
+    }
+
+[<Fact>]
+let ``GET "/{foo}/{bar}/{id}///" returns Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
+    let ctx = Substitute.For<HttpContext>()
+    let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}(/*)" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d///")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFail "It was expected that the result would be Hello 1f40580b1-d55b-4fe2-b6fb-ca4f90749a9d"
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal("Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
+    }
+
+[<Fact>]
+let ``GET "/{foo}/{bar}/{id}" returns Hello 2 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
+    let ctx = Substitute.For<HttpContext>()
+    let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}(/*)" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/2/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d///")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFail "It was expected that the result would be Hello 1f40580b1-d55b-4fe2-b6fb-ca4f90749a9d"
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal("Hello 2 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
     }

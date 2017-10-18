@@ -1349,7 +1349,7 @@ type Startup() =
 
 ### Demo apps
 
-There are two basic sample applications in the [`/samples`](https://github.com/dustinmoris/Giraffe/tree/develop/samples) folder. The [IdentityApp](https://github.com/dustinmoris/Giraffe/tree/develop/samples/IdentityApp) demonstrates how ASP.NET Core Identity can be used with Giraffe and the [SampleApp](https://github.com/dustinmoris/Giraffe/tree/develop/samples/SampleApp) is a generic sample application covering multiple features.
+There are three basic sample applications in the [`/samples`](https://github.com/dustinmoris/Giraffe/tree/develop/samples) folder. The [IdentityApp](https://github.com/dustinmoris/Giraffe/tree/develop/samples/IdentityApp) demonstrates how ASP.NET Core Identity can be used with Giraffe, the [JwtApp](https://github.com/dustinmoris/Giraffe/tree/develop/samples/JwtApp) shows how to configure JWT tokens in Giraffe and the [SampleApp](https://github.com/dustinmoris/Giraffe/tree/develop/samples/SampleApp) is a generic sample application covering multiple features.
 
 ### Live apps
 

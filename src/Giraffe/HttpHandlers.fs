@@ -48,7 +48,7 @@ let private getPath (ctx : HttpContext) =
     match getSavedSubPath ctx with
     | Some p when ctx.Request.Path.Value.Contains p -> ctx.Request.Path.Value.[p.Length..]
     | _   -> ctx.Request.Path.Value
-    
+
 let private handlerWithRootedPath (path : string) (handler : HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
@@ -217,7 +217,7 @@ let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : H
 /// and subsequently passed into the supplied routeHandler.
 let routeBind<'T> (route: string) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        let pattern = route.Replace("{", "(?<").Replace("}", ">.+)") |> sprintf "^%s$"
+        let pattern = route.Replace("{", "(?<").Replace("}", ">[^/\n]+)") |> sprintf "^%s$"
         let regex = Regex(pattern, RegexOptions.IgnoreCase)
         let mtch = regex.Match ctx.Request.Path.Value
         match mtch.Success with
