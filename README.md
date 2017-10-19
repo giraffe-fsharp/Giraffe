@@ -69,6 +69,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
         - [dotLiquidHtmlView](#dotliquidhtmlview)
     - [Giraffe.TokenRouter](#giraffetokenrouter)
         - [router](#router)
+        - [routing functions](#routing-functions)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Model Binding](#model-binding)
     - [BindJson](#bindjson)
