@@ -63,8 +63,6 @@ let private int64Parse (path:string) ipos fpos =
     | '+' -> go (ipos + 1)
     | _ -> go (ipos)
 
-
-let private decPower = [|1.;10.;100.;1000.;10000.;100000.;1000000.;10000000.;100000000.;100000000.|] 
 let private decDivide = [|1.;10.;100.;1000.;10000.;100000.;1000000.;10000000.;100000000.;100000000.|] |> Array.map (fun d -> 1. / d) // precompute inverse once at compile time
     
 let private floatParse (path:string) ipos fpos =
@@ -96,40 +94,6 @@ let private floatParse (path:string) ipos fpos =
     | '-' -> negNumber <- true ; go (ipos + 1)
     | '+' -> go (ipos + 1)
     | _ -> go (ipos)
-
-// let floatParse2 (path:string) ipos fpos =
-//     let mutable result = 0.
-//     let mutable nominator = 0L
-//     let mutable demoninator = 0L
-//     let mutable decPlaces = 0
-//     let mutable negNumber = false
-    
-//     let rec go pos =
-//         if path.[pos] = '.' then
-//             decPlaces <- 1
-//             if pos < fpos then go (pos + 1) else failure
-//         else
-//             let charDiff = int path.[pos] - int '0'
-//             if between charDiff 0 9 then
-//                 if decPlaces = 0 then 
-//                     nominator <- (nominator * 10L) + int64 charDiff
-//                 else
-//                     //result <- result + charDiff 
-//                     demoninator <- (demoninator * 10L) + int64 charDiff 
-//                     //result <- result + ( charDiff * decPower.[decPlaces]) // char is divided using multiplication of pre-computed divisors
-//                     decPlaces <- decPlaces + 1
-//                 if pos = fpos || decPlaces > 9 then
-//                     (float nominator) + (float demoninator) * (decPower.[decPlaces]) * if negNumber then - 1. else 1. 
-//                     |> box |> rtrn 
-//                 else go (pos + 1)   // continue iter
-//             else failure   // Invalid Character in path
-
-//     //Start Parse taking into account sign operator
-//     match path.[ipos] with
-//     | '-' -> negNumber <- true ; go (ipos + 1)
-//     | '+' -> go (ipos + 1)
-//     | _ -> go (ipos)
-
 
 let formatMap =
     dict [

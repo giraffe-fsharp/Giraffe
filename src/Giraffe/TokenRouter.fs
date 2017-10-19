@@ -13,20 +13,13 @@ open Giraffe.TokenParsers
 // assumptions: memory and compile time not relevant, all about execution speed, initially testing with Dictionary edges
 
 open NonStructuralComparison // needed for parser performance, non boxing of struct equality
-let routerKey = "router_pos"
-let notFound : HttpHandler = setStatusCode 404 >=> text "Not found"
-
-type RouteState(path:string) =
-    member val path = path with get
-    member val pos = 0 with get , set
 
 ////////////////////////////////////////////////////
 // Node Token (Radix) Tree using node mapping functions
 ////////////////////////////////////////////////////
 
 /// Tail Clip: clip end of 'str' string staring from int pos -> end
-let inline (-|) (str:string) (from:int) = str.Substring(from,str.Length - from)
-
+let inline private (-|) (str:string) (from:int) = str.Substring(from,str.Length - from)
 let private commonPathIndex (str1:string) (idx1:int) (str2:string) =
     let rec go i j =
         if i < str1.Length && j < str2.Length then
@@ -52,12 +45,6 @@ type PathMatch =
 | ZeroToken
 | ZeroMatch
 | FullMatch
-
-
-type ParseFnCache( ifn : obj -> HttpHandler) = 
-    member val TupleFn : ( obj [] -> obj ) option = None with get,set
-    member val fn = ifn with get
-
 let private getPathMatch (path:string) (token:string) =
     if token.Length = 0 then ZeroToken
     else
@@ -69,6 +56,10 @@ let private getPathMatch (path:string) (token:string) =
         elif tokenMatch then TokenInPath
         elif pathMatch  then PathInToken
         else SubMatch cp
+
+type ParseFnCache(ifn:obj -> HttpHandler) = 
+    member val TupleFn : ( obj [] -> obj ) option = None with get,set
+    member val fn = ifn with get
 
 type Node(token:string) = 
     let mutable midFns = []
@@ -325,9 +316,12 @@ let routef (path : StringFormat<_,'T>) (fn:'T -> HttpHandler) (root:Node)=
 // choose root will apply its root node to all route mapping functions to generate Trie at compile time, function produced will take routeState (path) and execute appropriate function
 
 // process path fn that returns httpHandler
-let private processPath (root:Node) : HttpHandler =
-    fun next (ctx:HttpContext) -> //(succ:Continuation) (fail:Continuation)
+let private processPath (abort:HttpHandler) (root:Node) : HttpHandler =
     
+    fun next ctx ->
+
+        //let abort  = setStatusCode 404 >=> text "Not found"
+
         let path : string = ctx.Request.Path.Value
         let last = path.Length - 1
 
@@ -403,7 +397,7 @@ let private processPath (root:Node) : HttpHandler =
 
         let rec processEnd (fns:EndCont list, pos, args) =
             match fns with
-            | [] -> notFound next ctx
+            | [] -> abort next ctx
             | h :: t ->
                 match h with                    
                 | HandlerMap fn -> fn next ctx // run function with all parameters
@@ -429,7 +423,7 @@ let private processPath (root:Node) : HttpHandler =
                 | struct(false,_,_,_) -> processMid(tail, pos, acc) // subsequent match could not complete so fail
             
             match fns with
-            | [] -> notFound next ctx 
+            | [] -> abort next ctx 
             | h :: t ->
                 match h with
                 | ApplyMatch x -> applyMatch x pos args t
@@ -453,7 +447,7 @@ let private processPath (root:Node) : HttpHandler =
                         processMid( node.MidFns, nxtChar, [] )
             else 
                 //printfn ">> failed to match %s path with %s token, commonPath=%i" (path.Substring(pos)) (node.Token) (commonPathIndex path pos node.Token)
-                notFound next ctx          
+                abort next ctx          
 
         // begin path crawl process
         crawl 0 root
@@ -484,15 +478,15 @@ let subRoute (path:string) (fns:(Node->Node) list) (parent:Node) : Node =
 ///**Description**
 /// HttpHandler funtion that accepts a list of route mapping functions and builds a route tree for fast processing of request routes 
 ///**Parameters**
+///  * `abort` : `HttpHandler` - HttpHandler to call if no route matched eg : `notFound`    
 ///  * `fns` : `(Node -> Node) list` - list of routing functions to route
 ///
 ///**Output Type**
 ///  * `HttpHandler`
-let router (fns:(Node->Node) list) : HttpHandler =
+let router (abort:HttpHandler) (fns:(Node->Node) list) : HttpHandler =
     let root = Node("")
     // precompile the route functions into node trie
     mapNode fns root
 
-    fun next ctx ->
-        //get path progress (if any so far)
-        processPath root next ctx
+    //get path progress (if any so far)
+    processPath abort root
