@@ -67,6 +67,8 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
         - [dotLiquid](#dotliquid)
         - [dotLiquidTemplate](#dotliquidtemplate)
         - [dotLiquidHtmlView](#dotliquidhtmlview)
+    - [Giraffe.TokenRouter](#giraffetokenrouter)
+        - [router](#router)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Model Binding](#model-binding)
     - [BindJson](#bindjson)
@@ -933,6 +935,57 @@ type Person =
 let app =
     choose [
         route  "/foo" >=> dotLiquidHtmlView "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
+    ]
+```
+
+### Giraffe.TokenRouter
+
+Including the `Giraffe.TokenRouter` module/namespace adds alternative route `HttpHandler` functions to route incoming requests through a basic [Radix Tree](https://en.wikipedia.org/wiki/Radix_tree) that is modified to handle path matching and parse values significantly faster then using basic `choose`. Each routing function is compiled into the tree so that on runtime it can quickly traverse the tree in small tokens until it matches or fails. If speed/performance on parsing & matching of routes is required it is advised you use `Giraffe.TokenRouter`
+
+#### router
+
+The base of all routing is a `router` function instead of `choose`. The `router` HttpHandler takes two arguments, a `HttpHandler` to run when it fails to match (typlically a `404 "Not Found"`) and the second argument is the list of routing functions.
+
+### Example:
+
+Defining a basic router and routes
+
+```fsharp
+let notFound = setStatusCode 404 >=> text "Not found"
+let app =
+    router notFound [
+        route "/"       (text "index")
+        route "/about"  (text "about")
+    ]
+```
+
+#### routing functions
+
+There are 3 routing functions and they work almost exactly the same as the basic ones with the exception of subRoute that has a slightly altered form.
+
+`route` & `routef` both have two args of path & function like before but as they are node mappers, the functions need to be enclosed in parentheses `()` or use `<|` / `=>` to capture the entire function.
+
+`subRoute` now takes a subpath argument like before (such that all child routes will presume this subpath is prepended) and as a second argument takes a list of further child routing functions
+
+### Example:
+
+Defining a basic router and routes
+
+```fsharp
+let notFound = setStatusCode 404 >=> text "Not found"
+let app =
+    router notFound [
+        route "/"       (text "index")
+        route "/about"  => text "about"
+        routef "parsing/%s/%i" (fun (s,i) -> text (sprintf "Recieved %s & %i" s i))
+        subRoute "/api" [
+            route "/"       <| text "api index"
+            route "/about"  (text "api about")
+            subRoute "/v2" [
+                route "/"       <| text "api v2 index"
+                route "/about"  (text "api v2 about")
+            ]
+        ]
     ]
 ```
 
