@@ -18,12 +18,10 @@ let private stringParse (path:string) ipos fpos = path.Substring(ipos,fpos - ipo
 let private  charParse (path:string) ipos _ = path.[ipos] |> box |> rtrn // this is not ideal method (but uncommonly used)
 
 let private boolParse (path:string) ipos fpos =
-    if between (fpos - ipos) 4 5 then 
-        match path.[ipos] with
-        | 't' | 'T' -> true  |> box |> rtrn // todo: Lazy matching, i'll complete later
-        | 'f' | 'F' -> false |> box |> rtrn
-        | _ -> failure
-    else failure
+    match path.Substring(ipos, fpos - ipos) with
+    | "true" | "True" | "TRUE" -> true  |> box |> rtrn
+    | "false" | "False" | "FALSE" -> false |> box |> rtrn
+    | _ -> failure
 
 let private intParse (path:string) ipos fpos =
 
