@@ -884,7 +884,7 @@ type Person =
         LastName  : string
     }
 
-let template = "<html><head><title>DotLiquid</title></head><body><p>First name: {{ firstName }}<br />Last name: {{ lastName }}</p></body></html>
+let template = "<html><head><title>DotLiquid</title></head><body><p>First name: {{ firstName }}<br />Last name: {{ lastName }}</p></body></html>"  
 
 let app =
     choose [
