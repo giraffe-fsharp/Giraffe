@@ -3,7 +3,6 @@ module Giraffe.TokenParsers
 open NonStructuralComparison // needed for parser performance, non boxing of struct equality
 open OptimizedClosures       // needed to apply multi-curry args at once with adapt (invoke method)
 
-
 type Parser = FSharpFunc<string,int,int,struct(bool*obj)>
 
 let inline private between x l u = (x - l) * (u - x) >= LanguagePrimitives.GenericZero
@@ -32,8 +31,8 @@ let private intParse (path:string) ipos fpos =
         if between charDiff 0 9 then
             result <- (result * 10) + charDiff
             if pos = fpos then
-                if negNumber then - result else result 
-                |> box |> rtrn 
+                if negNumber then - result else result
+                |> box |> rtrn
             else go (pos + 1)       // continue iter
         else failure
     //Start Parse taking into account sign operator
@@ -41,7 +40,7 @@ let private intParse (path:string) ipos fpos =
     | '-' -> negNumber <- true ; go (ipos + 1)
     | '+' -> go (ipos + 1)
     | _ -> go (ipos)
-    
+
 let private int64Parse (path:string) ipos fpos =
 
     let mutable result = 0L
@@ -51,8 +50,8 @@ let private int64Parse (path:string) ipos fpos =
         if between charDiff 0L 9L then
             result <- (result * 10L) + charDiff
             if pos = fpos then
-                if negNumber then - result else result 
-                |> box |> rtrn 
+                if negNumber then - result else result
+                |> box |> rtrn
             else go (pos + 1)       // continue iter
         else failure
     //Start Parse taking into account sign operator
@@ -62,12 +61,12 @@ let private int64Parse (path:string) ipos fpos =
     | _ -> go (ipos)
 
 let private decDivide = [|1.;10.;100.;1000.;10000.;100000.;1000000.;10000000.;100000000.;100000000.|] |> Array.map (fun d -> 1. / d) // precompute inverse once at compile time
-    
+
 let private floatParse (path:string) ipos fpos =
     let mutable result = 0.
     let mutable decPlaces = 0
     let mutable negNumber = false
-    
+
     let rec go pos =
         if path.[pos] = '.' then
             decPlaces <- 1
@@ -75,14 +74,14 @@ let private floatParse (path:string) ipos fpos =
         else
             let charDiff = float path.[pos] - float '0'
             if between charDiff 0. 9. then
-                if decPlaces = 0 then 
+                if decPlaces = 0 then
                     result <- (result * 10.) + charDiff
                 else
-                    //result <- result + charDiff 
+                    //result <- result + charDiff
                     result <- result + ( charDiff * decDivide.[decPlaces]) // char is divided using multiplication of pre-computed divisors
                     decPlaces <- decPlaces + 1
                 if pos = fpos || decPlaces > 9 then
-                    if negNumber then - result else result 
+                    if negNumber then - result else result
                     |> box |> rtrn
                 else go (pos + 1)   // continue iter
             else failure   // Invalid Character in path

@@ -446,7 +446,10 @@ let app =
 
 ### routeBind
 
-`routeBind` matches and parses a request path with a given object model. On success it will resolve the arguments from the route and create an instance of type `'T` and invoke the given `HttpHandler` with it.
+`routeBind` matches and parses a request path with a given object model. On success it will resolve the arguments from the route and create an instance of type `'T` and invoke the given
+`HttpHandler` with it.
+
+The `route` parameter of the `routeBind` handler can include any standard .NET Regex to allow greater flexibility when binding a route to an object model. For example `/{foo}/{bar}(/?)` would additionally specify that the route may end with zero or one trailing slash in order to successfully bind to the model.
 
 #### Example:
 
@@ -455,14 +458,20 @@ type Person =
     {
         FirstName : string
         LastName : string
-    }
 
 let app =
     choose [
-        route  "/foo/{firstName}/{lastName}" >=> routeBind<Person> (fun person ->
+        routeBind<Person> "/foo/{firstName}/{lastName}(/?)" (fun person ->
             sprintf "%s %s" person.FirstName person.LastName
             |> text)
     ]
+    }
+
+// HTTP GET /foo/John/Doe   --> Success
+// HTTP GET /foo/John/Doe/  --> Success
+// HTTP GET /foo/John/Doe// --> Failure
+
+// The last case will not bind to the Person model, because the Regex doesn't allow more than one trailing slash (change ? to * and it would work)
 ```
 
 ### routeStartsWith
@@ -887,7 +896,7 @@ type Person =
         LastName  : string
     }
 
-let template = "<html><head><title>DotLiquid</title></head><body><p>First name: {{ firstName }}<br />Last name: {{ lastName }}</p></body></html>"  
+let template = "<html><head><title>DotLiquid</title></head><body><p>First name: {{ firstName }}<br />Last name: {{ lastName }}</p></body></html>"
 
 let app =
     choose [
