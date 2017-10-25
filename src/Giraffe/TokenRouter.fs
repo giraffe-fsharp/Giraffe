@@ -1,16 +1,16 @@
 module Giraffe.TokenRouter
 
-open System.Threading.Tasks
-open FSharp.Core.Printf
-open Microsoft.AspNetCore.Http
 open System.Collections.Generic
-open Microsoft.FSharp.Reflection
-open Giraffe.HttpHandlers
 open System.Text
+open Microsoft.FSharp.Reflection
+open FSharp.Core.Printf
+open Giraffe.HttpHandlers
 open Giraffe.TokenParsers
 
-// implimenation of (router) Trie Node
-// assumptions: memory and compile time not relevant, all about execution speed, initially testing with Dictionary edges
+// Implemenation of (router) Trie Node
+// --------------------------------------
+// Assumptions: Memory and compile time are not relevant.
+// Optimised for execution speed (initially testing with Dictionary edges)
 
 open NonStructuralComparison // needed for parser performance, non boxing of struct equality
 

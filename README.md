@@ -449,7 +449,7 @@ let app =
 `routeBind` matches and parses a request path with a given object model. On success it will resolve the arguments from the route and create an instance of type `'T` and invoke the given
 `HttpHandler` with it.
 
-The `route` parameter of the `routeBind` handler can include any standard .NET Regex to allow greater flexibility when binding a route to an object model. For example `/{foo}/{bar}(/?)` would additionally specify that the route may end with zero or one trailing slash in order to successfully bind to the model.
+The `route` parameter of the `routeBind` handler can include any standard .NET Regex to allow greater flexibility when binding a route to an object model. For example `/{foo}/{bar}(/?)` specifies that the route may end with zero or one trailing slash when binding to the model.
 
 #### Example:
 
@@ -471,7 +471,7 @@ let app =
 // HTTP GET /foo/John/Doe/  --> Success
 // HTTP GET /foo/John/Doe// --> Failure
 
-// The last case will not bind to the Person model, because the Regex doesn't allow more than one trailing slash (change ? to * and it would work)
+// The last case will not bind to the Person model, because the Regex doesn't allow more than one trailing slash (change ? to * and it will work)
 ```
 
 ### routeStartsWith
@@ -950,13 +950,17 @@ let app =
 
 ### Giraffe.TokenRouter
 
-Including the `Giraffe.TokenRouter` module/namespace adds alternative route `HttpHandler` functions to route incoming requests through a basic [Radix Tree](https://en.wikipedia.org/wiki/Radix_tree) that is modified to handle path matching and parse values significantly faster then using basic `choose`. Each routing function is compiled into the tree so that on runtime it can quickly traverse the tree in small tokens until it matches or fails. If speed/performance on parsing & matching of routes is required it is advised you use `Giraffe.TokenRouter`
+The `Giraffe.TokenRouter` module adds alternative `HttpHandler` functions to route incoming HTTP requests through a basic [Radix Tree](https://en.wikipedia.org/wiki/Radix_tree). Several routing handlers (e.g.: `routef` and `subRoute`) have been overridden in such a way that path matching and value parsing are significantly faster than using the basic `choose` function.
+
+This implementation assumes that additional memory and compilation time is not an issue. If speed and performance of parsing and path matching of routes is required then `Giraffe.TokenRouter` is the preferred option.
 
 #### router
 
-The base of all routing is a `router` function instead of `choose`. The `router` HttpHandler takes two arguments, a `HttpHandler` to run when it fails to match (typlically a `404 "Not Found"`) and the second argument is the list of routing functions.
+The base of all routing decisions is a `router` function instead of the default `choose` function when using the `Giraffe.TokenRouter` module.
 
-### Example:
+The `router` HttpHandler takes two arguments, first a `HttpHandler` to execute when no route can be matched (typical 404 Not Found handler) and secondly a list of all routing functions.
+
+##### Example:
 
 Defining a basic router and routes
 
@@ -971,11 +975,11 @@ let app =
 
 #### routing functions
 
-There are 3 routing functions and they work almost exactly the same as the basic ones with the exception of subRoute that has a slightly altered form.
+When using the `Giraffe.TokenRouter` module the main routing functions have been slightly overridden to match the alternative (speed improved) implementation.
 
-`route` & `routef` both have two args of path & function like before but as they are node mappers, the functions need to be enclosed in parentheses `()` or use `<|` / `=>` to capture the entire function.
+The `route` and `routef` handlers work the exact same way as before, except that the continuation handler needs to be enclosed in parentheses or captured by the `<|` or `=>` operators.
 
-`subRoute` now takes a subpath argument like before (such that all child routes will presume this subpath is prepended) and as a second argument takes a list of further child routing functions
+The `subRoute` handler has been altered in order to accept an additional parameter of child routing functions. All child routing functions will presume that the given sub path has been prepended.
 
 ### Example:
 
