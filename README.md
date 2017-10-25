@@ -67,6 +67,9 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
         - [dotLiquid](#dotliquid)
         - [dotLiquidTemplate](#dotliquidtemplate)
         - [dotLiquidHtmlView](#dotliquidhtmlview)
+    - [Giraffe.TokenRouter](#giraffetokenrouter)
+        - [router](#router)
+        - [routing functions](#routing-functions)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Model Binding](#model-binding)
     - [BindJson](#bindjson)
@@ -443,7 +446,10 @@ let app =
 
 ### routeBind
 
-`routeBind` matches and parses a request path with a given object model. On success it will resolve the arguments from the route and create an instance of type `'T` and invoke the given `HttpHandler` with it.
+`routeBind` matches and parses a request path with a given object model. On success it will resolve the arguments from the route and create an instance of type `'T` and invoke the given
+`HttpHandler` with it.
+
+The `route` parameter of the `routeBind` handler can include any standard .NET Regex to allow greater flexibility when binding a route to an object model. For example `/{foo}/{bar}(/?)` specifies that the route may end with zero or one trailing slash when binding to the model.
 
 #### Example:
 
@@ -452,14 +458,22 @@ type Person =
     {
         FirstName : string
         LastName : string
-    }
 
 let app =
     choose [
-        route  "/foo/{firstName}/{lastName}" >=> routeBind<Person> (fun person ->
+        routeBind<Person> "/foo/{firstName}/{lastName}(/?)" (fun person ->
             sprintf "%s %s" person.FirstName person.LastName
             |> text)
     ]
+    }
+
+// HTTP GET /foo/John/Doe   --> Success
+// HTTP GET /foo/John/Doe/  --> Success
+// HTTP GET /foo/John/Doe// --> Failure
+
+// The last case will not bind to the Person model,
+// because the Regex doesn't allow more than one
+// trailing slash (change ? to * and it will work).
 ```
 
 ### routeStartsWith
@@ -884,7 +898,7 @@ type Person =
         LastName  : string
     }
 
-let template = "<html><head><title>DotLiquid</title></head><body><p>First name: {{ firstName }}<br />Last name: {{ lastName }}</p></body></html>
+let template = "<html><head><title>DotLiquid</title></head><body><p>First name: {{ firstName }}<br />Last name: {{ lastName }}</p></body></html>"
 
 let app =
     choose [
@@ -933,6 +947,61 @@ type Person =
 let app =
     choose [
         route  "/foo" >=> dotLiquidHtmlView "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
+    ]
+```
+
+### Giraffe.TokenRouter
+
+The `Giraffe.TokenRouter` module adds alternative `HttpHandler` functions to route incoming HTTP requests through a basic [Radix Tree](https://en.wikipedia.org/wiki/Radix_tree). Several routing handlers (e.g.: `routef` and `subRoute`) have been overridden in such a way that path matching and value parsing are significantly faster than using the basic `choose` function.
+
+This implementation assumes that additional memory and compilation time is not an issue. If speed and performance of parsing and path matching is required then the `Giraffe.TokenRouter` is the preferred option.
+
+#### router
+
+The base of all routing decisions is a `router` function instead of the default `choose` function when using the `Giraffe.TokenRouter` module.
+
+The `router` HttpHandler takes two arguments, a `HttpHandler` to execute when no route can be matched (typical 404 Not Found handler) and secondly a list of all routing functions.
+
+##### Example:
+
+Defining a basic router and routes
+
+```fsharp
+let notFound = setStatusCode 404 >=> text "Not found"
+let app =
+    router notFound [
+        route "/"       (text "index")
+        route "/about"  (text "about")
+    ]
+```
+
+#### routing functions
+
+When using the `Giraffe.TokenRouter` module the main routing functions have been slightly overridden to match the alternative (speed improved) implementation.
+
+The `route` and `routef` handlers work the exact same way as before, except that the continuation handler needs to be enclosed in parentheses or captured by the `<|` or `=>` operators.
+
+The `subRoute` handler has been altered in order to accept an additional parameter of child routing functions. All child routing functions will presume that the given sub path has been prepended.
+
+### Example:
+
+Defining a basic router and routes
+
+```fsharp
+let notFound = setStatusCode 404 >=> text "Not found"
+let app =
+    router notFound [
+        route "/"       (text "index")
+        route "/about"  => text "about"
+        routef "parsing/%s/%i" (fun (s,i) -> text (sprintf "Recieved %s & %i" s i))
+        subRoute "/api" [
+            route "/"       <| text "api index"
+            route "/about"  (text "api about")
+            subRoute "/v2" [
+                route "/"       <| text "api v2 index"
+                route "/about"  (text "api v2 about")
+            ]
+        ]
     ]
 ```
 
@@ -1461,7 +1530,7 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Jimmy Byrd](https://github.com/TheAngryByrd) (Added Linux builds)
 - [Jon Canning](https://github.com/JonCanning) (Moved the Razor and DotLiquid http handlers into separate NuGet packages and added the `routeBind` handler as well as some useful `HttpContext` extensions and bug fixes)
 - [Andrew Grant](https://github.com/GraanJonlo) (Fixed bug in the `giraffe-template` NuGet package)
-- [Gerard](https://github.com/gerardtoconnor) (Changed the API to continuations instead of binding HttpHandlers and to tasks from async)
+- [Gerard](https://github.com/gerardtoconnor) (Changed the API to continuations instead of binding HttpHandlers and to tasks from async. Also added the TokenRouter feature and more.)
 - [Mitchell Tilbrook](https://github.com/marukami) (Helped to fix documentation)
 - [Ody Mbegbu](https://github.com/odytrice) (Helped to improve the giraffe-template)
 - [Reed Mullanix](https://github.com/TOTBWF) (Helped with bug fixes)
