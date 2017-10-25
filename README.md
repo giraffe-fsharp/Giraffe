@@ -471,7 +471,9 @@ let app =
 // HTTP GET /foo/John/Doe/  --> Success
 // HTTP GET /foo/John/Doe// --> Failure
 
-// The last case will not bind to the Person model, because the Regex doesn't allow more than one trailing slash (change ? to * and it will work)
+// The last case will not bind to the Person model,
+// because the Regex doesn't allow more than one
+// trailing slash (change ? to * and it will work).
 ```
 
 ### routeStartsWith
@@ -952,13 +954,13 @@ let app =
 
 The `Giraffe.TokenRouter` module adds alternative `HttpHandler` functions to route incoming HTTP requests through a basic [Radix Tree](https://en.wikipedia.org/wiki/Radix_tree). Several routing handlers (e.g.: `routef` and `subRoute`) have been overridden in such a way that path matching and value parsing are significantly faster than using the basic `choose` function.
 
-This implementation assumes that additional memory and compilation time is not an issue. If speed and performance of parsing and path matching of routes is required then `Giraffe.TokenRouter` is the preferred option.
+This implementation assumes that additional memory and compilation time is not an issue. If speed and performance of parsing and path matching is required then the `Giraffe.TokenRouter` is the preferred option.
 
 #### router
 
 The base of all routing decisions is a `router` function instead of the default `choose` function when using the `Giraffe.TokenRouter` module.
 
-The `router` HttpHandler takes two arguments, first a `HttpHandler` to execute when no route can be matched (typical 404 Not Found handler) and secondly a list of all routing functions.
+The `router` HttpHandler takes two arguments, a `HttpHandler` to execute when no route can be matched (typical 404 Not Found handler) and secondly a list of all routing functions.
 
 ##### Example:
 
