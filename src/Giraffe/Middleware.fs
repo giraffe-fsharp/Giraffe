@@ -83,4 +83,3 @@ type IApplicationBuilder with
 
     member this.UseGiraffeErrorHandler (handler : ErrorHandler) =
         this.UseMiddleware<GiraffeErrorHandlerMiddleware> handler
-        |> ignore
