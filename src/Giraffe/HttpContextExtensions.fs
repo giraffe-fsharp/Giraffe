@@ -86,7 +86,6 @@ type HttpContext with
         }
 
     member this.BindQueryString<'T>() =
-        let query = this.Request.Query
         let obj   = Activator.CreateInstance<'T>()
         let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
         props
@@ -145,30 +144,37 @@ type HttpContext with
             else return this.BindQueryString<'T>()
         }
 
-    member private this.setHttpHeader (key : string) (value : obj) = 
+    /// ---------------------------
+    /// Response writers
+    /// ---------------------------
+
+    member private this.SetHttpHeader (key : string) (value : obj) =
         this.Response.Headers.[key] <- StringValues(value.ToString())
 
-    member private this.writeBytes (bytes:byte []) =
-        this.setHttpHeader "Content-Length" bytes.Length
-        this.Response.Body.WriteAsync(bytes, 0, bytes.Length)    
+    member private this.WriteBytes (bytes : byte[]) =
+        this.SetHttpHeader "Content-Length" bytes.Length
+        this.Response.Body.WriteAsync(bytes, 0, bytes.Length)
 
-    member private this.writeString (value:string) =
-        value |> System.Text.Encoding.UTF8.GetBytes |> this.writeBytes
+    member private this.WriteString (value : string) =
+        value |> System.Text.Encoding.UTF8.GetBytes |> this.WriteBytes
 
-    member this.WriteJson(value:obj) =  task {
-        this.setHttpHeader "Content-Type" "application/json"
-        do! value |> serializeJson |> this.writeString
-        return Some this 
-    }
+    member this.WriteJson (value : obj) =
+        task {
+            this.SetHttpHeader "Content-Type" "application/json"
+            do! value |> serializeJson |> this.WriteString
+            return Some this
+        }
 
-    member this.WriteXML(value:obj) = task {
-        this.setHttpHeader "Content-Type" "application/xml"
-        do! value |> serializeXml |> this.writeBytes
-        return Some this
-    }
+    member this.WriteXml (value : obj) =
+        task {
+            this.SetHttpHeader "Content-Type" "application/xml"
+            do! value |> serializeXml |> this.WriteBytes
+            return Some this
+        }
 
-    member this.WriteText(value:string) = task {
-        this.setHttpHeader "Content-Type" "text/plain"
-        do! value |> this.writeString
-        return Some this
-    }
+    member this.WriteText (value : string) =
+        task {
+            this.SetHttpHeader "Content-Type" "text/plain"
+            do! value |> this.WriteString
+            return Some this
+        }
