@@ -157,9 +157,9 @@ let cookieAuth (o : CookieAuthenticationOptions) =
 
 let configureApp (app : IApplicationBuilder) =
     app.UseGiraffeErrorHandler(errorHandler)
-        .UseStaticFiles()
-        .UseAuthentication()
-        .UseGiraffe webApp
+       .UseStaticFiles()
+       .UseAuthentication()
+       .UseGiraffe webApp
 
 let configureServices (services : IServiceCollection) =
     let sp  = services.BuildServiceProvider()

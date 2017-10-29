@@ -204,9 +204,9 @@ let configureCors (builder : CorsPolicyBuilder) =
 
 let configureApp (app : IApplicationBuilder) =
     app.UseCors(configureCors)
-        .UseGiraffeErrorHandler(errorHandler)
-        .UseAuthentication()
-        .UseGiraffe webApp
+       .UseGiraffeErrorHandler(errorHandler)
+       .UseAuthentication()
+       .UseGiraffe webApp
 
 let configureServices (services : IServiceCollection) =
     // Configure InMemory Db for sample application

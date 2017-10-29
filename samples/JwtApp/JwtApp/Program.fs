@@ -60,9 +60,9 @@ let errorHandler (ex : Exception) (logger : ILogger) =
 
 let configureApp (app : IApplicationBuilder) =
     app.UseAuthentication()
-        .UseGiraffeErrorHandler(errorHandler)
-        .UseStaticFiles()
-        .UseGiraffe webApp
+       .UseGiraffeErrorHandler(errorHandler)
+       .UseStaticFiles()
+       .UseGiraffe webApp
 
 let authenticationOptions (o : AuthenticationOptions) =
     o.DefaultAuthenticateScheme <- JwtBearerDefaults.AuthenticationScheme
