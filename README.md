@@ -53,7 +53,6 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [text](#text)
     - [json](#json)
     - [xml](#xml)
-    - [Nested Response Writing](#nested-response-writing)
     - [negotiate](#negotiate)
     - [negotiateWith](#negotiatewith)
     - [htmlFile](#htmlfile)
@@ -72,6 +71,10 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
         - [router](#router)
         - [routing functions](#routing-functions)
 - [Custom HttpHandlers](#custom-httphandlers)
+- [Nested Response Writing](#nested-response-writing)
+    - [WriteJson](#writejson)
+    - [WriteXml](#writexml)
+    - [WriteText](#writetext)
 - [Model Binding](#model-binding)
     - [BindJson](#bindjson)
     - [BindXml](#bindxml)
@@ -617,6 +620,8 @@ let app =
     ]
 ```
 
+You can also use the [`WriteText`](#writetext) extension method to return a plain text response back to the client.
+
 ### json
 
 `json` sets or modifies the body of the `HttpResponse` by sending a JSON serialized object to the client. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more. It also sets the `Content-Type` HTTP header to `application/json`.
@@ -635,6 +640,8 @@ let app =
         route  "/foo" >=> json { FirstName = "Foo"; LastName = "Bar" }
     ]
 ```
+
+You can also use the [`WriteJson`](#writejson) extension method to return a JSON response back to the client.
 
 ### xml
 
@@ -656,41 +663,7 @@ let app =
     ]
 ```
 
-### Nested Response Writing
-
-The `json`, `xml` & `text` HttpHandlers are all used to write a response in the composed pipeline but if you instead want to write the response nested within your HttpHanldler, you can instead use the `HttpContext` extension methods that can wtite your response and immeadiatly close out the pipeline afterwards (as once your response is written there is no further work to be done on response).
-
-#### Example:
-
-```fsharp
-type Person =
-    {
-        FirstName : string
-        LastName  : string
-    }
-
-let MyJsonHandler : HttpHandler =
-    fun next ctx ->
-        let person = { FirstName = "Foo"; LastName = "Bar" }
-        ctx.WriteJson person
-
-let MyXMLHandler : HttpHandler =
-    fun next ctx ->
-        let person = { FirstName = "Foo"; LastName = "Bar" }
-        ctx.WriteXML person
-
-let MyTextHandler : HttpHandler =
-    fun next ctx ->
-        let str = "{ FirstName = Foo; LastName = Bar }"
-        ctx.WriteText str
-
-let app =
-    choose [
-        route  "/json" >=> MyJsonHandler
-        route  "/xml" >=> MyXMLHandler
-        route  "/text" >=> MyTextHandler
-    ]
-```
+You can also use the [`WriteXml`](#writexml) extension method to return an XML response back to the client.
 
 ### negotiate
 
@@ -1089,6 +1062,78 @@ let app =
             )
         setStatusCode 404 >=> text "Not found"
     ] : HttpHandler
+```
+
+## Nested Response Writing
+
+The `Giraffe.HttpContextExtensions` module exposes a default set of response writing functions which extend the `HttpContext` object. Instead of using the [`json`](#json), [`xml`](#xml), or [`text`](#text) handlers to compose a custom HttpHandler you can also use the `WriteJson`, `WriteXml` and `WriteText` extension methods to directly write to the response of the `HttpContext` and close the pipeline.
+
+### WriteJson
+
+`ctx.WriteJson someObj` can be used to return a JSON response back to the client.
+
+#### Example:
+
+```fsharp
+[<CLIMutable>]
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let MyJsonHandler : HttpHandler =
+    fun next ctx ->
+        let person = { FirstName = "Foo"; LastName = "Bar" }
+        ctx.WriteJson person
+
+let app =
+    choose [
+        route "/json" >=> MyJsonHandler
+    ]
+```
+
+### WriteXml
+
+`ctx.WriteXml someObj` can be used to return an XML response back to the client.
+
+#### Example:
+
+```fsharp
+[<CLIMutable>]
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let MyXmlHandler : HttpHandler =
+    fun next ctx ->
+        let person = { FirstName = "Foo"; LastName = "Bar" }
+        ctx.WriteXml person
+
+let app =
+    choose [
+        route "/xml" >=> MyXmlHandler
+    ]
+```
+
+### WriteText
+
+`ctx.WriteText "some text"` can be used to return a plain text response back to the client.
+
+#### Example:
+
+```fsharp
+let MyTextHandler : HttpHandler =
+    fun next ctx ->
+        let str = "Hello World"
+        ctx.WriteText str
+
+let app =
+    choose [
+        route "/text" >=> MyTextHandler
+    ]
 ```
 
 ## Model Binding
@@ -1576,16 +1621,23 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Yevhenii Tsalko](https://github.com/YTsalko) (Migrated sample app to .NET Core 2.0)
 - [Tor Hovland](https://github.com/torhovland) (Helped with the sample applications, demonstrating CORS, JWT and configuration options)
 - [dawedawe](https://github.com/dawedawe) (README fixes)
+- [Dragan Jovanović](https://github.com/draganjovanovic1) (Changed the UseGiraffeErrorHandler method to allow chaining of middleware)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
 
 ## Blog posts
 
-- [Functional ASP.NET Core](https://dusted.codes/functional-aspnet-core)
-- [Functional ASP.NET Core part 2 - Hello world from Giraffe](https://dusted.codes/functional-aspnet-core-part-2-hello-world-from-giraffe)
-- [Carry On! … Continuation over binding pipelines for functional web](https://medium.com/@gerardtoconnor/carry-on-continuation-over-binding-pipelines-for-functional-web-58bd7e6ea009)
+- [Functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) (by Dustin M. Gorski)
+- [Functional ASP.NET Core part 2 - Hello world from Giraffe](https://dusted.codes/functional-aspnet-core-part-2-hello-world-from-giraffe) (by Dustin M. Gorski)
+- [Carry On! … Continuation over binding pipelines for functional web](https://medium.com/@gerardtoconnor/carry-on-continuation-over-binding-pipelines-for-functional-web-58bd7e6ea009) (by Gerard)
+- [A Functional Web with ASP.NET Core and F#'s Giraffe](https://www.hanselman.com/blog/AFunctionalWebWithASPNETCoreAndFsGiraffe.aspx) (by Scott Hanselman)
+- [Build a web service with F# and .NET Core 2.0](https://blogs.msdn.microsoft.com/dotnet/2017/09/26/build-a-web-service-with-f-and-net-core-2-0/) (by Phillip Carter)
 
 If you have blogged about Giraffe, demonstrating a useful topic or some other tips or tricks then please feel free to submit a pull request and add your article to this list as a reference for other Giraffe users. Thank you!
+
+## Videos
+
+- [Getting Started with ASP.NET Core Giraffe](https://www.youtube.com/watch?v=HyRzsPZ0f0k&t=461s) (by Ody Mbegbu)
 
 ## License
 
