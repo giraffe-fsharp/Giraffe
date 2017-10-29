@@ -201,12 +201,12 @@ let errorHandler (ex : Exception) (logger : ILogger) =
 
 let configureCors (builder : CorsPolicyBuilder) =
     builder.WithOrigins("http://localhost:8080").AllowAnyMethod().AllowAnyHeader() |> ignore
-    
+
 let configureApp (app : IApplicationBuilder) =
-    app.UseCors configureCors |> ignore
-    app.UseGiraffeErrorHandler errorHandler
-    app.UseAuthentication() |> ignore
-    app.UseGiraffe webApp
+    app.UseCors(configureCors)
+       .UseGiraffeErrorHandler(errorHandler)
+       .UseAuthentication()
+       .UseGiraffe webApp
 
 let configureServices (services : IServiceCollection) =
     // Configure InMemory Db for sample application

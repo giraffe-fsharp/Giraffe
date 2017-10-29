@@ -41,12 +41,12 @@ let errorHandler (ex : Exception) (logger : ILogger) =
 
 let configureCors (builder : CorsPolicyBuilder) =
     builder.WithOrigins("http://localhost:8080").AllowAnyMethod().AllowAnyHeader() |> ignore
-    
+
 let configureApp (app : IApplicationBuilder) =
-    app.UseCors configureCors |> ignore
-    app.UseGiraffeErrorHandler errorHandler
-    app.UseStaticFiles() |> ignore
-    app.UseGiraffe webApp
+    app.UseCors(configureCors)
+       .UseGiraffeErrorHandler(errorHandler)
+       .UseStaticFiles()
+       .UseGiraffe(webApp)
 
 let configureServices (services : IServiceCollection) =
     let sp  = services.BuildServiceProvider()

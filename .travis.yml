@@ -19,4 +19,4 @@ before_install:
 
 script:
   - export FrameworkPathOverride=$(dirname $(which mono))/../lib/mono/4.5/
-  - powershell ./build.ps1 -Release
+  - pwsh ./build.ps1 -Release
