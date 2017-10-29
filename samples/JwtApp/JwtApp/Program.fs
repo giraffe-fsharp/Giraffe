@@ -19,7 +19,7 @@ open Giraffe.Middleware
 // Web app
 // ---------------------------------
 
-type SimpleClaim = { Type: string; Value: string } 
+type SimpleClaim = { Type: string; Value: string }
 
 let authorize =
     requiresAuthentication (challenge JwtBearerDefaults.AuthenticationScheme)
@@ -29,13 +29,13 @@ let greet =
         let claim = ctx.User.FindFirst "name"
         let name = claim.Value
         text ("Hello " + name) next ctx
-    
+
 let showClaims =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let claims = ctx.User.Claims
         let simpleClaims = Seq.map (fun (i : Claim) -> {Type = i.Type; Value = i.Value}) claims
         json simpleClaims next ctx
-    
+
 let webApp =
     choose [
         GET >=>
@@ -59,10 +59,10 @@ let errorHandler (ex : Exception) (logger : ILogger) =
 // ---------------------------------
 
 let configureApp (app : IApplicationBuilder) =
-    app.UseAuthentication() |> ignore
-    app.UseGiraffeErrorHandler errorHandler
-    app.UseStaticFiles() |> ignore
-    app.UseGiraffe webApp
+    app.UseAuthentication()
+        .UseGiraffeErrorHandler(errorHandler)
+        .UseStaticFiles()
+        .UseGiraffe webApp
 
 let authenticationOptions (o : AuthenticationOptions) =
     o.DefaultAuthenticateScheme <- JwtBearerDefaults.AuthenticationScheme

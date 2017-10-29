@@ -156,10 +156,10 @@ let cookieAuth (o : CookieAuthenticationOptions) =
         o.ExpireTimeSpan      <- TimeSpan.FromDays 7.0
 
 let configureApp (app : IApplicationBuilder) =
-    app.UseGiraffeErrorHandler errorHandler
-    app.UseStaticFiles() |> ignore
-    app.UseAuthentication() |> ignore
-    app.UseGiraffe webApp
+    app.UseGiraffeErrorHandler(errorHandler)
+        .UseStaticFiles()
+        .UseAuthentication()
+        .UseGiraffe webApp
 
 let configureServices (services : IServiceCollection) =
     let sp  = services.BuildServiceProvider()
