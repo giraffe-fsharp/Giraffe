@@ -2,7 +2,7 @@
 <package>
     <metadata>
         <id>giraffe-template</id>
-        <version>0.5.0</version>
+        <version>0.6.0</version>
         <title>Giraffe Template for dotnet-new</title>
         <summary>A dotnet-new template for Giraffe web applications.</summary>
         <description>A dotnet-new template for Giraffe web applications.</description>
