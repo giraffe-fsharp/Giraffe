@@ -144,3 +144,31 @@ type HttpContext with
                         | _ -> failwithf "Cannot bind model from Content-Type '%s'" original.Value
             else return this.BindQueryString<'T>()
         }
+
+    member private this.setHttpHeader (key : string) (value : obj) = 
+        this.Response.Headers.[key] <- StringValues(value.ToString())
+
+    member private this.writeBytes (bytes:byte []) =
+        this.setHttpHeader "Content-Length" bytes.Length
+        this.Response.Body.WriteAsync(bytes, 0, bytes.Length)    
+
+    member private this.writeString (value:string) =
+        value |> System.Text.Encoding.UTF8.GetBytes |> this.writeBytes
+
+    member this.WriteJson(value:obj) =  task {
+        this.setHttpHeader "Content-Type" "application/json"
+        do! value |> serializeJson |> this.writeString
+        return Some this 
+    }
+
+    member this.WriteXML(value:obj) = task {
+        this.setHttpHeader "Content-Type" "application/xml"
+        do! value |> serializeXml |> this.writeBytes
+        return Some this
+    }
+
+    member this.WriteText(value:string) = task {
+        this.setHttpHeader "Content-Type" "text/plain"
+        do! value |> this.writeString
+        return Some this
+    }
