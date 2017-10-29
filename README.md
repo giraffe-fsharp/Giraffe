@@ -53,6 +53,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [text](#text)
     - [json](#json)
     - [xml](#xml)
+    - [Nested Response Writing](#nested-response-writing)
     - [negotiate](#negotiate)
     - [negotiateWith](#negotiatewith)
     - [htmlFile](#htmlfile)
@@ -652,6 +653,42 @@ type Person =
 let app =
     choose [
         route  "/foo" >=> xml { FirstName = "Foo"; LastName = "Bar" }
+    ]
+```
+
+### Nested Response Writing
+
+The `json`, `xml` & `text` HttpHandlers are all used to write a response in the composed pipeline but if you instead want to write the response nested within your HttpHanldler, you can instead use the `HttpContext` extension methods that can wtite your response and immeadiatly close out the pipeline afterwards (as once your response is written there is no further work to be done on response).
+
+#### Example:
+
+```fsharp
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let MyJsonHandler : HttpHandler =
+    fun next ctx ->
+        let person = { FirstName = "Foo"; LastName = "Bar" }
+        ctx.WriteJson person
+
+let MyXMLHandler : HttpHandler =
+    fun next ctx ->
+        let person = { FirstName = "Foo"; LastName = "Bar" }
+        ctx.WriteXML person
+
+let MyTextHandler : HttpHandler =
+    fun next ctx ->
+        let str = "{ FirstName = Foo; LastName = Bar }"
+        ctx.WriteText str
+
+let app =
+    choose [
+        route  "/json" >=> MyJsonHandler
+        route  "/xml" >=> MyXMLHandler
+        route  "/text" >=> MyTextHandler
     ]
 ```
 
