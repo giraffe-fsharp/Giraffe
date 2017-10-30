@@ -46,6 +46,10 @@ let mustBeAdmin =
     requiresAuthentication accessDenied
     >=> requiresRole "Admin" accessDenied
 
+let mustBeJohn =
+    requiresAuthentication accessDenied
+    >=> requiresAuthPolicy (fun u -> u.HasClaim (ClaimTypes.Name, "John")) accessDenied
+
 let loginHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
@@ -128,6 +132,7 @@ let webApp =
                 route  "/login"      >=> loginHandler
                 route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
                 route  "/user"       >=> mustBeUser >=> userHandler
+                route  "/john-only"  >=> mustBeJohn >=> userHandler
                 routef "/user/%i"    showUserHandler
                 route  "/razor"      >=> razorHtmlView "Person" { Name = "Razor" }
                 route  "/razorHello" >=> razorHtmlView "Hello" ""

@@ -33,6 +33,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [mustAccept](#mustaccept)
     - [challenge](#challenge)
     - [signOff](#signoff)
+    - [requiresAuthPolicy](#requiresauthpolicy)
     - [requiresAuthentication](#requiresauthentication)
     - [requiresRole](#requiresrole)
     - [requiresRoleOf](#requiresroleof)
@@ -285,6 +286,22 @@ let app =
     choose [
         route "/ping" >=> text "pong"
         route "/logout" >=> signOff "Cookie" >=> text "You have successfully logged out."
+    ]
+```
+
+### requiresAuthPolicy
+
+`requiresauthpolicy` validates if a user satisfies policy requirement,
+if not then the handler will execute the `authFailedHandler` function.
+
+```fsharp
+let mustBeJohn =
+    requiresAuthPolicy (fun user -> user.HasClaim (ClaimTypes.Name, "John")) accessDenied
+
+let app =
+    choose [
+        route "/ping" >=> text "pong"
+        route "/john-only" >=> mustBeJohn >=> text "Hi John."
     ]
 ```
 
