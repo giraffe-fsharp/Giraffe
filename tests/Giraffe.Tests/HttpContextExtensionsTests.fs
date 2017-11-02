@@ -423,7 +423,7 @@ let ``BindModel during HTTP GET request with query string returns correct result
     }
 
 [<Fact>]
-let ``TryGetRequestHeader during HTTP GET request with returns correct resultd`` () =
+let ``TryGetRequestHeader during HTTP GET request with returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
@@ -453,7 +453,7 @@ let ``TryGetRequestHeader during HTTP GET request with returns correct resultd``
     }
 
 [<Fact>]
-let ``TryGetQueryStringValue during HTTP GET request with query string returns correct resultd`` () =
+let ``TryGetQueryStringValue during HTTP GET request with query string returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
