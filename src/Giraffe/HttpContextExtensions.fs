@@ -11,6 +11,7 @@ open Microsoft.Extensions.Logging
 open Microsoft.FSharp.Reflection
 open Microsoft.Net.Http.Headers
 open Giraffe.Common
+open Giraffe.XmlViewEngine
 
 type HttpContext with
 
@@ -176,5 +177,12 @@ type HttpContext with
         task {
             this.SetHttpHeader "Content-Type" "text/plain"
             do! value |> this.WriteString
+            return Some this
+        }
+        
+    member this.RenderHtml (value: XmlNode) =
+        task {
+            this.SetHttpHeader "Content-Type" "text/html"
+            do! value |> renderHtmlDocument |> this.WriteString
             return Some this
         }
