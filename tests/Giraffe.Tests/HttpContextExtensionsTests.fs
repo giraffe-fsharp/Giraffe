@@ -15,6 +15,7 @@ open Microsoft.Extensions.Logging
 open Giraffe.Common
 open Giraffe.HttpHandlers
 open Giraffe.Tasks
+open Giraffe.XmlViewEngine
 
 let assertFailf format args =
     let msg = sprintf format args
@@ -482,3 +483,35 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
         | None     -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
+    
+[<Fact>]
+let ``RenderHtml should add html to the context`` () =
+    let ctx = Substitute.For<HttpContext>()
+    
+    let testHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
+            let htmlDoc = 
+                html [] [
+                    head [] []
+                    body [] [
+                        h1 [] [EncodedText "Hello world"]
+                    ]
+                ]
+            ctx.RenderHtml(htmlDoc)
+            
+    let app = route "/" >=> testHandler
+    
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    
+    let expected = sprintf "<!DOCTYPE html>%s<html><head></head><body><h1>Hello world</h1></body></html>" Environment.NewLine 
+            
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+        
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+                
