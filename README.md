@@ -76,7 +76,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [WriteJson](#writejson)
     - [WriteXml](#writexml)
     - [WriteText](#writetext)
-    - [ReturnHtml](#renderhtml)
+    - [RenderHtml](#renderhtml-1)
     - [ReturnHtmlFile](#returnhtmlfile)
 - [Model Binding](#model-binding)
     - [BindJson](#bindjson)
