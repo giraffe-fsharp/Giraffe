@@ -16,6 +16,10 @@ open Giraffe.Common
 open Giraffe.HttpHandlers
 open Giraffe.Tasks
 open Giraffe.XmlViewEngine
+open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.TestHost
+open Giraffe.Middleware
+open Microsoft.Extensions.Configuration
 
 let assertFailf format args =
     let msg = sprintf format args
@@ -514,4 +518,38 @@ let ``RenderHtml should add html to the context`` () =
         | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
+   
+let resultOfTask<'T> (task:Task<'T>) =
+    task.Result
                 
+[<Fact>]
+let ``ReturnHtmlFile should return html from content folder`` () =
+    let testHandler =
+        fun (next:HttpFunc) (ctx:HttpContext) ->
+            sprintf ".%cindex.html" Path.DirectorySeparatorChar
+            |> ctx.ReturnHtmlFile 
+            
+    let webApp = route "/" >=> testHandler
+
+    let configureApp (app : IApplicationBuilder) =
+        app
+           .UseStaticFiles()
+           .UseGiraffe webApp
+    
+    let host =
+        WebHostBuilder()
+            .UseContentRoot(Path.GetFullPath("webroot"))
+            .Configure(Action<IApplicationBuilder> configureApp)
+                         
+    use server = new TestServer(host)
+    use client = server.CreateClient()
+    
+    let expectedContent = 
+        Path.Combine("webroot", "index.html")
+        |> File.ReadAllText
+    
+    let actualContent =
+        client.GetStringAsync "/"
+        |> resultOfTask
+        
+    Assert.Equal(expectedContent, actualContent)

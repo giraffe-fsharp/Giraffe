@@ -4,11 +4,15 @@
     <TargetFrameworks>net461;netcoreapp2.0</TargetFrameworks>
     <AssemblyName>Giraffe.Tests</AssemblyName>
     <DebugType>portable</DebugType>
+    <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.0-preview-*" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.0.*" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.*" />
     <PackageReference Include="xunit" Version="2.3.0-*" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.3.0-*" />
@@ -28,5 +32,9 @@
     <Compile Include="HttpContextExtensionsTests.fs" />
     <Compile Include="TokenRouterTests.fs" />
   </ItemGroup>
-
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy webroot\* bin\Debug\netcoreapp2.0\webroot\ /y" Condition="'$(IsWindows)' == 'true'" />
+    <Exec Command="xcopy webroot\* bin\Debug\net461\webroot\ /y" Condition="'$(IsWindows)' == 'true'" />
+    <Exec Command="cp webroot/* bin/Debug/netcoreapp2.0/webroot/" Condition="'$(IsWindows)' != 'true'" />
+  </Target>
 </Project>
