@@ -1,4 +1,4 @@
-module Giraffe.AuthTests
+module Giraffe.AuthHandlerTests
 
 open System.IO
 open System.Text
