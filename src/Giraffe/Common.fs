@@ -27,7 +27,11 @@ let readFileAsString (filePath : string) =
 /// Serializers
 /// ---------------------------
 
-let inline serializeJson x = JsonConvert.SerializeObject x
+let inline serializeJson (serializer : JsonSerializer) x =
+    use stream = new MemoryStream()
+    use writer = new StreamWriter(stream)
+    serializer.Serialize(writer, x)
+    stream.ToString()
 
 let inline deserializeJson<'T> str = JsonConvert.DeserializeObject<'T> str
 
