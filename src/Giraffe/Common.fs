@@ -6,6 +6,7 @@ open System.Text
 open System.Xml
 open System.Xml.Serialization
 open Newtonsoft.Json
+open Newtonsoft.Json.Serialization
 
 /// ---------------------------
 /// Helper functions
@@ -27,7 +28,10 @@ let readFileAsString (filePath : string) =
 /// Serializers
 /// ---------------------------
 
-let inline serializeJson x = JsonConvert.SerializeObject x
+let settings = JsonSerializerSettings()
+settings.ContractResolver <- CamelCasePropertyNamesContractResolver()
+
+let inline serializeJson x = JsonConvert.SerializeObject(x, settings)
 
 let inline deserializeJson<'T> str = JsonConvert.DeserializeObject<'T> str
 
