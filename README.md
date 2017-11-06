@@ -76,6 +76,8 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [WriteJson](#writejson)
     - [WriteXml](#writexml)
     - [WriteText](#writetext)
+    - [RenderHtml](#renderhtml-1)
+    - [ReturnHtmlFile](#returnhtmlfile)
 - [Model Binding](#model-binding)
     - [BindJson](#bindjson)
     - [BindXml](#bindxml)
@@ -1151,6 +1153,47 @@ let MyTextHandler : HttpHandler =
 let app =
     choose [
         route "/text" >=> MyTextHandler
+    ]
+```
+
+### RenderHtml
+
+`ctx.RenderHtml someNode` can be used to return a [XmlViewEngine](#renderhtml) node.
+
+#### Example:
+
+```fsharp
+let myHtmlHandler =
+    fun (next: HttpFunc) (ctx: HttpContext) ->
+        let htmlDoc = 
+            html [] [
+                head [] []
+                body [] [
+                    h1 [] [EncodedText "Hello world"]
+                ]
+            ]
+        ctx.RenderHtml(htmlDoc)
+
+let app =
+    choose [
+        route "/html" >=> myHtmlHandler
+    ]
+```
+
+### ReturnHtmlFile
+
+`ctx.ReturnHtmlFile "./myPage.html"` can be used to return a html file. Note that the path should be relative, similar to [htmlFile](#htmlfile).
+
+#### Example:
+
+```fsharp
+let htmlFileHandler  =
+    fun (next:HttpFunc) (ctx:HttpContext) ->
+        ctx.ReturnHtmlFile "./index.html"
+
+let app =
+    choose [
+        route "/htmlFile" >=> htmlFileHandler
     ]
 ```
 
