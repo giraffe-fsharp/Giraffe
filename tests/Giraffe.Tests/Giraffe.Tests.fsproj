@@ -17,6 +17,8 @@
     <PackageReference Include="xunit" Version="2.3.0-*" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.3.0-*" />
     <PackageReference Include="NSubstitute" Version="2.0.*" />
+    <PackageReference Include="FsCheck" Version="2.10.*" />
+    <PackageReference Include="FsCheck.Xunit" Version="2.10.*" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,6 +30,7 @@
     <Compile Include="Asserts.fs" />
     <Compile Include="FormatExpressionTests.fs" />
     <Compile Include="HttpHandlerTests.fs" />
+    <Compile Include="AuthHandlerTests.fs" />
     <Compile Include="XmlViewEngineTests.fs" />
     <Compile Include="HttpContextExtensionsTests.fs" />
     <Compile Include="TokenRouterTests.fs" />
