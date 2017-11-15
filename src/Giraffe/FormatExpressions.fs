@@ -38,7 +38,7 @@ let convertToRegexPatternAndFormatChars (formatString : string) =
     |> convert
     |> (fun (pattern, formatChars) -> sprintf "^%s$" pattern, formatChars)
 
-let tryMatchInput (format : StringFormat<_, 'T>) (input : string) (ignoreCase : bool) =
+let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreCase : bool) =
     try
         let pattern, formatChars = 
             format.Value
