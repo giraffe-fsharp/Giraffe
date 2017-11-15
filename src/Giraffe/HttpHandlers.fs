@@ -310,7 +310,7 @@ let htmlFile (relativeFilePath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             let env = ctx.GetService<IHostingEnvironment>()
-            let filePath = env.ContentRootPath + relativeFilePath
+            let filePath = System.IO.Path.Combine(env.ContentRootPath, relativeFilePath)
             let! html = readFileAsString filePath
             return!
                 (setHttpHeader "Content-Type" "text/html"
