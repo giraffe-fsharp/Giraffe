@@ -57,14 +57,13 @@ type HttpContext with
         let body = this.Request.Body
         use reader = new StreamReader(body, true)
         reader.ReadToEndAsync()
-
-    member this.BindJson<'T>() =
+    member this.BindJson<'T>() = task {
             let body = this.Request.Body
             use sr = new StreamReader(body, true)
             use jr = new JsonTextReader(sr)
             let serializer = JsonSerializer()
-            serializer.Deserialize<'T>(jr)
-
+            return serializer.Deserialize<'T>(jr)
+    }
     member this.BindXml<'T>() =
         task {
             let! body = this.ReadBodyFromRequest()
