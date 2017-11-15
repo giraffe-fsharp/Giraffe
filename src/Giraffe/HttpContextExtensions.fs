@@ -11,6 +11,7 @@ open Microsoft.Extensions.Logging
 open Microsoft.FSharp.Reflection
 open Microsoft.Net.Http.Headers
 open Giraffe.Common
+open Newtonsoft.Json
 
 type HttpContext with
 
@@ -59,8 +60,11 @@ type HttpContext with
 
     member this.BindJson<'T>() =
         task {
-            let! body = this.ReadBodyFromRequest()
-            return deserializeJson<'T> body
+            let body = this.Request.Body
+            use sr = new StreamReader(body, true)
+            use jr = new JsonTextReader(sr)
+            let serializer = JsonSerializer()
+            return serializer.Deserialize<'T>(jr);
         }
 
     member this.BindXml<'T>() =
