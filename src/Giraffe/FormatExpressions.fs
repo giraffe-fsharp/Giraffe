@@ -16,7 +16,11 @@ let formatStringMap =
         'i', ("(-?\d+)",                int32      >> box)  // int
         'd', ("(-?\d+)",                int64      >> box)  // int64
         'f', ("(-?\d+\.{1}\d+)",        float      >> box)  // float
+<<<<<<< HEAD
         'g', ("(([0-9A-Fa-f]{8}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{12})|([0-9A-Fa-f]{32}))",        Guid      >> box)  // guid
+=======
+        'g', ("([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12})",        Guid      >> box)  // guid
+>>>>>>> feac37d... Added Guid format expression to get %g working in routef method.
     ]
 
 let convertToRegexPatternAndFormatChars (formatString : string) =

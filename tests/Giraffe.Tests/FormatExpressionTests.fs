@@ -188,6 +188,7 @@ let ``Format string with single "%g" matches "FE9CFE19-35D4-4EDC-9A95-5D38C4D579
         | None -> assertFail "Format failed to match input."
         | Some (g : Guid) -> Assert.Equal(Guid("FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD"), g)
 
+<<<<<<< HEAD
 let ``Format string with single "%g" matches "00000000000000000000000000000000"`` () =
     tryMatchInput "%g" "00000000000000000000000000000000" false
     |> function
@@ -199,6 +200,8 @@ let ``Format string with single "%g" matches "FE9CFE1935D44EDC9A955D38C4D579BD"`
     |> function
         | None -> assertFail "Format failed to match input."
         | Some (g : Guid) -> Assert.Equal(Guid("FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD"), g)
+=======
+>>>>>>> feac37d... Added Guid format expression to get %g working in routef method.
 
 // ---------------------------------
 // Negative Tests
