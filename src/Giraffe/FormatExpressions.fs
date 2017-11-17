@@ -18,6 +18,7 @@ let formatStringMap =
         'f', ("(-?\d+\.{1}\d+)",        float      >> box)  // float
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         'g', ("(([0-9A-Fa-f]{8}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{12})|([0-9A-Fa-f]{32}))",        Guid      >> box)  // guid
 =======
         'g', ("([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12})",        Guid      >> box)  // guid
@@ -25,6 +26,9 @@ let formatStringMap =
 =======
         'g', ("([0-9A-Fa-f]{8}[-]?[0-9A-Fa-f]{4}[-]?[0-9A-Fa-f]{4}[-]?[0-9A-Fa-f]{4}[-]?[0-9A-Fa-f]{12})",        Guid      >> box)  // guid
 >>>>>>> b45ee50... Modified the Guid regex to make the dashes optional.
+=======
+        'g', ("(([0-9A-Fa-f]{8}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{12})|([0-9A-Fa-f]{8}[0-9A-Fa-f]{4}[0-9A-Fa-f]{4}[0-9A-Fa-f]{4}[0-9A-Fa-f]{12}))",        Guid      >> box)  // guid
+>>>>>>> 040fbeb... Replaced the regex to handle either no dashes or all dashes in the Guid
     ]
 
 let convertToRegexPatternAndFormatChars (formatString : string) =
