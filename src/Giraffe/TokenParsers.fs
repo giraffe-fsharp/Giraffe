@@ -92,6 +92,11 @@ let private floatParse (path:string) ipos fpos =
     | '+' -> go (ipos + 1)
     | _ -> go (ipos)
 
+let private guidParse (path:string) ipos fpos = 
+    match System.Guid.TryParse(path.Substring(ipos, fpos - (ipos - 1))) with 
+    | true, x -> x |> box |> rtrn 
+    | false, _ -> failure 
+
 let formatMap =
     dict [
     // Char    Range Parser
@@ -102,4 +107,5 @@ let formatMap =
         'i', (FSharpFunc<_,_,_,_>.Adapt intParse   )  // int
         'd', (FSharpFunc<_,_,_,_>.Adapt int64Parse )  // int64
         'f', (FSharpFunc<_,_,_,_>.Adapt floatParse )  // float
+        'g', (FSharpFunc<_,_,_,_>.Adapt guidParse  )  // guid
     ]

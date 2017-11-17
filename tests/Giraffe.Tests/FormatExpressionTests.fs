@@ -174,6 +174,34 @@ let ``Format string with single "%f" matches "-45.342"`` () =
         | None -> assertFail "Format failed to match input."
         | Some (f : float) -> Assert.Equal(-45.342, f)
 
+[<Fact>] 
+let ``Format string with single "%g" matches "00000000-0000-0000-0000-000000000000"`` () = 
+    tryMatchInput "%g" "00000000-0000-0000-0000-000000000000" false 
+    |> function 
+        | None -> assertFail "Format failed to match input." 
+        | Some (g : Guid) -> Assert.Equal(Guid.Empty, g) 
+ 
+[<Fact>] 
+let ``Format string with single "%g" matches "FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD"`` () = 
+    tryMatchInput "%g" "FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD" false 
+    |> function 
+        | None -> assertFail "Format failed to match input." 
+        | Some (g : Guid) -> Assert.Equal(Guid("FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD"), g) 
+
+[<Fact>] 
+let ``Format string with single "%g" matches "00000000000000000000000000000000"`` () = 
+    tryMatchInput "%g" "00000000000000000000000000000000" false 
+    |> function 
+        | None -> assertFail "Format failed to match input." 
+        | Some (g : Guid) -> Assert.Equal(Guid.Empty, g) 
+ 
+[<Fact>] 
+let ``Format string with single "%g" matches "FE9CFE1935D44EDC9A955D38C4D579BD"`` () = 
+    tryMatchInput "%g" "FE9CFE1935D44EDC9A955D38C4D579BD" false 
+    |> function 
+        | None -> assertFail "Format failed to match input." 
+        | Some (g : Guid) -> Assert.Equal(Guid("FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD"), g) 
+
 // ---------------------------------
 // Negative Tests
 // ---------------------------------
