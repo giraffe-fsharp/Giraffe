@@ -17,10 +17,14 @@ let formatStringMap =
         'd', ("(-?\d+)",                int64      >> box)  // int64
         'f', ("(-?\d+\.{1}\d+)",        float      >> box)  // float
 <<<<<<< HEAD
+<<<<<<< HEAD
         'g', ("(([0-9A-Fa-f]{8}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{12})|([0-9A-Fa-f]{32}))",        Guid      >> box)  // guid
 =======
         'g', ("([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12})",        Guid      >> box)  // guid
 >>>>>>> feac37d... Added Guid format expression to get %g working in routef method.
+=======
+        'g', ("([0-9A-Fa-f]{8}[-]?[0-9A-Fa-f]{4}[-]?[0-9A-Fa-f]{4}[-]?[0-9A-Fa-f]{4}[-]?[0-9A-Fa-f]{12})",        Guid      >> box)  // guid
+>>>>>>> b45ee50... Modified the Guid regex to make the dashes optional.
     ]
 
 let convertToRegexPatternAndFormatChars (formatString : string) =
