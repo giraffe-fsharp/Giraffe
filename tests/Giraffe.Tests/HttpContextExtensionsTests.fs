@@ -15,6 +15,7 @@ open Microsoft.Extensions.Logging
 open Giraffe.Common
 open Giraffe.HttpHandlers
 open Giraffe.Tasks
+open Newtonsoft.Json
 
 let assertFailf format args =
     let msg = sprintf format args
@@ -233,6 +234,47 @@ let ``BindModel with JSON content returns correct result`` () =
         fun (next : HttpFunc) (ctx : HttpContext) ->
             task {
                 let! model = ctx.BindModel<Customer>()
+                return! text (model.ToString()) next ctx
+            }
+
+    let app = route "/auto" >=> autoHandler
+
+    let contentType = "application/json"
+    let postContent = "{ \"name\": \"John Doe\", \"isVip\": true, \"birthDate\": \"1990-04-20\", \"balance\": 150000.5, \"loyaltyPoints\": 137 }"
+    let stream = new MemoryStream()
+    let writer = new StreamWriter(stream, Encoding.UTF8)
+    writer.Write postContent
+    writer.Flush()
+    stream.Position <- 0L
+
+    let headers = HeaderDictionary()
+    headers.Add("Content-Type", StringValues(contentType))
+    headers.Add("Content-Length", StringValues(stream.Length.ToString()))
+    ctx.Request.ContentType.ReturnsForAnyArgs contentType |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
+    ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    ctx.Request.Body  <- stream
+
+    let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``BindModel with JSON content that uses custom serialization settings returns correct result`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let autoHandler =
+        fun (next : HttpFunc) (ctx : HttpContext) ->
+            task {
+                let! model = ctx.BindModel<Customer>(JsonSerializerSettings())
                 return! text (model.ToString()) next ctx
             }
 

@@ -642,7 +642,24 @@ let app =
     ]
 ```
 
-You can also use the [`WriteJson`](#writejson) extension method to return a JSON response back to the client.
+You can also use the [`WriteJson`](#writejson) extension method to return a default or custom serialized JSON response back to the client.
+
+You can also use the [`makeJsonHandler`](#makeJsonHandler) method to return a custom serialized JSON response back to the client.
+
+#### Example:
+
+```fsharp
+let customJson (dataObj : obj) : HttpHandler =
+    let settings = JsonSerializerSettings(
+        Formatting = Formatting.Indented,
+        NullValueHandling = NullValueHandling.Ignore
+    )
+    makeJsonHandler dataObj settings
+
+let app =
+    choose [
+        route  "/foo" >=> customJson { FirstName = "Foo"; LastName = "Bar" }
+    ]
 
 ### xml
 
@@ -1067,7 +1084,31 @@ let app =
 
 ## Nested Response Writing
 
-The `Giraffe.HttpContextExtensions` module exposes a default set of response writing functions which extend the `HttpContext` object. Instead of using the [`json`](#json), [`xml`](#xml), or [`text`](#text) handlers to compose a custom HttpHandler you can also use the `WriteJson`, `WriteXml` and `WriteText` extension methods to directly write to the response of the `HttpContext` and close the pipeline.
+The `Giraffe.HttpContextExtensions` module exposes a default set of response writing functions which extend the `HttpContext` object. Instead of using the [`json`](#json), [`xml`](#xml), or [`text`](#text) handlers to compose a custom HttpHandler you can also use the `makeJsonHandler`, `WriteJson`, `WriteXml` and `WriteText` extension methods to directly write to the response of the `HttpContext` and close the pipeline.
+
+### makeJsonHandler
+
+`makeJsonHandler someObj jsonSerializerSettings` can be used to return a JSON response back to the client using custom json serializer settings.
+
+#### Example:
+
+```fsharp
+[<CLIMutable>]
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let myJsonHandler (dataObj : obj) : HttpHandler =
+    let settings = JsonSerializerSettings()
+    makeJsonHandler dataObj settings
+
+let app =
+    choose [
+        route "/json" >=> myJsonHandler person
+    ]
+```
 
 ### WriteJson
 
@@ -1091,6 +1132,29 @@ let MyJsonHandler : HttpHandler =
 let app =
     choose [
         route "/json" >=> MyJsonHandler
+    ]
+```
+
+`ctx.WriteJson someObj jsonSerializerSettings` can be used to return a JSON response back to the client using custom json serializer settings.
+
+#### Example:
+
+```fsharp
+[<CLIMutable>]
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let MyJsonHandler : HttpHandler =
+    fun next ctx ->
+        let person = { FirstName = "Foo"; LastName = "Bar" }
+        ctx.WriteJson person (JsonSerializerSettings())
+
+let app =
+    choose [
+        route "/json" >=> MyJsonHandler person
     ]
 ```
 
@@ -1171,6 +1235,64 @@ let submitCar =
         task {
             // Binds a JSON payload to a Car object
             let! car = ctx.BindJson<Car>()
+
+            // Serializes the Car object back into JSON
+            // and sends it back as the response.
+            return! json car next ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong" ]
+        POST >=> route "/car" >=> submitCar ]
+```
+
+You can test the bind function by sending a HTTP request with a JSON payload:
+
+```
+POST http://localhost:5000/car HTTP/1.1
+Host: localhost:5000
+Connection: keep-alive
+Content-Length: 77
+Cache-Control: no-cache
+Content-Type: application/json
+Accept: */*
+
+{ "name": "DB9", "make": "Aston Martin", "wheels": 4, "built": "2016-01-01" }
+```
+
+`ctx.BindJson<'T>(setting: JsonSerializerSettings)` can be used to bind a JSON payload with customer JSON serialization to a strongly typed model.
+
+
+#### Example
+
+Define an F# record type with the `CLIMutable` attribute which will add a parameterless constructor to the type:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+```
+
+Then create a new `HttpHandler` which uses `BindJson` and use it from an app:
+
+```fsharp
+open Giraffe.HttpHandlers
+open Giraffe.HttpContextExtensions
+
+let submitCar =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Binds a JSON payload to a Car object
+            let! car = ctx.BindJson<Car>(JsonSerializerSettings())
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
@@ -1408,6 +1530,51 @@ let submitCar =
         task {
             // Binds a JSON, XML or form urlencoded payload to a Car object
             let! car = ctx.BindModel<Car>()
+
+            // Serializes the Car object back into JSON
+            // and sends it back as the response.
+            return! json car next ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong" ]
+        // Can accept GET and POST requests and
+        // bind a model from the payload or query string
+        route "/car" >=> submitCar ]
+```
+
+`ctx.BindModel<'T>(settings : JsonSerializerSettings)` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model. The JSON payload will be serialized the custom JsonSerializerSettings.
+
+#### Example
+
+Define an F# record type with the `CLIMutable` attribute which will add a parameterless constructor to the type:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+```
+
+Then create a new `HttpHandler` which uses `BindModel` and use it from an app:
+
+```fsharp
+open Giraffe.HttpHandlers
+open Giraffe.HttpContextExtensions
+
+let submitCar =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Binds a JSON, XML or form urlencoded payload to a Car object
+            let! car = ctx.BindModel<Car>(JsonSerializerSettings())
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
