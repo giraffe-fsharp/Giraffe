@@ -488,6 +488,7 @@ let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
     }
 
 [<Fact>]
+<<<<<<< HEAD
 let ``GET "/foo/johndoe/FE9CFE1935D44EDC9A955D38C4D579BD" returns "Name: johndoe, Id: FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
@@ -512,6 +513,8 @@ let ``GET "/foo/johndoe/FE9CFE1935D44EDC9A955D38C4D579BD" returns "Name: johndoe
     }
 
 [<Fact>]
+=======
+>>>>>>> f2aaa52... Added %g for Guids as a format placeholder.
 let ``GET "/foo/johndoe/FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD" returns "Name: johndoe, Id: FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
