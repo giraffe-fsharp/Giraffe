@@ -689,7 +689,7 @@ let app =
     ]
 ```
 
-You can also use the [`WriteJson`](#writejson) extension method to return a custom serialized JSON response back to the client.
+Alternatively you can also use the [`WriteJson`](#writejson) extension method to return a custom serialized JSON response back to the client.
 
 ### json
 
@@ -1139,7 +1139,7 @@ The `Giraffe.HttpContextExtensions` module exposes a default set of response wri
 
 ### WriteJson
 
-`ctx.WriteJson someObj` can be used to return a JSON response back to the client.
+`ctx.WriteJson someObj` can be used to return a JSON response back to the client. Alternatively you can use `ctx.WriteJson (settings : JsoSerializerSettings) someObj` to customize the generated JSON before sending the response back to the client.
 
 #### Example:
 
@@ -1159,29 +1159,6 @@ let myJsonHandler : HttpHandler =
 let app =
     choose [
         route "/json" >=> myJsonHandler
-    ]
-```
-
-`ctx.WriteJson settings someObj` can be used to return a JSON response back to the client using a custom `JsonSerializerSettings` object.
-
-#### Example:
-
-```fsharp
-[<CLIMutable>]
-type Person =
-    {
-        FirstName : string
-        LastName  : string
-    }
-
-let myCustomJsonHandler : HttpHandler =
-    fun next ctx ->
-        let person = { FirstName = "Foo"; LastName = "Bar" }
-        ctx.WriteJson (JsonSerializerSettings(), person)
-
-let app =
-    choose [
-        route "/json" >=> myCustomJsonHandler
     ]
 ```
 
@@ -1738,14 +1715,14 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Nicolás Herrera](https://github.com/nicolocodev) (Added razor engine feature)
 - [Dave Shaw](https://github.com/xdaDaveShaw) (Extended sample application and general help to keep things in good shape)
 - [Tobias Burger](https://github.com/toburger) (Fixed issues with culture specific parsers)
-- [David Sinclair](https://github.com/dsincl12) (Created the dotnet-new template for Giraffe)
-- [Florian Verdonck](https://github.com/nojaf) (Ported Suave's experimental Html into Giraffe, implemented the warbler and general help with the project)
+- [David Sinclair](https://github.com/dsincl12) (Created the dotnet-new template for Giraffe and fixed the default JSON formatting during serialization)
+- [Florian Verdonck](https://github.com/nojaf) (Ported Suave's experimental Html into Giraffe, implemented the warbler and general help with the project as well as feature development)
 - [Roman Melnikov](https://github.com/Neftedollar) (Added `redirectTo` route)
 - [Diego B. Fernandez](https://github.com/diegobfernandez) (Added support for the `Option<'T>` type in the query string model binding)
 - [Jimmy Byrd](https://github.com/TheAngryByrd) (Added Linux builds)
 - [Jon Canning](https://github.com/JonCanning) (Moved the Razor and DotLiquid http handlers into separate NuGet packages and added the `routeBind` handler as well as some useful `HttpContext` extensions and bug fixes)
 - [Andrew Grant](https://github.com/GraanJonlo) (Fixed bug in the `giraffe-template` NuGet package)
-- [Gerard](https://github.com/gerardtoconnor) (Changed the API to continuations instead of binding HttpHandlers and to tasks from async. Also added the TokenRouter feature and more.)
+- [Gerard](https://github.com/gerardtoconnor) (Changed the API to continuations instead of binding HttpHandlers and to tasks from async. Also added the TokenRouter feature and awful lot of general help and community support)
 - [Mitchell Tilbrook](https://github.com/marukami) (Helped to fix documentation)
 - [Ody Mbegbu](https://github.com/odytrice) (Helped to improve the giraffe-template)
 - [Reed Mullanix](https://github.com/TOTBWF) (Helped with bug fixes)
@@ -1754,7 +1731,10 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Yevhenii Tsalko](https://github.com/YTsalko) (Migrated sample app to .NET Core 2.0)
 - [Tor Hovland](https://github.com/torhovland) (Helped with the sample applications, demonstrating CORS, JWT and configuration options)
 - [dawedawe](https://github.com/dawedawe) (README fixes)
-- [Dragan Jovanović](https://github.com/draganjovanovic1) (Changed the UseGiraffeErrorHandler method to allow chaining of middleware)
+- [Dragan Jovanović](https://github.com/draganjovanovic1) (Changed the UseGiraffeErrorHandler method to allow chaining of middleware and added policy based auth handlers)
+- [Viquoc Quan](https://github.com/vtquan) (Fixed bug in giraffe-template)
+- [Kerry Jones](https://github.com/KerryRJ) (Helped to fix bugs and added custom JSON serialization support)
+- [Steffen Forkmann](https://github.com/forki) (Improved the htmlFile http handler)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
 
