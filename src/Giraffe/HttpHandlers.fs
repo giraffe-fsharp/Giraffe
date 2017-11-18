@@ -301,13 +301,13 @@ let text (str : string) : HttpHandler =
 
 /// Serializes an object to JSON with custom JsonSerializerSettings and writes it to the body of the HTTP response.
 /// It also sets the HTTP header Content-Type: application/json and sets the Content-Length header accordingly.
-let makeJsonHandler (settings : JsonSerializerSettings) (dataObj : obj) : HttpHandler =
+let customJson (settings : JsonSerializerSettings) (dataObj : obj) : HttpHandler =
     setHttpHeader "Content-Type" "application/json"
     >=> setBodyAsString (serializeJson settings dataObj)
 
 /// Serializes an object to JSON and writes it to the body of the HTTP response.
 /// It also sets the HTTP header Content-Type: application/json and sets the Content-Length header accordingly.
-let json = makeJsonHandler defaultJsonSerializerSettings
+let json = customJson defaultJsonSerializerSettings
 
 /// Serializes an object to XML and writes it to the body of the HTTP response.
 /// It also sets the HTTP header Content-Type: application/xml and sets the Content-Length header accordingly.
