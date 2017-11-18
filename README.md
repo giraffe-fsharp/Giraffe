@@ -33,6 +33,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [mustAccept](#mustaccept)
     - [challenge](#challenge)
     - [signOff](#signoff)
+    - [requiresAuthPolicy](#requiresauthpolicy)
     - [requiresAuthentication](#requiresauthentication)
     - [requiresRole](#requiresrole)
     - [requiresRoleOf](#requiresroleof)
@@ -75,6 +76,8 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [WriteJson](#writejson)
     - [WriteXml](#writexml)
     - [WriteText](#writetext)
+    - [RenderHtml](#renderhtml-1)
+    - [ReturnHtmlFile](#returnhtmlfile)
 - [Model Binding](#model-binding)
     - [BindJson](#bindjson)
     - [BindXml](#bindxml)
@@ -290,6 +293,22 @@ let app =
     choose [
         route "/ping" >=> text "pong"
         route "/logout" >=> signOff "Cookie" >=> text "You have successfully logged out."
+    ]
+```
+
+### requiresAuthPolicy
+
+`requiresauthpolicy` validates if a user satisfies policy requirement,
+if not then the handler will execute the `authFailedHandler` function.
+
+```fsharp
+let mustBeJohn =
+    requiresAuthPolicy (fun user -> user.HasClaim (ClaimTypes.Name, "John")) accessDenied
+
+let app =
+    choose [
+        route "/ping" >=> text "pong"
+        route "/john-only" >=> mustBeJohn >=> text "Hi John."
     ]
 ```
 
@@ -725,7 +744,7 @@ let app =
 
 `htmlFile` sets or modifies the body of the `HttpResponse` with the contents of a physical html file. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
 
-This http handler takes a relative path of a html file as input parameter and sets the HTTP header `Content-Type` to `text/html`.
+This http handler takes a rooted path of a html file or path that is relative to the ContentRootPath as input parameter and sets the HTTP header `Content-Type` to `text/html`.
 
 #### Example:
 
@@ -1134,6 +1153,47 @@ let MyTextHandler : HttpHandler =
 let app =
     choose [
         route "/text" >=> MyTextHandler
+    ]
+```
+
+### RenderHtml
+
+`ctx.RenderHtml someNode` can be used to return a [XmlViewEngine](#renderhtml) node.
+
+#### Example:
+
+```fsharp
+let myHtmlHandler =
+    fun (next: HttpFunc) (ctx: HttpContext) ->
+        let htmlDoc = 
+            html [] [
+                head [] []
+                body [] [
+                    h1 [] [EncodedText "Hello world"]
+                ]
+            ]
+        ctx.RenderHtml(htmlDoc)
+
+let app =
+    choose [
+        route "/html" >=> myHtmlHandler
+    ]
+```
+
+### ReturnHtmlFile
+
+`ctx.ReturnHtmlFile "./myPage.html"` can be used to return a html file. Note that the path should be relative, similar to [htmlFile](#htmlfile).
+
+#### Example:
+
+```fsharp
+let htmlFileHandler  =
+    fun (next:HttpFunc) (ctx:HttpContext) ->
+        ctx.ReturnHtmlFile "./index.html"
+
+let app =
+    choose [
+        route "/htmlFile" >=> htmlFileHandler
     ]
 ```
 

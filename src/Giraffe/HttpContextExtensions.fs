@@ -12,6 +12,8 @@ open Microsoft.FSharp.Reflection
 open Microsoft.Net.Http.Headers
 open Giraffe.Common
 open Newtonsoft.Json
+open Giraffe.XmlViewEngine
+open Microsoft.AspNetCore.Hosting
 
 type HttpContext with
 
@@ -177,5 +179,22 @@ type HttpContext with
         task {
             this.SetHttpHeader "Content-Type" "text/plain"
             do! value |> this.WriteString
+            return Some this
+        }
+        
+    member this.RenderHtml (value: XmlNode) =
+        task {
+            this.SetHttpHeader "Content-Type" "text/html"
+            do! value |> renderHtmlDocument |> this.WriteString
+            return Some this
+        }
+        
+    member this.ReturnHtmlFile (relativeFilePath: String) =
+        task {
+            this.SetHttpHeader "Content-Type" "text/html"
+            let env = this.GetService<IHostingEnvironment>()
+            let filePath = env.ContentRootPath + relativeFilePath
+            let! html = readFileAsString filePath
+            do! this.WriteString html
             return Some this
         }

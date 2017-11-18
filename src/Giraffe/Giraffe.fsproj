@@ -39,8 +39,8 @@
     <Compile Include="Common.fs" />
     <Compile Include="ComputationExpressions.fs" />
     <Compile Include="FormatExpressions.fs" />
-    <Compile Include="HttpContextExtensions.fs" />
     <Compile Include="XmlViewEngine.fs" />
+    <Compile Include="HttpContextExtensions.fs" />
     <Compile Include="HttpHandlers.fs" />
     <Compile Include="TokenParsers.fs" />
     <Compile Include="TokenRouter.fs" />
