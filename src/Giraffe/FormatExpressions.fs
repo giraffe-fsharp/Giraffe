@@ -12,7 +12,7 @@ let formatStringMap =
     // ----------------------------------------------------------
         'b', ("(?i:(true|false)){1}",   bool.Parse >> box)  // bool
         'c', ("(.{1})",                 char       >> box)  // char
-        's', ("(.+)",                                 box)  // string
+        's', ("(.+)",                   Net.WebUtility.UrlDecode >> box)  // string
         'i', ("(-?\d+)",                int32      >> box)  // int
         'd', ("(-?\d+)",                int64      >> box)  // int64
         'f', ("(-?\d+\.{1}\d+)",        float      >> box)  // float
@@ -38,7 +38,7 @@ let convertToRegexPatternAndFormatChars (formatString : string) =
     |> convert
     |> (fun (pattern, formatChars) -> sprintf "^%s$" pattern, formatChars)
 
-let tryMatchInput (format : StringFormat<_, 'T>) (input : string) (ignoreCase : bool) =
+let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreCase : bool) =
     try
         let pattern, formatChars = 
             format.Value
@@ -64,7 +64,7 @@ let tryMatchInput (format : StringFormat<_, 'T>) (input : string) (ignoreCase : 
                 (groups, formatChars)
                 ||> Seq.map2 (fun g c -> 
                     let _, parser   = formatStringMap.[c]
-                    let value       = parser g.Value
+                    let value       = parser g.Value  
                     value)
                 |> Seq.toArray
 

@@ -71,11 +71,11 @@ let private handlerWithRootedPath (path : string) (handler : HttpHandler) : Http
 
 /// Combines two HttpHandler functions into one.
 let compose (handler1 : HttpHandler) (handler2 : HttpHandler) : HttpHandler =
-    fun (next : HttpFunc) ->
-        let func = next |> handler2 |> handler1
+    fun (final : HttpFunc) ->
+        let func = final |> handler2 |> handler1
         fun (ctx : HttpContext) ->
             match ctx.Response.HasStarted with
-            | true  -> next ctx
+            | true  -> final ctx
             | false -> func ctx
 
 /// Combines two HttpHandler functions into one.
@@ -192,7 +192,7 @@ let route (path : string) : HttpHandler =
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 /// The arguments from the format string will be automatically resolved when the
 /// route matches and subsequently passed into the supplied routeHandler.
-let routef (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
+let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) false
         |> function
@@ -209,7 +209,7 @@ let routeCi (path : string) : HttpHandler =
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 /// The arguments from the format string will be automatically resolved when the
 /// route matches and subsequently passed into the supplied routeHandler.
-let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
+let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) true
         |> function
