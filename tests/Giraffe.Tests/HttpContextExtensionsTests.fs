@@ -12,14 +12,14 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http.Internal
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
+open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.TestHost
+open Microsoft.Extensions.Configuration
 open Giraffe.Common
 open Giraffe.HttpHandlers
 open Giraffe.Tasks
 open Giraffe.XmlViewEngine
-open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.TestHost
 open Giraffe.Middleware
-open Microsoft.Extensions.Configuration
 
 let assertFailf format args =
     let msg = sprintf format args
@@ -487,14 +487,14 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
         | None     -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
-    
+
 [<Fact>]
 let ``RenderHtml should add html to the context`` () =
     let ctx = Substitute.For<HttpContext>()
-    
+
     let testHandler =
         fun (next: HttpFunc) (ctx: HttpContext) ->
-            let htmlDoc = 
+            let htmlDoc =
                 html [] [
                     head [] []
                     body [] [
@@ -502,54 +502,54 @@ let ``RenderHtml should add html to the context`` () =
                     ]
                 ]
             ctx.RenderHtml(htmlDoc)
-            
+
     let app = route "/" >=> testHandler
-    
+
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    
-    let expected = sprintf "<!DOCTYPE html>%s<html><head></head><body><h1>Hello world</h1></body></html>" Environment.NewLine 
-            
+
+    let expected = sprintf "<!DOCTYPE html>%s<html><head></head><body><h1>Hello world</h1></body></html>" Environment.NewLine
+
     task {
         let! result = app (Some >> Task.FromResult) ctx
-        
+
         match result with
         | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
-   
+
 let resultOfTask<'T> (task:Task<'T>) =
     task.Result
-                
+
 [<Fact>]
 let ``ReturnHtmlFile should return html from content folder`` () =
     let testHandler =
         fun (next:HttpFunc) (ctx:HttpContext) ->
             sprintf ".%cindex.html" Path.DirectorySeparatorChar
-            |> ctx.ReturnHtmlFile 
-            
+            |> ctx.ReturnHtmlFile
+
     let webApp = route "/" >=> testHandler
 
     let configureApp (app : IApplicationBuilder) =
         app
            .UseStaticFiles()
            .UseGiraffe webApp
-    
+
     let host =
         WebHostBuilder()
             .UseContentRoot(Path.GetFullPath("webroot"))
             .Configure(Action<IApplicationBuilder> configureApp)
-                         
+
     use server = new TestServer(host)
     use client = server.CreateClient()
-    
-    let expectedContent = 
+
+    let expectedContent =
         Path.Combine("webroot", "index.html")
         |> File.ReadAllText
-    
+
     let actualContent =
         client.GetStringAsync "/"
         |> resultOfTask
-        
+
     Assert.Equal(expectedContent, actualContent)

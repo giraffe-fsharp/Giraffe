@@ -2,6 +2,7 @@ module Giraffe.FormatExpressions
 
 open System
 open System.Text.RegularExpressions
+open System.Net
 open Microsoft.FSharp.Reflection
 open FSharp.Core
 open FSharp.Core.Printf
@@ -10,12 +11,12 @@ let formatStringMap =
     dict [
     // Char    Regex                    Parser
     // ----------------------------------------------------------
-        'b', ("(?i:(true|false)){1}",   bool.Parse >> box)  // bool
-        'c', ("(.{1})",                 char       >> box)  // char
-        's', ("(.+)",                   Net.WebUtility.UrlDecode >> box)  // string
-        'i', ("(-?\d+)",                int32      >> box)  // int
-        'd', ("(-?\d+)",                int64      >> box)  // int64
-        'f', ("(-?\d+\.{1}\d+)",        float      >> box)  // float
+        'b', ("(?i:(true|false)){1}",   bool.Parse           >> box)  // bool
+        'c', ("(.{1})",                 char                 >> box)  // char
+        's', ("(.+)",                   WebUtility.UrlDecode >> box)  // string
+        'i', ("(-?\d+)",                int32                >> box)  // int
+        'd', ("(-?\d+)",                int64                >> box)  // int64
+        'f', ("(-?\d+\.{1}\d+)",        float                >> box)  // float
     ]
 
 let convertToRegexPatternAndFormatChars (formatString : string) =
@@ -24,7 +25,7 @@ let convertToRegexPatternAndFormatChars (formatString : string) =
         | '%' :: '%' :: tail ->
             let pattern, formatChars = convert tail
             "%" + pattern, formatChars
-        | '%' :: c :: tail -> 
+        | '%' :: c :: tail ->
             let pattern, formatChars = convert tail
             let regex, _ = formatStringMap.[c]
             regex + pattern, c :: formatChars
@@ -40,12 +41,12 @@ let convertToRegexPatternAndFormatChars (formatString : string) =
 
 let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreCase : bool) =
     try
-        let pattern, formatChars = 
+        let pattern, formatChars =
             format.Value
             |> Regex.Escape
             |> convertToRegexPatternAndFormatChars
-        
-        let options = 
+
+        let options =
             match ignoreCase with
             | true  -> RegexOptions.IgnoreCase
             | false -> RegexOptions.None
@@ -62,9 +63,9 @@ let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreC
 
             let values =
                 (groups, formatChars)
-                ||> Seq.map2 (fun g c -> 
+                ||> Seq.map2 (fun g c ->
                     let _, parser   = formatStringMap.[c]
-                    let value       = parser g.Value  
+                    let value       = parser g.Value
                     value)
                 |> Seq.toArray
 

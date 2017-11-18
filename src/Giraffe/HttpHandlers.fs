@@ -6,6 +6,7 @@ open System.Collections.Generic
 open System.Security.Claims
 open System.Threading.Tasks
 open System.Text.RegularExpressions
+open System.IO
 open Microsoft.AspNetCore.Authentication
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
@@ -145,7 +146,7 @@ let signOff (authScheme : string) : HttpHandler =
             return! next ctx
         }
 
-/// Validates if a user satisfies policy requirement.
+/// Validates if a user satisfies a policy requirement.
 /// If not it will proceed with the authFailedHandler.
 let requiresAuthPolicy (policy : ClaimsPrincipal -> bool) (authFailedHandler : HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -313,12 +314,12 @@ let xml (dataObj : obj) : HttpHandler =
 let htmlFile (filePath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
-            let filePath = 
-                if System.IO.Path.IsPathRooted filePath then
+            let filePath =
+                if Path.IsPathRooted filePath then
                     filePath
                 else
                     let env = ctx.GetService<IHostingEnvironment>()
-                    System.IO.Path.Combine(env.ContentRootPath, filePath)
+                    Path.Combine(env.ContentRootPath, filePath)
             let! html = readFileAsString filePath
             return!
                 (setHttpHeader "Content-Type" "text/html"

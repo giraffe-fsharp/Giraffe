@@ -59,13 +59,16 @@ type HttpContext with
         let body = this.Request.Body
         use reader = new StreamReader(body, true)
         reader.ReadToEndAsync()
-    member this.BindJson<'T>() = task {
+
+    member this.BindJson<'T>() =
+        task {
             let body = this.Request.Body
             use sr = new StreamReader(body, true)
             use jr = new JsonTextReader(sr)
             let serializer = JsonSerializer()
             return serializer.Deserialize<'T>(jr)
-    }
+        }
+
     member this.BindXml<'T>() =
         task {
             let! body = this.ReadBodyFromRequest()
@@ -181,14 +184,14 @@ type HttpContext with
             do! value |> this.WriteString
             return Some this
         }
-        
+
     member this.RenderHtml (value: XmlNode) =
         task {
             this.SetHttpHeader "Content-Type" "text/html"
             do! value |> renderHtmlDocument |> this.WriteString
             return Some this
         }
-        
+
     member this.ReturnHtmlFile (relativeFilePath: String) =
         task {
             this.SetHttpHeader "Content-Type" "text/html"
