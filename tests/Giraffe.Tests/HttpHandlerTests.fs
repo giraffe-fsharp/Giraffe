@@ -17,6 +17,7 @@ open Giraffe.XmlViewEngine
 open Giraffe.DotLiquid.HttpHandlers
 open Giraffe.Tests.Asserts
 open Giraffe.Tasks
+open Newtonsoft.Json
 
 // ---------------------------------
 // Helper functions
@@ -157,6 +158,34 @@ let ``GET "/json" returns json object`` () =
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
     ctx.Response.Body <- new MemoryStream()
     let expected = "{\"foo\":\"john\",\"bar\":\"doe\",\"age\":30}"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+
+let ``GET "/json" with a custom json handler returns json object`` () =
+    let customJson (dataObj : obj) : HttpHandler =
+        let settings = JsonSerializerSettings()
+        makeJsonHandler dataObj settings
+
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            route "/"     >=> text "Hello World"
+            route "/foo"  >=> text "bar"
+            route "/json" >=> customJson { Foo = "john"; Bar = "doe"; Age = 30 }
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "{\"Foo\":\"john\",\"Bar\":\"doe\",\"Age\":30}"
 
     task {
         let! result = app next ctx
