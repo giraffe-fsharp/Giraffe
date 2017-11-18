@@ -310,11 +310,15 @@ let xml (dataObj : obj) : HttpHandler =
 
 /// Reads a HTML file from disk and writes its contents to the body of the HTTP response
 /// with a Content-Type of text/html.
-let htmlFile (relativeFilePath : string) : HttpHandler =
+let htmlFile (filePath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
-            let env = ctx.GetService<IHostingEnvironment>()
-            let filePath = env.ContentRootPath + relativeFilePath
+            let filePath = 
+                if System.IO.Path.IsPathRooted filePath then
+                    filePath
+                else
+                    let env = ctx.GetService<IHostingEnvironment>()
+                    System.IO.Path.Combine(env.ContentRootPath, filePath)
             let! html = readFileAsString filePath
             return!
                 (setHttpHeader "Content-Type" "text/html"

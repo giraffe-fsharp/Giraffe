@@ -744,7 +744,7 @@ let app =
 
 `htmlFile` sets or modifies the body of the `HttpResponse` with the contents of a physical html file. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
 
-This http handler takes a relative path of a html file as input parameter and sets the HTTP header `Content-Type` to `text/html`.
+This http handler takes a rooted path of a html file or path that is relative to the ContentRootPath as input parameter and sets the HTTP header `Content-Type` to `text/html`.
 
 #### Example:
 
