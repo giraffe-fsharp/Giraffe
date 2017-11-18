@@ -3,8 +3,10 @@ module Giraffe.HttpHandlers
 open System
 open System.Text
 open System.Collections.Generic
+open System.Security.Claims
 open System.Threading.Tasks
 open System.Text.RegularExpressions
+open System.IO
 open Microsoft.AspNetCore.Authentication
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
@@ -72,11 +74,11 @@ let private handlerWithRootedPath (path : string) (handler : HttpHandler) : Http
 
 /// Combines two HttpHandler functions into one.
 let compose (handler1 : HttpHandler) (handler2 : HttpHandler) : HttpHandler =
-    fun (next : HttpFunc) ->
-        let func = next |> handler2 |> handler1
+    fun (final : HttpFunc) ->
+        let func = final |> handler2 |> handler1
         fun (ctx : HttpContext) ->
             match ctx.Response.HasStarted with
-            | true  -> next ctx
+            | true  -> final ctx
             | false -> func ctx
 
 /// Combines two HttpHandler functions into one.
@@ -146,31 +148,34 @@ let signOff (authScheme : string) : HttpHandler =
             return! next ctx
         }
 
+/// Validates if a user satisfies a policy requirement.
+/// If not it will proceed with the authFailedHandler.
+let requiresAuthPolicy (policy : ClaimsPrincipal -> bool) (authFailedHandler : HttpHandler) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        if policy ctx.User
+        then next ctx
+        else authFailedHandler finish ctx
+
 /// Validates if a user is authenticated.
 /// If not it will proceed with the authFailedHandler.
 let requiresAuthentication (authFailedHandler : HttpHandler) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        if isNotNull ctx.User && ctx.User.Identity.IsAuthenticated
-        then next ctx
-        else authFailedHandler finish ctx
+    requiresAuthPolicy
+        (fun user -> isNotNull user && user.Identity.IsAuthenticated)
+        authFailedHandler
 
 /// Validates if a user is in a specific role.
 /// If not it will proceed with the authFailedHandler.
 let requiresRole (role : string) (authFailedHandler : HttpHandler) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        if ctx.User.IsInRole role
-        then next ctx
-        else authFailedHandler finish ctx
+    requiresAuthPolicy
+        (fun user -> user.IsInRole role)
+        authFailedHandler
 
 /// Validates if a user has at least one of the specified roles.
 /// If not it will proceed with the authFailedHandler.
 let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        roles
-        |> List.exists ctx.User.IsInRole
-        |> function
-            | true  -> next ctx
-            | false -> authFailedHandler finish ctx
+    requiresAuthPolicy
+        (fun user -> List.exists user.IsInRole roles)
+        authFailedHandler
 
 /// Attempts to clear the current HttpResponse object.
 /// This can be useful inside an error handler when the response
@@ -190,7 +195,7 @@ let route (path : string) : HttpHandler =
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 /// The arguments from the format string will be automatically resolved when the
 /// route matches and subsequently passed into the supplied routeHandler.
-let routef (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
+let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) false
         |> function
@@ -207,7 +212,7 @@ let routeCi (path : string) : HttpHandler =
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 /// The arguments from the format string will be automatically resolved when the
 /// route matches and subsequently passed into the supplied routeHandler.
-let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
+let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) true
         |> function
@@ -219,7 +224,7 @@ let routeCif (path : StringFormat<_, 'T>) (routeHandler : 'T -> HttpHandler) : H
 /// and subsequently passed into the supplied routeHandler.
 let routeBind<'T> (route: string) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        let pattern = route.Replace("{", "(?<").Replace("}", ">[^/\n]+)") |> sprintf "^%s$"
+        let pattern = route.Replace("{", "(?<").Replace("}", ">[^/\n]+)") |> sprintf "%s$"
         let regex = Regex(pattern, RegexOptions.IgnoreCase)
         let mtch = regex.Match ctx.Request.Path.Value
         match mtch.Success with
@@ -314,11 +319,15 @@ let xml (dataObj : obj) : HttpHandler =
 
 /// Reads a HTML file from disk and writes its contents to the body of the HTTP response
 /// with a Content-Type of text/html.
-let htmlFile (relativeFilePath : string) : HttpHandler =
+let htmlFile (filePath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
-            let env = ctx.GetService<IHostingEnvironment>()
-            let filePath = env.ContentRootPath + relativeFilePath
+            let filePath =
+                if Path.IsPathRooted filePath then
+                    filePath
+                else
+                    let env = ctx.GetService<IHostingEnvironment>()
+                    Path.Combine(env.ContentRootPath, filePath)
             let! html = readFileAsString filePath
             return!
                 (setHttpHeader "Content-Type" "text/html"

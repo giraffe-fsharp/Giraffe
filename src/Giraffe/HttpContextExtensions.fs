@@ -6,12 +6,14 @@ open System.IO
 open System.Reflection
 open System.ComponentModel
 open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Microsoft.FSharp.Reflection
 open Microsoft.Net.Http.Headers
-open Giraffe.Common
 open Newtonsoft.Json
+open Giraffe.Common
+open Giraffe.XmlViewEngine
 
 type HttpContext with
 
@@ -61,8 +63,15 @@ type HttpContext with
     member this.BindJson<'T>() = this.BindJson<'T>(defaultJsonSerializationSettings)
     member this.BindJson<'T>(settings : JsonSerializerSettings) =
         task {
-            let! body = this.ReadBodyFromRequest()
-            return deserializeJson<'T> body settings
+            // ToDo: Merge conflict
+            // let! body = this.ReadBodyFromRequest()
+            // return deserializeJson<'T> body settings
+
+            let body = this.Request.Body
+            use sr = new StreamReader(body, true)
+            use jr = new JsonTextReader(sr)
+            let serializer = JsonSerializer()
+            return serializer.Deserialize<'T>(jr)
         }
 
     member this.BindXml<'T>() =
@@ -180,5 +189,22 @@ type HttpContext with
         task {
             this.SetHttpHeader "Content-Type" "text/plain"
             do! value |> this.WriteString
+            return Some this
+        }
+
+    member this.RenderHtml (value: XmlNode) =
+        task {
+            this.SetHttpHeader "Content-Type" "text/html"
+            do! value |> renderHtmlDocument |> this.WriteString
+            return Some this
+        }
+
+    member this.ReturnHtmlFile (relativeFilePath: String) =
+        task {
+            this.SetHttpHeader "Content-Type" "text/html"
+            let env = this.GetService<IHostingEnvironment>()
+            let filePath = env.ContentRootPath + relativeFilePath
+            let! html = readFileAsString filePath
+            do! this.WriteString html
             return Some this
         }
