@@ -68,7 +68,7 @@ let comment     (content : string) = rawText (sprintf "<!-- %s -->" content)
 let html       = tag "html"
 
 /// Document metadata
-let ``base``   = tag "base"
+let ``base``   = voidTag "base"
 let head       = tag "head"
 let link attr  = voidTag "link" attr
 let meta attr  = voidTag "meta" attr
