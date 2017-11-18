@@ -172,7 +172,7 @@ let ``GET "/json" returns json object`` () =
 let ``GET "/json" with a custom json handler returns json object`` () =
     let customJson (dataObj : obj) : HttpHandler =
         let settings = JsonSerializerSettings()
-        makeJsonHandler dataObj settings
+        makeJsonHandler settings dataObj
 
     let ctx = Substitute.For<HttpContext>()
     let app =

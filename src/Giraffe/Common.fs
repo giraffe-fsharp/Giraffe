@@ -27,11 +27,17 @@ let readFileAsString (filePath : string) =
 /// ---------------------------
 /// Serializers
 /// ---------------------------
-let defaultJsonSerializationSettings = JsonSerializerSettings(ContractResolver = CamelCasePropertyNamesContractResolver()) 
 
-let inline serializeJson x (settings: JsonSerializerSettings) = JsonConvert.SerializeObject(x, settings) 
+let defaultJsonSerializerSettings = JsonSerializerSettings(ContractResolver = CamelCasePropertyNamesContractResolver())
 
-let inline deserializeJson<'T> str (settings: JsonSerializerSettings) = JsonConvert.DeserializeObject<'T>(str, settings)
+let inline serializeJson       (settings : JsonSerializerSettings) x   = JsonConvert.SerializeObject(x, settings)
+let inline deserializeJson<'T> (settings : JsonSerializerSettings) str = JsonConvert.DeserializeObject<'T>(str, settings)
+
+let inline deserializeJsonFromStream<'T> (settings : JsonSerializerSettings) (stream : Stream) =
+    use sr = new StreamReader(stream, true)
+    use jr = new JsonTextReader(sr)
+    let serializer = JsonSerializer.Create settings
+    serializer.Deserialize<'T>(jr)
 
 let serializeXml x =
     use stream = new MemoryStream()

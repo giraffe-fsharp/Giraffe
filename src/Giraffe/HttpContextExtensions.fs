@@ -60,18 +60,11 @@ type HttpContext with
         use reader = new StreamReader(body, true)
         reader.ReadToEndAsync()
 
-    member this.BindJson<'T>() = this.BindJson<'T>(defaultJsonSerializationSettings)
-    member this.BindJson<'T>(settings : JsonSerializerSettings) =
-        task {
-            // ToDo: Merge conflict
-            // let! body = this.ReadBodyFromRequest()
-            // return deserializeJson<'T> body settings
+    member this.BindJson<'T>() = this.BindJson<'T> defaultJsonSerializerSettings
 
-            let body = this.Request.Body
-            use sr = new StreamReader(body, true)
-            use jr = new JsonTextReader(sr)
-            let serializer = JsonSerializer()
-            return serializer.Deserialize<'T>(jr)
+    member this.BindJson<'T> (settings : JsonSerializerSettings) =
+        task {
+            return deserializeJsonFromStream<'T> settings this.Request.Body
         }
 
     member this.BindXml<'T>() =
@@ -137,8 +130,9 @@ type HttpContext with
                     p.SetValue(obj, value, null))
         obj
 
-    member this.BindModel<'T>() = this.BindModel<'T>(defaultJsonSerializationSettings) 
-    member this.BindModel<'T>(settings : JsonSerializerSettings) =
+    member this.BindModel<'T>() = this.BindModel<'T> defaultJsonSerializerSettings
+
+    member this.BindModel<'T> (settings : JsonSerializerSettings) =
         task {
             let method = this.Request.Method
             if method.Equals "POST" || method.Equals "PUT" then
@@ -149,7 +143,7 @@ type HttpContext with
                     | false -> failwithf "Could not parse Content-Type HTTP header value '%s'" original.Value
                     | true  ->
                         match parsed.Value.MediaType.Value with
-                        | "application/json"                  -> this.BindJson<'T>(settings)
+                        | "application/json"                  -> this.BindJson<'T> settings
                         | "application/xml"                   -> this.BindXml<'T>()
                         | "application/x-www-form-urlencoded" -> this.BindForm<'T>()
                         | _ -> failwithf "Cannot bind model from Content-Type '%s'" original.Value
@@ -170,11 +164,12 @@ type HttpContext with
     member private this.WriteString (value : string) =
         value |> System.Text.Encoding.UTF8.GetBytes |> this.WriteBytes
 
-    member this.WriteJson (value : obj) = this.WriteJson(value, defaultJsonSerializationSettings)
-    member this.WriteJson (value : obj, settings: JsonSerializerSettings) =
+    member this.WriteJson (value : obj) = this.WriteJson(defaultJsonSerializerSettings, value)
+
+    member this.WriteJson (settings: JsonSerializerSettings, value : obj) =
         task {
             this.SetHttpHeader "Content-Type" "application/json"
-            do! serializeJson value settings |> this.WriteString 
+            do! serializeJson settings value |> this.WriteString
             return Some this
         }
 
