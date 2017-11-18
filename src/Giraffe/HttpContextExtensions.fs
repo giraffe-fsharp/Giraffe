@@ -6,11 +6,14 @@ open System.IO
 open System.Reflection
 open System.ComponentModel
 open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Microsoft.FSharp.Reflection
 open Microsoft.Net.Http.Headers
+open Newtonsoft.Json
 open Giraffe.Common
+open Giraffe.XmlViewEngine
 
 type HttpContext with
 
@@ -57,10 +60,11 @@ type HttpContext with
         use reader = new StreamReader(body, true)
         reader.ReadToEndAsync()
 
-    member this.BindJson<'T>() =
+    member this.BindJson<'T>() = this.BindJson<'T> defaultJsonSerializerSettings
+
+    member this.BindJson<'T> (settings : JsonSerializerSettings) =
         task {
-            let! body = this.ReadBodyFromRequest()
-            return deserializeJson<'T> body
+            return deserializeJsonFromStream<'T> settings this.Request.Body
         }
 
     member this.BindXml<'T>() =
@@ -126,7 +130,9 @@ type HttpContext with
                     p.SetValue(obj, value, null))
         obj
 
-    member this.BindModel<'T>() =
+    member this.BindModel<'T>() = this.BindModel<'T> defaultJsonSerializerSettings
+
+    member this.BindModel<'T> (settings : JsonSerializerSettings) =
         task {
             let method = this.Request.Method
             if method.Equals "POST" || method.Equals "PUT" then
@@ -137,7 +143,7 @@ type HttpContext with
                     | false -> failwithf "Could not parse Content-Type HTTP header value '%s'" original.Value
                     | true  ->
                         match parsed.Value.MediaType.Value with
-                        | "application/json"                  -> this.BindJson<'T>()
+                        | "application/json"                  -> this.BindJson<'T> settings
                         | "application/xml"                   -> this.BindXml<'T>()
                         | "application/x-www-form-urlencoded" -> this.BindForm<'T>()
                         | _ -> failwithf "Cannot bind model from Content-Type '%s'" original.Value
@@ -158,10 +164,12 @@ type HttpContext with
     member private this.WriteString (value : string) =
         value |> System.Text.Encoding.UTF8.GetBytes |> this.WriteBytes
 
-    member this.WriteJson (value : obj) =
+    member this.WriteJson (value : obj) = this.WriteJson(defaultJsonSerializerSettings, value)
+
+    member this.WriteJson (settings: JsonSerializerSettings, value : obj) =
         task {
             this.SetHttpHeader "Content-Type" "application/json"
-            do! value |> serializeJson |> this.WriteString
+            do! serializeJson settings value |> this.WriteString
             return Some this
         }
 
@@ -176,5 +184,22 @@ type HttpContext with
         task {
             this.SetHttpHeader "Content-Type" "text/plain"
             do! value |> this.WriteString
+            return Some this
+        }
+
+    member this.RenderHtml (value: XmlNode) =
+        task {
+            this.SetHttpHeader "Content-Type" "text/html"
+            do! value |> renderHtmlDocument |> this.WriteString
+            return Some this
+        }
+
+    member this.ReturnHtmlFile (relativeFilePath: String) =
+        task {
+            this.SetHttpHeader "Content-Type" "text/html"
+            let env = this.GetService<IHostingEnvironment>()
+            let filePath = env.ContentRootPath + relativeFilePath
+            let! html = readFileAsString filePath
+            do! this.WriteString html
             return Some this
         }

@@ -17,6 +17,7 @@ open Giraffe.XmlViewEngine
 open Giraffe.DotLiquid.HttpHandlers
 open Giraffe.Tests.Asserts
 open Giraffe.Tasks
+open Newtonsoft.Json
 
 // ---------------------------------
 // Helper functions
@@ -151,6 +152,34 @@ let ``GET "/json" returns json object`` () =
             route "/"     >=> text "Hello World"
             route "/foo"  >=> text "bar"
             route "/json" >=> json { Foo = "john"; Bar = "doe"; Age = 30 }
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "{\"foo\":\"john\",\"bar\":\"doe\",\"age\":30}"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+
+let ``GET "/json" with a custom json handler returns json object`` () =
+    let customJson (dataObj : obj) : HttpHandler =
+        let settings = JsonSerializerSettings()
+        customJson settings dataObj
+
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            route "/"     >=> text "Hello World"
+            route "/foo"  >=> text "bar"
+            route "/json" >=> customJson { Foo = "john"; Bar = "doe"; Age = 30 }
             setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -837,7 +866,7 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"left ear\",\"nose\"]}"
+    let expected = "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"birthDate\":\"1990-07-12T00:00:00\",\"height\":1.85,\"piercings\":[\"left ear\",\"nose\"]}"
 
     task {
         let! result = app next ctx
@@ -877,7 +906,7 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"left ear\",\"nose\"]}"
+    let expected = "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"birthDate\":\"1990-07-12T00:00:00\",\"height\":1.85,\"piercings\":[\"left ear\",\"nose\"]}"
 
     task {
         let! result = app next ctx
@@ -1017,7 +1046,7 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"ear\",\"nose\"]}"
+    let expected = "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"birthDate\":\"1990-07-12T00:00:00\",\"height\":1.85,\"piercings\":[\"ear\",\"nose\"]}"
 
     task {
         let! result = app next ctx
@@ -1241,7 +1270,7 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"ear\",\"nose\"]}"
+    let expected = "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"birthDate\":\"1990-07-12T00:00:00\",\"height\":1.85,\"piercings\":[\"ear\",\"nose\"]}"
 
     task {
         let! result = app next ctx
@@ -1436,4 +1465,56 @@ let ``GET "/{foo}/{bar}/{id}" returns Hello 4 f40580b1-d55b-4fe2-b6fb-ca4f90749a
         | Some ctx ->
             let body = getBody ctx
             Assert.Equal("Hello 4 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
+    }
+
+[<Fact>]
+let ``GET "/api/{foo}/{bar}/{id}" returns Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
+    let ctx = Substitute.For<HttpContext>()
+    let app = GET >=> routeBind<RouteBind> "/api/{foo}/{bar}/{id}" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFail "It was expected that the result would be Hello 1"
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal("Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
+    }
+
+type RouteBindId = { Id : Guid }
+[<Fact>]
+let ``GET "/api/{id}" returns f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
+    let ctx = Substitute.For<HttpContext>()
+    let app = GET >=> routeBind<RouteBindId> "/api/{id}" (fun m -> sprintf "%O" m.Id |> text)
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFail "It was expected that the result would be f40580b1-d55b-4fe2-b6fb-ca4f90749a9d"
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal("f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
+    }
+
+[<Fact>]
+let ``GET "/api/{id}/" returns f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
+    let ctx = Substitute.For<HttpContext>()
+    let app = GET >=> routeBind<RouteBindId> "/api/{id}(/?)" (fun m -> sprintf "%O" m.Id |> text)
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d/")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFail "It was expected that the result would be f40580b1-d55b-4fe2-b6fb-ca4f90749a9d"
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal("f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
     }
