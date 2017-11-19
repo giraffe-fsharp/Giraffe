@@ -495,7 +495,7 @@ let ``GET "/foo/johndoe/FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD" returns "Name: joh
             route   "/"       => text "Hello World" 
             route   "/foo"    => text "bar" 
             routef "/foo/%s/bar" text 
-            routef "/foo/%s/%g" (fun (name, id: Guid) -> text (sprintf "Name: %s, Id: %O" name id)) 
+            routef "/foo/%s/%O" (fun (name, id: Guid) -> text (sprintf "Name: %s, Id: %O" name id)) 
         ] 
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore 
@@ -518,7 +518,7 @@ let ``GET "/foo/johndoe/FE9CFE1935D44EDC9A955D38C4D579BD" returns "Name: johndoe
             route   "/"       => text "Hello World" 
             route   "/foo"    => text "bar" 
             routef "/foo/%s/bar" text 
-            routef "/foo/%s/%g" (fun (name, id: Guid) -> text (sprintf "Name: %s, Id: %O" name id)) 
+            routef "/foo/%s/%O" (fun (name, id: Guid) -> text (sprintf "Name: %s, Id: %O" name id)) 
         ] 
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore 

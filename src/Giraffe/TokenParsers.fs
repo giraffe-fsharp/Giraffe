@@ -107,5 +107,5 @@ let formatMap =
         'i', (FSharpFunc<_,_,_,_>.Adapt intParse   )  // int
         'd', (FSharpFunc<_,_,_,_>.Adapt int64Parse )  // int64
         'f', (FSharpFunc<_,_,_,_>.Adapt floatParse )  // float
-        'g', (FSharpFunc<_,_,_,_>.Adapt guidParse  )  // guid
+        'O', (FSharpFunc<_,_,_,_>.Adapt guidParse  )  // guid
     ]

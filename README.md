@@ -403,7 +403,7 @@ The following format placeholders are currently supported:
 - `%i` for int32
 - `%d` for int64 (this is custom to Giraffe)
 - `%f` for float/double
-- `%g` for guid
+- `%O` for guid
 
 #### Example:
 
@@ -411,7 +411,7 @@ The following format placeholders are currently supported:
 let app =
     choose [
         route  "/foo" >=> text "Foo"
-        routef "/bar/%s/%i/%g" (fun (name, age, id: Guid) ->
+        routef "/bar/%s/%i/%O" (fun (name, age, id: Guid) ->
             // name is of type string
             // age is of type int
             // id is of type guid
