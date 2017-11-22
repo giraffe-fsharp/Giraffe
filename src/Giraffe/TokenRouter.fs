@@ -492,26 +492,6 @@ let private processPath (abort:HttpHandler) (root:Node) : HttpHandler =
                 | ApplyMatch x -> applyMatch x pos args t
                 | ApplyMatchAndComplete x -> applyMatchAndComplete pos args x t
 
-        // let rec crawl (pos:int) (node:Node) =
-        //     let cp = commonPathIndex path pos node.Token
-        //     if cp = node.Token.Length then
-        //         let nxtChar = pos + node.Token.Length
-        //         if (nxtChar - 1 ) = last then //if have reached end of path through nodes, run HandlerFn
-        //             processEnd(node.EndFns, pos, [] )
-        //         else
-        //             match node.TryGetValue path.[nxtChar] with
-        //             | true, cnode ->
-        //                 if (pos + cnode.Token.Length ) = last then //if have reached end of path through nodes, run HandlerFn
-        //                     processEnd(cnode.EndFns, pos + node.Token.Length, [] )
-        //                 else                //need to continue down chain till get to end of path
-        //                     crawl (nxtChar) cnode
-        //             | false, _ ->
-        //                 // no further nodes, either a static url didnt match or there is a pattern match required
-        //                 processMid( node.MidFns, nxtChar, [] )
-        //     else
-        //         //printfn ">> failed to match %s path with %s token, commonPath=%i" (path.Substring(pos)) (node.Token) (commonPathIndex path pos node.Token)
-        //         abort next ctx
-
         // begin path crawl process
         crawl(0,root,processMid,processEnd)
 

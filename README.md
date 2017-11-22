@@ -1060,6 +1060,8 @@ When using the `Giraffe.TokenRouter` module the main routing functions have been
 
 The `route` and `routef` handlers work the exact same way as before, except that the continuation handler needs to be enclosed in parentheses or captured by the `<|` or `=>` operators.
 
+The http method filters `GET` , `POST` , `PUT` and `DELETE` are functions that take a list of routing functions similar to before.   
+
 The `subRoute` handler has been altered in order to accept an additional parameter of child routing functions. All child routing functions will presume that the given sub path has been prepended.
 
 ### Example:
@@ -1074,12 +1076,15 @@ let app =
         route "/about"  => text "about"
         routef "parsing/%s/%i" (fun (s,i) -> text (sprintf "Recieved %s & %i" s i))
         subRoute "/api" [
-            route "/"       <| text "api index"
-            route "/about"  (text "api about")
-            subRoute "/v2" [
-                route "/"       <| text "api v2 index"
-                route "/about"  (text "api v2 about")
+            GET [
+                route "/"       <| text "api index"
+                route "/about"  (text "api about")
+                subRoute "/v2" [
+                    route "/"       <| text "api v2 index"
+                    route "/about"  (text "api v2 about")
+                ]
             ]
+
         ]
     ]
 ```
