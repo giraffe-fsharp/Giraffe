@@ -3,9 +3,9 @@ module Giraffe.TokenRouter
 open System.Collections.Generic
 open System.Text
 open Microsoft.FSharp.Reflection
-open FSharp.Core.Printf
-open Giraffe.HttpHandlers
-open Giraffe.TokenParsers
+open Printf
+open HttpHandlers
+open TokenParsers
 
 // Implemenation of (router) Trie Node
 // --------------------------------------
@@ -82,10 +82,10 @@ type Node(token:string) =
         with get()  = endFns
         and set v = endFns <- v
     member __.AddEndFn = addEndFn
-    member x.EdgeCount
+    member __.EdgeCount
         with get () = edges.Count
-    member x.GetEdgeKeys = edges.Keys
-    member x.TryGetValue v = edges.TryGetValue v
+    member __.GetEdgeKeys = edges.Keys
+    member __.TryGetValue v = edges.TryGetValue v
     override x.ToString() =
         let sb = StringBuilder()
         x.ToString(0, sb)
@@ -104,11 +104,11 @@ type Node(token:string) =
             else
                 sb.Append("\n")         |> ignore
                 for kvp in x.Edges do
-                    for i = 0 to depth do sb.Append("\t") |> ignore
+                    for _ in 0 .. depth do sb.Append("\t") |> ignore
                     sb  .Append(kvp.Key)
                         .Append(" => ") |> ignore
                     kvp.Value.ToString(depth + 1,sb)
-                for i = 0 to depth do sb.Append("\t") |> ignore
+                for _ in 0 .. depth do sb.Append("\t") |> ignore
                 sb.Append("])\n")    |> ignore
 
     static member AddFn (node:Node) fn =
@@ -135,6 +135,21 @@ type Node(token:string) =
         node.MidFns <- List.empty
         node.EndFns <- List.empty
 
+
+    static member ExtendPath (node:Node) (path:string) (rc:ContType) =        
+        if path = "" then
+            Node.AddFn node rc
+            node
+        else
+            match node.TryGetValue path.[0] with
+            | true, cnode ->
+                Node.AddPath cnode path rc // recursive path scan
+            | false, _    ->
+                let nnode = Node(path)
+                node.Edges.Add(path.[0], nnode)
+                Node.AddFn nnode rc
+                nnode
+
     static member AddPath (node:Node) (path:string) (rc:ContType) =
 
         //printfn "'%s' -> %s" path (node.ToString())
@@ -146,20 +161,20 @@ type Node(token:string) =
             Node.AddFn node rc
             node
         | ZeroMatch ->
-            if path = "" then
-                Node.AddFn node rc
-                node
-            else
-                // special case adding subroute (ignore subroute token)
-                match node.TryGetValue path.[0] with
-                | true, cnode ->
-                    Node.AddPath cnode path rc // recursive path scan
-                | fales, _    ->
-                    let nnode = Node(path)
-                    node.Edges.Add(path.[0], nnode)
-                    Node.AddFn nnode rc
-                    nnode
-                //failwith <| sprintf "path passed to node with non-matching start in error:%s -> %s\n\n%s\n" path node.Token (node.ToString())
+            // if path = "" then
+            //     Node.AddFn node rc
+            //     node
+            // else
+            //     // special case adding subroute (ignore subroute token)
+            //     match node.TryGetValue path.[0] with
+            //     | true, cnode ->
+            //         Node.AddPath cnode path rc // recursive path scan
+            //     | false, _    ->
+            //         let nnode = Node(path)
+            //         node.Edges.Add(path.[0], nnode)
+            //         Node.AddFn nnode rc
+            //         nnode
+            failwith <| sprintf "path passed to node with non-matching start in error:%s -> %s\n\n%s\n" path node.Token (node.ToString())
         | FullMatch ->
             Node.AddFn node rc
             node
@@ -173,7 +188,7 @@ type Node(token:string) =
             match node.TryGetValue rem.[0] with
             | true, cnode ->
                 Node.AddPath cnode rem rc // recursive path scan
-            | fales, _    ->
+            | false, _    ->
                 let nnode = Node(rem)
                 node.Edges.Add(rem.[0], nnode)
                 Node.AddFn nnode rc
@@ -190,9 +205,11 @@ type Node(token:string) =
 and MidCont =
 | ApplyMatch of (char * (char []) * (Node)) // (parser , nextChar(s) , contNode) list
 | ApplyMatchAndComplete of ( char * int * ParseFnCache) // (lastParser, No# Parsers, Cont Fn)
+| MethodMatch of string * Node
     member x.Precedence
         with get () =
             match x with
+            | MethodMatch _ -> 3 
             | ApplyMatch (c,_,_) -> (int c)
             | ApplyMatchAndComplete (c,_,_) -> 256 + (int c)
 
@@ -264,7 +281,7 @@ let private getPostMatchNode fmt (nxt:char) (ils:MidCont list) =
 ///  * `Node`
 let route (path:string) (fn:HttpHandler) (root:Node) =
     // Simple route that iterates down nodes and if function found, execute as normal
-    Node.AddPath root path (fn |> HandlerMap |> End)
+    Node.ExtendPath root path (fn |> HandlerMap |> End)
 
 ///**Description**
 /// Matches and parses url values from a route using `printf` string formatting, results are passes to function as tuple.
@@ -286,7 +303,7 @@ let routef (path : PrintfFormat<_,_,_,_,'T>) (fn:'T -> HttpHandler) (root:Node)=
             if pcount = 0 then
                 failwith "'routef' (route Parse) used with no arguments? please add % format args or change to simple 'route' for non-parse routes"
             else
-                Node.AddPath node (path.Value -| ts) ( MatchComplete( pcount , ParseFnCache( fun(o:obj) -> (o :?> 'T) |> fn ) ) |> End)  //todo: boxing & upcasting bad for performance, need to fix
+                Node.ExtendPath node (path.Value -| ts) ( MatchComplete( pcount , ParseFnCache( fun(o:obj) -> (o :?> 'T) |> fn ) ) |> End)  //todo: boxing & upcasting bad for performance, need to fix
         else
             let fmtChar = path.Value.[pl + 1]
             // overrided %% -> % case
@@ -300,10 +317,10 @@ let routef (path : PrintfFormat<_,_,_,_,'T>) (fn:'T -> HttpHandler) (root:Node)=
                     if node.MidFns |> List.exists (function | ApplyMatchAndComplete(c,_,_) -> fmtChar = c | _ -> false )
                     then sprintf "duplicate paths detected '%s', Trie Build skipping..." path.Value |> failwith
                     else
-                        Node.AddPath node (path.Value.Substring(ts,pl - ts)) (ApplyMatchAndComplete( fmtChar , pcount + 1 , ParseFnCache(fun (o:obj) -> o :?> 'T |> fn )) |> Mid)
+                        Node.ExtendPath node (path.Value.Substring(ts,pl - ts)) (ApplyMatchAndComplete( fmtChar , pcount + 1 , ParseFnCache(fun (o:obj) -> o :?> 'T |> fn )) |> Mid)
                 else //otherwise add mid pattern parse apply
                     //get node this parser will be on
-                    let nnode = Node.AddPath node (path.Value.Substring(ts,pl - ts)) Empty
+                    let nnode = Node.ExtendPath node (path.Value.Substring(ts,pl - ts)) Empty
                     let cnode,midFns = getPostMatchNode fmtChar path.Value.[pl+2] nnode.MidFns
                     nnode.MidFns <- midFns //update adjusted functions
                     go (pl + 2) (pl + 2) (pcount + 1) cnode
@@ -325,6 +342,36 @@ let private processPath (abort:HttpHandler) (root:Node) : HttpHandler =
 
         let path : string = ctx.Request.Path.Value
         let last = path.Length - 1
+
+        let rec crawl (pos:int , node:Node, mf , ef) =
+            if node.Token.Length > 0 then
+                let cp = commonPathIndex path pos node.Token
+                if cp = node.Token.Length then
+                    let nxtChar = pos + node.Token.Length
+                    if (nxtChar - 1 ) = last then //if have reached end of path through nodes, run HandlerFn
+                        ef(node.EndFns, pos, [] )
+                    else
+                        match node.TryGetValue path.[nxtChar] with
+                        | true, cnode ->
+                            if (pos + cnode.Token.Length ) = last then //if have reached end of path through nodes, run HandlerFn
+                                ef(cnode.EndFns, pos + node.Token.Length, [] )
+                            else                //need to continue down chain till get to end of path
+                                crawl (nxtChar,cnode,mf,ef)
+                        | false, _ ->
+                            // no further nodes, either a static url didnt match or there is a pattern match required
+                            mf( node.MidFns, nxtChar, [] )
+                else
+                    abort next ctx                        
+            elif node.Token.Length = 0 then
+                match node.TryGetValue path.[pos] with
+                | true, cnode ->
+                    crawl (pos,cnode,mf,ef)
+                | false, _ ->
+                    // no further nodes, either a static url didnt match or there is a pattern match required
+                    mf( node.MidFns, pos , [] )
+            else
+                //printfn ">> failed to match %s path with %s token, commonPath=%i" (path.Substring(pos)) (node.Token) (commonPathIndex path pos node.Token)
+                abort next ctx
 
         let rec checkCompletionPath (pos:int) (node:Node) = // this funciton is only used by parser paths
             //this function doesn't test array bounds as all callers do so before
@@ -358,7 +405,7 @@ let private processPath (abort:HttpHandler) (root:Node) : HttpHandler =
             | x1 -> //x1 represents position of match close char but rest of chain must be confirmed
                 match checkCompletionPath x1 node with
                 | struct(true,x2,cn) -> success(x1 - 1,x2,cn)                 // from where char found to end of node chain complete
-                | struct(false,x2,_) -> getNodeCompletion cs (x1 + 1) node // char foundpart of match, not completion string
+                | struct(false,_,_) -> getNodeCompletion cs (x1 + 1) node // char foundpart of match, not completion string
 
         let createResult (args:obj list) (argCount:int) (pfc:ParseFnCache) =
             let input =
@@ -394,14 +441,28 @@ let private processPath (abort:HttpHandler) (root:Node) : HttpHandler =
                         let tf = FSharpValue.PreComputeTupleConstructor(tupleType)
                         pfc.TupleFn <- Some tf // cache the tuple function (lazy eval)
                         tf values
-            pfc.fn input next ctx
+            
+            let resultTask = pfc.fn input next ctx
+            task { 
+                let! result = resultTask 
+                match result with
+                | Some _ -> return! resultTask
+                | None -> return! abort next ctx
+            }
 
-        let rec processEnd (fns:EndCont list, pos, args) =
+        let rec processEnd (fns:EndCont list, _, args) =
             match fns with
             | [] -> abort next ctx
-            | h :: t ->
+            | h :: _ ->
                 match h with
-                | HandlerMap fn -> fn next ctx // run function with all parameters
+                | HandlerMap fn -> 
+                    let resultTask = fn next ctx // run function with all parameters
+                    task { 
+                        let! result = resultTask 
+                        match result with
+                        | Some _ -> return! resultTask
+                        | None -> return! abort next ctx
+                    }
                 | MatchComplete (i,fn) -> createResult args i fn
 
         let rec processMid (fns:MidCont list,pos, args) =
@@ -427,31 +488,32 @@ let private processPath (abort:HttpHandler) (root:Node) : HttpHandler =
             | [] -> abort next ctx
             | h :: t ->
                 match h with
+                | MethodMatch (m,n) -> if ctx.Request.Method = m then crawl(pos,n,processMid,processEnd) else processMid(t,pos,args)
                 | ApplyMatch x -> applyMatch x pos args t
                 | ApplyMatchAndComplete x -> applyMatchAndComplete pos args x t
 
-        let rec crawl (pos:int) (node:Node) =
-            let cp = commonPathIndex path pos node.Token
-            if cp = node.Token.Length then
-                let nxtChar = pos + node.Token.Length
-                if (nxtChar - 1 ) = last then //if have reached end of path through nodes, run HandlerFn
-                    processEnd(node.EndFns, pos, [] )
-                else
-                    match node.TryGetValue path.[nxtChar] with
-                    | true, cnode ->
-                        if (pos + cnode.Token.Length ) = last then //if have reached end of path through nodes, run HandlerFn
-                            processEnd(cnode.EndFns, pos + node.Token.Length, [] )
-                        else                //need to continue down chain till get to end of path
-                            crawl (nxtChar) cnode
-                    | false, _ ->
-                        // no further nodes, either a static url didnt match or there is a pattern match required
-                        processMid( node.MidFns, nxtChar, [] )
-            else
-                //printfn ">> failed to match %s path with %s token, commonPath=%i" (path.Substring(pos)) (node.Token) (commonPathIndex path pos node.Token)
-                abort next ctx
+        // let rec crawl (pos:int) (node:Node) =
+        //     let cp = commonPathIndex path pos node.Token
+        //     if cp = node.Token.Length then
+        //         let nxtChar = pos + node.Token.Length
+        //         if (nxtChar - 1 ) = last then //if have reached end of path through nodes, run HandlerFn
+        //             processEnd(node.EndFns, pos, [] )
+        //         else
+        //             match node.TryGetValue path.[nxtChar] with
+        //             | true, cnode ->
+        //                 if (pos + cnode.Token.Length ) = last then //if have reached end of path through nodes, run HandlerFn
+        //                     processEnd(cnode.EndFns, pos + node.Token.Length, [] )
+        //                 else                //need to continue down chain till get to end of path
+        //                     crawl (nxtChar) cnode
+        //             | false, _ ->
+        //                 // no further nodes, either a static url didnt match or there is a pattern match required
+        //                 processMid( node.MidFns, nxtChar, [] )
+        //     else
+        //         //printfn ">> failed to match %s path with %s token, commonPath=%i" (path.Substring(pos)) (node.Token) (commonPathIndex path pos node.Token)
+        //         abort next ctx
 
         // begin path crawl process
-        crawl 0 root
+        crawl(0,root,processMid,processEnd)
 
 let private mapNode (fns:(Node->Node) list) (parent:Node) =
     let rec go ls =
@@ -472,9 +534,20 @@ let private mapNode (fns:(Node->Node) list) (parent:Node) =
 ///  * `parent` : `Node` - This parameter is applied by `router`, and is ommitted when building api such that function is partially applied fn
 ///  * `Node`
 let subRoute (path:string) (fns:(Node->Node) list) (parent:Node) : Node =
-    let child = Node.AddPath parent path Empty
+    let child = Node.ExtendPath parent path Empty
     mapNode fns child
     child
+
+let private methodFns (meth:string) (fns:(Node->Node) list) (parent:Node) =
+    let child = Node("") 
+    mapNode fns child
+    parent.AddMidFn <| MethodMatch(meth,child)
+    child
+
+let GET    fns = methodFns "GET"    fns
+let POST   fns = methodFns "POST"   fns 
+let PUT    fns = methodFns "PUT"    fns
+let DELETE fns = methodFns "DELETE" fns  
 
 ///**Description**
 /// HttpHandler funtion that accepts a list of route mapping functions and builds a route tree for fast processing of request routes
@@ -488,6 +561,16 @@ let router (abort:HttpHandler) (fns:(Node->Node) list) : HttpHandler =
     let root = Node("")
     // precompile the route functions into node trie
     mapNode fns root
+    
+    //get path progress (if any so far)
+    processPath abort root
+
+let routerDbg (dbg:string -> unit)  (abort:HttpHandler) (fns:(Node->Node) list) : HttpHandler =
+    let root = Node("")
+    // precompile the route functions into node trie
+    mapNode fns root
+
+    dbg (root.ToString())
 
     //get path progress (if any so far)
     processPath abort root
