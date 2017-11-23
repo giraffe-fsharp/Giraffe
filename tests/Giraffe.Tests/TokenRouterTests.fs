@@ -1407,3 +1407,46 @@ type DebugTests(output:ITestOutputHelper) =
                 let body = getBody ctx
                 Assert.Equal(expected, body)
         }
+
+    member __.``Test portRoute function`` () = 
+        let ctx = Substitute.For<HttpContext>()
+        let notFound = (setStatusCode 404 >=> text "Not Found")
+        let app1 =
+            routerDbg output.WriteLine notFound [
+                GET [
+                    route  "/index1"          => text "index page1" ]                       
+                POST [
+                    subRoute "/api1" [
+                        route "/newpassword1" => text "newpassword1" ]
+                ]             
+            ]
+        let app2 =
+            routerDbg output.WriteLine notFound [
+                GET [
+                    route  "/index2"          => text "index page2" ]                       
+                POST [
+                    subRoute "/api2" [
+                        route "/newpassword2" => text "newpassword2" ]
+                ]             
+            ]
+        let app = portRoute [
+            (9001,app1)
+            (9002,app2)
+        ]   
+        
+        let expected = "newpassword2"
+        ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+        ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/newpassword2")) |> ignore
+        ctx.Request.Host.Port.HasValue.ReturnsForAnyArgs true |> ignore
+        ctx.Request.Host.Port.Value.ReturnsForAnyArgs 9002 |> ignore
+        ctx.Response.Body <- new MemoryStream()
+        
+        task {
+            let! result = app (Some >> Task.FromResult) ctx
+
+            match result with
+            | None     -> assertFail "No Route matched"
+            | Some ctx ->  
+                let body = getBody ctx
+                Assert.Equal(expected, body)
+        }

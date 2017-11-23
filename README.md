@@ -61,6 +61,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [renderHtml](#renderhtml)
     - [redirectTo](#redirectto)
     - [warbler](#warbler)
+    - [portRoute](#portRoute)
 - [Additional HttpHandlers](#additional-httphandlers)
     - [Giraffe.Razor](#girafferazor)
         - [razorView](#razorview)
@@ -884,6 +885,32 @@ A warbler will help to evaluate the function every time the route is hit.
 ```fsharp
 // ('a -> 'a -> 'b) -> 'a -> 'b
 let warbler f a = f a a
+```
+
+### portRoute
+
+if you are accepting multiple ports through `WebHost.UseUrls` then you are able to easily filter requests based on port using the `portRoute` HttpHandler by providing a tupled list of port number & HttpHandler.
+
+#### Example 
+```fsharp
+
+let app9001 =
+    router notFound [
+        GET [
+            route  "/index1"          => text "index page1" ]                                    
+    ]
+let app9002 =
+    router notFound [                      
+        POST [
+            subRoute "/api2" [
+                route "/newpassword2" => text "newpassword2" ]
+        ]             
+    ]
+let app = portRoute [
+    (9001,app9001)
+    (9002,app9002)
+]  
+
 ```
 
 ## Additional HttpHandlers

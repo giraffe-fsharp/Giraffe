@@ -409,3 +409,16 @@ let redirectTo (permanent : bool) (location : string) : HttpHandler  =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.Response.Redirect(location, permanent)
         Task.FromResult (Some ctx)
+
+let portRoute (fns: (int * HttpHandler) list) : HttpHandler =
+    fun next ->
+        let portMap = Dictionary<_,_>(fns.Length)
+        fns |> List.iter (fun (p,h) -> portMap.Add(p, h next ))
+        fun (ctx:HttpContext) ->
+            let port = ctx.Request.Host.Port 
+            if port.HasValue then 
+                match portMap.TryGetValue port.Value with
+                | true ,func -> func ctx
+                | false,_    -> abort
+            else 
+                abort            
