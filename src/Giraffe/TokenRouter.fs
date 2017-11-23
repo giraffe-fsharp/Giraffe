@@ -161,19 +161,6 @@ type Node(token:string) =
             Node.AddFn node rc
             node
         | ZeroMatch ->
-            // if path = "" then
-            //     Node.AddFn node rc
-            //     node
-            // else
-            //     // special case adding subroute (ignore subroute token)
-            //     match node.TryGetValue path.[0] with
-            //     | true, cnode ->
-            //         Node.AddPath cnode path rc // recursive path scan
-            //     | false, _    ->
-            //         let nnode = Node(path)
-            //         node.Edges.Add(path.[0], nnode)
-            //         Node.AddFn nnode rc
-            //         nnode
             failwith <| sprintf "path passed to node with non-matching start in error:%s -> %s\n\n%s\n" path node.Token (node.ToString())
         | FullMatch ->
             Node.AddFn node rc
