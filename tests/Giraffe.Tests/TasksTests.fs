@@ -604,6 +604,48 @@ let testTryOverReturnFrom() =
         }
     require (t.Result = 2) "didn't catch"
 
+
+
+[<Theory>]
+[<InlineData(10)>]
+[<InlineData(100)>]
+[<InlineData(1000)>]
+let testUnitTaskSequentially n =
+    let dict = System.Collections.Concurrent.ConcurrentDictionary<_,_>()
+    let t (i:int) =
+        task {
+            do! Task.Delay 100
+            dict.TryAdd(i,1) |> ignore
+        }
+
+    let t2 = task {
+        for t in [1..n] |> List.map t do
+            do! t
+    }
+    t2.Wait()
+    Assert.Equal(dict.Count, n)
+
+[<Theory>]
+[<InlineData(10)>]
+[<InlineData(100)>]
+[<InlineData(1000)>]
+let testUnitTaskSequentiallyInTask n =
+    let dict = System.Collections.Concurrent.ConcurrentDictionary<_,_>()
+    let t (i:int) =
+        task {
+            do! Task.Delay 100
+            dict.TryAdd(i,1) |> ignore
+        }
+
+    task {
+        for t in [1..n] |> List.map t do
+            do! t
+        Assert.Equal(dict.Count, n)
+    }
+    
+    
+
+
 // no need to call this, we just want to check that it compiles w/o warnings
 let testTrivialReturnCompiles (x : 'a) : 'a Task =
     task {
