@@ -604,8 +604,6 @@ let testTryOverReturnFrom() =
         }
     require (t.Result = 2) "didn't catch"
 
-
-
 [<Theory>]
 [<InlineData(10)>]
 [<InlineData(100)>]
@@ -642,9 +640,6 @@ let testUnitTaskSequentiallyInTask n =
             do! t
         Assert.Equal(dict.Count, n)
     }
-    
-    
-
 
 // no need to call this, we just want to check that it compiles w/o warnings
 let testTrivialReturnCompiles (x : 'a) : 'a Task =

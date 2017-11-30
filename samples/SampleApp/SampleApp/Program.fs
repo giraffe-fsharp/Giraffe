@@ -15,6 +15,7 @@ open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
+open Giraffe
 open Giraffe.Tasks
 open Giraffe.HttpContextExtensions
 open Giraffe.HttpHandlers
@@ -140,14 +141,14 @@ let webApp =
                 route  "/person"     >=> (personView { Name = "Html Node" } |> renderHtml)
                 route  "/once"       >=> (time() |> text)
                 route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
-                route  "/configured"  >=> configuredHandler
+                route  "/configured" >=> configuredHandler
             ]
         POST >=>
             choose [
                 route "/small-upload" >=> smallFileUploadHandler
                 route "/large-upload" >=> largeFileUploadHandler ]
         route "/car" >=> submitCar
-        setStatusCode 404 >=> text "Not Found" ]
+        RequestErrors.notFound (text "Not Found") ]
 
 // ---------------------------------
 // Main
