@@ -404,21 +404,22 @@ let negotiate (responseObj : obj) : HttpHandler =
         // response object
         responseObj
 
-///Redirects to a different location with a 302 or 301 (when permanent) HTTP status code.
+/// Redirects to a different location with a 302 or 301 (when permanent) HTTP status code.
 let redirectTo (permanent : bool) (location : string) : HttpHandler  =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.Response.Redirect(location, permanent)
         Task.FromResult (Some ctx)
 
-let portRoute (fns: (int * HttpHandler) list) : HttpHandler =
+/// Filters an incoming HTTP request based on the port.
+let portRoute (fns : (int * HttpHandler) list) : HttpHandler =
     fun next ->
         let portMap = Dictionary<_,_>(fns.Length)
-        fns |> List.iter (fun (p,h) -> portMap.Add(p, h next ))
-        fun (ctx:HttpContext) ->
-            let port = ctx.Request.Host.Port 
-            if port.HasValue then 
+        fns |> List.iter (fun (p, h) -> portMap.Add(p, h next))
+        fun (ctx : HttpContext) ->
+            let port = ctx.Request.Host.Port
+            if port.HasValue then
                 match portMap.TryGetValue port.Value with
-                | true ,func -> func ctx
-                | false,_    -> abort
-            else 
-                abort            
+                | true , func -> func ctx
+                | false, _    -> abort
+            else
+                abort
