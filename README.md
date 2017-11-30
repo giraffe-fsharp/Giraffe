@@ -1768,7 +1768,7 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Dragan Jovanović](https://github.com/draganjovanovic1) (Changed the UseGiraffeErrorHandler method to allow chaining of middleware and added policy based auth handlers)
 - [Viquoc Quan](https://github.com/vtquan) (Fixed bug in giraffe-template)
 - [Kerry Jones](https://github.com/KerryRJ) (Helped to fix bugs and added custom JSON serialization support)
-- [Steffen Forkmann](https://github.com/forki) (Improved the htmlFile http handler)
+- [Steffen Forkmann](https://github.com/forki) (Improved the htmlFile http handler and ported Suave's status code handlers as well as general help with the project)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
 
