@@ -61,6 +61,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [renderHtml](#renderhtml)
     - [redirectTo](#redirectto)
     - [warbler](#warbler)
+    - [portRoute](#portRoute)
 - [Additional HttpHandlers](#additional-httphandlers)
     - [Giraffe.Razor](#girafferazor)
         - [razorView](#razorview)
@@ -886,6 +887,32 @@ A warbler will help to evaluate the function every time the route is hit.
 let warbler f a = f a a
 ```
 
+### portRoute
+
+if you are accepting multiple ports through `WebHost.UseUrls` then you are able to easily filter requests based on port using the `portRoute` HttpHandler by providing a tupled list of port number & HttpHandler.
+
+#### Example 
+```fsharp
+
+let app9001 =
+    router notFound [
+        GET [
+            route  "/index1"          => text "index page1" ]                                    
+    ]
+let app9002 =
+    router notFound [                      
+        POST [
+            subRoute "/api2" [
+                route "/newpassword2" => text "newpassword2" ]
+        ]             
+    ]
+let app = portRoute [
+    (9001,app9001)
+    (9002,app9002)
+]  
+
+```
+
 ## Additional HttpHandlers
 
 There's a few additional `HttpHandler` functions which you can get through referencing extra NuGet packages.
@@ -1060,6 +1087,8 @@ When using the `Giraffe.TokenRouter` module the main routing functions have been
 
 The `route` and `routef` handlers work the exact same way as before, except that the continuation handler needs to be enclosed in parentheses or captured by the `<|` or `=>` operators.
 
+The http method filters `GET` , `POST` , `PUT` and `DELETE` are functions that take a list of routing functions similar to before.   
+
 The `subRoute` handler has been altered in order to accept an additional parameter of child routing functions. All child routing functions will presume that the given sub path has been prepended.
 
 ### Example:
@@ -1074,12 +1103,15 @@ let app =
         route "/about"  => text "about"
         routef "parsing/%s/%i" (fun (s,i) -> text (sprintf "Recieved %s & %i" s i))
         subRoute "/api" [
-            route "/"       <| text "api index"
-            route "/about"  (text "api about")
-            subRoute "/v2" [
-                route "/"       <| text "api v2 index"
-                route "/about"  (text "api v2 about")
+            GET [
+                route "/"       <| text "api index"
+                route "/about"  (text "api about")
+                subRoute "/v2" [
+                    route "/"       <| text "api v2 index"
+                    route "/about"  (text "api v2 about")
+                ]
             ]
+
         ]
     ]
 ```
