@@ -511,11 +511,13 @@ let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
 let ``GET "/foo/johndoe/FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD" returns "Name: johndoe, Id: FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD"`` () = 
     let ctx = Substitute.For<HttpContext>() 
     let app = 
-        GET >=> router notFound [ 
-            route   "/"       => text "Hello World" 
-            route   "/foo"    => text "bar" 
-            routef "/foo/%s/bar" text 
-            routef "/foo/%s/%O" (fun (name, id: Guid) -> text (sprintf "Name: %s, Id: %O" name id)) 
+        router notFound [
+            GET [
+                route   "/"       => text "Hello World" 
+                route   "/foo"    => text "bar" 
+                routef "/foo/%s/bar" text 
+                routef "/foo/%s/%O" (fun (name, id: Guid) -> text (sprintf "Name: %s, Id: %O" name id)) 
+            ]
         ] 
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore 
@@ -534,12 +536,14 @@ let ``GET "/foo/johndoe/FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD" returns "Name: joh
 let ``GET "/foo/johndoe/FE9CFE1935D44EDC9A955D38C4D579BD" returns "Name: johndoe, Id: FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD"`` () = 
     let ctx = Substitute.For<HttpContext>() 
     let app = 
-        GET >=> router notFound [ 
-            route   "/"       => text "Hello World" 
-            route   "/foo"    => text "bar" 
-            routef "/foo/%s/bar" text 
-            routef "/foo/%s/%O" (fun (name, id: Guid) -> text (sprintf "Name: %s, Id: %O" name id)) 
-        ] 
+        router notFound [ 
+            GET [
+                route   "/"       => text "Hello World" 
+                route   "/foo"    => text "bar" 
+                routef "/foo/%s/bar" text 
+                routef "/foo/%s/%O" (fun (name, id: Guid) -> text (sprintf "Name: %s, Id: %O" name id)) 
+            ]
+        ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore 
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/johndoe/FE9CFE1935D44EDC9A955D38C4D579BD")) |> ignore 
@@ -1475,7 +1479,8 @@ type DebugTests(output:ITestOutputHelper) =
                         route "/newpassword2" => text "newpassword2" ]
                 ]
             ]
-        let app = portRoute [
+        let app =
+            portRoute [
                 (9001,app1)
                 (9002,app2)
             ]

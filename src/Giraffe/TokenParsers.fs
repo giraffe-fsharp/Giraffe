@@ -1,5 +1,6 @@
 module Giraffe.TokenParsers
 
+open System
 open NonStructuralComparison // needed for parser performance, non boxing of struct equality
 open OptimizedClosures       // needed to apply multi-curry args at once with adapt (invoke method)
 
@@ -92,10 +93,48 @@ let private floatParse (path:string) ipos fpos =
     | '+' -> go (ipos + 1)
     | _ -> go (ipos)
 
-let private guidParse (path:string) ipos fpos = 
-    match System.Guid.TryParse(path.Substring(ipos, fpos - (ipos - 1))) with 
-    | true, x -> x |> box |> rtrn 
-    | false, _ -> failure 
+let private guidMap = [|3;2;1;0;5;4;7;6;8;9;10;11;12;13;14;15|]
+let private guidParse (path:string) ipos fpos =
+    let byteAry = Array.zeroCreate<byte>(16)
+    let mutable bytePos = 0
+    let mutable byteCur = 0uy
+    let mutable atHead = true
+    let rec go pos =
+        if path.[pos] = '-' then // skip over '-' chars
+            if pos < fpos then go (pos + 1) else failure
+        else 
+            let cv =  byte path.[pos]
+            
+            let value =
+                if  cv >= byte '0' then
+                    if cv <= byte '9' then cv - byte '0'
+                    elif cv >= byte 'A' then
+                        if cv <= byte 'F' then cv - byte 'A' + 10uy
+                        elif cv >= byte 'a' then
+                            if cv <= byte 'f' then cv - byte 'a' + 10uy
+                            else 255uy
+                        else 255uy
+                    else 255uy
+                else 255uy                                        
+
+            if value = 255uy then
+                failure
+            else
+                if atHead then
+                    byteCur <- value <<< 4
+                    atHead <- false
+                    go (pos + 1)   // continue iter
+                else
+                    byteAry.[guidMap.[bytePos]] <- byteCur ||| value
+                    if bytePos = 15 then
+                        Guid(byteAry) |> box |> rtrn
+                    else
+                        byteCur <- 0uy
+                        atHead <- true
+                        bytePos <- bytePos + 1
+                        go (pos + 1)   // continue iter
+    //Start Parse
+    go (ipos)
 
 let formatMap =
     dict [
