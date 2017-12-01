@@ -2,6 +2,7 @@ module Giraffe.FormatExpressions
 
 open System
 open System.Text.RegularExpressions
+open System.Net
 open Microsoft.FSharp.Reflection
 open FSharp.Core
 open FSharp.Core.Printf
@@ -25,7 +26,7 @@ let convertToRegexPatternAndFormatChars (formatString : string) =
         | '%' :: '%' :: tail ->
             let pattern, formatChars = convert tail
             "%" + pattern, formatChars
-        | '%' :: c :: tail -> 
+        | '%' :: c :: tail ->
             let pattern, formatChars = convert tail
             let regex, _ = formatStringMap.[c]
             regex + pattern, c :: formatChars
@@ -39,14 +40,14 @@ let convertToRegexPatternAndFormatChars (formatString : string) =
     |> convert
     |> (fun (pattern, formatChars) -> sprintf "^%s$" pattern, formatChars)
 
-let tryMatchInput (format : StringFormat<_, 'T>) (input : string) (ignoreCase : bool) =
+let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreCase : bool) =
     try
-        let pattern, formatChars = 
+        let pattern, formatChars =
             format.Value
             |> Regex.Escape
             |> convertToRegexPatternAndFormatChars
-        
-        let options = 
+
+        let options =
             match ignoreCase with
             | true  -> RegexOptions.IgnoreCase
             | false -> RegexOptions.None
@@ -63,7 +64,7 @@ let tryMatchInput (format : StringFormat<_, 'T>) (input : string) (ignoreCase : 
 
             let values =
                 (groups, formatChars)
-                ||> Seq.map2 (fun g c -> 
+                ||> Seq.map2 (fun g c ->
                     let _, parser   = formatStringMap.[c]
                     let value       = parser g.Value
                     value)

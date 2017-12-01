@@ -33,6 +33,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [mustAccept](#mustaccept)
     - [challenge](#challenge)
     - [signOff](#signoff)
+    - [requiresAuthPolicy](#requiresauthpolicy)
     - [requiresAuthentication](#requiresauthentication)
     - [requiresRole](#requiresrole)
     - [requiresRoleOf](#requiresroleof)
@@ -51,6 +52,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [setBody](#setbody)
     - [setBodyAsString](#setbodyasstring)
     - [text](#text)
+    - [customJson](#customjson)
     - [json](#json)
     - [xml](#xml)
     - [negotiate](#negotiate)
@@ -58,6 +60,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [htmlFile](#htmlfile)
     - [renderHtml](#renderhtml)
     - [redirectTo](#redirectto)
+    - [portRoute](#portroute)
     - [warbler](#warbler)
 - [Additional HttpHandlers](#additional-httphandlers)
     - [Giraffe.Razor](#girafferazor)
@@ -75,6 +78,8 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [WriteJson](#writejson)
     - [WriteXml](#writexml)
     - [WriteText](#writetext)
+    - [RenderHtml](#renderhtml-1)
+    - [ReturnHtmlFile](#returnhtmlfile)
 - [Model Binding](#model-binding)
     - [BindJson](#bindjson)
     - [BindXml](#bindxml)
@@ -290,6 +295,22 @@ let app =
     choose [
         route "/ping" >=> text "pong"
         route "/logout" >=> signOff "Cookie" >=> text "You have successfully logged out."
+    ]
+```
+
+### requiresAuthPolicy
+
+`requiresauthpolicy` validates if a user satisfies policy requirement,
+if not then the handler will execute the `authFailedHandler` function.
+
+```fsharp
+let mustBeJohn =
+    requiresAuthPolicy (fun user -> user.HasClaim (ClaimTypes.Name, "John")) accessDenied
+
+let app =
+    choose [
+        route "/ping" >=> text "pong"
+        route "/john-only" >=> mustBeJohn >=> text "Hi John."
     ]
 ```
 
@@ -625,6 +646,54 @@ let app =
 
 You can also use the [`WriteText`](#writetext) extension method to return a plain text response back to the client.
 
+### customJson
+
+`customJson` sets or modifies the body of the `HttpResponse` by sending a JSON serialized object with custom `JsonSerializerSettings` to the client. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more. It also sets the `Content-Type` HTTP header to `application/json`.
+
+#### Example:
+
+```fsharp
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let settings = JsonSerializerSettings(
+        Formatting = Formatting.Indented,
+        NullValueHandling = NullValueHandling.Ignore
+    )
+
+let app =
+    choose [
+        route  "/foo" >=> customJson settings { FirstName = "Foo"; LastName = "Bar" }
+    ]
+```
+
+You can also create a new http handler with the help of `customJson`:
+
+```fsharp
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let settings = JsonSerializerSettings(
+        Formatting = Formatting.Indented,
+        NullValueHandling = NullValueHandling.Ignore
+    )
+
+let formattedJson = customJson settings
+
+let app =
+    choose [
+        route  "/foo" >=> formattedJson { FirstName = "Foo"; LastName = "Bar" }
+    ]
+```
+
+Alternatively you can also use the [`WriteJson`](#writejson) extension method to return a custom serialized JSON response back to the client.
+
 ### json
 
 `json` sets or modifies the body of the `HttpResponse` by sending a JSON serialized object to the client. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more. It also sets the `Content-Type` HTTP header to `application/json`.
@@ -644,7 +713,7 @@ let app =
     ]
 ```
 
-You can also use the [`WriteJson`](#writejson) extension method to return a JSON response back to the client.
+You can also use the [`WriteJson`](#writejson) extension method to return a default serialized JSON response back to the client.
 
 ### xml
 
@@ -727,7 +796,7 @@ let app =
 
 `htmlFile` sets or modifies the body of the `HttpResponse` with the contents of a physical html file. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
 
-This http handler takes a relative path of a html file as input parameter and sets the HTTP header `Content-Type` to `text/html`.
+This http handler takes a rooted path of a html file or a path which is relative to the ContentRootPath as the input parameter and sets the HTTP header `Content-Type` to `text/html`.
 
 #### Example:
 
@@ -790,6 +859,34 @@ let app =
         route "/permanent" >=> redirectTo true "http://example.org"
         route "/foo"       >=> text "Some string"
     ]
+```
+
+### portRoute
+
+If your web server is listening to multiple ports through `WebHost.UseUrls` then you can use the `portRoute` HttpHandler to easily filter incoming requests based on their port by providing a list of port number and HttpHandler (`(int * HttpHandler) list`).
+
+#### Example
+```fsharp
+
+let app9001 =
+    router notFound [
+        GET [
+            route  "/index1" => text "index page1" ]
+    ]
+
+let app9002 =
+    router notFound [
+        POST [
+            subRoute "/api2" [
+                route "/newpassword2" => text "newpassword2" ]
+        ]
+    ]
+
+let app = portRoute [
+    (9001, app9001)
+    (9002, app9002)
+]
+
 ```
 
 ### warbler
@@ -994,6 +1091,8 @@ When using the `Giraffe.TokenRouter` module the main routing functions have been
 
 The `route` and `routef` handlers work the exact same way as before, except that the continuation handler needs to be enclosed in parentheses or captured by the `<|` or `=>` operators.
 
+The http handlers `GET`, `POST`, `PUT` and `DELETE` are functions which take a list of nested http handler functions similar to before.
+
 The `subRoute` handler has been altered in order to accept an additional parameter of child routing functions. All child routing functions will presume that the given sub path has been prepended.
 
 ### Example:
@@ -1008,12 +1107,15 @@ let app =
         route "/about"  => text "about"
         routef "parsing/%s/%i" (fun (s,i) -> text (sprintf "Recieved %s & %i" s i))
         subRoute "/api" [
-            route "/"       <| text "api index"
-            route "/about"  (text "api about")
-            subRoute "/v2" [
-                route "/"       <| text "api v2 index"
-                route "/about"  (text "api v2 about")
+            GET [
+                route "/"       <| text "api index"
+                route "/about"  (text "api about")
+                subRoute "/v2" [
+                    route "/"       <| text "api v2 index"
+                    route "/about"  (text "api v2 about")
+                ]
             ]
+
         ]
     ]
 ```
@@ -1069,11 +1171,11 @@ let app =
 
 ## Nested Response Writing
 
-The `Giraffe.HttpContextExtensions` module exposes a default set of response writing functions which extend the `HttpContext` object. Instead of using the [`json`](#json), [`xml`](#xml), or [`text`](#text) handlers to compose a custom HttpHandler you can also use the `WriteJson`, `WriteXml` and `WriteText` extension methods to directly write to the response of the `HttpContext` and close the pipeline.
+The `Giraffe.HttpContextExtensions` module exposes a default set of response writing functions which extend the `HttpContext` object. Instead of using the [`customJson`](#customjson), [`json`](#json), [`xml`](#xml), or [`text`](#text) handlers to compose a custom HttpHandler you can also use the `WriteJson`, `WriteXml` and `WriteText` extension methods to directly write to the response of the `HttpContext` and close the pipeline.
 
 ### WriteJson
 
-`ctx.WriteJson someObj` can be used to return a JSON response back to the client.
+`ctx.WriteJson someObj` can be used to return a JSON response back to the client. Alternatively you can use `ctx.WriteJson (settings : JsoSerializerSettings) someObj` to customize the generated JSON before sending the response back to the client.
 
 #### Example:
 
@@ -1085,14 +1187,14 @@ type Person =
         LastName  : string
     }
 
-let MyJsonHandler : HttpHandler =
+let myJsonHandler : HttpHandler =
     fun next ctx ->
         let person = { FirstName = "Foo"; LastName = "Bar" }
         ctx.WriteJson person
 
 let app =
     choose [
-        route "/json" >=> MyJsonHandler
+        route "/json" >=> myJsonHandler
     ]
 ```
 
@@ -1110,14 +1212,14 @@ type Person =
         LastName  : string
     }
 
-let MyXmlHandler : HttpHandler =
+let myXmlHandler : HttpHandler =
     fun next ctx ->
         let person = { FirstName = "Foo"; LastName = "Bar" }
         ctx.WriteXml person
 
 let app =
     choose [
-        route "/xml" >=> MyXmlHandler
+        route "/xml" >=> myXmlHandler
     ]
 ```
 
@@ -1128,14 +1230,55 @@ let app =
 #### Example:
 
 ```fsharp
-let MyTextHandler : HttpHandler =
+let myTextHandler : HttpHandler =
     fun next ctx ->
         let str = "Hello World"
         ctx.WriteText str
 
 let app =
     choose [
-        route "/text" >=> MyTextHandler
+        route "/text" >=> myTextHandler
+    ]
+```
+
+### RenderHtml
+
+`ctx.RenderHtml someNode` can be used to return a [XmlViewEngine](#renderhtml) node.
+
+#### Example:
+
+```fsharp
+let myHtmlHandler =
+    fun (next: HttpFunc) (ctx: HttpContext) ->
+        let htmlDoc =
+            html [] [
+                head [] []
+                body [] [
+                    h1 [] [EncodedText "Hello world"]
+                ]
+            ]
+        ctx.RenderHtml(htmlDoc)
+
+let app =
+    choose [
+        route "/html" >=> myHtmlHandler
+    ]
+```
+
+### ReturnHtmlFile
+
+`ctx.ReturnHtmlFile "./myPage.html"` can be used to return a html file. Note that the path should be relative, similar to [htmlFile](#htmlfile).
+
+#### Example:
+
+```fsharp
+let htmlFileHandler  =
+    fun (next:HttpFunc) (ctx:HttpContext) ->
+        ctx.ReturnHtmlFile "./index.html"
+
+let app =
+    choose [
+        route "/htmlFile" >=> htmlFileHandler
     ]
 ```
 
@@ -1145,7 +1288,7 @@ The `Giraffe.HttpContextExtensions` module exposes a default set of model bindin
 
 ### BindJson
 
-`ctx.BindJson<'T>()` can be used to bind a JSON payload to a strongly typed model.
+`ctx.BindJson<'T>()` can be used to bind a JSON payload to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserializer during model binding.
 
 #### Example
 
@@ -1199,7 +1342,7 @@ Cache-Control: no-cache
 Content-Type: application/json
 Accept: */*
 
-{ "Name": "DB9", "Make": "Aston Martin", "Wheels": 4, "Built": "2016-01-01" }
+{ "name": "DB9", "make": "Aston Martin", "wheels": 4, "built": "2016-01-01" }
 ```
 
 ### bindXml
@@ -1382,7 +1525,7 @@ Accept: */*
 
 ### bindModel
 
-`ctx.BindModel<'T>()` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model.
+`ctx.BindModel<'T>()` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserializer during model binding.
 
 #### Example
 
@@ -1608,14 +1751,14 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Nicolás Herrera](https://github.com/nicolocodev) (Added razor engine feature)
 - [Dave Shaw](https://github.com/xdaDaveShaw) (Extended sample application and general help to keep things in good shape)
 - [Tobias Burger](https://github.com/toburger) (Fixed issues with culture specific parsers)
-- [David Sinclair](https://github.com/dsincl12) (Created the dotnet-new template for Giraffe)
-- [Florian Verdonck](https://github.com/nojaf) (Ported Suave's experimental Html into Giraffe, implemented the warbler and general help with the project)
+- [David Sinclair](https://github.com/dsincl12) (Created the dotnet-new template for Giraffe and fixed the default JSON formatting during serialization)
+- [Florian Verdonck](https://github.com/nojaf) (Ported Suave's experimental Html into Giraffe, implemented the warbler and general help with the project as well as feature development)
 - [Roman Melnikov](https://github.com/Neftedollar) (Added `redirectTo` route)
 - [Diego B. Fernandez](https://github.com/diegobfernandez) (Added support for the `Option<'T>` type in the query string model binding)
 - [Jimmy Byrd](https://github.com/TheAngryByrd) (Added Linux builds)
 - [Jon Canning](https://github.com/JonCanning) (Moved the Razor and DotLiquid http handlers into separate NuGet packages and added the `routeBind` handler as well as some useful `HttpContext` extensions and bug fixes)
 - [Andrew Grant](https://github.com/GraanJonlo) (Fixed bug in the `giraffe-template` NuGet package)
-- [Gerard](https://github.com/gerardtoconnor) (Changed the API to continuations instead of binding HttpHandlers and to tasks from async. Also added the TokenRouter feature and more.)
+- [Gerard](https://github.com/gerardtoconnor) (Changed the API to continuations instead of binding HttpHandlers and to tasks from async. Also added the TokenRouter feature and awful lot of general help and community support)
 - [Mitchell Tilbrook](https://github.com/marukami) (Helped to fix documentation)
 - [Ody Mbegbu](https://github.com/odytrice) (Helped to improve the giraffe-template)
 - [Reed Mullanix](https://github.com/TOTBWF) (Helped with bug fixes)
@@ -1624,7 +1767,10 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Yevhenii Tsalko](https://github.com/YTsalko) (Migrated sample app to .NET Core 2.0)
 - [Tor Hovland](https://github.com/torhovland) (Helped with the sample applications, demonstrating CORS, JWT and configuration options)
 - [dawedawe](https://github.com/dawedawe) (README fixes)
-- [Dragan Jovanović](https://github.com/draganjovanovic1) (Changed the UseGiraffeErrorHandler method to allow chaining of middleware)
+- [Dragan Jovanović](https://github.com/draganjovanovic1) (Changed the UseGiraffeErrorHandler method to allow chaining of middleware and added policy based auth handlers)
+- [Viquoc Quan](https://github.com/vtquan) (Fixed bug in giraffe-template)
+- [Kerry Jones](https://github.com/KerryRJ) (Helped to fix bugs and added custom JSON serialization support)
+- [Steffen Forkmann](https://github.com/forki) (Improved the htmlFile http handler and ported Suave's status code handlers as well as general help with the project)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
 

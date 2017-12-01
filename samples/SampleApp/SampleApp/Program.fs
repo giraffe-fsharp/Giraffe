@@ -15,6 +15,7 @@ open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
+open Giraffe
 open Giraffe.Tasks
 open Giraffe.HttpContextExtensions
 open Giraffe.HttpHandlers
@@ -45,6 +46,10 @@ let mustBeUser = requiresAuthentication accessDenied
 let mustBeAdmin =
     requiresAuthentication accessDenied
     >=> requiresRole "Admin" accessDenied
+
+let mustBeJohn =
+    requiresAuthentication accessDenied
+    >=> requiresAuthPolicy (fun u -> u.HasClaim (ClaimTypes.Name, "John")) accessDenied
 
 let loginHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -128,6 +133,7 @@ let webApp =
                 route  "/login"      >=> loginHandler
                 route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
                 route  "/user"       >=> mustBeUser >=> userHandler
+                route  "/john-only"  >=> mustBeJohn >=> userHandler
                 routef "/user/%i"    showUserHandler
                 route  "/razor"      >=> razorHtmlView "Person" { Name = "Razor" }
                 route  "/razorHello" >=> razorHtmlView "Hello" ""
@@ -135,14 +141,14 @@ let webApp =
                 route  "/person"     >=> (personView { Name = "Html Node" } |> renderHtml)
                 route  "/once"       >=> (time() |> text)
                 route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
-                route  "/configured"  >=> configuredHandler
+                route  "/configured" >=> configuredHandler
             ]
         POST >=>
             choose [
                 route "/small-upload" >=> smallFileUploadHandler
                 route "/large-upload" >=> largeFileUploadHandler ]
         route "/car" >=> submitCar
-        setStatusCode 404 >=> text "Not Found" ]
+        RequestErrors.notFound (text "Not Found") ]
 
 // ---------------------------------
 // Main

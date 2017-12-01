@@ -248,7 +248,7 @@ let configureServices (services : IServiceCollection) =
         ) |> ignore
 
     // Enable CORS
-    services.AddCors |> ignore
+    services.AddCors() |> ignore
 
 let configureLogging (builder : ILoggingBuilder) =
     let filter (l : LogLevel) = l.Equals LogLevel.Error

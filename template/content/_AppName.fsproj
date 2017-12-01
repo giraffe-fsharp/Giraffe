@@ -21,7 +21,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.0.*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.0.*" />
-    <PackageReference Include="Giraffe" Version="0.1.0-beta-200" />
+    <PackageReference Include="Giraffe" Version="0.1.0-beta-310" />
     <PackageReference Include="Giraffe.Razor" Version="0.1.0-beta-100" />
   </ItemGroup>
 

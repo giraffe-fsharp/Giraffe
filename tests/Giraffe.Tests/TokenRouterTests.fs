@@ -10,6 +10,7 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Xunit
+open Xunit.Abstractions
 open NSubstitute
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
@@ -40,7 +41,7 @@ let assertFailf format args =
     let msg = sprintf format args
     Assert.True(false, msg)
 
-let notFound = setStatusCode 404 >=> text "Not found" 
+let notFound = setStatusCode 404 >=> text "Not found"
 let next : HttpFunc = Some >> Task.FromResult
 
 // ---------------------------------
@@ -80,9 +81,10 @@ type Person =
 let ``GET "/" returns "Hello World"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/" => text "Hello World"
-            route "/foo" => text "bar" ]
+        router notFound [
+            GET [
+                route "/" => text "Hello World"
+                route "/foo" => text "bar" ]]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
@@ -100,10 +102,13 @@ let ``GET "/" returns "Hello World"`` () =
 [<Fact>]
 let ``GET "/foo" returns "bar"`` () =
     let ctx = Substitute.For<HttpContext>()
+    let notFound = setStatusCode 404 >=> text "Not found"
     let app =
-        GET >=> router notFound [
-            route "/"    => text "Hello World"
-            route "/foo" => text "bar"]
+        router notFound [
+            GET [
+                route "/"    => text "Hello World"
+                route "/foo" => text "bar"]
+            ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo")) |> ignore
@@ -121,11 +126,13 @@ let ``GET "/foo" returns "bar"`` () =
 [<Fact>]
 let ``GET "/FOO" returns 404 "Not found"`` () =
     let ctx = Substitute.For<HttpContext>()
+    let notFound = setStatusCode 404 >=> text "Not found"
     let app =
-        GET >=> router (setStatusCode 404 >=> text "Not found") [
-            route "/"    => text "Hello World"
-            route "/foo" => text "bar"
-            ]
+        router notFound [
+            GET [
+                route "/"    => text "Hello World"
+                route "/foo" => text "bar"
+            ]]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/FOO")) |> ignore
@@ -147,16 +154,17 @@ let ``GET "/FOO" returns 404 "Not found"`` () =
 let ``GET "/json" returns json object`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"     => text "Hello World"
-            route "/foo"  => text "bar"
-            route "/json" => json { Foo = "john"; Bar = "doe"; Age = 30 }
-            ]
+        router notFound [
+            GET [
+                route "/"     => text "Hello World"
+                route "/foo"  => text "bar"
+                route "/json" => json { Foo = "john"; Bar = "doe"; Age = 30 }
+            ]]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "{\"Foo\":\"john\",\"Bar\":\"doe\",\"Age\":30}"
+    let expected = "{\"foo\":\"john\",\"bar\":\"doe\",\"age\":30}"
 
     task {
         let! result = app next ctx
@@ -169,15 +177,18 @@ let ``GET "/json" returns json object`` () =
 [<Fact>]
 let ``POST "/post/1" returns "1"`` () =
     let ctx = Substitute.For<HttpContext>()
+    let notFound = setStatusCode 404 >=> text "Not found"
     let app =
-        choose [
-            GET >=> router notFound [
+        router notFound [
+            GET [
                 route "/"     => text "Hello World"
-                route "/foo"  => text "bar" ]
-            POST >=> router notFound [
-                route "/post/1" => text "1"
-                route "/post/2" => text "2" ]
+                route "/foo"  => text "bar"
             ]
+            POST [
+                route "/post/1" => text "1"
+                route "/post/2" => text "2"
+            ]
+        ]
 
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/post/1")) |> ignore
@@ -195,15 +206,18 @@ let ``POST "/post/1" returns "1"`` () =
 [<Fact>]
 let ``POST "/post/2" returns "2"`` () =
     let ctx = Substitute.For<HttpContext>()
+    let notFound = setStatusCode 404 >=> text "Not found"
     let app =
-        choose [
-            GET >=> router notFound [
+        router notFound [
+            GET [
                 route "/"     => text "Hello World"
-                route "/foo"  => text "bar" ]
-            POST >=> router notFound [
+                route "/foo"  => text "bar"
+                ]
+            POST [
                 route "/post/1" => text "1"
-                route "/post/2" => text "2" ]
+                route "/post/2" => text "2"
             ]
+        ]
 
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/post/2")) |> ignore
@@ -221,15 +235,16 @@ let ``POST "/post/2" returns "2"`` () =
 [<Fact>]
 let ``PUT "/post/2" returns 404 "Not found"`` () =
     let ctx = Substitute.For<HttpContext>()
+    let notFound = setStatusCode 404 >=> text "Not found"
     let app =
-        choose [
-            GET >=> router notFound [
+        router notFound [
+            GET [
                 route "/"     => text "Hello World"
                 route "/foo"  => text "bar" ]
-            POST >=> router notFound [
+            POST [
                 route "/post/1" => text "1"
                 route "/post/2" => text "2" ]
-            setStatusCode 404 >=> text "Not found" ]
+            ]
 
     ctx.Request.Method.ReturnsForAnyArgs "PUT" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/post/2")) |> ignore
@@ -258,13 +273,13 @@ let ``GET "/dotLiquid" returns rendered html view`` () =
     let obj = { Foo = "John"; Bar = "Doe"; Age = 30 }
 
     let app =
-        choose [
-            GET >=> router notFound [
+        router notFound [
+            GET [
                 route "/"          => text "Hello World"
                 route "/dotLiquid" => dotLiquid "text/html" dotLiquidTemplate obj ]
-            POST >=> router notFound [
-                route "/post/1"    => text "1" ] 
-            setStatusCode 404 >=> text "Not found" ]
+            POST [
+                route "/post/1"    => text "1" ]
+            ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/dotLiquid")) |> ignore
@@ -286,15 +301,15 @@ let ``GET "/dotLiquid" returns rendered html view`` () =
 let ``POST "/text" with supported Accept header returns "good"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        choose [
-            GET >=> router notFound [
+        router notFound [
+            GET [
                 route "/"     => text "Hello World"
                 route "/foo"  => text "bar" ]
-            POST >=> router notFound [
+            POST [
                 route "/text"   (mustAccept [ "text/plain" ] >=> text "text")
                 route "/json"   (mustAccept [ "application/json" ] >=> json "json")
                 route "/either" (mustAccept [ "text/plain"; "application/json" ] >=> text "either") ]
-            setStatusCode 404 >=> text "Not found" ]
+            ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("text/plain"))
@@ -319,15 +334,15 @@ let ``POST "/text" with supported Accept header returns "good"`` () =
 let ``POST "/json" with supported Accept header returns "json"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        choose [
-            GET >=> router notFound [
+        router notFound [
+            GET [
                 route "/"     => text "Hello World"
                 route "/foo"  => text "bar" ]
-            POST >=> router notFound [
+            POST [
                 route "/text"   ( mustAccept [ "text/plain" ] >=> text "text")
                 route "/json"   ( mustAccept [ "application/json" ] >=> json "json")
                 route "/either" ( mustAccept [ "text/plain"; "application/json" ] >=> text "either") ]
-            setStatusCode 404 >=> text "Not found" ]
+            ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/json"))
@@ -352,15 +367,15 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
 let ``POST "/either" with supported Accept header returns "either"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        choose [
-            GET >=> router notFound [
+        router notFound [
+            GET [
                 route "/"     => text "Hello World"
                 route "/foo"  => text "bar" ]
-            POST >=> router notFound [
+            POST [
                 route "/text"   ( mustAccept [ "text/plain" ] >=> text "text" )
                 route "/json"   ( mustAccept [ "application/json" ] >=> json "json" )
                 route "/either" ( mustAccept [ "text/plain"; "application/json" ] >=> text "either" ) ]
-            setStatusCode 404 >=> text "Not found" ]
+            ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/json"))
@@ -384,16 +399,17 @@ let ``POST "/either" with supported Accept header returns "either"`` () =
 [<Fact>]
 let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` () =
     let ctx = Substitute.For<HttpContext>()
+    let notFound = setStatusCode 404 >=> text "Not found"
     let app =
-        choose [
-            GET >=> router notFound [
+        router notFound [
+            GET [
                 route "/"     => text "Hello World"
                 route "/foo"  => text "bar" ]
-            POST >=> router notFound [
+            POST [
                 route "/text"   ( mustAccept [ "text/plain" ] >=> text "text" )
                 route "/json"   ( mustAccept [ "application/json" ] >=> json "json" )
                 route "/either" ( mustAccept [ "text/plain"; "application/json" ] >=> text "either" ) ]
-            setStatusCode 404 >=> text "Not found" ]
+        ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/xml"))
@@ -418,7 +434,7 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
 // let ``GET "/JSON" returns "BaR"`` () =
 //     let ctx = Substitute.For<HttpContext>()
 //     let app =
-//         GET >=> router notFound [
+//         router notFound [ GET [
 //             route   "/"       => text "Hello World"
 //             route   "/foo"    => text "bar"
 //             route   "/json"   => json { Foo = "john"; Bar = "doe"; Age = 30 }
@@ -442,12 +458,14 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
 let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route   "/"       => text "Hello World"
-            route   "/foo"    => text "bar"
-            routef "/foo/%s/bar" text
-            routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
+        router notFound [
+            GET [
+                route   "/"       => text "Hello World"
+                route   "/foo"    => text "bar"
+                routef "/foo/%s/bar" text
+                routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
             ]
+        ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/blah blah/bar")) |> ignore
@@ -467,12 +485,14 @@ let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
 let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route   "/"       => text "Hello World"
-            route   "/foo"    => text "bar"
-            routef "/foo/%s/bar" text
-            routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
+        router notFound [
+            GET [
+                route   "/"       => text "Hello World"
+                route   "/foo"    => text "bar"
+                routef "/foo/%s/bar" text
+                routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
             ]
+        ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/johndoe/59")) |> ignore
@@ -538,9 +558,9 @@ let ``GET "/foo/johndoe/FE9CFE1935D44EDC9A955D38C4D579BD" returns "Name: johndoe
 //     let ctx = Substitute.For<HttpContext>()
 //     let app =
 //         choose [
-//             GET >=> router notFound [
+//             router notFound [ GET [
 //                 route "/" => text "Hello World" ]
-//             POST >=> router notFound [
+//             router notFound [ POST [
 //                 route    "/post/1" => text "1"
 //                 routeCif "/post/%i" json ]
 //             ]
@@ -563,9 +583,9 @@ let ``GET "/foo/johndoe/FE9CFE1935D44EDC9A955D38C4D579BD" returns "Name: johndoe
 //     let ctx = Substitute.For<HttpContext>()
 //     let app =
 //         router notFound [
-//             GET >=> router notFound [
+//             router notFound [ GET [
 //                 route "/" => text "Hello World" ]
-//             POST >=> router notFound [
+//             router notFound [ POST [
 //                 route    "/post/1" => text "1"
 //                 routeCif "/post/%i" json ]
 //             ]
@@ -587,15 +607,17 @@ let ``GET "/foo/johndoe/FE9CFE1935D44EDC9A955D38C4D579BD" returns "Name: johndoe
 let ``Sub route with empty route`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"    => text "Hello World"
-            route "/foo" => text "bar"
-            subRoute "/api" [
-                    route ""       => text "api root"
-                    route "/admin" => text "admin"
-                    route "/users" => text "users" ]
-            route "/api/test" => text "test"
+        router notFound [
+            GET [
+                route "/"    => text "Hello World"
+                route "/foo" => text "bar"
+                subRoute "/api" [
+                        route ""       => text "api root"
+                        route "/admin" => text "admin"
+                        route "/users" => text "users" ]
+                route "/api/test" => text "test"
             ]
+        ]
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -615,15 +637,17 @@ let ``Sub route with empty route`` () =
 let ``Sub route with non empty route`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"    => text "Hello World"
-            route "/foo" => text "bar"
-            subRoute "/api" [
-                    route ""       => text "api root"
-                    route "/admin" => text "admin"
-                    route "/users" => text "users" ]
-            route "/api/test" => text "test"
+        router notFound [
+            GET [
+                route "/"    => text "Hello World"
+                route "/foo" => text "bar"
+                subRoute "/api" [
+                        route ""       => text "api root"
+                        route "/admin" => text "admin"
+                        route "/users" => text "users" ]
+                route "/api/test" => text "test"
             ]
+        ]
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -646,15 +670,17 @@ let ``Route after sub route with same beginning of path`` () =
         let ctx = Substitute.For<HttpContext>()
 
         let app =
-            GET >=> router notFound [
-                route "/"    => text "Hello World"
-                route "/foo" => text "bar"
-                subRoute "/api" [
-                        route ""       => text "api root"
-                        route "/admin" => text "admin"
-                        route "/users" => text "users" ]
-                route "/api/test" => text "test"
+            router notFound [
+                GET [
+                    route "/"    => text "Hello World"
+                    route "/foo" => text "bar"
+                    subRoute "/api" [
+                            route ""       => text "api root"
+                            route "/admin" => text "admin"
+                            route "/users" => text "users" ]
+                    route "/api/test" => text "test"
                 ]
+            ]
 
         ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
         ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -673,21 +699,23 @@ let ``Route after sub route with same beginning of path`` () =
 let ``Nested sub routes`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"    => text "Hello World"
-            route "/foo" => text "bar"
-            subRoute "/api" [
-                    route ""       => text "api root"
-                    route "/admin" => text "admin"
-                    route "/users" => text "users"
-                    subRoute "/v2" [
-                            route ""       => text "api root v2"
-                            route "/admin" => text "admin v2"
-                            route "/users" => text "users v2"
-                        ]
-                ]
-            route "/api/test" => text "test"
+        router notFound [
+            GET [
+                route "/"    => text "Hello World"
+                route "/foo" => text "bar"
+                subRoute "/api" [
+                        route ""       => text "api root"
+                        route "/admin" => text "admin"
+                        route "/users" => text "users"
+                        subRoute "/v2" [
+                                route ""       => text "api root v2"
+                                route "/admin" => text "admin v2"
+                                route "/users" => text "users v2"
+                            ]
+                    ]
+                route "/api/test" => text "test"
             ]
+        ]
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -707,23 +735,25 @@ let ``Nested sub routes`` () =
 let ``Route after nested sub routes with same beginning of path`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"    => text "Hello World"
-            route "/foo" => text "bar"
-            subRoute "/api" [
-                    route ""       => text "api root"
-                    route "/admin" => text "admin"
-                    route "/users" => text "users"
-                    subRoute "/v2" [
-                            route ""       => text "api root v2"
-                            route "/admin" => text "admin v2"
-                            route "/users" => text "users v2"
-                        ]
-                    route "/yada" => text "yada"
-                ]
-            route "/api/test"   => text "test"
-            route "/api/v2/else" => text "else"
+        router notFound [
+            GET [
+                route "/"    => text "Hello World"
+                route "/foo" => text "bar"
+                subRoute "/api" [
+                        route ""       => text "api root"
+                        route "/admin" => text "admin"
+                        route "/users" => text "users"
+                        subRoute "/v2" [
+                                route ""       => text "api root v2"
+                                route "/admin" => text "admin v2"
+                                route "/users" => text "users v2"
+                            ]
+                        route "/yada" => text "yada"
+                    ]
+                route "/api/test"   => text "test"
+                route "/api/v2/else" => text "else"
             ]
+        ]
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -743,20 +773,22 @@ let ``Route after nested sub routes with same beginning of path`` () =
 let ``Multiple nested sub routes`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"    => text "Hello World"
-            route "/foo" => text "bar"
-            subRoute "/api"  [
-                    route "/users" => text "users"
-                    subRoute "/v2" [
-                        route "/admin" => text "admin v2"
-                        route "/users" => text "users v2" ]
-                    subRoute "/v2" [
-                        route "/admin2" => text "correct admin2" ]
-                ]
-            route "/api/test"   => text "test"
-            route "/api/v2/else" => text "else"
+        router notFound [
+            GET [
+                route "/"    => text "Hello World"
+                route "/foo" => text "bar"
+                subRoute "/api"  [
+                        route "/users" => text "users"
+                        subRoute "/v2" [
+                            route "/admin" => text "admin v2"
+                            route "/users" => text "users v2" ]
+                        subRoute "/v2" [
+                            route "/admin2" => text "correct admin2" ]
+                    ]
+                route "/api/test"   => text "test"
+                route "/api/v2/else" => text "else"
             ]
+        ]
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -777,14 +809,16 @@ let ``Multiple nested sub routes`` () =
 let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"    => text "Hello World"
-            route "/foo" => text "bar"
-            subRoute "/api" [
-                    route  "" => text "api root"
-                    routef "/foo/bar/%s" text ]
-            route "/api/test" => text "test"
+        router notFound [
+            GET [
+                route "/"    => text "Hello World"
+                route "/foo" => text "bar"
+                subRoute "/api" [
+                        route  "" => text "api root"
+                        routef "/foo/bar/%s" text ]
+                route "/api/test" => text "test"
             ]
+        ]
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -816,13 +850,13 @@ let ``GET "/person" returns rendered HTML view`` () =
     let johnDoe = { Foo = "John"; Bar = "Doe"; Age = 30 }
 
     let app =
-        choose [
-            GET >=> router notFound [
+        router notFound [
+            GET [
                 route "/"          => text "Hello World"
                 route "/person"    => (personView johnDoe |> renderHtml) ]
-            POST >=> router notFound [
+            POST [
                 route "/post/1"    => text "1" ]
-                ]
+        ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/person")) |> ignore
@@ -853,11 +887,13 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
 
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"     => text "Hello World"
-            route "/foo"  => text "bar"
-            route "/auto" => negotiate johnDoe
+        router notFound [
+            GET [
+                route "/"     => text "Hello World"
+                route "/foo"  => text "bar"
+                route "/auto" => negotiate johnDoe
             ]
+        ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/json"))
@@ -867,7 +903,7 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"left ear\",\"nose\"]}"
+    let expected = "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"birthDate\":\"1990-07-12T00:00:00\",\"height\":1.85,\"piercings\":[\"left ear\",\"nose\"]}"
 
     task {
         let! result = app next ctx
@@ -893,11 +929,13 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
 
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"     => text "Hello World"
-            route "/foo"  => text "bar"
-            route "/auto" => negotiate johnDoe
+        router notFound [
+            GET [
+                route "/"     => text "Hello World"
+                route "/foo"  => text "bar"
+                route "/auto" => negotiate johnDoe
             ]
+        ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/xml; q=0.9, application/json"))
@@ -907,7 +945,7 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"left ear\",\"nose\"]}"
+    let expected = "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"birthDate\":\"1990-07-12T00:00:00\",\"height\":1.85,\"piercings\":[\"left ear\",\"nose\"]}"
 
     task {
         let! result = app next ctx
@@ -933,11 +971,13 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
 
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"     => text "Hello World"
-            route "/foo"  => text "bar"
-            route "/auto" => negotiate johnDoe
+        router notFound [
+            GET [
+                route "/"     => text "Hello World"
+                route "/foo"  => text "bar"
+                route "/auto" => negotiate johnDoe
             ]
+        ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/xml"))
@@ -983,11 +1023,13 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
 
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"     => text "Hello World"
-            route "/foo"  => text "bar"
-            route "/auto" => negotiate johnDoe
+        router notFound [
+            GET [
+                route "/"     => text "Hello World"
+                route "/foo"  => text "bar"
+                route "/auto" => negotiate johnDoe
             ]
+        ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/xml, application/json"))
@@ -1033,11 +1075,13 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
 
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"     => text "Hello World"
-            route "/foo"  => text "bar"
-            route "/auto" => negotiate johnDoe
+        router notFound [
+            GET [
+                route "/"     => text "Hello World"
+                route "/foo"  => text "bar"
+                route "/auto" => negotiate johnDoe
             ]
+        ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/json, application/xml"))
@@ -1047,7 +1091,7 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"ear\",\"nose\"]}"
+    let expected = "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"birthDate\":\"1990-07-12T00:00:00\",\"height\":1.85,\"piercings\":[\"ear\",\"nose\"]}"
 
     task {
         let! result = app next ctx
@@ -1073,11 +1117,13 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
 
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"     => text "Hello World"
-            route "/foo"  => text "bar"
-            route "/auto" => negotiate johnDoe
+        router notFound [
+            GET [
+                route "/"     => text "Hello World"
+                route "/foo"  => text "bar"
+                route "/auto" => negotiate johnDoe
             ]
+        ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/json; q=0.5, application/xml"))
@@ -1123,11 +1169,13 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
 
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"     => text "Hello World"
-            route "/foo"  => text "bar"
-            route "/auto" => negotiate johnDoe
+        router notFound [
+            GET [
+                route "/"     => text "Hello World"
+                route "/foo"  => text "bar"
+                route "/auto" => negotiate johnDoe
             ]
+        ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/json; q=0.5, application/xml; q=0.6"))
@@ -1173,11 +1221,13 @@ let ``Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0
 
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"     => text "Hello World"
-            route "/foo"  => text "bar"
-            route "/auto" => negotiate johnDoe
+        router notFound [
+            GET [
+                route "/"     => text "Hello World"
+                route "/foo"  => text "bar"
+                route "/auto" => negotiate johnDoe
             ]
+        ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("text/plain; q=0.7, application/xml; q=0.6"))
@@ -1217,11 +1267,13 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
 
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"     => text "Hello World"
-            route "/foo"  => text "bar"
-            route "/auto" => negotiate johnDoe
+        router notFound [
+            GET [
+                route "/"     => text "Hello World"
+                route "/foo"  => text "bar"
+                route "/auto" => negotiate johnDoe
             ]
+        ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("text/html"))
@@ -1258,11 +1310,13 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
 
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"     => text "Hello World"
-            route "/foo"  => text "bar"
-            route "/auto" => negotiate johnDoe
+        router notFound [
+            GET [
+                route "/"     => text "Hello World"
+                route "/foo"  => text "bar"
+                route "/auto" => negotiate johnDoe
             ]
+        ]
 
     let headers = HeaderDictionary()
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
@@ -1271,7 +1325,7 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = "{\"FirstName\":\"John\",\"LastName\":\"Doe\",\"BirthDate\":\"1990-07-12T00:00:00\",\"Height\":1.85,\"Piercings\":[\"ear\",\"nose\"]}"
+    let expected = "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"birthDate\":\"1990-07-12T00:00:00\",\"height\":1.85,\"piercings\":[\"ear\",\"nose\"]}"
 
     task {
         let! result = app next ctx
@@ -1289,9 +1343,10 @@ let ``Warbler function should execute inner function each time`` () =
     let ctx = Substitute.For<HttpContext>()
     let inner() = Guid.NewGuid().ToString()
     let app =
-        GET >=> router notFound [
-            route "/foo"  => text (inner())
-            route "/foo2" => warbler (fun _ -> text (inner())) ]
+        router notFound [
+            GET [
+                route "/foo"  => text (inner())
+                route "/foo2" => warbler (fun _ -> text (inner())) ]]
         <| next
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -1327,10 +1382,12 @@ let ``Warbler function should execute inner function each time`` () =
 let ``GET "/redirect" redirect to "/" `` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> router notFound [
-            route "/"         => text "Hello World"
-            route "/redirect" => redirectTo false "/"
+        router notFound [
+            GET [
+                route "/"         => text "Hello World"
+                route "/redirect" => redirectTo false "/"
             ]
+        ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/redirect")) |> ignore
@@ -1348,10 +1405,12 @@ let ``GET "/redirect" redirect to "/" `` () =
 let ``POST "/redirect" redirect to "/" `` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        POST >=> router notFound [
-            route "/"         => text "Hello World"
-            route "/redirect" => redirectTo true "/"
+        router notFound [
+            POST [
+                route "/"         => text "Hello World"
+                route "/redirect" => redirectTo true "/"
             ]
+        ]
 
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/redirect")) |> ignore
@@ -1363,3 +1422,77 @@ let ``POST "/redirect" redirect to "/" `` () =
         | None     -> assertFail "It was expected that the request would be redirected"
         | Some ctx -> ctx.Response.Received().Redirect("/", true)
     }
+
+type DebugTests(output:ITestOutputHelper) =
+
+    [<Fact>]
+    member __.``Pre-route method filtering`` () =
+        let ctx = Substitute.For<HttpContext>()
+        let notFound = (setStatusCode 404 >=> text "Not Found")
+        let app =
+            routerDbg output.WriteLine notFound [
+                GET [
+                    route  "/index"          => text "index page" ]
+                POST [
+                    subRoute "/api" [
+                        route "/newpassword" => text "newpassword" ]
+                ]
+            ]
+
+        let expected = "newpassword"
+        ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+        ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/newpassword")) |> ignore
+        ctx.Response.Body <- new MemoryStream()
+
+        task {
+            let! result = app (Some >> Task.FromResult) ctx
+
+            match result with
+            | None     -> assertFail "No Route matched"
+            | Some ctx ->
+                let body = getBody ctx
+                Assert.Equal(expected, body)
+        }
+
+    member __.``Test portRoute function`` () =
+        let ctx = Substitute.For<HttpContext>()
+        let notFound = (setStatusCode 404 >=> text "Not Found")
+        let app1 =
+            routerDbg output.WriteLine notFound [
+                GET [
+                    route  "/index1"          => text "index page1" ]
+                POST [
+                    subRoute "/api1" [
+                        route "/newpassword1" => text "newpassword1" ]
+                ]
+            ]
+        let app2 =
+            routerDbg output.WriteLine notFound [
+                GET [
+                    route  "/index2"          => text "index page2" ]
+                POST [
+                    subRoute "/api2" [
+                        route "/newpassword2" => text "newpassword2" ]
+                ]
+            ]
+        let app = portRoute [
+                (9001,app1)
+                (9002,app2)
+            ]
+
+        let expected = "newpassword2"
+        ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+        ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/newpassword2")) |> ignore
+        ctx.Request.Host.Port.HasValue.ReturnsForAnyArgs true |> ignore
+        ctx.Request.Host.Port.Value.ReturnsForAnyArgs 9002 |> ignore
+        ctx.Response.Body <- new MemoryStream()
+
+        task {
+            let! result = app (Some >> Task.FromResult) ctx
+
+            match result with
+            | None     -> assertFail "No Route matched"
+            | Some ctx ->
+                let body = getBody ctx
+                Assert.Equal(expected, body)
+        }
