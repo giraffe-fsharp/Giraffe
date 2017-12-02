@@ -23,6 +23,7 @@
     <RepositoryUrl>https://github.com/dustinmoris/giraffe</RepositoryUrl>
     <NetStandardImplicitPackageVersion>2.0</NetStandardImplicitPackageVersion>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
   </PropertyGroup>
 
   <ItemGroup>
@@ -48,7 +49,7 @@
     <Compile Include="Middleware.fs" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(IsWindows)' != 'true' AND '$(TargetFramework)' == 'net461'">
     <Reference Include="netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
   </ItemGroup>
 
