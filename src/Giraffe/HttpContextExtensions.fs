@@ -198,7 +198,7 @@ type HttpContext with
         task {
             this.SetHttpHeader "Content-Type" "text/html"
             let env = this.GetService<IHostingEnvironment>()
-            let filePath = env.ContentRootPath + relativeFilePath
+            let filePath = Path.Combine(env.ContentRootPath, relativeFilePath)
             let! html = readFileAsString filePath
             do! this.WriteString html
             return Some this

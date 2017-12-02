@@ -4,7 +4,6 @@
     <TargetFrameworks>net461;netcoreapp2.0</TargetFrameworks>
     <AssemblyName>Giraffe.Tests</AssemblyName>
     <DebugType>portable</DebugType>
-    <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
   </PropertyGroup>
 
   <ItemGroup>
@@ -36,9 +35,11 @@
     <Compile Include="HttpContextExtensionsTests.fs" />
     <Compile Include="TokenRouterTests.fs" />
   </ItemGroup>
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy webroot\* bin\Debug\netcoreapp2.0\webroot\ /y" Condition="'$(IsWindows)' == 'true'" />
-    <Exec Command="xcopy webroot\* bin\Debug\net461\webroot\ /y" Condition="'$(IsWindows)' == 'true'" />
-    <Exec Command="cp webroot/* bin/Debug/netcoreapp2.0/webroot/" Condition="'$(IsWindows)' != 'true'" />
-  </Target>
+
+  <ItemGroup>
+    <Content Include="webroot\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

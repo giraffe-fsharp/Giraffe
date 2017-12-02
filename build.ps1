@@ -24,16 +24,9 @@ $ErrorActionPreference = "Stop"
 function Invoke-Cmd ($cmd)
 {
     Write-Host $cmd -ForegroundColor DarkCyan
-    if ([environment]::OSVersion.Platform -eq "Unix")
-    {
-        Invoke-Expression -Command $cmd
-    }
-    else
-    {
-        $command = "cmd.exe /C $cmd"
-        Invoke-Expression -Command $command
-        if ($LastExitCode -ne 0) { Write-Error "An error occured when executing '$cmd'."; return }
-    }
+    if ([environment]::OSVersion.Platform -ne "Unix") { $cmd = "cmd.exe /C $cmd" }
+    Invoke-Expression -Command $cmd
+    if ($LastExitCode -ne 0) { Write-Error "An error occured when executing '$cmd'."; return }
 }
 
 function Write-DotnetVersion

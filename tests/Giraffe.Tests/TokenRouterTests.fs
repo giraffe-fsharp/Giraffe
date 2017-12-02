@@ -1429,10 +1429,7 @@ type DebugTests(output:ITestOutputHelper) =
                         route "/newpassword2" => text "newpassword2" ]
                 ]
             ]
-        let app = portRoute [
-                (9001,app1)
-                (9002,app2)
-            ]
+        let app = portRoute [ (9001, app1); (9002, app2) ]
 
         let expected = "newpassword2"
         ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore

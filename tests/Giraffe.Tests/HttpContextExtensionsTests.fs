@@ -568,8 +568,7 @@ let resultOfTask<'T> (task:Task<'T>) =
 let ``ReturnHtmlFile should return html from content folder`` () =
     let testHandler =
         fun (next:HttpFunc) (ctx:HttpContext) ->
-            sprintf ".%cindex.html" Path.DirectorySeparatorChar
-            |> ctx.ReturnHtmlFile
+            ctx.ReturnHtmlFile "index.html"
 
     let webApp = route "/" >=> testHandler
 
