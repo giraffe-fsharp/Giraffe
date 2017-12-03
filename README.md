@@ -1102,14 +1102,14 @@ let notFound = setStatusCode 404 >=> text "Not found"
 let app =
     router notFound [
         route "/"       (text "index")
-        route "/about"  => text "about"
+        route "/about"  (text "about")
         routef "parsing/%s/%i" (fun (s,i) -> text (sprintf "Recieved %s & %i" s i))
         subRoute "/api" [
             GET [
-                route "/"       <| text "api index"
+                route "/"       (text "api index")
                 route "/about"  (text "api about")
                 subRoute "/v2" [
-                    route "/"       <| text "api v2 index"
+                    route "/"       (text "api v2 index")
                     route "/about"  (text "api v2 about")
                 ]
             ]
