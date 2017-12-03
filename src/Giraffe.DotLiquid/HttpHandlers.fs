@@ -30,7 +30,7 @@ let dotLiquidTemplate (contentType : string) (templatePath : string) (model : ob
         task {
             let env = ctx.RequestServices.GetService<IHostingEnvironment>()
             let path = Path.Combine(env.ContentRootPath, templatePath)
-            let! template = readFileAsString path
+            let! template = readFileAsStringAsync path
             return! dotLiquid contentType template model next ctx
         }
 

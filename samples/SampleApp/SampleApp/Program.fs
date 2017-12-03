@@ -96,7 +96,7 @@ type Car =
 let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
-            let! car = ctx.BindModel<Car>()
+            let! car = ctx.BindModelAsync<Car>()
             return! json car next ctx
         }
 

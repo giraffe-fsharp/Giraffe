@@ -56,13 +56,13 @@ type Customer =
             this.LoyaltyPoints
 
 [<Fact>]
-let ``BindJson test`` () =
+let ``BindJsonAsync test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let jsonHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
             task {
-                let! model = ctx.BindJson<Customer>()
+                let! model = ctx.BindJsonAsync<Customer>()
                 return! text (model.ToString()) next ctx
             }
 
@@ -95,13 +95,13 @@ let ``BindJson test`` () =
     }
 
 [<Fact>]
-let ``BindXml test`` () =
+let ``BindXmlAsync test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let xmlHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
             task {
-                let! model = ctx.BindXml<Customer>()
+                let! model = ctx.BindXmlAsync<Customer>()
                 return! text (model.ToString()) next ctx
             }
 
@@ -134,13 +134,13 @@ let ``BindXml test`` () =
     }
 
 [<Fact>]
-let ``BindForm test`` () =
+let ``BindFormAsync test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let formHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
             task {
-                let! model = ctx.BindForm<Customer>()
+                let! model = ctx.BindFormAsync<Customer>()
                 return! text (model.ToString()) next ctx
             }
 
@@ -232,13 +232,13 @@ let ``BindQueryString with option property test`` () =
 
 
 [<Fact>]
-let ``BindModel with JSON content returns correct result`` () =
+let ``BindModelAsync with JSON content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
             task {
-                let! model = ctx.BindModel<Customer>()
+                let! model = ctx.BindModelAsync<Customer>()
                 return! text (model.ToString()) next ctx
             }
 
@@ -273,13 +273,13 @@ let ``BindModel with JSON content returns correct result`` () =
     }
 
 [<Fact>]
-let ``BindModel with JSON content that uses custom serialization settings returns correct result`` () =
+let ``BindModelAsync with JSON content that uses custom serialization settings returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
             task {
-                let! model = ctx.BindModel<Customer>(JsonSerializerSettings())
+                let! model = ctx.BindModelAsync<Customer>(JsonSerializerSettings())
                 return! text (model.ToString()) next ctx
             }
 
@@ -314,13 +314,13 @@ let ``BindModel with JSON content that uses custom serialization settings return
     }
 
 [<Fact>]
-let ``BindModel with XML content returns correct result`` () =
+let ``BindModelAsync with XML content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
             task {
-                let! model = ctx.BindModel<Customer>()
+                let! model = ctx.BindModelAsync<Customer>()
                 return! text (model.ToString()) next ctx
             }
 
@@ -355,13 +355,13 @@ let ``BindModel with XML content returns correct result`` () =
     }
 
 [<Fact>]
-let ``BindModel with FORM content returns correct result`` () =
+let ``BindModelAsync with FORM content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
             task {
-                let! model = ctx.BindModel<Customer>()
+                let! model = ctx.BindModelAsync<Customer>()
                 return! text (model.ToString()) next ctx
             }
 
@@ -398,13 +398,13 @@ let ``BindModel with FORM content returns correct result`` () =
     }
 
 [<Fact>]
-let ``BindModel with JSON content and a specific charset returns correct result`` () =
+let ``BindModelAsync with JSON content and a specific charset returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
             task {
-                let! model = ctx.BindModel<Customer>()
+                let! model = ctx.BindModelAsync<Customer>()
                 return! text (model.ToString()) next ctx
             }
 
@@ -439,13 +439,13 @@ let ``BindModel with JSON content and a specific charset returns correct result`
     }
 
 [<Fact>]
-let ``BindModel during HTTP GET request with query string returns correct result`` () =
+let ``BindModelAsync during HTTP GET request with query string returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
             task {
-                let! model = ctx.BindModel<Customer>()
+                let! model = ctx.BindModelAsync<Customer>()
                 return! text (model.ToString()) next ctx
             }
 
@@ -531,7 +531,7 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
     }
 
 [<Fact>]
-let ``RenderHtml should add html to the context`` () =
+let ``RenderHtmlAsync should add html to the context`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
@@ -543,7 +543,7 @@ let ``RenderHtml should add html to the context`` () =
                         h1 [] [EncodedText "Hello world"]
                     ]
                 ]
-            ctx.RenderHtml(htmlDoc)
+            ctx.RenderHtmlAsync(htmlDoc)
 
     let app = route "/" >=> testHandler
 
@@ -565,10 +565,10 @@ let resultOfTask<'T> (task:Task<'T>) =
     task.Result
 
 [<Fact>]
-let ``ReturnHtmlFile should return html from content folder`` () =
+let ``ReturnHtmlFileAsync should return html from content folder`` () =
     let testHandler =
         fun (next:HttpFunc) (ctx:HttpContext) ->
-            ctx.ReturnHtmlFile "index.html"
+            ctx.ReturnHtmlFileAsync "index.html"
 
     let webApp = route "/" >=> testHandler
 

@@ -55,25 +55,25 @@ type HttpContext with
     /// Model binding
     /// ---------------------------
 
-    member this.ReadBodyFromRequest() =
+    member this.ReadBodyFromRequestAsync() =
         let body = this.Request.Body
         use reader = new StreamReader(body, true)
         reader.ReadToEndAsync()
 
-    member this.BindJson<'T>() = this.BindJson<'T> defaultJsonSerializerSettings
+    member this.BindJsonAsync<'T>() = this.BindJsonAsync<'T> defaultJsonSerializerSettings
 
-    member this.BindJson<'T> (settings : JsonSerializerSettings) =
+    member this.BindJsonAsync<'T> (settings : JsonSerializerSettings) =
         task {
             return deserializeJsonFromStream<'T> settings this.Request.Body
         }
 
-    member this.BindXml<'T>() =
+    member this.BindXmlAsync<'T>() =
         task {
-            let! body = this.ReadBodyFromRequest()
+            let! body = this.ReadBodyFromRequestAsync()
             return deserializeXml<'T> body
         }
 
-    member this.BindForm<'T>() =
+    member this.BindFormAsync<'T>() =
         task {
             let! form = this.Request.ReadFormAsync()
             let obj   = Activator.CreateInstance<'T>()
@@ -130,9 +130,9 @@ type HttpContext with
                     p.SetValue(obj, value, null))
         obj
 
-    member this.BindModel<'T>() = this.BindModel<'T> defaultJsonSerializerSettings
+    member this.BindModelAsync<'T>() = this.BindModelAsync<'T> defaultJsonSerializerSettings
 
-    member this.BindModel<'T> (settings : JsonSerializerSettings) =
+    member this.BindModelAsync<'T> (settings : JsonSerializerSettings) =
         task {
             let method = this.Request.Method
             if method.Equals "POST" || method.Equals "PUT" then
@@ -143,9 +143,9 @@ type HttpContext with
                     | false -> failwithf "Could not parse Content-Type HTTP header value '%s'" original.Value
                     | true  ->
                         match parsed.Value.MediaType.Value with
-                        | "application/json"                  -> this.BindJson<'T> settings
-                        | "application/xml"                   -> this.BindXml<'T>()
-                        | "application/x-www-form-urlencoded" -> this.BindForm<'T>()
+                        | "application/json"                  -> this.BindJsonAsync<'T> settings
+                        | "application/xml"                   -> this.BindXmlAsync<'T>()
+                        | "application/x-www-form-urlencoded" -> this.BindFormAsync<'T>()
                         | _ -> failwithf "Cannot bind model from Content-Type '%s'" original.Value
             else return this.BindQueryString<'T>()
         }
@@ -157,49 +157,49 @@ type HttpContext with
     member private this.SetHttpHeader (key : string) (value : obj) =
         this.Response.Headers.[key] <- StringValues(value.ToString())
 
-    member private this.WriteBytes (bytes : byte[]) =
+    member private this.WriteBytesAsync (bytes : byte[]) =
         this.SetHttpHeader "Content-Length" bytes.Length
         this.Response.Body.WriteAsync(bytes, 0, bytes.Length)
 
-    member private this.WriteString (value : string) =
-        value |> System.Text.Encoding.UTF8.GetBytes |> this.WriteBytes
+    member private this.WriteStringAsync (value : string) =
+        value |> System.Text.Encoding.UTF8.GetBytes |> this.WriteBytesAsync
 
-    member this.WriteJson (value : obj) = this.WriteJson(defaultJsonSerializerSettings, value)
+    member this.WriteJsonAsync (value : obj) = this.WriteJsonAsync(defaultJsonSerializerSettings, value)
 
-    member this.WriteJson (settings: JsonSerializerSettings, value : obj) =
+    member this.WriteJsonAsync (settings: JsonSerializerSettings, value : obj) =
         task {
             this.SetHttpHeader "Content-Type" "application/json"
-            do! serializeJson settings value |> this.WriteString
+            do! serializeJson settings value |> this.WriteStringAsync
             return Some this
         }
 
-    member this.WriteXml (value : obj) =
+    member this.WriteXmlAsync (value : obj) =
         task {
             this.SetHttpHeader "Content-Type" "application/xml"
-            do! value |> serializeXml |> this.WriteBytes
+            do! value |> serializeXml |> this.WriteBytesAsync
             return Some this
         }
 
-    member this.WriteText (value : string) =
+    member this.WriteTextAsync (value : string) =
         task {
             this.SetHttpHeader "Content-Type" "text/plain"
-            do! value |> this.WriteString
+            do! value |> this.WriteStringAsync
             return Some this
         }
 
-    member this.RenderHtml (value: XmlNode) =
+    member this.RenderHtmlAsync (value: XmlNode) =
         task {
             this.SetHttpHeader "Content-Type" "text/html"
-            do! value |> renderHtmlDocument |> this.WriteString
+            do! value |> renderHtmlDocument |> this.WriteStringAsync
             return Some this
         }
 
-    member this.ReturnHtmlFile (relativeFilePath: String) =
+    member this.ReturnHtmlFileAsync (relativeFilePath: String) =
         task {
             this.SetHttpHeader "Content-Type" "text/html"
             let env = this.GetService<IHostingEnvironment>()
             let filePath = Path.Combine(env.ContentRootPath, relativeFilePath)
-            let! html = readFileAsString filePath
-            do! this.WriteString html
+            let! html = readFileAsStringAsync filePath
+            do! this.WriteStringAsync html
             return Some this
         }

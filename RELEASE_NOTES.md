@@ -12,6 +12,21 @@ Release Notes
 
 - Changed the `base` tag from the `XmlViewEngine` from a regular `tag` to a `voidTag` to comply with the HTML spec.
 
+### Breaking changes
+
+- Renamed all async methods by appending `Async` at the end of the method in order to comply with the general .NET naming convention
+    - `readFileAsString` --> `readFileAsStringAsync`
+    - `ctx.ReadBodyFromRequest` --> `ctx.ReadBodyFromRequestAsync`
+    - `ctx.BindJson` --> `ctx.BindJsonAsync`
+    - `ctx.BindXml` --> `ctx.BindXmlAsync`
+    - `ctx.BindForm` --> `ctx.BindFormAsync`
+    - `ctx.BindModel` --> `ctx.BindModelAsync`
+    - `ctx.WriteJson` --> `ctx.WriteJsonAsync`
+    - `ctx.WriteXml` --> `ctx.WriteXmlAsync`
+    - `ctx.WriteText` --> `ctx.WriteTextAsync`
+    - `ctx.RenderHtml` --> `ctx.RenderHtmlAsync`
+    - `ctx.ReturnHtmlFile` --> `ctx.ReturnHtmlFileAsync`
+
 # 0.1.0-beta-310
 
 ### New features

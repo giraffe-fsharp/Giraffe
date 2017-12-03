@@ -75,17 +75,17 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
         - [routing functions](#routing-functions)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Nested Response Writing](#nested-response-writing)
-    - [WriteJson](#writejson)
-    - [WriteXml](#writexml)
-    - [WriteText](#writetext)
-    - [RenderHtml](#renderhtml-1)
-    - [ReturnHtmlFile](#returnhtmlfile)
+    - [WriteJsonAsync](#writejsonasync)
+    - [WriteXmlAsync](#writexmlasync)
+    - [WriteTextAsync](#writetextasync)
+    - [RenderHtmlAsync](#renderhtmlasync)
+    - [ReturnHtmlFileAsync](#returnhtmlfileasync)
 - [Model Binding](#model-binding)
-    - [BindJson](#bindjson)
-    - [BindXml](#bindxml)
-    - [BindForm](#bindform)
+    - [BindJsonAsync](#bindjsonasync)
+    - [BindXmlAsync](#bindxmlasync)
+    - [BindFormAsync](#bindformasync)
     - [BindQueryString](#bindquerystring)
-    - [BindModel](#bindmodel)
+    - [BindModelAsync](#bindmodelasync)
 - [Error Handling](#error-handling)
 - [Installation](#installation)
 - [Sample applications](#sample-applications)
@@ -189,7 +189,7 @@ open Giraffe.HttpHandlers
 let personHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
-            let! person = ctx.BindModel<Person>()
+            let! person = ctx.BindModelAsync<Person>()
             return! json person next ctx
         }
 ```
@@ -642,7 +642,7 @@ let app =
     ]
 ```
 
-You can also use the [`WriteText`](#writetext) extension method to return a plain text response back to the client.
+You can also use the [`WriteTextAsync`](#writetextasync) extension method to return a plain text response back to the client.
 
 ### customJson
 
@@ -690,7 +690,7 @@ let app =
     ]
 ```
 
-Alternatively you can also use the [`WriteJson`](#writejson) extension method to return a custom serialized JSON response back to the client.
+Alternatively you can also use the [`WriteJsonAsync`](#writejsonasync) extension method to return a custom serialized JSON response back to the client.
 
 ### json
 
@@ -711,7 +711,7 @@ let app =
     ]
 ```
 
-You can also use the [`WriteJson`](#writejson) extension method to return a default serialized JSON response back to the client.
+You can also use the [`WriteJsonAsync`](#writejsonasync) extension method to return a default serialized JSON response back to the client.
 
 ### xml
 
@@ -733,7 +733,7 @@ let app =
     ]
 ```
 
-You can also use the [`WriteXml`](#writexml) extension method to return an XML response back to the client.
+You can also use the [`WriteXmlAsync`](#writexmlasync) extension method to return an XML response back to the client.
 
 ### negotiate
 
@@ -1169,11 +1169,11 @@ let app =
 
 ## Nested Response Writing
 
-The `Giraffe.HttpContextExtensions` module exposes a default set of response writing functions which extend the `HttpContext` object. Instead of using the [`customJson`](#customjson), [`json`](#json), [`xml`](#xml), or [`text`](#text) handlers to compose a custom HttpHandler you can also use the `WriteJson`, `WriteXml` and `WriteText` extension methods to directly write to the response of the `HttpContext` and close the pipeline.
+The `Giraffe.HttpContextExtensions` module exposes a default set of response writing functions which extend the `HttpContext` object. Instead of using the [`customJson`](#customjson), [`json`](#json), [`xml`](#xml), or [`text`](#text) handlers to compose a custom HttpHandler you can also use the `WriteJsonAsync`, `WriteXmlAsync` and `WriteTextAsync` extension methods to directly write to the response of the `HttpContext` and close the pipeline.
 
-### WriteJson
+### WriteJsonAsync
 
-`ctx.WriteJson someObj` can be used to return a JSON response back to the client. Alternatively you can use `ctx.WriteJson (settings : JsoSerializerSettings) someObj` to customize the generated JSON before sending the response back to the client.
+`ctx.WriteJsonAsync someObj` can be used to return a JSON response back to the client. Alternatively you can use `ctx.WriteJsonAsync (settings : JsoSerializerSettings) someObj` to customize the generated JSON before sending the response back to the client.
 
 #### Example:
 
@@ -1188,7 +1188,7 @@ type Person =
 let myJsonHandler : HttpHandler =
     fun next ctx ->
         let person = { FirstName = "Foo"; LastName = "Bar" }
-        ctx.WriteJson person
+        ctx.WriteJsonAsync person
 
 let app =
     choose [
@@ -1196,9 +1196,9 @@ let app =
     ]
 ```
 
-### WriteXml
+### WriteXmlAsync
 
-`ctx.WriteXml someObj` can be used to return an XML response back to the client.
+`ctx.WriteXmlAsync someObj` can be used to return an XML response back to the client.
 
 #### Example:
 
@@ -1213,7 +1213,7 @@ type Person =
 let myXmlHandler : HttpHandler =
     fun next ctx ->
         let person = { FirstName = "Foo"; LastName = "Bar" }
-        ctx.WriteXml person
+        ctx.WriteXmlAsync person
 
 let app =
     choose [
@@ -1221,9 +1221,9 @@ let app =
     ]
 ```
 
-### WriteText
+### WriteTextAsync
 
-`ctx.WriteText "some text"` can be used to return a plain text response back to the client.
+`ctx.WriteTextAsync "some text"` can be used to return a plain text response back to the client.
 
 #### Example:
 
@@ -1231,7 +1231,7 @@ let app =
 let myTextHandler : HttpHandler =
     fun next ctx ->
         let str = "Hello World"
-        ctx.WriteText str
+        ctx.WriteTextAsync str
 
 let app =
     choose [
@@ -1239,9 +1239,9 @@ let app =
     ]
 ```
 
-### RenderHtml
+### RenderHtmlAsync
 
-`ctx.RenderHtml someNode` can be used to return a [XmlViewEngine](#renderhtml) node.
+`ctx.RenderHtmlAsync someNode` can be used to return a [XmlViewEngine](#renderhtmlasync) node.
 
 #### Example:
 
@@ -1255,7 +1255,7 @@ let myHtmlHandler =
                     h1 [] [EncodedText "Hello world"]
                 ]
             ]
-        ctx.RenderHtml(htmlDoc)
+        ctx.RenderHtmlAsync(htmlDoc)
 
 let app =
     choose [
@@ -1263,16 +1263,16 @@ let app =
     ]
 ```
 
-### ReturnHtmlFile
+### ReturnHtmlFileAsync
 
-`ctx.ReturnHtmlFile "./myPage.html"` can be used to return a html file. Note that the path should be relative, similar to [htmlFile](#htmlfile).
+`ctx.ReturnHtmlFileAsync "./myPage.html"` can be used to return a html file. Note that the path should be relative, similar to [htmlFile](#htmlfile).
 
 #### Example:
 
 ```fsharp
 let htmlFileHandler  =
     fun (next:HttpFunc) (ctx:HttpContext) ->
-        ctx.ReturnHtmlFile "./index.html"
+        ctx.ReturnHtmlFileAsync "./index.html"
 
 let app =
     choose [
@@ -1284,9 +1284,9 @@ let app =
 
 The `Giraffe.HttpContextExtensions` module exposes a default set of model binding functions which extend the `HttpContext` object.
 
-### BindJson
+### BindJsonAsync
 
-`ctx.BindJson<'T>()` can be used to bind a JSON payload to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserializer during model binding.
+`ctx.BindJsonAsync<'T>()` can be used to bind a JSON payload to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserialisation during model binding.
 
 #### Example
 
@@ -1303,7 +1303,7 @@ type Car =
     }
 ```
 
-Then create a new `HttpHandler` which uses `BindJson` and use it from an app:
+Then create a new `HttpHandler` which uses `BindJsonAsync` and use it from an app:
 
 ```fsharp
 open Giraffe.HttpHandlers
@@ -1313,7 +1313,7 @@ let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Binds a JSON payload to a Car object
-            let! car = ctx.BindJson<Car>()
+            let! car = ctx.BindJsonAsync<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
@@ -1343,9 +1343,9 @@ Accept: */*
 { "name": "DB9", "make": "Aston Martin", "wheels": 4, "built": "2016-01-01" }
 ```
 
-### bindXml
+### bindXmlAsync
 
-`ctx.BindXml<'T>()` can be used to bind an XML payload to a strongly typed model.
+`ctx.BindXmlAsync<'T>()` can be used to bind an XML payload to a strongly typed model.
 
 #### Example
 
@@ -1362,7 +1362,7 @@ type Car =
     }
 ```
 
-Then create a new `HttpHandler` which uses `BindXml` and use it from an app:
+Then create a new `HttpHandler` which uses `BindXmlAsync` and use it from an app:
 
 ```fsharp
 open Giraffe.HttpHandlers
@@ -1372,7 +1372,7 @@ let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Binds an XML payload to a Car object
-            let! car = ctx.BindXml<Car>()
+            let! car = ctx.BindXmlAsync<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
@@ -1407,9 +1407,9 @@ Accept: */*
 </Car>
 ```
 
-### bindForm
+### BindFormAsync
 
-`ctx.BindForm<'T>()` can be used to bind a form urlencoded payload to a strongly typed model.
+`ctx.BindFormAsync<'T>()` can be used to bind a form urlencoded payload to a strongly typed model.
 
 #### Example
 
@@ -1426,7 +1426,7 @@ type Car =
     }
 ```
 
-Then create a new `HttpHandler` which uses `BindForm` and use it from an app:
+Then create a new `HttpHandler` which uses `BindFormAsync` and use it from an app:
 
 ```fsharp
 open Giraffe.HttpHandlers
@@ -1436,7 +1436,7 @@ let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Binds a form urlencoded payload to a Car object
-            let! car = ctx.BindForm<Car>()
+            let! car = ctx.BindFormAsync<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
@@ -1521,9 +1521,9 @@ Accept: */*
 
 ```
 
-### bindModel
+### BindModelAsync
 
-`ctx.BindModel<'T>()` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserializer during model binding.
+`ctx.BindModelAsync<'T>()` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserializer during model binding.
 
 #### Example
 
@@ -1540,7 +1540,7 @@ type Car =
     }
 ```
 
-Then create a new `HttpHandler` which uses `BindModel` and use it from an app:
+Then create a new `HttpHandler` which uses `BindModelAsync` and use it from an app:
 
 ```fsharp
 open Giraffe.HttpHandlers
@@ -1550,7 +1550,7 @@ let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Binds a JSON, XML or form urlencoded payload to a Car object
-            let! car = ctx.BindModel<Car>()
+            let! car = ctx.BindModelAsync<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
@@ -1673,7 +1673,7 @@ The build script supports the following flags:
 - `-All` will build and test all projects
 - `-Release` will build Giraffe with the `Release` configuration
 - `-Pack` will create a NuGet package for Giraffe and giraffe-template.
-- `-OnlyNetStandard` will build Giraffe only targeting the NETStandard1.6 framework ([see known issues](#known-issues))
+- `-OnlyNetStandard` will build Giraffe only targeting the NETStandard1.6 framework
 
 Examples:
 
