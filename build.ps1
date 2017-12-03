@@ -21,10 +21,15 @@ $ErrorActionPreference = "Stop"
 # Helper functions
 # ----------------------------------------------
 
+function Test-IsWindows
+{
+    [environment]::OSVersion.Platform -ne "Unix"
+}
+
 function Invoke-Cmd ($cmd)
 {
     Write-Host $cmd -ForegroundColor DarkCyan
-    if ([environment]::OSVersion.Platform -ne "Unix") { $cmd = "cmd.exe /C $cmd" }
+    if (Test-IsWindows) { $cmd = "cmd.exe /C $cmd" }
     Invoke-Expression -Command $cmd
     if ($LastExitCode -ne 0) { Write-Error "An error occured when executing '$cmd'."; return }
 }
@@ -85,6 +90,26 @@ function Remove-OldBuildArtifacts
         Remove-Item $_ -Recurse -Force }
 }
 
+function Get-TargetFrameworks ($projFile)
+{
+    [xml]$proj = Get-Content $projFile
+    ($proj.Project.PropertyGroup.TargetFrameworks).Split(";")
+}
+
+function Get-NetCoreTargetFramework ($projFile)
+{
+    Get-TargetFrameworks $projFile  | where { $_ -like "netstandard*" -or $_ -like "netcoreapp*" }
+}
+
+function Get-FrameworkArg ($projFile)
+{
+    if ($OnlyNetStandard.IsPresent) {
+        $fw = Get-NetCoreTargetFramework $projFile
+        "-f $fw"
+    }
+    else { "" }
+}
+
 # ----------------------------------------------
 # Main
 # ----------------------------------------------
@@ -109,15 +134,16 @@ Write-DotnetVersion
 Remove-OldBuildArtifacts
 
 $configuration = if ($Release.IsPresent) { "Release" } else { "Debug" }
-$framework     = if ($OnlyNetStandard.IsPresent) { "-f netstandard2.0" } else { "" }
 
 Write-Host "Building Giraffe..." -ForegroundColor Magenta
+$framework = Get-FrameworkArg $giraffe
 dotnet-restore $giraffe
 dotnet-build   $giraffe "-c $configuration $framework"
 
 if (!$ExcludeRazor.IsPresent)
 {
     Write-Host "Building Giraffe.Razor..." -ForegroundColor Magenta
+    $framework = Get-FrameworkArg $giraffeRazor
     dotnet-restore $giraffeRazor
     dotnet-build   $giraffeRazor "-c $configuration $framework"
 }
@@ -125,6 +151,7 @@ if (!$ExcludeRazor.IsPresent)
 if (!$ExcludeDotLiquid.IsPresent)
 {
     Write-Host "Building Giraffe.DotLiquid..." -ForegroundColor Magenta
+    $framework = Get-FrameworkArg $giraffeDotLiquid
     dotnet-restore $giraffeDotLiquid
     dotnet-build   $giraffeDotLiquid "-c $configuration $framework"
 }
@@ -132,9 +159,17 @@ if (!$ExcludeDotLiquid.IsPresent)
 if (!$ExcludeTests.IsPresent -and !$Run.IsPresent)
 {
     Write-Host "Building and running tests..." -ForegroundColor Magenta
+    $framework = Get-FrameworkArg $giraffeTests
+    # Currently dotnet test does not work for net461 on Linux/Mac
+    # See: https://github.com/Microsoft/vstest/issues/1318
+    if (!(Test-IsWindows)) {
+        Write-Warning "Running tests only for .NET Core build, because dotnet test does not support net4x tests on Linux/Mac at the moment (see: https://github.com/Microsoft/vstest/issues/1318)."
+        $fw = Get-NetCoreTargetFramework $giraffeTests
+        $framework = "-f $fw"
+    }
     dotnet-restore $giraffeTests
-    dotnet-build   $giraffeTests
-    dotnet-test    $giraffeTests
+    dotnet-build   $giraffeTests $framework
+    dotnet-test    $giraffeTests $framework
 }
 
 if (!$ExcludeSamples.IsPresent -and !$Run.IsPresent)

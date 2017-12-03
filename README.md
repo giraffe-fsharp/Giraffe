@@ -1707,25 +1707,15 @@ Build and test all projects, use the `Release` build configuration and create al
 PS > .\build.ps1 -Release -All -Pack
 ```
 
+### Building on Linux or macOS
+
+In order to successfully run the build script on Linux or macOS you will have to [install PowerShell for Linux or Mac](https://github.com/PowerShell/PowerShell#get-powershell).
+
+Additionally you will have to [install the latest version of Mono](http://www.mono-project.com/download/) and execute the `./build.sh` script which will set the correct `FrameworkPathOverride` before subsequently executing the `./build.ps1` PowerShell script.
+
 ### Development environment
 
 Currently the best way to work with F# on .NET Core is to use [Visual Studio Code](https://code.visualstudio.com/) with the [Ionide](http://ionide.io/) extension. Intellisense and debugging is supported with the latest versions of both.
-
-#### Known issues
-
-Currently there is a known issue with Ionide where [Intellisense breaks when a project targets multiple frameworks](https://github.com/ionide/ionide-vscode-fsharp/issues/416).
-
-This issue affects Giraffe because it targets more than one framework and therefore breaks Intellisense when building the project with the default configuration.
-
-During development you can workaround this issue by invoking the build script with the `-OnlyNetStandard` flag:
-
-```
-PS > .\build.ps1 -OnlyNetStandard
-```
-
-This switch will override the default configuration and allow a frictionless development experience.
-
-The official build by the build server doesn't use this setting and builds the project against all supported target frameworks as you would expect it.
 
 ## Contributing
 
