@@ -168,7 +168,6 @@ let ``GET "/json" returns json object`` () =
     }
 
 [<Fact>]
-
 let ``GET "/json" with a custom json handler returns json object`` () =
     let customJson (dataObj : obj) : HttpHandler =
         let settings = JsonSerializerSettings()
@@ -556,6 +555,30 @@ let ``POST "/POsT/523" returns "523"`` () =
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/POsT/523")) |> ignore
     ctx.Response.Body <- new MemoryStream()
     let expected = "523"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``GET "/foo/b%2Fc/bar" returns "b/c"`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            route   "/"       >=> text "Hello World"
+            route   "/foo"    >=> text "bar"
+            routef "/foo/%s/bar" text
+            routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/b%2Fc/bar")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "b/c"
 
     task {
         let! result = app next ctx

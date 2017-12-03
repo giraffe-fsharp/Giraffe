@@ -28,8 +28,6 @@ let readFileAsString (filePath : string) =
 /// Serializers
 /// ---------------------------
 
-let defaultJsonSerializerSettings = JsonSerializerSettings(ContractResolver = CamelCasePropertyNamesContractResolver())
-
 let inline serializeJson       (settings : JsonSerializerSettings) x   = JsonConvert.SerializeObject(x, settings)
 let inline deserializeJson<'T> (settings : JsonSerializerSettings) str = JsonConvert.DeserializeObject<'T>(str, settings)
 
@@ -38,6 +36,11 @@ let inline deserializeJsonFromStream<'T> (settings : JsonSerializerSettings) (st
     use jr = new JsonTextReader(sr)
     let serializer = JsonSerializer.Create settings
     serializer.Deserialize<'T>(jr)
+
+let defaultJsonSerializerSettings = JsonSerializerSettings(ContractResolver = CamelCasePropertyNamesContractResolver())
+
+let inline defaultSerializeJson x = serializeJson defaultJsonSerializerSettings x
+let inline defaultDeserializeJson<'T> str = deserializeJson<'T> defaultJsonSerializerSettings str
 
 let serializeXml x =
     use stream = new MemoryStream()
