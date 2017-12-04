@@ -62,6 +62,11 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [redirectTo](#redirectto)
     - [portRoute](#portroute)
     - [warbler](#warbler)
+- [StatusCode HttpHandlers](#statuscode-httphandlers)
+    - [Intermediate](#intermediate)
+    - [Successful](#successful)
+    - [RequestErrors](#requesterrors)
+    - [ServerErrors](#servererrors)
 - [Additional HttpHandlers](#additional-httphandlers)
     - [Giraffe.Razor](#girafferazor)
         - [razorView](#razorview)
@@ -914,6 +919,130 @@ A warbler will help to evaluate the function every time the route is hit.
 // ('a -> 'a -> 'b) -> 'a -> 'b
 let warbler f a = f a a
 ```
+
+## StatusCode HttpHandlers
+
+Giraffe also offers a default set of so called `HttpStatusCodeHandlers`, which can be used to return a response with a specific HTTP status code.
+
+If you need to set the HTTP status code as part of a custom `HttpHandler` then please use the [`setStatusCode`](#setstatuscode) handler instead.
+
+Giraffe's default set of `HttpStatusCodeHandlers` are categorised in four sub modules:
+
+- [Intermediate](#intermediate) (1xx status codes)
+- [Successful](#successful) (2xx status codes)
+- [RequestErrors](#requesterrors) (4xx status codes)
+- [ServerErrors](#servererrors) (5xx status codes)
+
+For most `HttpStatusCodeHandlers` (except `Intermediate`) there are two available function versions - a lower case and an upper case version.
+
+The lower case version (e.g. `Successful.ok`) is the lower level function which let's you combine it with any other `HttpHandler`:
+
+Example:
+
+```fsharp
+let app = route `/` >=> Successful.ok (text "Hello World")
+```
+
+This is essentially the equivalent of:
+
+```fsharp
+let app = route `/` >=> setStatusCode 200 >=> text "Hello World"
+```
+
+The upper case version (e.g. `Successful.OK`) can be used to return an object back to the client through Giraffe's deafult content negotiation.
+
+Example:
+
+```fsharp
+type Person = { FirstName : string; LastName : string }
+
+let johnDoe = { FirstName = "John"; LastName = "Doe" }
+
+let app = choose [
+    route `/`     >=> Successful.OK "Hello World"
+    route `/john` >=> Successful.OK johnDoe
+]
+```
+
+In order to better explain the upper case version you could equally write the same code this way:
+
+```fsharp
+type Person = { FirstName : string; LastName : string }
+
+let johnDoe = { FirstName = "John"; LastName = "Doe" }
+
+let app = choose [
+    route `/`     >=> setStatusCode 200 >=> negotiate "Hello World"
+    route `/john` >=> setStatusCode 200 >=> negotiate johnDoe
+]
+```
+
+For HTTP 3xx status codes it is recommended to use the [redirectTo](#redirectto) http handler.
+
+### Intermediate
+
+| HTTP Status Code | Function name | Example |
+| ---------------- | ------------- | ------- |
+| 100 | CONTINUE | `route "/" >=> Intermediate.CONTINUE` |
+| 101 | SWITCHING_PROTO | `route "/" >=> Intermediate.SWITCHING_PROTO` |
+
+### Successful
+
+| HTTP Status Code | Function name | Example |
+| ---------------- | ------------- | ------- |
+| 200 | ok | `route "/" >=> Successful.ok (text "Hello World")` |
+| 200 | OK | `route "/" >=> Successful.OK "Hello World"` |
+| 201 | created | `route "/" >=> Successful.created (json someObj)` |
+| 201 | CREATED | `route "/" >=> Successful.CREATED someObj` |
+| 202 | accepted | `route "/" >=> Successful.accepted (xml someObj)` |
+| 202 | ACCEPTED | `route "/" >=> Successful.ACCEPTED someObj` |
+
+### RequestErrors
+
+| HTTP Status Code | Function name | Example |
+| ---------------- | ------------- | ------- |
+| 400 | badRequest | `route "/" >=> RequestErrors.badRequest (text "Don't like it")` |
+| 400 | BAD_REQUEST | `route "/" >=> RequestErrors.BAD_REQUEST "Don't like it"` |
+| 401 | unauthorized | `route "/" >=> RequestErrors.unauthorized "Basic" "MyApp" (text "Don't know who you are")` |
+| 401 | UNAUTHORIZED | `route "/" >=> RequestErrors.UNAUTHORIZED "Don't know who you are"` |
+| 403 | forbidden | `route "/" >=> RequestErrors.forbidden (text "Not enough permissions")` |
+| 403 | FORBIDDEN | `route "/" >=> RequestErrors.FORBIDDEN "Not enough permissions"` |
+| 404 | notFound | `route "/" >=> RequestErrors.notFound (text "Page not found")` |
+| 404 | NOT_FOUND | `route "/" >=> RequestErrors.NOT_FOUND "Page not found"` |
+| 405 | methodNotAllowed | `route "/" >=> RequestErrors.methodNotAllowed (text "Don't support this")` |
+| 405 | METHOD_NOT_ALLOWED | `route "/" >=> RequestErrors.METHOD_NOT_ALLOWED "Don't support this"` |
+| 406 | notAcceptable | `route "/" >=> RequestErrors.notAcceptable (text "Not having this")` |
+| 406 | NOT_ACCEPTABLE | `route "/" >=> RequestErrors.NOT_ACCEPTABLE "Not having this"` |
+| 409 | conflict | `route "/" >=> RequestErrors.conflict (text "some conflict")` |
+| 409 | CONFLICT | `route "/" >=> RequestErrors.CONFLICT "some conflict"` |
+| 410 | gone | `route "/" >=> RequestErrors.gone (text "Too late, not here anymore")` |
+| 410 | GONE | `route "/" >=> RequestErrors.GONE "Too late, not here anymore"` |
+| 415 | unsupportedMediaType | `route "/" >=> RequestErrors.unsupportedMediaType (text "Please send in different format")` |
+| 415 | UNSUPPORTED_MEDIA_TYPE | `route "/" >=> RequestErrors.UNSUPPORTED_MEDIA_TYPE "Please send in different format"` |
+| 422 | unprocessableEntity | `route "/" >=> RequestErrors.unprocessableEntity (text "Can't do anything with this")` |
+| 422 | UNPROCESSABLE_ENTITY | `route "/" >=> RequestErrors.UNPROCESSABLE_ENTITY "Can't do anything with this"` |
+| 428 | preconditionRequired | `route "/" >=> RequestErrors.preconditionRequired (test "Please do something else first")` |
+| 428 | PRECONDITION_REQUIRED | `route "/" >=> RequestErrors.PRECONDITION_REQUIRED "Please do something else first"` |
+| 429 | tooManyRequests | `route "/" >=> RequestErrors.tooManyRequests (text "Slow down champ")` |
+| 429 | TOO_MANY_REQUESTS | `route "/" >=> RequestErrors.TOO_MANY_REQUESTS "Slow down champ"` |
+
+Note that the `unauthorized` and `UNAUTHORIZED` functions require two additional parameters, an [authentication scheme](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication#Authentication_schemes) and a realm.
+
+### ServerErrors
+
+| HTTP Status Code | Function name | Example |
+| ---------------- | ------------- | ------- |
+| 500 | internalError | `route "/" >=> ServerErrors.internalError (text "Ops, something went wrong")` |
+| 500 | INTERNAL_ERROR | `route "/" >=> ServerErrors.INTERNAL_ERROR "Not implemented"` |
+| 501 | notImplemented | `route "/" >=> ServerErrors.notImplemented (text "Not implemented")` |
+| 501 | NOT_IMPLEMENTED | `route "/" >=> ServerErrors.NOT_IMPLEMENTED "Ops, something went wrong"` |
+| 502 | badGateway | `route "/" >=> ServerErrors.badGateway (text "Bad gateway")` |
+| 502 | BAD_GATEWAY | `route "/" >=> ServerErrors.BAD_GATEWAY "Bad gateway"` |
+| 503 | serviceUnavailable | `route "/" >=> ServerErrors.serviceUnavailable (text "Service unavailable")` |
+| 503 | SERVICE_UNAVAILABLE | `route "/" >=> ServerErrors.SERVICE_UNAVAILABLE "Service unavailable"` |
+| 504 | gatewayTimeout | `route "/" >=> ServerErrors.gatewayTimeout (text "Gateway timeout")` |
+| 504 | GATEWAY_TIMEOUT | `route "/" >=> ServerErrors.GATEWAY_TIMEOUT "Gateway timeout"` |
+| 505 | invalidHttpVersion | `route "/" >=> ServerErrors.invalidHttpVersion (text "Invalid HTTP version")` |
 
 ## Additional HttpHandlers
 

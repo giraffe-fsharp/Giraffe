@@ -1,11 +1,11 @@
 Release Notes
 =============
 
-# Develop branch
+# 0.1.0-beta-400
 
 ### New features
 
-- Added HTTP status code helper functions.
+- Added [HTTP status code helper functions](https://github.com/dustinmoris/Giraffe#statuscode-httphandlers).
 - Added `defaultSerializeJson` and `defaultDeserializeJson` methods.
 - Auto opened default Giraffe modules so that the core functionality can be entirely consumed through a single `open Giraffe` statement.
 - The functionality from `Giraffe.Razor.Middleware` and `Giraffe.Razor.HttpHandlers` can be both consumed through a single `open Giraffe.Razor` now.
