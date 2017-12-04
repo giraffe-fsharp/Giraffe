@@ -16,11 +16,8 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.AspNetCore.Identity
 open Microsoft.AspNetCore.Identity.EntityFrameworkCore
 open Microsoft.EntityFrameworkCore
-open Giraffe.Tasks
-open Giraffe.HttpContextExtensions
+open Giraffe
 open Giraffe.XmlViewEngine
-open Giraffe.HttpHandlers
-open Giraffe.Middleware
 
 // ---------------------------------
 // View engine
@@ -126,7 +123,7 @@ let showErrors (errors : IdentityError seq) =
 let registerHandler : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
-            let! model       = ctx.BindForm<RegisterModel>()
+            let! model       = ctx.BindFormAsync<RegisterModel>()
             let  user        = IdentityUser(UserName = model.UserName, Email = model.Email)
             let  userManager = ctx.GetService<UserManager<IdentityUser>>()
             let! result      = userManager.CreateAsync(user, model.Password)
@@ -142,7 +139,7 @@ let registerHandler : HttpHandler =
 let loginHandler : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
-            let! model = ctx.BindForm<LoginModel>()
+            let! model = ctx.BindFormAsync<LoginModel>()
             let signInManager = ctx.GetService<SignInManager<IdentityUser>>()
             let! result = signInManager.PasswordSignInAsync(model.UserName, model.Password, true, false)
             match result.Succeeded with
@@ -248,7 +245,7 @@ let configureServices (services : IServiceCollection) =
         ) |> ignore
 
     // Enable CORS
-    services.AddCors |> ignore
+    services.AddCors() |> ignore
 
 let configureLogging (builder : ILoggingBuilder) =
     let filter (l : LogLevel) = l.Equals LogLevel.Error

@@ -1,14 +1,17 @@
-module Giraffe.Razor.Middleware
+namespace Giraffe.Razor
 
-open Microsoft.AspNetCore.Mvc.Razor
-open Microsoft.Extensions.DependencyInjection
-open Microsoft.Extensions.FileProviders
+[<AutoOpen>]
+module Middleware =
 
-type IServiceCollection with
-    member this.AddRazorEngine (viewsFolderPath : string) =
-        this.Configure<RazorViewEngineOptions>(
-            fun (options : RazorViewEngineOptions) ->
-                options.FileProviders.Clear()
-                options.FileProviders.Add(new PhysicalFileProvider(viewsFolderPath)))
-            .AddMvc()
-        |> ignore
+    open Microsoft.AspNetCore.Mvc.Razor
+    open Microsoft.Extensions.DependencyInjection
+    open Microsoft.Extensions.FileProviders
+
+    type IServiceCollection with
+        member this.AddRazorEngine (viewsFolderPath : string) =
+            this.Configure<RazorViewEngineOptions>(
+                fun (options : RazorViewEngineOptions) ->
+                    options.FileProviders.Clear()
+                    options.FileProviders.Add(new PhysicalFileProvider(viewsFolderPath)))
+                .AddMvc()
+            |> ignore

@@ -62,6 +62,11 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [redirectTo](#redirectto)
     - [portRoute](#portroute)
     - [warbler](#warbler)
+- [StatusCode HttpHandlers](#statuscode-httphandlers)
+    - [Intermediate](#intermediate)
+    - [Successful](#successful)
+    - [RequestErrors](#requesterrors)
+    - [ServerErrors](#servererrors)
 - [Additional HttpHandlers](#additional-httphandlers)
     - [Giraffe.Razor](#girafferazor)
         - [razorView](#razorview)
@@ -75,17 +80,17 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
         - [routing functions](#routing-functions)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Nested Response Writing](#nested-response-writing)
-    - [WriteJson](#writejson)
-    - [WriteXml](#writexml)
-    - [WriteText](#writetext)
-    - [RenderHtml](#renderhtml-1)
-    - [ReturnHtmlFile](#returnhtmlfile)
+    - [WriteJsonAsync](#writejsonasync)
+    - [WriteXmlAsync](#writexmlasync)
+    - [WriteTextAsync](#writetextasync)
+    - [RenderHtmlAsync](#renderhtmlasync)
+    - [ReturnHtmlFileAsync](#returnhtmlfileasync)
 - [Model Binding](#model-binding)
-    - [BindJson](#bindjson)
-    - [BindXml](#bindxml)
-    - [BindForm](#bindform)
+    - [BindJsonAsync](#bindjsonasync)
+    - [BindXmlAsync](#bindxmlasync)
+    - [BindFormAsync](#bindformasync)
     - [BindQueryString](#bindquerystring)
-    - [BindModel](#bindmodel)
+    - [BindModelAsync](#bindmodelasync)
 - [Error Handling](#error-handling)
 - [Installation](#installation)
 - [Sample applications](#sample-applications)
@@ -189,7 +194,7 @@ open Giraffe.HttpHandlers
 let personHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
-            let! person = ctx.BindModel<Person>()
+            let! person = ctx.BindModelAsync<Person>()
             return! json person next ctx
         }
 ```
@@ -642,7 +647,7 @@ let app =
     ]
 ```
 
-You can also use the [`WriteText`](#writetext) extension method to return a plain text response back to the client.
+You can also use the [`WriteTextAsync`](#writetextasync) extension method to return a plain text response back to the client.
 
 ### customJson
 
@@ -690,7 +695,7 @@ let app =
     ]
 ```
 
-Alternatively you can also use the [`WriteJson`](#writejson) extension method to return a custom serialized JSON response back to the client.
+Alternatively you can also use the [`WriteJsonAsync`](#writejsonasync) extension method to return a custom serialized JSON response back to the client.
 
 ### json
 
@@ -711,7 +716,7 @@ let app =
     ]
 ```
 
-You can also use the [`WriteJson`](#writejson) extension method to return a default serialized JSON response back to the client.
+You can also use the [`WriteJsonAsync`](#writejsonasync) extension method to return a default serialized JSON response back to the client.
 
 ### xml
 
@@ -733,7 +738,7 @@ let app =
     ]
 ```
 
-You can also use the [`WriteXml`](#writexml) extension method to return an XML response back to the client.
+You can also use the [`WriteXmlAsync`](#writexmlasync) extension method to return an XML response back to the client.
 
 ### negotiate
 
@@ -915,6 +920,130 @@ A warbler will help to evaluate the function every time the route is hit.
 let warbler f a = f a a
 ```
 
+## StatusCode HttpHandlers
+
+Giraffe also offers a default set of so called `HttpStatusCodeHandlers`, which can be used to return a response with a specific HTTP status code.
+
+If you need to set the HTTP status code as part of a custom `HttpHandler` then please use the [`setStatusCode`](#setstatuscode) handler instead.
+
+Giraffe's default set of `HttpStatusCodeHandlers` are categorised in four sub modules:
+
+- [Intermediate](#intermediate) (1xx status codes)
+- [Successful](#successful) (2xx status codes)
+- [RequestErrors](#requesterrors) (4xx status codes)
+- [ServerErrors](#servererrors) (5xx status codes)
+
+For most `HttpStatusCodeHandlers` (except `Intermediate`) there are two available function versions - a lower case and an upper case version.
+
+The lower case version (e.g. `Successful.ok`) is the lower level function which let's you combine it with any other `HttpHandler`:
+
+Example:
+
+```fsharp
+let app = route `/` >=> Successful.ok (text "Hello World")
+```
+
+This is essentially the equivalent of:
+
+```fsharp
+let app = route `/` >=> setStatusCode 200 >=> text "Hello World"
+```
+
+The upper case version (e.g. `Successful.OK`) can be used to return an object back to the client through Giraffe's deafult content negotiation.
+
+Example:
+
+```fsharp
+type Person = { FirstName : string; LastName : string }
+
+let johnDoe = { FirstName = "John"; LastName = "Doe" }
+
+let app = choose [
+    route `/`     >=> Successful.OK "Hello World"
+    route `/john` >=> Successful.OK johnDoe
+]
+```
+
+In order to better explain the upper case version you could equally write the same code this way:
+
+```fsharp
+type Person = { FirstName : string; LastName : string }
+
+let johnDoe = { FirstName = "John"; LastName = "Doe" }
+
+let app = choose [
+    route `/`     >=> setStatusCode 200 >=> negotiate "Hello World"
+    route `/john` >=> setStatusCode 200 >=> negotiate johnDoe
+]
+```
+
+For HTTP 3xx status codes it is recommended to use the [redirectTo](#redirectto) http handler.
+
+### Intermediate
+
+| HTTP Status Code | Function name | Example |
+| ---------------- | ------------- | ------- |
+| 100 | CONTINUE | `route "/" >=> Intermediate.CONTINUE` |
+| 101 | SWITCHING_PROTO | `route "/" >=> Intermediate.SWITCHING_PROTO` |
+
+### Successful
+
+| HTTP Status Code | Function name | Example |
+| ---------------- | ------------- | ------- |
+| 200 | ok | `route "/" >=> Successful.ok (text "Hello World")` |
+| 200 | OK | `route "/" >=> Successful.OK "Hello World"` |
+| 201 | created | `route "/" >=> Successful.created (json someObj)` |
+| 201 | CREATED | `route "/" >=> Successful.CREATED someObj` |
+| 202 | accepted | `route "/" >=> Successful.accepted (xml someObj)` |
+| 202 | ACCEPTED | `route "/" >=> Successful.ACCEPTED someObj` |
+
+### RequestErrors
+
+| HTTP Status Code | Function name | Example |
+| ---------------- | ------------- | ------- |
+| 400 | badRequest | `route "/" >=> RequestErrors.badRequest (text "Don't like it")` |
+| 400 | BAD_REQUEST | `route "/" >=> RequestErrors.BAD_REQUEST "Don't like it"` |
+| 401 | unauthorized | `route "/" >=> RequestErrors.unauthorized "Basic" "MyApp" (text "Don't know who you are")` |
+| 401 | UNAUTHORIZED | `route "/" >=> RequestErrors.UNAUTHORIZED "Don't know who you are"` |
+| 403 | forbidden | `route "/" >=> RequestErrors.forbidden (text "Not enough permissions")` |
+| 403 | FORBIDDEN | `route "/" >=> RequestErrors.FORBIDDEN "Not enough permissions"` |
+| 404 | notFound | `route "/" >=> RequestErrors.notFound (text "Page not found")` |
+| 404 | NOT_FOUND | `route "/" >=> RequestErrors.NOT_FOUND "Page not found"` |
+| 405 | methodNotAllowed | `route "/" >=> RequestErrors.methodNotAllowed (text "Don't support this")` |
+| 405 | METHOD_NOT_ALLOWED | `route "/" >=> RequestErrors.METHOD_NOT_ALLOWED "Don't support this"` |
+| 406 | notAcceptable | `route "/" >=> RequestErrors.notAcceptable (text "Not having this")` |
+| 406 | NOT_ACCEPTABLE | `route "/" >=> RequestErrors.NOT_ACCEPTABLE "Not having this"` |
+| 409 | conflict | `route "/" >=> RequestErrors.conflict (text "some conflict")` |
+| 409 | CONFLICT | `route "/" >=> RequestErrors.CONFLICT "some conflict"` |
+| 410 | gone | `route "/" >=> RequestErrors.gone (text "Too late, not here anymore")` |
+| 410 | GONE | `route "/" >=> RequestErrors.GONE "Too late, not here anymore"` |
+| 415 | unsupportedMediaType | `route "/" >=> RequestErrors.unsupportedMediaType (text "Please send in different format")` |
+| 415 | UNSUPPORTED_MEDIA_TYPE | `route "/" >=> RequestErrors.UNSUPPORTED_MEDIA_TYPE "Please send in different format"` |
+| 422 | unprocessableEntity | `route "/" >=> RequestErrors.unprocessableEntity (text "Can't do anything with this")` |
+| 422 | UNPROCESSABLE_ENTITY | `route "/" >=> RequestErrors.UNPROCESSABLE_ENTITY "Can't do anything with this"` |
+| 428 | preconditionRequired | `route "/" >=> RequestErrors.preconditionRequired (test "Please do something else first")` |
+| 428 | PRECONDITION_REQUIRED | `route "/" >=> RequestErrors.PRECONDITION_REQUIRED "Please do something else first"` |
+| 429 | tooManyRequests | `route "/" >=> RequestErrors.tooManyRequests (text "Slow down champ")` |
+| 429 | TOO_MANY_REQUESTS | `route "/" >=> RequestErrors.TOO_MANY_REQUESTS "Slow down champ"` |
+
+Note that the `unauthorized` and `UNAUTHORIZED` functions require two additional parameters, an [authentication scheme](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication#Authentication_schemes) and a realm.
+
+### ServerErrors
+
+| HTTP Status Code | Function name | Example |
+| ---------------- | ------------- | ------- |
+| 500 | internalError | `route "/" >=> ServerErrors.internalError (text "Ops, something went wrong")` |
+| 500 | INTERNAL_ERROR | `route "/" >=> ServerErrors.INTERNAL_ERROR "Not implemented"` |
+| 501 | notImplemented | `route "/" >=> ServerErrors.notImplemented (text "Not implemented")` |
+| 501 | NOT_IMPLEMENTED | `route "/" >=> ServerErrors.NOT_IMPLEMENTED "Ops, something went wrong"` |
+| 502 | badGateway | `route "/" >=> ServerErrors.badGateway (text "Bad gateway")` |
+| 502 | BAD_GATEWAY | `route "/" >=> ServerErrors.BAD_GATEWAY "Bad gateway"` |
+| 503 | serviceUnavailable | `route "/" >=> ServerErrors.serviceUnavailable (text "Service unavailable")` |
+| 503 | SERVICE_UNAVAILABLE | `route "/" >=> ServerErrors.SERVICE_UNAVAILABLE "Service unavailable"` |
+| 504 | gatewayTimeout | `route "/" >=> ServerErrors.gatewayTimeout (text "Gateway timeout")` |
+| 504 | GATEWAY_TIMEOUT | `route "/" >=> ServerErrors.GATEWAY_TIMEOUT "Gateway timeout"` |
+| 505 | invalidHttpVersion | `route "/" >=> ServerErrors.invalidHttpVersion (text "Invalid HTTP version")` |
+
 ## Additional HttpHandlers
 
 There's a few additional `HttpHandler` functions which you can get through referencing extra NuGet packages.
@@ -933,7 +1062,7 @@ The `razorView` handler requires the view name, an object model and the contentT
 Add the razor engine service during start-up:
 
 ```fsharp
-open Giraffe.Razor.Middleware
+open Giraffe.Razor
 
 type Startup() =
     member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =
@@ -944,7 +1073,7 @@ type Startup() =
 Use the razorView function:
 
 ```fsharp
-open Giraffe.Razor.HttpHandlers
+open Giraffe.Razor
 
 let model = { WelcomeText = "Hello World" }
 
@@ -963,7 +1092,7 @@ let app =
 Add the razor engine service during start-up:
 
 ```fsharp
-open Giraffe.Razor.Middleware
+open Giraffe.Razor
 
 type Startup() =
     member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =
@@ -974,7 +1103,7 @@ type Startup() =
 Use the razorView function:
 
 ```fsharp
-open Giraffe.Razor.HttpHandlers
+open Giraffe.Razor
 
 let model = { WelcomeText = "Hello World" }
 
@@ -998,7 +1127,7 @@ The `dotLiquid` handler requires the content type and the actual template to be 
 ##### Example:
 
 ```fsharp
-open Giraffe.DotLiquid.HttpHandlers
+open Giraffe.DotLiquid
 
 type Person =
     {
@@ -1023,7 +1152,7 @@ This http handler takes a relative path of a template file, an associated model 
 ##### Example:
 
 ```fsharp
-open Giraffe.DotLiquid.HttpHandlers
+open Giraffe.DotLiquid
 
 type Person =
     {
@@ -1044,7 +1173,7 @@ let app =
 ##### Example:
 
 ```fsharp
-open Giraffe.DotLiquid.HttpHandlers
+open Giraffe.DotLiquid
 
 type Person =
     {
@@ -1102,14 +1231,14 @@ let notFound = setStatusCode 404 >=> text "Not found"
 let app =
     router notFound [
         route "/"       (text "index")
-        route "/about"  => text "about"
+        route "/about"  (text "about")
         routef "parsing/%s/%i" (fun (s,i) -> text (sprintf "Recieved %s & %i" s i))
         subRoute "/api" [
             GET [
-                route "/"       <| text "api index"
+                route "/"       (text "api index")
                 route "/about"  (text "api about")
                 subRoute "/v2" [
-                    route "/"       <| text "api v2 index"
+                    route "/"       (text "api v2 index")
                     route "/about"  (text "api v2 about")
                 ]
             ]
@@ -1169,11 +1298,11 @@ let app =
 
 ## Nested Response Writing
 
-The `Giraffe.HttpContextExtensions` module exposes a default set of response writing functions which extend the `HttpContext` object. Instead of using the [`customJson`](#customjson), [`json`](#json), [`xml`](#xml), or [`text`](#text) handlers to compose a custom HttpHandler you can also use the `WriteJson`, `WriteXml` and `WriteText` extension methods to directly write to the response of the `HttpContext` and close the pipeline.
+The `Giraffe.HttpContextExtensions` module exposes a default set of response writing functions which extend the `HttpContext` object. Instead of using the [`customJson`](#customjson), [`json`](#json), [`xml`](#xml), or [`text`](#text) handlers to compose a custom HttpHandler you can also use the `WriteJsonAsync`, `WriteXmlAsync` and `WriteTextAsync` extension methods to directly write to the response of the `HttpContext` and close the pipeline.
 
-### WriteJson
+### WriteJsonAsync
 
-`ctx.WriteJson someObj` can be used to return a JSON response back to the client. Alternatively you can use `ctx.WriteJson (settings : JsoSerializerSettings) someObj` to customize the generated JSON before sending the response back to the client.
+`ctx.WriteJsonAsync someObj` can be used to return a JSON response back to the client. Alternatively you can use `ctx.WriteJsonAsync (settings : JsoSerializerSettings) someObj` to customize the generated JSON before sending the response back to the client.
 
 #### Example:
 
@@ -1188,7 +1317,7 @@ type Person =
 let myJsonHandler : HttpHandler =
     fun next ctx ->
         let person = { FirstName = "Foo"; LastName = "Bar" }
-        ctx.WriteJson person
+        ctx.WriteJsonAsync person
 
 let app =
     choose [
@@ -1196,9 +1325,9 @@ let app =
     ]
 ```
 
-### WriteXml
+### WriteXmlAsync
 
-`ctx.WriteXml someObj` can be used to return an XML response back to the client.
+`ctx.WriteXmlAsync someObj` can be used to return an XML response back to the client.
 
 #### Example:
 
@@ -1213,7 +1342,7 @@ type Person =
 let myXmlHandler : HttpHandler =
     fun next ctx ->
         let person = { FirstName = "Foo"; LastName = "Bar" }
-        ctx.WriteXml person
+        ctx.WriteXmlAsync person
 
 let app =
     choose [
@@ -1221,9 +1350,9 @@ let app =
     ]
 ```
 
-### WriteText
+### WriteTextAsync
 
-`ctx.WriteText "some text"` can be used to return a plain text response back to the client.
+`ctx.WriteTextAsync "some text"` can be used to return a plain text response back to the client.
 
 #### Example:
 
@@ -1231,7 +1360,7 @@ let app =
 let myTextHandler : HttpHandler =
     fun next ctx ->
         let str = "Hello World"
-        ctx.WriteText str
+        ctx.WriteTextAsync str
 
 let app =
     choose [
@@ -1239,9 +1368,9 @@ let app =
     ]
 ```
 
-### RenderHtml
+### RenderHtmlAsync
 
-`ctx.RenderHtml someNode` can be used to return a [XmlViewEngine](#renderhtml) node.
+`ctx.RenderHtmlAsync someNode` can be used to return a [XmlViewEngine](#renderhtmlasync) node.
 
 #### Example:
 
@@ -1255,7 +1384,7 @@ let myHtmlHandler =
                     h1 [] [EncodedText "Hello world"]
                 ]
             ]
-        ctx.RenderHtml(htmlDoc)
+        ctx.RenderHtmlAsync(htmlDoc)
 
 let app =
     choose [
@@ -1263,16 +1392,16 @@ let app =
     ]
 ```
 
-### ReturnHtmlFile
+### ReturnHtmlFileAsync
 
-`ctx.ReturnHtmlFile "./myPage.html"` can be used to return a html file. Note that the path should be relative, similar to [htmlFile](#htmlfile).
+`ctx.ReturnHtmlFileAsync "./myPage.html"` can be used to return a html file. Note that the path should be relative, similar to [htmlFile](#htmlfile).
 
 #### Example:
 
 ```fsharp
 let htmlFileHandler  =
     fun (next:HttpFunc) (ctx:HttpContext) ->
-        ctx.ReturnHtmlFile "./index.html"
+        ctx.ReturnHtmlFileAsync "./index.html"
 
 let app =
     choose [
@@ -1284,9 +1413,9 @@ let app =
 
 The `Giraffe.HttpContextExtensions` module exposes a default set of model binding functions which extend the `HttpContext` object.
 
-### BindJson
+### BindJsonAsync
 
-`ctx.BindJson<'T>()` can be used to bind a JSON payload to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserializer during model binding.
+`ctx.BindJsonAsync<'T>()` can be used to bind a JSON payload to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserialisation during model binding.
 
 #### Example
 
@@ -1303,7 +1432,7 @@ type Car =
     }
 ```
 
-Then create a new `HttpHandler` which uses `BindJson` and use it from an app:
+Then create a new `HttpHandler` which uses `BindJsonAsync` and use it from an app:
 
 ```fsharp
 open Giraffe.HttpHandlers
@@ -1313,7 +1442,7 @@ let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Binds a JSON payload to a Car object
-            let! car = ctx.BindJson<Car>()
+            let! car = ctx.BindJsonAsync<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
@@ -1343,9 +1472,9 @@ Accept: */*
 { "name": "DB9", "make": "Aston Martin", "wheels": 4, "built": "2016-01-01" }
 ```
 
-### bindXml
+### bindXmlAsync
 
-`ctx.BindXml<'T>()` can be used to bind an XML payload to a strongly typed model.
+`ctx.BindXmlAsync<'T>()` can be used to bind an XML payload to a strongly typed model.
 
 #### Example
 
@@ -1362,7 +1491,7 @@ type Car =
     }
 ```
 
-Then create a new `HttpHandler` which uses `BindXml` and use it from an app:
+Then create a new `HttpHandler` which uses `BindXmlAsync` and use it from an app:
 
 ```fsharp
 open Giraffe.HttpHandlers
@@ -1372,7 +1501,7 @@ let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Binds an XML payload to a Car object
-            let! car = ctx.BindXml<Car>()
+            let! car = ctx.BindXmlAsync<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
@@ -1407,9 +1536,9 @@ Accept: */*
 </Car>
 ```
 
-### bindForm
+### BindFormAsync
 
-`ctx.BindForm<'T>()` can be used to bind a form urlencoded payload to a strongly typed model.
+`ctx.BindFormAsync<'T>()` can be used to bind a form urlencoded payload to a strongly typed model.
 
 #### Example
 
@@ -1426,7 +1555,7 @@ type Car =
     }
 ```
 
-Then create a new `HttpHandler` which uses `BindForm` and use it from an app:
+Then create a new `HttpHandler` which uses `BindFormAsync` and use it from an app:
 
 ```fsharp
 open Giraffe.HttpHandlers
@@ -1436,7 +1565,7 @@ let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Binds a form urlencoded payload to a Car object
-            let! car = ctx.BindForm<Car>()
+            let! car = ctx.BindFormAsync<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
@@ -1521,9 +1650,9 @@ Accept: */*
 
 ```
 
-### bindModel
+### BindModelAsync
 
-`ctx.BindModel<'T>()` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserializer during model binding.
+`ctx.BindModelAsync<'T>()` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserializer during model binding.
 
 #### Example
 
@@ -1540,7 +1669,7 @@ type Car =
     }
 ```
 
-Then create a new `HttpHandler` which uses `BindModel` and use it from an app:
+Then create a new `HttpHandler` which uses `BindModelAsync` and use it from an app:
 
 ```fsharp
 open Giraffe.HttpHandlers
@@ -1550,7 +1679,7 @@ let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Binds a JSON, XML or form urlencoded payload to a Car object
-            let! car = ctx.BindModel<Car>()
+            let! car = ctx.BindModelAsync<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
@@ -1673,7 +1802,7 @@ The build script supports the following flags:
 - `-All` will build and test all projects
 - `-Release` will build Giraffe with the `Release` configuration
 - `-Pack` will create a NuGet package for Giraffe and giraffe-template.
-- `-OnlyNetStandard` will build Giraffe only targeting the NETStandard1.6 framework ([see known issues](#known-issues))
+- `-OnlyNetStandard` will build Giraffe only targeting the NETStandard1.6 framework
 
 Examples:
 
@@ -1707,25 +1836,15 @@ Build and test all projects, use the `Release` build configuration and create al
 PS > .\build.ps1 -Release -All -Pack
 ```
 
+### Building on Linux or macOS
+
+In order to successfully run the build script on Linux or macOS you will have to [install PowerShell for Linux or Mac](https://github.com/PowerShell/PowerShell#get-powershell).
+
+Additionally you will have to [install the latest version of Mono](http://www.mono-project.com/download/) and execute the `./build.sh` script which will set the correct `FrameworkPathOverride` before subsequently executing the `./build.ps1` PowerShell script.
+
 ### Development environment
 
 Currently the best way to work with F# on .NET Core is to use [Visual Studio Code](https://code.visualstudio.com/) with the [Ionide](http://ionide.io/) extension. Intellisense and debugging is supported with the latest versions of both.
-
-#### Known issues
-
-Currently there is a known issue with Ionide where [Intellisense breaks when a project targets multiple frameworks](https://github.com/ionide/ionide-vscode-fsharp/issues/416).
-
-This issue affects Giraffe because it targets more than one framework and therefore breaks Intellisense when building the project with the default configuration.
-
-During development you can workaround this issue by invoking the build script with the `-OnlyNetStandard` flag:
-
-```
-PS > .\build.ps1 -OnlyNetStandard
-```
-
-This switch will override the default configuration and allow a frictionless development experience.
-
-The official build by the build server doesn't use this setting and builds the project against all supported target frameworks as you would expect it.
 
 ## Contributing
 
@@ -1768,7 +1887,7 @@ Special thanks to all developers who helped me by submitting pull requests with 
 - [Dragan Jovanović](https://github.com/draganjovanovic1) (Changed the UseGiraffeErrorHandler method to allow chaining of middleware and added policy based auth handlers)
 - [Viquoc Quan](https://github.com/vtquan) (Fixed bug in giraffe-template)
 - [Kerry Jones](https://github.com/KerryRJ) (Helped to fix bugs and added custom JSON serialization support)
-- [Steffen Forkmann](https://github.com/forki) (Improved the htmlFile http handler)
+- [Steffen Forkmann](https://github.com/forki) (Improved the htmlFile http handler and ported Suave's status code handlers as well as general help with the project)
 
 If you submit a pull request please feel free to add yourself to this list as part of the PR.
 

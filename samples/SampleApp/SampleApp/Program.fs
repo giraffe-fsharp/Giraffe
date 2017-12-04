@@ -15,12 +15,8 @@ open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
-open Giraffe.Tasks
-open Giraffe.HttpContextExtensions
-open Giraffe.HttpHandlers
-open Giraffe.Middleware
-open Giraffe.Razor.HttpHandlers
-open Giraffe.Razor.Middleware
+open Giraffe
+open Giraffe.Razor
 open SampleApp.Models
 open SampleApp.HtmlViews
 
@@ -95,7 +91,7 @@ type Car =
 let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
-            let! car = ctx.BindModel<Car>()
+            let! car = ctx.BindModelAsync<Car>()
             return! json car next ctx
         }
 
@@ -140,14 +136,14 @@ let webApp =
                 route  "/person"     >=> (personView { Name = "Html Node" } |> renderHtml)
                 route  "/once"       >=> (time() |> text)
                 route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
-                route  "/configured"  >=> configuredHandler
+                route  "/configured" >=> configuredHandler
             ]
         POST >=>
             choose [
                 route "/small-upload" >=> smallFileUploadHandler
                 route "/large-upload" >=> largeFileUploadHandler ]
         route "/car" >=> submitCar
-        setStatusCode 404 >=> text "Not Found" ]
+        RequestErrors.notFound (text "Not Found") ]
 
 // ---------------------------------
 // Main

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>Giraffe</AssemblyName>
-    <Version>0.1.0-beta-310</Version>
+    <Version>0.1.0-beta-400</Version>
     <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
     <Copyright>Copyright 2017 Dustin Moris Gorski</Copyright>
     <NeutralLanguage>en-GB</NeutralLanguage>
@@ -23,6 +23,7 @@
     <RepositoryUrl>https://github.com/dustinmoris/giraffe</RepositoryUrl>
     <NetStandardImplicitPackageVersion>2.0</NetStandardImplicitPackageVersion>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
   </PropertyGroup>
 
   <ItemGroup>
@@ -42,9 +43,14 @@
     <Compile Include="XmlViewEngine.fs" />
     <Compile Include="HttpContextExtensions.fs" />
     <Compile Include="HttpHandlers.fs" />
+    <Compile Include="HttpStatusCodeHandlers.fs" />
     <Compile Include="TokenParsers.fs" />
     <Compile Include="TokenRouter.fs" />
     <Compile Include="Middleware.fs" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsWindows)' != 'true' AND '$(TargetFramework)' == 'net461'">
+    <Reference Include="netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
   </ItemGroup>
 
 </Project>

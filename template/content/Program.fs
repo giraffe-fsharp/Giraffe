@@ -9,10 +9,8 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
-open Giraffe.HttpHandlers
-open Giraffe.Middleware
-open Giraffe.Razor.HttpHandlers
-open Giraffe.Razor.Middleware
+open Giraffe
+open Giraffe.Razor
 open _AppName.Models
 
 // ---------------------------------

@@ -1,3 +1,4 @@
+[<AutoOpen>]
 module Giraffe.HttpHandlers
 
 open System
@@ -326,7 +327,7 @@ let htmlFile (filePath : string) : HttpHandler =
                 else
                     let env = ctx.GetService<IHostingEnvironment>()
                     Path.Combine(env.ContentRootPath, filePath)
-            let! html = readFileAsString filePath
+            let! html = readFileAsStringAsync filePath
             return!
                 (setHttpHeader "Content-Type" "text/html"
                 >=> setBodyAsString html) next ctx

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>Giraffe.DotLiquid</AssemblyName>
-    <Version>0.1.0-beta-100</Version>
+    <Version>0.1.0-beta-200</Version>
     <Description>DotLiquid templating engine handlers for the Giraffe web framework.</Description>
     <Copyright>Copyright 2017 Dustin Moris Gorski</Copyright>
     <NeutralLanguage>en-GB</NeutralLanguage>
@@ -22,6 +22,7 @@
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/dustinmoris/giraffe</RepositoryUrl>
     <NetStandardImplicitPackageVersion>2.0</NetStandardImplicitPackageVersion>
+    <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
   </PropertyGroup>
 
   <ItemGroup>
@@ -34,6 +35,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Giraffe\Giraffe.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsWindows)' != 'true' AND '$(TargetFramework)' == 'net461'">
+    <Reference Include="netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
   </ItemGroup>
 
   <ItemGroup>

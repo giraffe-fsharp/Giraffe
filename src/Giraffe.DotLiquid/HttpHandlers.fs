@@ -1,4 +1,4 @@
-module Giraffe.DotLiquid.HttpHandlers
+module Giraffe.DotLiquid
 
 open System.IO
 open System.Text
@@ -29,8 +29,8 @@ let dotLiquidTemplate (contentType : string) (templatePath : string) (model : ob
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             let env = ctx.RequestServices.GetService<IHostingEnvironment>()
-            let path = env.ContentRootPath + templatePath
-            let! template = readFileAsString path
+            let path = Path.Combine(env.ContentRootPath, templatePath)
+            let! template = readFileAsStringAsync path
             return! dotLiquid contentType template model next ctx
         }
 
