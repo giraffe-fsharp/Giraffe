@@ -933,7 +933,7 @@ The `razorView` handler requires the view name, an object model and the contentT
 Add the razor engine service during start-up:
 
 ```fsharp
-open Giraffe.Razor.Middleware
+open Giraffe.Razor
 
 type Startup() =
     member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =
@@ -944,7 +944,7 @@ type Startup() =
 Use the razorView function:
 
 ```fsharp
-open Giraffe.Razor.HttpHandlers
+open Giraffe.Razor
 
 let model = { WelcomeText = "Hello World" }
 
@@ -963,7 +963,7 @@ let app =
 Add the razor engine service during start-up:
 
 ```fsharp
-open Giraffe.Razor.Middleware
+open Giraffe.Razor
 
 type Startup() =
     member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =
@@ -974,7 +974,7 @@ type Startup() =
 Use the razorView function:
 
 ```fsharp
-open Giraffe.Razor.HttpHandlers
+open Giraffe.Razor
 
 let model = { WelcomeText = "Hello World" }
 
@@ -998,7 +998,7 @@ The `dotLiquid` handler requires the content type and the actual template to be 
 ##### Example:
 
 ```fsharp
-open Giraffe.DotLiquid.HttpHandlers
+open Giraffe.DotLiquid
 
 type Person =
     {
@@ -1023,7 +1023,7 @@ This http handler takes a relative path of a template file, an associated model 
 ##### Example:
 
 ```fsharp
-open Giraffe.DotLiquid.HttpHandlers
+open Giraffe.DotLiquid
 
 type Person =
     {
@@ -1044,7 +1044,7 @@ let app =
 ##### Example:
 
 ```fsharp
-open Giraffe.DotLiquid.HttpHandlers
+open Giraffe.DotLiquid
 
 type Person =
     {

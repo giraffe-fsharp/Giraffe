@@ -16,11 +16,8 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.AspNetCore.Identity
 open Microsoft.AspNetCore.Identity.EntityFrameworkCore
 open Microsoft.EntityFrameworkCore
-open Giraffe.Tasks
-open Giraffe.HttpContextExtensions
+open Giraffe
 open Giraffe.XmlViewEngine
-open Giraffe.HttpHandlers
-open Giraffe.Middleware
 
 // ---------------------------------
 // View engine

@@ -1,3 +1,4 @@
+[<AutoOpen>]
 module Giraffe.HttpHandlers
 
 open System

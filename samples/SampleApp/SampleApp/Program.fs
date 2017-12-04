@@ -16,12 +16,7 @@ open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
-open Giraffe.Tasks
-open Giraffe.HttpContextExtensions
-open Giraffe.HttpHandlers
-open Giraffe.Middleware
-open Giraffe.Razor.HttpHandlers
-open Giraffe.Razor.Middleware
+open Giraffe.Razor
 open SampleApp.Models
 open SampleApp.HtmlViews
 

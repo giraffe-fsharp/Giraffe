@@ -6,19 +6,13 @@ open System.IO
 open System.Text
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
-open Microsoft.Extensions.Logging
 open Xunit
 open Xunit.Abstractions
 open NSubstitute
-open Giraffe.HttpHandlers
-open Giraffe.Middleware
-open Giraffe.XmlViewEngine
-open Giraffe.DotLiquid.HttpHandlers
+open XmlViewEngine
+open TokenRouter
 open Giraffe.Tests.Asserts
-open Giraffe.Tasks
-open Giraffe.TokenRouter
 
 // ---------------------------------
 // Helper functions
@@ -260,41 +254,6 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
             let body = getBody ctx
             Assert.Equal(expected, body)
             Assert.Equal(404, ctx.Response.StatusCode)
-    }
-
-[<Fact>]
-let ``GET "/dotLiquid" returns rendered html view`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let dotLiquidTemplate =
-        "<html><head><title>DotLiquid</title></head>" +
-        "<body><p>{{ foo }} {{ bar }} is {{ age }} years old.</p>" +
-        "</body></html>"
-
-    let obj = { Foo = "John"; Bar = "Doe"; Age = 30 }
-
-    let app =
-        router notFound [
-            GET [
-                route "/"          => text "Hello World"
-                route "/dotLiquid" => dotLiquid "text/html" dotLiquidTemplate obj ]
-            POST [
-                route "/post/1"    => text "1" ]
-            ]
-
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/dotLiquid")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "<html><head><title>DotLiquid</title></head><body><p>John Doe is 30 years old.</p></body></html>"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None -> assertFailf "Result was expected to be %s" expected
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal(expected, body)
-            Assert.Equal("text/html", ctx.Response |> getContentType)
     }
 
 [<Fact>]

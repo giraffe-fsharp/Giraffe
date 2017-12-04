@@ -1,4 +1,4 @@
-module Giraffe.DotLiquid.HttpHandlers
+module Giraffe.DotLiquid
 
 open System.IO
 open System.Text

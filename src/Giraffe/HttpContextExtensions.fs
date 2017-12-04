@@ -1,4 +1,4 @@
-[<AutoOpenAttribute>]
+[<AutoOpen>]
 module Giraffe.HttpContextExtensions
 
 open System

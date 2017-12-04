@@ -1,6 +1,5 @@
-namespace Giraffe
-
-open HttpHandlers
+[<AutoOpen>]
+module Giraffe.HttpStatusCodeHandlers
 
 // 1xx
 module Intermediate =

@@ -119,14 +119,15 @@ if ($ClearOnly.IsPresent) {
     return
 }
 
-$giraffe          = ".\src\Giraffe\Giraffe.fsproj"
-$giraffeRazor     = ".\src\Giraffe.Razor\Giraffe.Razor.fsproj"
-$giraffeDotLiquid = ".\src\Giraffe.DotLiquid\Giraffe.DotLiquid.fsproj"
-$giraffeTests     = ".\tests\Giraffe.Tests\Giraffe.Tests.fsproj"
-$identityApp      = ".\samples\IdentityApp\IdentityApp\IdentityApp.fsproj"
-$jwtApp           = ".\samples\JwtApp\JwtApp\JwtApp.fsproj"
-$sampleApp        = ".\samples\SampleApp\SampleApp\SampleApp.fsproj"
-$sampleAppTests   = ".\samples\SampleApp\SampleApp.Tests\SampleApp.Tests.fsproj"
+$giraffe               = ".\src\Giraffe\Giraffe.fsproj"
+$giraffeRazor          = ".\src\Giraffe.Razor\Giraffe.Razor.fsproj"
+$giraffeDotLiquid      = ".\src\Giraffe.DotLiquid\Giraffe.DotLiquid.fsproj"
+$giraffeDotLiquidTests = ".\tests\Giraffe.DotLiquid.Tests\Giraffe.DotLiquid.Tests.fsproj"
+$giraffeTests          = ".\tests\Giraffe.Tests\Giraffe.Tests.fsproj"
+$identityApp           = ".\samples\IdentityApp\IdentityApp\IdentityApp.fsproj"
+$jwtApp                = ".\samples\JwtApp\JwtApp\JwtApp.fsproj"
+$sampleApp             = ".\samples\SampleApp\SampleApp\SampleApp.fsproj"
+$sampleAppTests        = ".\samples\SampleApp\SampleApp.Tests\SampleApp.Tests.fsproj"
 
 Update-AppVeyorBuildVersion $giraffe
 Test-Version $giraffe
@@ -139,22 +140,6 @@ Write-Host "Building Giraffe..." -ForegroundColor Magenta
 $framework = Get-FrameworkArg $giraffe
 dotnet-restore $giraffe
 dotnet-build   $giraffe "-c $configuration $framework"
-
-if (!$ExcludeRazor.IsPresent)
-{
-    Write-Host "Building Giraffe.Razor..." -ForegroundColor Magenta
-    $framework = Get-FrameworkArg $giraffeRazor
-    dotnet-restore $giraffeRazor
-    dotnet-build   $giraffeRazor "-c $configuration $framework"
-}
-
-if (!$ExcludeDotLiquid.IsPresent)
-{
-    Write-Host "Building Giraffe.DotLiquid..." -ForegroundColor Magenta
-    $framework = Get-FrameworkArg $giraffeDotLiquid
-    dotnet-restore $giraffeDotLiquid
-    dotnet-build   $giraffeDotLiquid "-c $configuration $framework"
-}
 
 if (!$ExcludeTests.IsPresent -and !$Run.IsPresent)
 {
@@ -170,6 +155,38 @@ if (!$ExcludeTests.IsPresent -and !$Run.IsPresent)
     dotnet-restore $giraffeTests
     dotnet-build   $giraffeTests $framework
     dotnet-test    $giraffeTests $framework
+}
+
+if (!$ExcludeRazor.IsPresent)
+{
+    Write-Host "Building Giraffe.Razor..." -ForegroundColor Magenta
+    $framework = Get-FrameworkArg $giraffeRazor
+    dotnet-restore $giraffeRazor
+    dotnet-build   $giraffeRazor "-c $configuration $framework"
+}
+
+if (!$ExcludeDotLiquid.IsPresent)
+{
+    Write-Host "Building Giraffe.DotLiquid..." -ForegroundColor Magenta
+    $framework = Get-FrameworkArg $giraffeDotLiquid
+    dotnet-restore $giraffeDotLiquid
+    dotnet-build   $giraffeDotLiquid "-c $configuration $framework"
+
+    if (!$ExcludeTests.IsPresent -and !$Run.IsPresent)
+    {
+        Write-Host "Building and running DotLiquid tests..." -ForegroundColor Magenta
+        $framework = Get-FrameworkArg $giraffeDotLiquidTests
+        # Currently dotnet test does not work for net461 on Linux/Mac
+        # See: https://github.com/Microsoft/vstest/issues/1318
+        if (!(Test-IsWindows)) {
+            Write-Warning "Running tests only for .NET Core build, because dotnet test does not support net4x tests on Linux/Mac at the moment (see: https://github.com/Microsoft/vstest/issues/1318)."
+            $fw = Get-NetCoreTargetFramework $giraffeDotLiquidTests
+            $framework = "-f $fw"
+        }
+        dotnet-restore $giraffeDotLiquidTests
+        dotnet-build   $giraffeDotLiquidTests $framework
+        dotnet-test    $giraffeDotLiquidTests $framework
+    }
 }
 
 if (!$ExcludeSamples.IsPresent -and !$Run.IsPresent)

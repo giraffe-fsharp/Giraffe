@@ -43,7 +43,7 @@
     <Compile Include="XmlViewEngine.fs" />
     <Compile Include="HttpContextExtensions.fs" />
     <Compile Include="HttpHandlers.fs" />
-    <Compile Include="HttpStatusCodes.fs" />
+    <Compile Include="HttpStatusCodeHandlers.fs" />
     <Compile Include="TokenParsers.fs" />
     <Compile Include="TokenRouter.fs" />
     <Compile Include="Middleware.fs" />

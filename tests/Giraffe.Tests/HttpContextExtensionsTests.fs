@@ -5,22 +5,16 @@ open System.Collections.Generic
 open System.IO
 open System.Text
 open System.Threading.Tasks
-open Xunit
-open NSubstitute
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http.Internal
 open Microsoft.Extensions.Primitives
-open Microsoft.Extensions.Logging
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.TestHost
-open Microsoft.Extensions.Configuration
+open Xunit
+open NSubstitute
 open Newtonsoft.Json
-open Giraffe.Common
-open Giraffe.HttpHandlers
-open Giraffe.Tasks
 open Giraffe.XmlViewEngine
-open Giraffe.Middleware
 
 let assertFailf format args =
     let msg = sprintf format args
