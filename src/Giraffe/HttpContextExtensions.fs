@@ -150,7 +150,7 @@ type HttpContext with
                         | "application/xml"                   -> this.BindXmlAsync<'T>()
                         | "application/x-www-form-urlencoded" -> this.BindFormAsync<'T>(?cultureInfo = cultureInfo)
                         | _ -> failwithf "Cannot bind model from Content-Type '%s'" original.Value
-            else return this.BindQueryString<'T>()
+            else return this.BindQueryString<'T>(?cultureInfo = cultureInfo)
         }
 
     /// ---------------------------
