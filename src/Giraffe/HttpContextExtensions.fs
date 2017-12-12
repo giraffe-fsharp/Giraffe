@@ -78,12 +78,12 @@ type HttpContext with
             return deserializeXml<'T> body
         }
 
-    member this.BindFormAsync<'T>(?cultureInfo:CultureInfo) =
+    member this.BindFormAsync<'T>(?cultureInfo : CultureInfo) =
         task {
-            let! form = this.Request.ReadFormAsync()
+            let! form   = this.Request.ReadFormAsync()
             let culture = defaultArg cultureInfo CultureInfo.InvariantCulture
-            let obj   = Activator.CreateInstance<'T>()
-            let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
+            let obj     = Activator.CreateInstance<'T>()
+            let props   = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
             props
             |> Seq.iter (fun p ->
                 let strValue = ref (StringValues())
@@ -95,10 +95,10 @@ type HttpContext with
             return obj
         }
 
-    member this.BindQueryString<'T>(?cultureInfo:CultureInfo) =
-        let obj   = Activator.CreateInstance<'T>()
+    member this.BindQueryString<'T>(?cultureInfo : CultureInfo) =
+        let obj     = Activator.CreateInstance<'T>()
         let culture = defaultArg cultureInfo CultureInfo.InvariantCulture
-        let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
+        let props   = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
         props
         |> Seq.iter (fun p ->
             match this.TryGetQueryStringValue p.Name with
@@ -139,7 +139,7 @@ type HttpContext with
 
     member this.BindModelAsync<'T>(?cultureInfo) = this.BindModelAsync<'T>(defaultJsonSerializerSettings, ?cultureInfo = cultureInfo)
 
-    member this.BindModelAsync<'T> (settings : JsonSerializerSettings, ?cultureInfo:CultureInfo) =
+    member this.BindModelAsync<'T> (settings : JsonSerializerSettings, ?cultureInfo : CultureInfo) =
         task {
             let method = this.Request.Method
             if method.Equals "POST" || method.Equals "PUT" then

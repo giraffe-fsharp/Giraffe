@@ -6,6 +6,7 @@ Release Notes
 #### New features
 
 - Added a new overload of `GetLogger` to the `HttpContext` extension methods, which allows one to pass in a `categoryName` string in order to initialise a new logger: `let logger = ctx.GetLogger "categoryName"`.
+- `BindFormAsync`, `BindQueryString` and `BindModelAsync` accept an additional optional parameter for `CultureInfo`.
 
 #### Breaking changes
 

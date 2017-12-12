@@ -1378,7 +1378,7 @@ Accept: */*
 
 ### BindFormAsync
 
-`ctx.BindFormAsync<'T>()` can be used to bind a form urlencoded payload to a strongly typed model.
+`ctx.BindFormAsync<'T>(?cultureInfo : CultureInfo)` can be used to bind a form urlencoded payload to a strongly typed model.
 
 #### Example
 
@@ -1421,6 +1421,13 @@ let webApp =
         POST >=> route "/car" >=> submitCar ]
 ```
 
+You can also specify a `CultureInfo` parameter when binding from a form:
+
+```fsharp
+let british = CultureInfo.CreateSpecificCulture("en-GB")
+let! car = ctx.BindFormAsync<Car> british
+```
+
 You can test the bind function by sending a HTTP request with a form payload:
 
 ```
@@ -1437,7 +1444,7 @@ Name=DB9&Make=Aston+Martin&Wheels=4&Built=2016-01-01
 
 ### bindQueryString
 
-`ctx.BindQueryString<'T>()` can be used to bind a query string to a strongly typed model.
+`ctx.BindQueryString<'T>(?cultureInfo : CultureInfo)` can be used to bind a query string to a strongly typed model.
 
 #### Example
 
@@ -1480,6 +1487,13 @@ let webApp =
                 route "/car" >=> submitCar ]
 ```
 
+You can also specify a `CultureInfo` parameter when binding from a query string:
+
+```fsharp
+let british = CultureInfo.CreateSpecificCulture("en-GB")
+let car = ctx.BindQueryString<Car> british
+```
+
 You can test the bind function by sending a HTTP request with a query string:
 
 ```
@@ -1492,7 +1506,7 @@ Accept: */*
 
 ### BindModelAsync
 
-`ctx.BindModelAsync<'T>()` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserializer during model binding.
+`ctx.BindModelAsync<'T>(?cultureInfo : CultureInfo)` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserializer during model binding and/or a `CultureInfo` object.
 
 #### Example
 
@@ -1535,6 +1549,13 @@ let webApp =
         // Can accept GET and POST requests and
         // bind a model from the payload or query string
         route "/car" >=> submitCar ]
+```
+
+You can also specify a `CultureInfo` parameter when using `BindModelAsync`:
+
+```fsharp
+let british = CultureInfo.CreateSpecificCulture("en-GB")
+let! car = ctx.BindModelAsync<Car> british
 ```
 
 ## Error Handling
