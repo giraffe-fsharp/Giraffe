@@ -1,10 +1,8 @@
 namespace Giraffe.Tests.Asserts
 
-open Xunit
-
 module XmlAssert =
+    open Xunit
     open System.Linq
-    open System.Xml
     open System.Xml.Linq
 
     let rec normalize (element : XElement) =
@@ -18,15 +16,15 @@ module XmlAssert =
                     .OrderBy(fun a -> a.Name.ToString())
                     .Select(fun e -> normalize(e))
             )
-        elif element.IsEmpty then  
+        elif element.IsEmpty then
             XElement(
-                element.Name, 
+                element.Name,
                 element.Attributes()
                     .OrderBy(fun a -> a.Name.ToString())
               )
          else
             XElement(
-                element.Name, 
+                element.Name,
                 element.Attributes()
                     .OrderBy(fun a -> a.Name.ToString()), element.Value
                )

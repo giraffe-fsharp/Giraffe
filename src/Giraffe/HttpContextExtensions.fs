@@ -2,6 +2,7 @@
 module Giraffe.HttpContextExtensions
 
 open System
+open System.Globalization
 open System.IO
 open System.Reflection
 open System.ComponentModel
@@ -12,8 +13,8 @@ open Microsoft.Extensions.Logging
 open Microsoft.FSharp.Reflection
 open Microsoft.Net.Http.Headers
 open Newtonsoft.Json
-open Giraffe.Common
-open Giraffe.XmlViewEngine
+open Common
+open XmlViewEngine
 
 type HttpContext with
 
@@ -26,6 +27,10 @@ type HttpContext with
 
     member this.GetLogger<'T>() =
         this.GetService<ILogger<'T>>()
+
+    member this.GetLogger (categoryName : string) =
+        let loggerFactory = this.GetService<ILoggerFactory>()
+        loggerFactory.CreateLogger categoryName
 
     /// ---------------------------
     /// Common helpers
@@ -73,25 +78,27 @@ type HttpContext with
             return deserializeXml<'T> body
         }
 
-    member this.BindFormAsync<'T>() =
+    member this.BindFormAsync<'T>(?cultureInfo : CultureInfo) =
         task {
-            let! form = this.Request.ReadFormAsync()
-            let obj   = Activator.CreateInstance<'T>()
-            let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
+            let! form   = this.Request.ReadFormAsync()
+            let culture = defaultArg cultureInfo CultureInfo.InvariantCulture
+            let obj     = Activator.CreateInstance<'T>()
+            let props   = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
             props
             |> Seq.iter (fun p ->
                 let strValue = ref (StringValues())
                 if form.TryGetValue(p.Name, strValue)
                 then
                     let converter = TypeDescriptor.GetConverter p.PropertyType
-                    let value = converter.ConvertFromInvariantString(strValue.Value.ToString())
+                    let value = converter.ConvertFromString(null, culture, strValue.Value.ToString())
                     p.SetValue(obj, value, null))
             return obj
         }
 
-    member this.BindQueryString<'T>() =
-        let obj   = Activator.CreateInstance<'T>()
-        let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
+    member this.BindQueryString<'T>(?cultureInfo : CultureInfo) =
+        let obj     = Activator.CreateInstance<'T>()
+        let culture = defaultArg cultureInfo CultureInfo.InvariantCulture
+        let props   = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
         props
         |> Seq.iter (fun p ->
             match this.TryGetQueryStringValue p.Name with
@@ -116,7 +123,7 @@ type HttpContext with
 
                 let converter = TypeDescriptor.GetConverter propertyType
 
-                let value = converter.ConvertFromInvariantString(queryValue)
+                let value = converter.ConvertFromString(null, culture, queryValue)
 
                 if isOptionType then
                     let cases = FSharpType.GetUnionCases(p.PropertyType)
@@ -130,9 +137,9 @@ type HttpContext with
                     p.SetValue(obj, value, null))
         obj
 
-    member this.BindModelAsync<'T>() = this.BindModelAsync<'T> defaultJsonSerializerSettings
+    member this.BindModelAsync<'T>(?cultureInfo) = this.BindModelAsync<'T>(defaultJsonSerializerSettings, ?cultureInfo = cultureInfo)
 
-    member this.BindModelAsync<'T> (settings : JsonSerializerSettings) =
+    member this.BindModelAsync<'T> (settings : JsonSerializerSettings, ?cultureInfo : CultureInfo) =
         task {
             let method = this.Request.Method
             if method.Equals "POST" || method.Equals "PUT" then
@@ -145,9 +152,9 @@ type HttpContext with
                         match parsed.Value.MediaType.Value with
                         | "application/json"                  -> this.BindJsonAsync<'T> settings
                         | "application/xml"                   -> this.BindXmlAsync<'T>()
-                        | "application/x-www-form-urlencoded" -> this.BindFormAsync<'T>()
+                        | "application/x-www-form-urlencoded" -> this.BindFormAsync<'T>(?cultureInfo = cultureInfo)
                         | _ -> failwithf "Cannot bind model from Content-Type '%s'" original.Value
-            else return this.BindQueryString<'T>()
+            else return this.BindQueryString<'T>(?cultureInfo = cultureInfo)
         }
 
     /// ---------------------------

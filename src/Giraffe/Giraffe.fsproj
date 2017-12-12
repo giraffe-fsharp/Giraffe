@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>Giraffe</AssemblyName>
-    <Version>0.1.0-beta-400</Version>
+    <Version>0.1.0-beta-500</Version>
     <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
     <Copyright>Copyright 2017 Dustin Moris Gorski</Copyright>
     <NeutralLanguage>en-GB</NeutralLanguage>
@@ -33,10 +33,10 @@
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.0.*" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.*" />
+    <PackageReference Include="Giraffe.Tasks" Version="0.1.0-beta-0*" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Tasks.fs" />
     <Compile Include="Common.fs" />
     <Compile Include="ComputationExpressions.fs" />
     <Compile Include="FormatExpressions.fs" />

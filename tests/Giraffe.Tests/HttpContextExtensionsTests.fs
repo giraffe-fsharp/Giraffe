@@ -1,6 +1,7 @@
 module Giraffe.HttpContextExtensionsTests
 
 open System
+open System.Globalization
 open System.Collections.Generic
 open System.IO
 open System.Text
@@ -188,6 +189,34 @@ let ``BindQueryString test`` () =
     ctx.Response.Body <- new MemoryStream()
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``BindQueryString culture specific test`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let queryHandler =
+        fun (next : HttpFunc) (ctx : HttpContext) ->
+            let model = ctx.BindQueryString<Customer>(CultureInfo.CreateSpecificCulture("en-GB"))
+            text (model.ToString()) next ctx
+
+    let app = GET >=> route "/query" >=> queryHandler
+
+    let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=12/04/1998 12:34:56&Balance=150000.5&LoyaltyPoints=137"
+    let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/query")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let expected = "Name: John Doe, IsVip: true, BirthDate: 1998-04-12, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
@@ -392,6 +421,49 @@ let ``BindModelAsync with FORM content returns correct result`` () =
     }
 
 [<Fact>]
+let ``BindModelAsync with culture aware form content returns correct result`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let autoHandler =
+        fun (next : HttpFunc) (ctx : HttpContext) ->
+            task {
+                let! model = ctx.BindModelAsync<Customer>(CultureInfo.CreateSpecificCulture("en-GB"))
+                return! text (model.ToString()) next ctx
+            }
+
+    let app = route "/auto" >=> autoHandler
+
+    let contentType = "application/x-www-form-urlencoded"
+    let headers = HeaderDictionary()
+    headers.Add("Content-Type", StringValues(contentType))
+    ctx.Request.HasFormContentType.ReturnsForAnyArgs true |> ignore
+    let form =
+        dict [
+            "Name", StringValues("John Doe")
+            "IsVip", StringValues("true")
+            "BirthDate", StringValues("04/01/2015 05:45:00")
+            "Balance", StringValues("150000.5")
+            "LoyaltyPoints", StringValues("137")
+        ] |> Dictionary
+    let taskColl = System.Threading.Tasks.Task.FromResult(FormCollection(form) :> IFormCollection)
+    ctx.Request.ReadFormAsync().ReturnsForAnyArgs(taskColl) |> ignore
+    ctx.Request.ContentType.ReturnsForAnyArgs contentType |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
+    ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let expected = "Name: John Doe, IsVip: true, BirthDate: 2015-01-04, Balance: 150000.50, LoyaltyPoints: 137"
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
 let ``BindModelAsync with JSON content and a specific charset returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
@@ -447,7 +519,6 @@ let ``BindModelAsync during HTTP GET request with query string returns correct r
 
     let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-    let asdf = QueryCollection(query) :> IQueryCollection
     ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
@@ -462,6 +533,37 @@ let ``BindModelAsync during HTTP GET request with query string returns correct r
         | None     -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
+
+[<Fact>]
+let ``BindModelAsync during HTTP GET request with culture aware query string returns correct result`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let autoHandler =
+        fun (next : HttpFunc) (ctx : HttpContext) ->
+            task {
+                let! model = ctx.BindModelAsync<Customer>(CultureInfo.CreateSpecificCulture("en-GB"))
+                return! text (model.ToString()) next ctx
+            }
+
+    let app = route "/auto" >=> autoHandler
+
+    let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=15/06/2013 06:00:00&Balance=150000.5&LoyaltyPoints=137"
+    let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let expected = "Name: John Doe, IsVip: true, BirthDate: 2013-06-15, Balance: 150000.50, LoyaltyPoints: 137"
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
 
 [<Fact>]
 let ``TryGetRequestHeader during HTTP GET request with returns correct result`` () =
@@ -508,7 +610,6 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
 
     let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-    let asdf = QueryCollection(query) :> IQueryCollection
     ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/test")) |> ignore
@@ -529,7 +630,7 @@ let ``RenderHtmlAsync should add html to the context`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
-        fun (next: HttpFunc) (ctx: HttpContext) ->
+        fun (next : HttpFunc) (ctx : HttpContext) ->
             let htmlDoc =
                 html [] [
                     head [] []
@@ -561,7 +662,7 @@ let resultOfTask<'T> (task:Task<'T>) =
 [<Fact>]
 let ``ReturnHtmlFileAsync should return html from content folder`` () =
     let testHandler =
-        fun (next:HttpFunc) (ctx:HttpContext) ->
+        fun (next : HttpFunc) (ctx : HttpContext) ->
             ctx.ReturnHtmlFileAsync "index.html"
 
     let webApp = route "/" >=> testHandler

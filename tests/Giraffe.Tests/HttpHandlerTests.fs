@@ -6,13 +6,11 @@ open System.IO
 open System.Text
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
-open Microsoft.Extensions.Logging
 open Xunit
 open NSubstitute
 open Newtonsoft.Json
-open Giraffe.XmlViewEngine
+open XmlViewEngine
 open Giraffe.Tests.Asserts
 
 // ---------------------------------
