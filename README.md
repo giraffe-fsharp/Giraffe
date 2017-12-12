@@ -68,16 +68,10 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [RequestErrors](#requesterrors)
     - [ServerErrors](#servererrors)
 - [Additional HttpHandlers](#additional-httphandlers)
-    - [Giraffe.Razor](#girafferazor)
-        - [razorView](#razorview)
-        - [razorHtmlView](#razorhtmlview)
-    - [Giraffe.DotLiquid](#giraffedotliquid)
-        - [dotLiquid](#dotliquid)
-        - [dotLiquidTemplate](#dotliquidtemplate)
-        - [dotLiquidHtmlView](#dotliquidhtmlview)
     - [Giraffe.TokenRouter](#giraffetokenrouter)
         - [router](#router)
         - [routing functions](#routing-functions)
+    - [Additional NuGet packages](#additional-nuget-packages)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Nested Response Writing](#nested-response-writing)
     - [WriteJsonAsync](#writejsonasync)
@@ -183,9 +177,9 @@ let app =
 
 ### Tasks
 
-Another important aspect to Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core works only with tasks out of the box).
+Another important aspect to Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core only works with tasks out of the box).
 
-For this purpose Giraffe has it's own `task {}` workflow which comes with the `Giraffe.Tasks` module. Syntactically it works identical to F#'s async workflows:
+For this purpose Giraffe has it's own `task {}` workflow which comes with the `Giraffe.Tasks` NuGet package. Syntactically it works identical to F#'s async workflows:
 
 ```fsharp
 open Giraffe.Tasks
@@ -199,7 +193,7 @@ let personHandler =
         }
 ```
 
-The `task {}` workflow is not strictly tied to Giraffe and can be used from anywhere in an F# application:
+The `task {}` workflow is not strictly tied to Giraffe and can also be used from other places in an F# application:
 
 ```fsharp
 open Giraffe.Tasks
@@ -216,29 +210,7 @@ let readFileAndDoSomething (filePath : string) =
     }
 ```
 
-Note, you can still continue to use regular `Async<'T>` workflows from within the `task{}` computation expression without having to manually convert back into a `Task<'T>`.
-
-If you were to write the same code with F#'s async workflow it would look something like this:
-
-
-```fsharp
-let readFileAndDoSomething (filePath : string) =
-    async {
-        use stream = new FileStream(filePath, FileMode.Open)
-        use reader = new StreamReader(stream)
-        let! contents =
-            reader.ReadToEndAsync()
-            |> Async.AwaitTask
-
-        // do something with contents
-
-        return contents
-    }
-```
-
-Apart from the convenience of not having to convert from a `Task<'T>` into an `Async<'T>` workflow and then back again into a `Task<'T>` when returning back to the ASP.NET Core pipeline it also proved to improve overall performance by two figure % in comparison to F#'s async implementation.
-
-The original code for Giraffe's task implementation has been taken from [Robert Peele](https://github.com/rspeele)'s [TaskBuilder.fs](https://github.com/rspeele/TaskBuilder.fs) and gradually modified to better fit Giraffe's use case for a highly scalable ASP.NET Core web application.
+For more information please visit the official [Giraffe.Tasks](https://github.com/giraffe-fsharp/Giraffe.Tasks) GitHub repository.
 
 ## Default HttpHandlers
 
@@ -1046,146 +1018,7 @@ Note that the `unauthorized` and `UNAUTHORIZED` functions require two additional
 
 ## Additional HttpHandlers
 
-There's a few additional `HttpHandler` functions which you can get through referencing extra NuGet packages.
-
-### Giraffe.Razor
-
-The `Giraffe.Razor` NuGet package adds additional `HttpHandler` functions to render Razor views from Giraffe.
-
-#### razorView
-
-`razorView` uses the official ASP.NET Core MVC Razor view engine to compile a page and set the body of the `HttpResponse`. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
-
-The `razorView` handler requires the view name, an object model and the contentType of the response to be passed in. It also requires to be enabled through the `AddRazorEngine` function during start-up.
-
-##### Example:
-Add the razor engine service during start-up:
-
-```fsharp
-open Giraffe.Razor
-
-type Startup() =
-    member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =
-        let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
-        services.AddRazorEngine(viewsFolderPath) |> ignore
-```
-
-Use the razorView function:
-
-```fsharp
-open Giraffe.Razor
-
-let model = { WelcomeText = "Hello World" }
-
-let app =
-    choose [
-        // Assuming there is a view called "Index.cshtml"
-        route  "/" >=> razorView "text/html" "Index" model
-    ]
-```
-
-#### razorHtmlView
-
-`razorHtmlView` is the same as `razorView` except that it automatically sets the response as `text/html`.
-
-##### Example:
-Add the razor engine service during start-up:
-
-```fsharp
-open Giraffe.Razor
-
-type Startup() =
-    member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =
-        let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
-        services.AddRazorEngine(viewsFolderPath) |> ignore
-```
-
-Use the razorView function:
-
-```fsharp
-open Giraffe.Razor
-
-let model = { WelcomeText = "Hello World" }
-
-let app =
-    choose [
-        // Assuming there is a view called "Index.cshtml"
-        route  "/" >=> razorHtmlView "Index" model
-    ]
-```
-
-### Giraffe.DotLiquid
-
-The `Giraffe.DotLiquid` NuGet package adds additional `HttpHandler` functions to render DotLiquid templates in Giraffe.
-
-#### dotLiquid
-
-`dotLiquid` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
-
-The `dotLiquid` handler requires the content type and the actual template to be passed in as two string values together with an object model. This handler is supposed to be used as the base handler for other http handlers which want to utilize the DotLiquid template engine (e.g. you could create an SVG handler on top of it).
-
-##### Example:
-
-```fsharp
-open Giraffe.DotLiquid
-
-type Person =
-    {
-        FirstName : string
-        LastName  : string
-    }
-
-let template = "<html><head><title>DotLiquid</title></head><body><p>First name: {{ firstName }}<br />Last name: {{ lastName }}</p></body></html>"
-
-let app =
-    choose [
-        route  "/foo" >=> dotLiquid "text/html" template { FirstName = "Foo"; LastName = "Bar" }
-    ]
-```
-
-#### dotLiquidTemplate
-
-`dotLiquidTemplate` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
-
-This http handler takes a relative path of a template file, an associated model and the contentType of the response as parameters.
-
-##### Example:
-
-```fsharp
-open Giraffe.DotLiquid
-
-type Person =
-    {
-        FirstName : string
-        LastName  : string
-    }
-
-let app =
-    choose [
-        route  "/foo" >=> dotLiquidTemplate "text/html" "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
-    ]
-```
-
-#### dotLiquidHtmlView
-
-`dotLiquidHtmlView` is the same as `dotLiquidTemplate` except that it automatically sets the response as `text/html`.
-
-##### Example:
-
-```fsharp
-open Giraffe.DotLiquid
-
-type Person =
-    {
-        FirstName : string
-        LastName  : string
-    }
-
-let app =
-    choose [
-        route  "/foo" >=> dotLiquidHtmlView "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
-    ]
-```
+There's a few additional `HttpHandler` functions which you can get through referencing extra modules or NuGet packages.
 
 ### Giraffe.TokenRouter
 
@@ -1246,6 +1079,13 @@ let app =
         ]
     ]
 ```
+
+### Additional NuGet packages
+
+There's more `HttpHandler` functions available through additional NuGet packages:
+
+- [Giraffe.Razor](https://github.com/giraffe-fsharp/Giraffe.Razor): Adds native Razor view functionality to Giraffe web applications.
+- [Giraffe.DotLiquid](https://github.com/giraffe-fsharp/Giraffe.DotLiquid): Adds native DotLiquid template functionality to Giraffe web applications.
 
 ## Custom HttpHandlers
 

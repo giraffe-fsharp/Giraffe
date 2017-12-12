@@ -13,8 +13,8 @@ open Microsoft.Extensions.Logging
 open Microsoft.FSharp.Reflection
 open Microsoft.Net.Http.Headers
 open Newtonsoft.Json
-open Giraffe.Common
-open Giraffe.XmlViewEngine
+open Common
+open XmlViewEngine
 
 type HttpContext with
 
@@ -27,6 +27,10 @@ type HttpContext with
 
     member this.GetLogger<'T>() =
         this.GetService<ILogger<'T>>()
+
+    member this.GetLogger (categoryName : string) =
+        let loggerFactory = this.GetService<ILoggerFactory>()
+        loggerFactory.CreateLogger categoryName
 
     /// ---------------------------
     /// Common helpers

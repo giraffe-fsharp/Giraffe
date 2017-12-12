@@ -211,7 +211,6 @@ let ``BindQueryString culture specific test`` () =
 
     let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=12/04/1998 12:34:56&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-    let asdf = QueryCollection(query) :> IQueryCollection
     ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/query")) |> ignore
@@ -422,7 +421,7 @@ let ``BindModelAsync with FORM content returns correct result`` () =
     }
 
 [<Fact>]
-let ``BindModelAsync with FORM content culture aware returns correct result`` () =
+let ``BindModelAsync with culture aware form content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
@@ -520,7 +519,6 @@ let ``BindModelAsync during HTTP GET request with query string returns correct r
 
     let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-    let asdf = QueryCollection(query) :> IQueryCollection
     ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
@@ -537,7 +535,7 @@ let ``BindModelAsync during HTTP GET request with query string returns correct r
     }
 
 [<Fact>]
-let ``BindModelAsync during HTTP GET request with query string culture aware returns correct result`` () =
+let ``BindModelAsync during HTTP GET request with culture aware query string returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let autoHandler =
@@ -551,7 +549,6 @@ let ``BindModelAsync during HTTP GET request with query string culture aware ret
 
     let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=15/06/2013 06:00:00&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-    let asdf = QueryCollection(query) :> IQueryCollection
     ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
@@ -613,7 +610,6 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
 
     let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-    let asdf = QueryCollection(query) :> IQueryCollection
     ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/test")) |> ignore
@@ -634,7 +630,7 @@ let ``RenderHtmlAsync should add html to the context`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
-        fun (next: HttpFunc) (ctx: HttpContext) ->
+        fun (next : HttpFunc) (ctx : HttpContext) ->
             let htmlDoc =
                 html [] [
                     head [] []
@@ -666,7 +662,7 @@ let resultOfTask<'T> (task:Task<'T>) =
 [<Fact>]
 let ``ReturnHtmlFileAsync should return html from content folder`` () =
     let testHandler =
-        fun (next:HttpFunc) (ctx:HttpContext) ->
+        fun (next : HttpFunc) (ctx : HttpContext) ->
             ctx.ReturnHtmlFileAsync "index.html"
 
     let webApp = route "/" >=> testHandler

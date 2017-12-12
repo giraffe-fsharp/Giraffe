@@ -16,7 +16,6 @@ open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
-open Giraffe.Razor
 open SampleApp.Models
 open SampleApp.HtmlViews
 
@@ -95,29 +94,6 @@ let submitCar =
             return! json car next ctx
         }
 
-let smallFileUploadHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        task {
-            return!
-                (match ctx.Request.HasFormContentType with
-                | false -> setStatusCode 400 >=> text "Bad request"
-                | true  ->
-                    ctx.Request.Form.Files
-                    |> Seq.fold (fun acc file -> sprintf "%s\n%s" acc file.FileName) ""
-                    |> text) next ctx
-        }
-
-let largeFileUploadHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        task {
-            let formFeature = ctx.Features.Get<IFormFeature>()
-            let! form = formFeature.ReadFormAsync CancellationToken.None
-            return!
-                (form.Files
-                |> Seq.fold (fun acc file -> sprintf "%s\n%s" acc file.FileName) ""
-                |> text) next ctx
-        }
-
 let webApp =
     choose [
         GET >=>
@@ -130,18 +106,11 @@ let webApp =
                 route  "/user"       >=> mustBeUser >=> userHandler
                 route  "/john-only"  >=> mustBeJohn >=> userHandler
                 routef "/user/%i"    showUserHandler
-                route  "/razor"      >=> razorHtmlView "Person" { Name = "Razor" }
-                route  "/razorHello" >=> razorHtmlView "Hello" ""
-                route  "/fileupload" >=> razorHtmlView "FileUpload" ""
                 route  "/person"     >=> (personView { Name = "Html Node" } |> renderHtml)
                 route  "/once"       >=> (time() |> text)
                 route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
                 route  "/configured" >=> configuredHandler
             ]
-        POST >=>
-            choose [
-                route "/small-upload" >=> smallFileUploadHandler
-                route "/large-upload" >=> largeFileUploadHandler ]
         route "/car" >=> submitCar
         RequestErrors.notFound (text "Not Found") ]
 
@@ -163,17 +132,10 @@ let configureApp (app : IApplicationBuilder) =
        .UseGiraffe webApp
 
 let configureServices (services : IServiceCollection) =
-    let sp  = services.BuildServiceProvider()
-    let env = sp.GetService<IHostingEnvironment>()
-    let viewsFolderPath = Path.Combine(env.ContentRootPath, "Views")
-
     services
         .AddAuthentication(authScheme)
-        .AddCookie(cookieAuth)
-    |> ignore
-
-    services.AddDataProtection()            |> ignore
-    services.AddRazorEngine viewsFolderPath |> ignore
+        .AddCookie(cookieAuth)   |> ignore
+    services.AddDataProtection() |> ignore
 
 let configureLogging (loggerBuilder : ILoggingBuilder) =
     loggerBuilder.AddFilter(fun lvl -> lvl.Equals LogLevel.Error)
@@ -181,7 +143,7 @@ let configureLogging (loggerBuilder : ILoggingBuilder) =
                  .AddDebug() |> ignore
 
 [<EntryPoint>]
-let main argv =
+let main _ =
     let contentRoot = Directory.GetCurrentDirectory()
     let webRoot     = Path.Combine(contentRoot, "WebRoot")
     WebHost.CreateDefaultBuilder()
