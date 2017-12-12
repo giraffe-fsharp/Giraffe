@@ -5,12 +5,12 @@ Release Notes
 
 #### New features
 
-- Added a new overload of `GetLogger` to the `HttpContext` extension methods, which allows one to pass in a `categoryName` string in order to initialise a new logger: `let logger = ctx.GetLogger "categoryName"`.
+- Added a new overload for `GetLogger` of the `HttpContext` extension methods, which allows one to pass in a `categoryName` string in order to initialise a new logger: `let logger = ctx.GetLogger "categoryName"`.
 - `BindFormAsync`, `BindQueryString` and `BindModelAsync` accept an additional optional parameter for `CultureInfo`.
 
 #### Breaking changes
 
-- Removed `Giraffe.Tasks` from the `Griaffe` NuGet package and added a new dependency on the newly created `Giraffe.Tasks` NuGet package. You can use the `Giraffe.Tasks` NuGet package from non ASP.NET Core projects too now.
+- Removed `Giraffe.Tasks` from the `Giraffe` NuGet package and added a new dependency on the newly created `Giraffe.Tasks` NuGet package. You can use the `Giraffe.Tasks` NuGet package from non ASP.NET Core projects now as well.
 
 ## 0.1.0-beta-400
 
