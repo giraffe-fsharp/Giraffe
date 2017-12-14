@@ -333,13 +333,17 @@ let htmlFile (filePath : string) : HttpHandler =
                 >=> setBodyAsString html) next ctx
         }
 
+/// The HTTP response is of Content-Type text/html.
+let html (document : string) : HttpHandler =
+    setHttpHeader "Content-Type" "text/html"
+    >=> (setBodyAsString document)
+    
 /// Uses the Giraffe.XmlViewEngine to compile and render a HTML Document from
 /// an given XmlNode. The HTTP response is of Content-Type text/html.
 let renderHtml (document : XmlNode) : HttpHandler =
-    setHttpHeader "Content-Type" "text/html"
-    >=> (document
-        |> renderHtmlDocument
-        |> setBodyAsString)
+    document
+    |> renderHtmlDocument
+    |> html
 
 /// Checks the HTTP Accept header of the request and determines the most appropriate
 /// response type from a given set of negotiationRules. If the Accept header cannot be
