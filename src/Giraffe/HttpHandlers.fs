@@ -351,7 +351,7 @@ let renderHtml (document : XmlNode) : HttpHandler =
 /// Example:
 /// let negotiationRules = dict [ "application/json", json; "application/xml" , xml ]
 /// `json` and `xml` are both the respective default HttpHandler functions in this example.
-let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>)
+let negotiateWith (negotiationRules    : #IDictionary<string, obj -> HttpHandler>)
                   (unacceptableHandler : HttpHandler)
                   (responseObj         : obj)
                   : HttpHandler =
@@ -359,21 +359,19 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
         (ctx.Request.GetTypedHeaders()).Accept
         |> fun acceptedMimeTypes ->
             match isNull acceptedMimeTypes || acceptedMimeTypes.Count = 0 with
-            | true  ->
-                negotiationRules.Keys
+            | true ->
+                negotiationRules
                 |> Seq.head
-                |> fun mediaType -> negotiationRules.[mediaType]
-                |> fun handler   -> handler responseObj next ctx
+                |> fun rule -> rule.Value
+                |> fun handler -> handler responseObj next ctx
             | false ->
                 List.ofSeq acceptedMimeTypes
                 |> List.filter (fun x -> negotiationRules.ContainsKey x.MediaType.Value)
                 |> fun mimeTypes ->
-                    match mimeTypes.Length with
-                    | 0 -> unacceptableHandler next ctx
-                    | _ ->
-                        mimeTypes
-                        |> List.sortByDescending (fun x -> if x.Quality.HasValue then x.Quality.Value else 1.0)
-                        |> List.head
+                    match mimeTypes |> List.sortByDescending (fun x -> if x.Quality.HasValue then x.Quality.Value else 1.0) with
+                    | [] -> unacceptableHandler next ctx
+                    | selectedMimeType :: _ ->
+                        selectedMimeType
                         |> fun mimeType -> negotiationRules.[mimeType.MediaType.Value]
                         |> fun handler  -> handler responseObj next ctx
 
