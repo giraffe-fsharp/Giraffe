@@ -12,12 +12,16 @@
     <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.WebSockets" Version="2.0.*" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.*" />
     <PackageReference Include="xunit" Version="2.3.*" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.3.*" />
     <PackageReference Include="NSubstitute" Version="3.1.*" />
     <PackageReference Include="FsCheck" Version="3.0.0-*" />
     <PackageReference Include="FsCheck.Xunit" Version="3.0.0-*" />
+    
+
+    <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,6 +36,7 @@
     <Compile Include="GiraffeViewEngineTests.fs" />
     <Compile Include="HttpContextExtensionsTests.fs" />
     <Compile Include="TokenRouterTests.fs" />
+    <Compile Include="WebSocketTests.fs" />
   </ItemGroup>
 
   <ItemGroup>
