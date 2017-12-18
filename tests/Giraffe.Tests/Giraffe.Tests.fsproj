@@ -32,6 +32,7 @@
     <Compile Include="XmlViewEngineTests.fs" />
     <Compile Include="HttpContextExtensionsTests.fs" />
     <Compile Include="TokenRouterTests.fs" />
+    <Compile Include="SwaggerTests.fs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -27,6 +27,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FSharp.Quotations.Evaluator" Version="1.0.7" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.*" />
     <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.*" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.0.*" />
@@ -47,6 +48,7 @@
     <Compile Include="TokenParsers.fs" />
     <Compile Include="TokenRouter.fs" />
     <Compile Include="Middleware.fs" />
+    <Compile Include="Swagger.fs" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsWindows)' != 'true' AND '$(TargetFramework)' == 'net461'">
