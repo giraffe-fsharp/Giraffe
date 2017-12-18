@@ -377,6 +377,36 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
                         |> fun mimeType -> negotiationRules.[mimeType.MediaType.Value]
                         |> fun handler  -> handler responseObj next ctx
 
+
+
+
+
+/// Currently available negotiation rules
+let NegotiationRules =
+    let defaultNegotiationRules = [
+        "*/*"             , json
+        "application/json", json
+        "application/xml" , xml
+        "text/xml"        , xml
+        "text/plain"      , fun x -> x.ToString() |> text
+    ]
+
+    let dict = Dictionary<_,obj -> HttpHandler>(5)
+    for pattern,handler in defaultNegotiationRules do
+        dict.Add(pattern,handler)
+    dict
+
+let DefaultUnacceptableHandler =
+    (fun (next : HttpFunc) (ctx : HttpContext) ->
+        (setStatusCode 406
+        >=> ((ctx.Request.Headers.["Accept"]).ToString()
+            |> sprintf "%s is unacceptable by the server."
+            |> text)) next ctx)
+
+/// Currently configured unacceptable HttpHandler
+let mutable UnacceptableHandler = DefaultUnacceptableHandler
+
+
 /// Same as negotiateWith except that it specifies a default set of negotiation rules
 /// and a default unacceptableHandler.
 ///
@@ -386,24 +416,7 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
 /// application/xml  -> serializes object to XML
 /// text/xml         -> serializes object to XML
 /// text/plain       -> returns object's ToString() result
-let negotiate (responseObj : obj) : HttpHandler =
-    negotiateWith
-        // Default negotiation rules
-        (dict [
-            "*/*"             , json
-            "application/json", json
-            "application/xml" , xml
-            "text/xml"        , xml
-            "text/plain"      , fun x -> x.ToString() |> text
-        ])
-        // Default unacceptable HttpHandler
-        (fun (next : HttpFunc) (ctx : HttpContext) ->
-            (setStatusCode 406
-            >=> ((ctx.Request.Headers.["Accept"]).ToString()
-                |> sprintf "%s is unacceptable by the server."
-                |> text)) next ctx)
-        // response object
-        responseObj
+let negotiate : obj -> HttpHandler = negotiateWith NegotiationRules UnacceptableHandler 
 
 /// Redirects to a different location with a 302 or 301 (when permanent) HTTP status code.
 let redirectTo (permanent : bool) (location : string) : HttpHandler  =
