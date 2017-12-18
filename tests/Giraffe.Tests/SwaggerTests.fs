@@ -30,9 +30,10 @@ let ``webapp is a simple route returning text`` () =
     <@ GET >=> route "/home" >=> text "Home." @>
 
   let ctx = AnalyzeContext.Empty
-  analyze webApp ctx HttpMethods.Get
-  let routes = !ctx.Routes
+  analyze webApp ctx AppAnalyzeRules.Default
   let expRoutes = 
     [ "GET", "/home" ]
-  assertThat (routes = expRoutes)
-
+  assertThat (!ctx.Routes = expRoutes)
+  let expResponses =
+    [ "text/plain",(typeof<string>) ]
+  assertThat (!ctx.Responses = expResponses)
