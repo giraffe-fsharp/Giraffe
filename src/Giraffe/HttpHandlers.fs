@@ -360,26 +360,31 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
                   (responseObj         : obj)
                   : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        (ctx.Request.GetTypedHeaders()).Accept
-        |> fun acceptedMimeTypes ->
-            match isNull acceptedMimeTypes || acceptedMimeTypes.Count = 0 with
-            | true  ->
-                negotiationRules.Keys
-                |> Seq.head
-                |> fun mediaType -> negotiationRules.[mediaType]
-                |> fun handler   -> handler responseObj next ctx
-            | false ->
-                List.ofSeq acceptedMimeTypes
-                |> List.filter (fun x -> negotiationRules.ContainsKey x.MediaType.Value)
-                |> fun mimeTypes ->
-                    match mimeTypes.Length with
-                    | 0 -> unacceptableHandler next ctx
-                    | _ ->
-                        mimeTypes
-                        |> List.sortByDescending (fun x -> if x.Quality.HasValue then x.Quality.Value else 1.0)
-                        |> List.head
-                        |> fun mimeType -> negotiationRules.[mimeType.MediaType.Value]
-                        |> fun handler  -> handler responseObj next ctx
+        let acceptedMimeTypes = (ctx.Request.GetTypedHeaders()).Accept
+        if isNull acceptedMimeTypes || acceptedMimeTypes.Count = 0 then
+            let kv = negotiationRules |> Seq.head
+            kv.Value responseObj next ctx
+        else
+            let mutable mimeType = Unchecked.defaultof<_>
+            let mutable curQuality = Double.NegativeInfinity
+            let mutable qualityOfRule = 1.
+            // filter the list if acceptedMimeTypes by the negotiationRules
+            // and select the mimetype with maximal quality
+            for x in acceptedMimeTypes do
+                if negotiationRules.ContainsKey x.MediaType.Value then
+                    if x.Quality.HasValue then
+                        qualityOfRule <- x.Quality.Value 
+                    else
+                        qualityOfRule <- 1.
+                     
+                    if curQuality < qualityOfRule then
+                        curQuality <- qualityOfRule
+                        mimeType <- x
+
+            if isNull mimeType then
+                unacceptableHandler next ctx 
+            else
+                negotiationRules.[mimeType.MediaType.Value] responseObj next ctx
 
 /// Same as negotiateWith except that it specifies a default set of negotiation rules
 /// and a default unacceptableHandler.
