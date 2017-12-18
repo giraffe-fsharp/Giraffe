@@ -353,27 +353,28 @@ let renderHtml (document : XmlNode) : HttpHandler =
 /// `json` and `xml` are both the respective default HttpHandler functions in this example.
 let negotiateWith (negotiationRules    : #IDictionary<string, obj -> HttpHandler>)
                   (unacceptableHandler : HttpHandler)
+                  (defaultMimeType     : string)
                   (responseObj         : obj)
                   : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        (ctx.Request.GetTypedHeaders()).Accept
-        |> fun acceptedMimeTypes ->
-            match isNull acceptedMimeTypes || acceptedMimeTypes.Count = 0 with
-            | true ->
-                negotiationRules
-                |> Seq.head
-                |> fun rule -> rule.Value
-                |> fun handler -> handler responseObj next ctx
-            | false ->
-                List.ofSeq acceptedMimeTypes
-                |> List.filter (fun x -> negotiationRules.ContainsKey x.MediaType.Value)
-                |> fun mimeTypes ->
-                    match mimeTypes |> List.sortByDescending (fun x -> if x.Quality.HasValue then x.Quality.Value else 1.0) with
-                    | [] -> unacceptableHandler next ctx
-                    | selectedMimeType :: _ ->
-                        selectedMimeType
-                        |> fun mimeType -> negotiationRules.[mimeType.MediaType.Value]
-                        |> fun handler  -> handler responseObj next ctx
+        let acceptedMimeTypes = (ctx.Request.GetTypedHeaders()).Accept
+        if isNull acceptedMimeTypes || acceptedMimeTypes.Count = 0 then
+            let handler = negotiationRules.[defaultMimeType]
+            handler responseObj next ctx
+        else
+            let compatibleMimeTypes =
+                acceptedMimeTypes
+                |> Seq.filter (fun x -> negotiationRules.ContainsKey x.MediaType.Value)
+                
+            if Seq.isEmpty compatibleMimeTypes then
+                unacceptableHandler next ctx
+            else
+                let selectedMimeType =
+                    compatibleMimeTypes
+                    |> Seq.minBy (fun x -> if x.Quality.HasValue then x.Quality.Value else 1.0)
+
+                let handler = negotiationRules.[selectedMimeType.MediaType.Value]
+                handler responseObj next ctx
 
 /// Same as negotiateWith except that it specifies a default set of negotiation rules
 /// and a default unacceptableHandler.
@@ -400,6 +401,8 @@ let negotiate (responseObj : obj) : HttpHandler =
             >=> ((ctx.Request.Headers.["Accept"]).ToString()
                 |> sprintf "%s is unacceptable by the server."
                 |> text)) next ctx)
+        // default mime type
+        "*/*"
         // response object
         responseObj
 
