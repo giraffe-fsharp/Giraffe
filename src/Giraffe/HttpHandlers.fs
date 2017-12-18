@@ -364,6 +364,8 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
             let mutable mimeType = Unchecked.defaultof<_>
             let mutable curQuality = Double.NegativeInfinity
             let mutable qualityOfRule = 1.
+            // filter the list if acceptedMimeTypes by the negotiationRules
+            // and select the mimetype with maximal quality
             for x in acceptedMimeTypes do
                 if negotiationRules.ContainsKey x.MediaType.Value then
                     if x.Quality.HasValue then
