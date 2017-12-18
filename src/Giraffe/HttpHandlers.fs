@@ -353,13 +353,13 @@ let renderHtml (document : XmlNode) : HttpHandler =
 /// `json` and `xml` are both the respective default HttpHandler functions in this example.
 let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>)
                   (unacceptableHandler : HttpHandler)
-                  (defaultMimeType     : string)
                   (responseObj         : obj)
                   : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let acceptedMimeTypes = (ctx.Request.GetTypedHeaders()).Accept
         if isNull acceptedMimeTypes || acceptedMimeTypes.Count = 0 then
-            negotiationRules.[defaultMimeType] responseObj next ctx
+            let kv = negotiationRules |> Seq.head
+            kv.Value responseObj next ctx
         else
             let mutable mimeType = Unchecked.defaultof<_>
             let mutable curQuality = Double.NegativeInfinity
@@ -405,8 +405,6 @@ let negotiate (responseObj : obj) : HttpHandler =
             >=> ((ctx.Request.Headers.["Accept"]).ToString()
                 |> sprintf "%s is unacceptable by the server."
                 |> text)) next ctx)
-        // default mime type
-        "*/*"
         // response object
         responseObj
 
