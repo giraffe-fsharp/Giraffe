@@ -391,7 +391,7 @@ let NegotiationRules =
         "text/plain"      , fun x -> x.ToString() |> text
     ]
 
-    let dict = Dictionary<_,_>(5)
+    let dict = Dictionary<_,obj -> HttpHandler>(5)
     for pattern,handler in defaultNegotiationRules do
         dict.Add(pattern,handler)
     dict
@@ -416,8 +416,7 @@ let mutable UnacceptableHandler = DefaultUnacceptableHandler
 /// application/xml  -> serializes object to XML
 /// text/xml         -> serializes object to XML
 /// text/plain       -> returns object's ToString() result
-let negotiate (responseObj : obj) : HttpHandler =
-    negotiateWith NegotiationRules UnacceptableHandler responseObj
+let negotiate : obj -> HttpHandler = negotiateWith NegotiationRules UnacceptableHandler 
 
 /// Redirects to a different location with a 302 or 301 (when permanent) HTTP status code.
 let redirectTo (permanent : bool) (location : string) : HttpHandler  =
