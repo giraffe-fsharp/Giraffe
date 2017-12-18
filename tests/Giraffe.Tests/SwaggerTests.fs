@@ -29,11 +29,22 @@ let ``webapp is a simple route returning text`` () =
   let webApp =
     <@ GET >=> route "/home" >=> text "Home." @>
 
-  let ctx = AnalyzeContext.Empty
-  analyze webApp ctx AppAnalyzeRules.Default
-  let expRoutes = 
-    [ "GET", "/home" ]
-  assertThat (!ctx.Routes = expRoutes)
-  let expResponses =
-    [ "text/plain",(typeof<string>) ]
-  assertThat (!ctx.Responses = expResponses)
+  let ctx = analyze webApp AppAnalyzeRules.Default
+
+  let exp = 
+    { Verb="GET"
+      Path="/home"
+      Responses=
+        [
+          { StatusCode=200
+            ContentType="text/plain"
+            ModelType=(typeof<string>) }
+        ]
+    }
+  let route = !ctx.Routes |> Seq.exactlyOne
+  
+  Assert.Equal(exp.Path, route.Path)
+  Assert.Equal(exp.Verb, route.Verb)
+  Assert.Equal(exp.Responses.[0], route.Responses.[0])
+  
+
