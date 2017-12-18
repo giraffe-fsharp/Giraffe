@@ -88,6 +88,14 @@ type AppAnalyzeRules =
                 ctx.AddResponse 200 "text/plain" (typeof<string>)
                 ctx)
 
+        // HTTP POST method
+        { ModuleName="HttpHandlers"; FunctionName="POST" }, 
+            (fun ctx -> 
+              // { ctx with Verb="POST" }
+              ctx.Verb := "POST"
+              ctx
+            )
+
       ] |> Map
     { MethodCalls=methodCalls }
 
@@ -99,33 +107,41 @@ let analyze webapp (rules:AppAnalyzeRules) =
 
     match exp with
     | Let (id,op,t) -> 
-          match op with
-          | Value (o,_) -> ctx.SetVariable id.Name (o.ToString())
-          | _ -> ()
-          loop t ctx
+        match op with
+        | Value (o,_) -> ctx.SetVariable id.Name (o.ToString())
+        | _ -> ()
+        loop t ctx
     | NewUnionCase (a,b) -> analyzeAll b ctx
     | Application (left, right) ->
-          analyzeAll [left; right] ctx
+        //failwithf "Application %A" left
+        analyzeAll [left; right] ctx
+    | PropertyGet (instance, propertyInfo, pargs) ->
+        // if propertyInfo.Name = "POST"
+        // then failwithf "PropertyGet: %A" (propertyInfo.DeclaringType.Name,propertyInfo.Name)
+        rules.ApplyMethodCall propertyInfo.DeclaringType.Name propertyInfo.Name ctx |> ignore
     | Call(instance, method, args) ->
-          let values =
-              args
-                  |> List.choose (
-                          function
-                          | Value(varVal,_) -> Some varVal 
-                          | e ->
-                              printfn "not handled var %A" e 
-                              None
-                      )
-          for a in args do
-              printfn "a raw: [%A]" (a.ToString())
-              
-          printfn "values: [%A]" values
-          printfn "Calling %s.%s with args [%A]" method.DeclaringType.Name method.Name args
-          
-          rules.ApplyMethodCall method.DeclaringType.Name method.Name ctx |> ignore
-    | Lambda(_, e) -> 
-          loop e ctx
-    | e -> printfn "not implemented %A" e
+        let values =
+            args
+                |> List.choose (
+                        function
+                        | Value(varVal,_) -> Some varVal 
+                        | e ->
+                            printfn "not handled var %A" e 
+                            None
+                    )
+        for a in args do
+            printfn "a raw: [%A]" (a.ToString())
+            
+        printfn "values: [%A]" values
+        printfn "Calling %s.%s with args [%A]" method.DeclaringType.Name method.Name args
+        
+        rules.ApplyMethodCall method.DeclaringType.Name method.Name ctx |> ignore
+    | Lambda(e1, e2) -> 
+        //failwithf "lambda %A" e1
+        loop e2 ctx
+    | e -> 
+        printfn "not implemented %A" e
+        //failwithf "not implemented %A" e
   
   let ctx = AnalyzeContext.Empty
   loop webapp ctx

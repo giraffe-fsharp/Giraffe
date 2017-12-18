@@ -25,7 +25,7 @@ let assertThat (cmp:bool) =
 // ---------------------------------
 
 [<Fact>]
-let ``webapp is a simple route returning text`` () =
+let ``webapp is a simple route with verb `GET` returning text`` () =
   let webApp =
     <@ GET >=> route "/home" >=> text "Home." @>
 
@@ -33,6 +33,31 @@ let ``webapp is a simple route returning text`` () =
 
   let exp = 
     { Verb="GET"
+      Path="/home"
+      Responses=
+        [
+          { StatusCode=200
+            ContentType="text/plain"
+            ModelType=(typeof<string>) }
+        ]
+    }
+  let route = !ctx.Routes |> Seq.exactlyOne
+  
+  Assert.Equal(exp.Path, route.Path)
+  Assert.Equal(exp.Verb, route.Verb)
+  Assert.Equal(exp.Responses.[0], route.Responses.[0])
+  
+
+
+[<Fact>]
+let ``webapp is a simple route with verb `POST` returning text`` () =
+  let webApp =
+    <@ POST >=> route "/home" >=> text "Home." @>
+
+  let ctx = analyze webApp AppAnalyzeRules.Default
+
+  let exp = 
+    { Verb="POST"
       Path="/home"
       Responses=
         [
