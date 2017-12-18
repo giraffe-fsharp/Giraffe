@@ -359,22 +359,26 @@ let negotiateWith (negotiationRules    : #IDictionary<string, obj -> HttpHandler
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let acceptedMimeTypes = (ctx.Request.GetTypedHeaders()).Accept
         if isNull acceptedMimeTypes || acceptedMimeTypes.Count = 0 then
-            let handler = negotiationRules.[defaultMimeType]
-            handler responseObj next ctx
+            negotiationRules.[defaultMimeType] responseObj next ctx
         else
-            let compatibleMimeTypes =
-                acceptedMimeTypes
-                |> Seq.filter (fun x -> negotiationRules.ContainsKey x.MediaType.Value)
-                
-            if Seq.isEmpty compatibleMimeTypes then
-                unacceptableHandler next ctx
-            else
-                let selectedMimeType =
-                    compatibleMimeTypes
-                    |> Seq.minBy (fun x -> if x.Quality.HasValue then x.Quality.Value else 1.0)
+            let mutable mimeType = Unchecked.defaultof<_>
+            let mutable curQuality = Double.NegativeInfinity
+            let mutable qualityOfRule = 1.
+            for x in acceptedMimeTypes do
+                if negotiationRules.ContainsKey x.MediaType.Value then
+                    if x.Quality.HasValue then
+                        qualityOfRule <- x.Quality.Value 
+                    else
+                        qualityOfRule <- 1.
+                     
+                    if curQuality < qualityOfRule then
+                        curQuality <- qualityOfRule
+                        mimeType <- x
 
-                let handler = negotiationRules.[selectedMimeType.MediaType.Value]
-                handler responseObj next ctx
+            if isNull mimeType then
+                unacceptableHandler next ctx 
+            else
+                negotiationRules.[mimeType.MediaType.Value] responseObj next ctx
 
 /// Same as negotiateWith except that it specifies a default set of negotiation rules
 /// and a default unacceptableHandler.
