@@ -379,21 +379,15 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
 
 
 
-let DefaultNegotiationRules = 
-    [
+/// Currently available negotiation rules
+let NegotiationRules =
+    dict [
         "*/*"             , json
         "application/json", json
         "application/xml" , xml
         "text/xml"        , xml
         "text/plain"      , fun x -> x.ToString() |> text
     ]
-
-/// Currently available negotiation rules
-let NegotiationRules =
-    let dict = new System.Collections.Generic.Dictionary<_,_>()
-    for pattern,handler in DefaultNegotiationRules do
-        dict.Add(pattern,handler)
-    dict
 
 let DefaultUnacceptableHandler =
     (fun (next : HttpFunc) (ctx : HttpContext) ->
