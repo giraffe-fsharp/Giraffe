@@ -351,7 +351,7 @@ let renderHtml (document : XmlNode) : HttpHandler =
 /// Example:
 /// let negotiationRules = dict [ "application/json", json; "application/xml" , xml ]
 /// `json` and `xml` are both the respective default HttpHandler functions in this example.
-let negotiateWith (negotiationRules    : #IDictionary<string, obj -> HttpHandler>)
+let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>)
                   (unacceptableHandler : HttpHandler)
                   (defaultMimeType     : string)
                   (responseObj         : obj)
