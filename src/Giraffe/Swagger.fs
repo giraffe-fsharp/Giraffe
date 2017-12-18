@@ -37,7 +37,7 @@ type AnalyzeContext =
   member __.PushRoute () =
     match !__.CurrentRoute with
     | Some route -> 
-        let r = { route with Responses=(!__.Responses) }
+        let r = { route with Responses=(!__.Responses |> List.distinct) }
         __.Routes := r :: !__.Routes
         __.CurrentRoute := None
         __.Responses := []
@@ -128,6 +128,8 @@ let analyze webapp (rules:AppAnalyzeRules) =
         rules.ApplyMethodCall method.DeclaringType.Name method.Name ctx |> ignore
     | Lambda(e1, e2) -> 
         loop e2 ctx
+    | IfThenElse(ifExp, thenExp, elseExp) ->
+        analyzeAll [ifExp; thenExp; elseExp] ctx
     | e -> 
         printfn "not implemented %A" e
   
