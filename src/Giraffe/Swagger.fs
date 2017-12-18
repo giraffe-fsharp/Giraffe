@@ -60,42 +60,37 @@ type AnalyzeContext =
 type MethodCallId = 
   { ModuleName:string
     FunctionName:string }
-type AnalyzeRuleBody = AnalyzeContext -> AnalyzeContext
+type AnalyzeRuleBody = AnalyzeContext -> unit
 type AppAnalyzeRules =
   { MethodCalls:Map<MethodCallId, AnalyzeRuleBody> }
   member __.ApplyMethodCall moduleName functionName ctx =
     let key = { ModuleName=moduleName; FunctionName=functionName }
     if __.MethodCalls.ContainsKey key
-    then
-      let v = __.MethodCalls.Item key
-      v ctx
-    else ctx
+    then ctx |> __.MethodCalls.Item key
 
   static member Default =
     let methodCalls = 
       [ 
         // simple route
         { ModuleName="HttpHandlers"; FunctionName="route" }, 
-            (fun ctx -> 
-                let path = (!ctx.Variables).Item "path"
-                ctx.AddRoute (!ctx.Verb) path
-                ctx)
+            (fun ctx -> (!ctx.Variables).Item "path" |> ctx.AddRoute (!ctx.Verb))
         
         // text used to return raw text content
         { ModuleName="HttpHandlers"; FunctionName="text" }, 
-            (fun ctx -> 
-                let path = (!ctx.Variables).Item "path"
-                ctx.AddResponse 200 "text/plain" (typeof<string>)
-                ctx)
+            (fun ctx -> ctx.AddResponse 200 "text/plain" (typeof<string>))
 
+        // HTTP GET method
+        { ModuleName="HttpHandlers"; FunctionName="GET" }, (fun ctx -> ctx.Verb := "GET")
         // HTTP POST method
-        { ModuleName="HttpHandlers"; FunctionName="POST" }, 
-            (fun ctx -> 
-              // { ctx with Verb="POST" }
-              ctx.Verb := "POST"
-              ctx
-            )
+        { ModuleName="HttpHandlers"; FunctionName="POST" }, (fun ctx -> ctx.Verb := "POST")
+        // HTTP PUT method
+        { ModuleName="HttpHandlers"; FunctionName="PUT" }, (fun ctx -> ctx.Verb := "PUT")
+        // HTTP DELETE method
+        { ModuleName="HttpHandlers"; FunctionName="DELETE" }, (fun ctx -> ctx.Verb := "DELETE")
+        // HTTP PATCH method
+        { ModuleName="HttpHandlers"; FunctionName="PATCH" }, (fun ctx -> ctx.Verb := "PATCH")
 
+        
       ] |> Map
     { MethodCalls=methodCalls }
 
@@ -113,35 +108,28 @@ let analyze webapp (rules:AppAnalyzeRules) =
         loop t ctx
     | NewUnionCase (a,b) -> analyzeAll b ctx
     | Application (left, right) ->
-        //failwithf "Application %A" left
         analyzeAll [left; right] ctx
     | PropertyGet (instance, propertyInfo, pargs) ->
-        // if propertyInfo.Name = "POST"
-        // then failwithf "PropertyGet: %A" (propertyInfo.DeclaringType.Name,propertyInfo.Name)
         rules.ApplyMethodCall propertyInfo.DeclaringType.Name propertyInfo.Name ctx |> ignore
     | Call(instance, method, args) ->
         let values =
             args
-                |> List.choose (
-                        function
-                        | Value(varVal,_) -> Some varVal 
-                        | e ->
-                            printfn "not handled var %A" e 
-                            None
-                    )
+            |> List.choose (
+                    function
+                    | Value(varVal,_) -> Some varVal 
+                    | e -> None
+                )
         for a in args do
-            printfn "a raw: [%A]" (a.ToString())
+          printfn "a raw: [%A]" (a.ToString())
             
         printfn "values: [%A]" values
         printfn "Calling %s.%s with args [%A]" method.DeclaringType.Name method.Name args
         
         rules.ApplyMethodCall method.DeclaringType.Name method.Name ctx |> ignore
     | Lambda(e1, e2) -> 
-        //failwithf "lambda %A" e1
         loop e2 ctx
     | e -> 
         printfn "not implemented %A" e
-        //failwithf "not implemented %A" e
   
   let ctx = AnalyzeContext.Empty
   loop webapp ctx
