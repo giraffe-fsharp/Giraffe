@@ -1,11 +1,9 @@
 module Giraffe.FormatExpressions
 
-open System
 open System.Text.RegularExpressions
 open System.Net
 open Microsoft.FSharp.Reflection
 open FSharp.Core
-open FSharp.Core.Printf
 
 let formatStringMap =
     dict [
@@ -82,4 +80,4 @@ let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreC
             :?> 'T
             |> Some
     with
-    | ex -> None
+    | _ -> None

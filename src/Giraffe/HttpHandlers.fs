@@ -196,6 +196,14 @@ let route (path : string) : HttpHandler =
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 /// The arguments from the format string will be automatically resolved when the
 /// route matches and subsequently passed into the supplied routeHandler.
+///
+/// Supported format chars:
+/// %b -> bool
+/// %c -> char
+/// %s -> string
+/// %i -> int
+/// %d -> int64
+/// %f -> float/double
 let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) false
