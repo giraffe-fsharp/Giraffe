@@ -337,7 +337,7 @@ let htmlFile (filePath : string) : HttpHandler =
 let html (document : string) : HttpHandler =
     setHttpHeader "Content-Type" "text/html"
     >=> (setBodyAsString document)
-    
+
 /// Uses the Giraffe.XmlViewEngine to compile and render a HTML Document from
 /// an given XmlNode. The HTTP response is of Content-Type text/html.
 let renderHtml (document : XmlNode) : HttpHandler =
@@ -365,24 +365,24 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
             let kv = negotiationRules |> Seq.head
             kv.Value responseObj next ctx
         else
-            let mutable mimeType = Unchecked.defaultof<_>
-            let mutable curQuality = Double.NegativeInfinity
+            let mutable mimeType      = Unchecked.defaultof<_>
+            let mutable curQuality    = Double.NegativeInfinity
             let mutable qualityOfRule = 1.
-            // filter the list if acceptedMimeTypes by the negotiationRules
-            // and select the mimetype with maximal quality
+            // Filter the list of acceptedMimeTypes by the negotiationRules
+            // and selects the mimetype with the greatest quality
             for x in acceptedMimeTypes do
                 if negotiationRules.ContainsKey x.MediaType.Value then
                     if x.Quality.HasValue then
-                        qualityOfRule <- x.Quality.Value 
+                        qualityOfRule <- x.Quality.Value
                     else
                         qualityOfRule <- 1.
-                     
+
                     if curQuality < qualityOfRule then
                         curQuality <- qualityOfRule
                         mimeType <- x
 
             if isNull mimeType then
-                unacceptableHandler next ctx 
+                unacceptableHandler next ctx
             else
                 negotiationRules.[mimeType.MediaType.Value] responseObj next ctx
 

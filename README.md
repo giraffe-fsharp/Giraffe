@@ -58,6 +58,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [negotiate](#negotiate)
     - [negotiateWith](#negotiatewith)
     - [htmlFile](#htmlfile)
+    - [html](#html)
     - [renderHtml](#renderhtml)
     - [redirectTo](#redirectto)
     - [portRoute](#portroute)
@@ -778,6 +779,19 @@ This http handler takes a rooted path of a html file or a path which is relative
 let app =
     choose [
         route  "/" >=> htmlFile "index.html"
+    ]
+```
+
+### html
+
+`html` sets or modifies the body of the `HttpResponse` with the contents of a single string variable. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
+
+#### Example:
+
+```fsharp
+let app =
+    choose [
+        route  "/" >=> html "<html><head><title>Hello World</title></head><body><p>Hello World</p></body></html>"
     ]
 ```
 
