@@ -49,6 +49,7 @@ type AnalyzeContext =
         __.CurrentRoute := None
         __.Responses := []
     | None -> ()
+    __.ArgTypes := []
     __
   member __.AddResponse code contentType (modelType:Type) =
     let rs = { StatusCode=code; ContentType=contentType; ModelType=modelType }
