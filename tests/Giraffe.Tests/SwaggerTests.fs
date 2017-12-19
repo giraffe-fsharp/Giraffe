@@ -196,3 +196,28 @@ let ``webapp is a simple route with verb `POST` with a more complex condition re
   Assert.Equal(exp.Responses.[0], route.Responses.[0])
   Assert.Equal(2, route.Responses.Length)
   Assert.Equal(0, (!ctx.ArgTypes).Length)
+
+
+[<Fact>]
+let ``webapp is a simple routeCi with verb `GET` returning text`` () =
+  let webApp =
+    <@ GET >=> routeCi "/home" >=> text "Home." @>
+
+  let ctx = analyze webApp AppAnalyzeRules.Default
+
+  let exp = 
+    { Verb="GET"
+      Path="/home"
+      Responses=
+        [
+          { StatusCode=200
+            ContentType="text/plain"
+            ModelType=(typeof<string>) }
+        ]
+    }
+  let route = !ctx.Routes |> Seq.exactlyOne
+  
+  Assert.Equal(exp.Path, route.Path)
+  Assert.Equal(exp.Verb, route.Verb)
+  Assert.Equal(exp.Responses.[0], route.Responses.[0])
+

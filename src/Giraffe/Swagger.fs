@@ -119,6 +119,8 @@ type AppAnalyzeRules =
         // simple route
         { ModuleName="HttpHandlers"; FunctionName="route" }, 
             (fun ctx -> (!ctx.Variables).Item "path" |> ctx.AddRoute (ctx.GetVerb()))
+        { ModuleName="HttpHandlers"; FunctionName="routeCi" }, 
+            (fun ctx -> (!ctx.Variables).Item "path" |> ctx.AddRoute (ctx.GetVerb()))
         
         // used to return raw text content
         { ModuleName="HttpHandlers"; FunctionName="text" }, 
