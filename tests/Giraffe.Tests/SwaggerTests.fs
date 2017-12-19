@@ -18,8 +18,24 @@ open Giraffe.XmlViewEngine
 open Swagger
 open System
 
+// ---------------------------------
+// Helper functions
+// ---------------------------------
+
 let assertThat (cmp:bool) =
   Assert.True cmp
+
+// ---------------------------------
+// Test Types
+// ---------------------------------
+
+type Dummy =
+    {
+        Foo : string
+        Bar : string
+        Age : int
+    }
+
 
 // ---------------------------------
 // Tests
@@ -48,8 +64,6 @@ let ``webapp is a simple route with verb `GET` returning text`` () =
   Assert.Equal(exp.Verb, route.Verb)
   Assert.Equal(exp.Responses.[0], route.Responses.[0])
   
-
-
 [<Fact>]
 let ``webapp is a simple route with verb `POST` returning text`` () =
   let webApp =
@@ -101,4 +115,42 @@ let ``webapp is a simple route with verb `PUT` with a condition returning text``
   Assert.Equal(exp.Verb, route.Verb)
   Assert.Equal(exp.Responses.[0], route.Responses.[0])
   Assert.Equal(1, route.Responses.Length)
+  
+
+[<Fact>]
+let ``webapp is a simple route with verb `DELETE` with a condition returning text or json`` () =
+  let webApp =
+    <@ 
+        DELETE >=> 
+          route "/seconds" >=> 
+            if DateTime.Now.Second % 2 = 0 
+            then text "Seconds are odd" 
+            else json { Foo = "foo"; Bar = "bar"; Age = 32 } 
+    @>
+
+  let ctx = analyze webApp AppAnalyzeRules.Default
+
+  let exp = 
+    { Verb="DELETE"
+      Path="/seconds"
+      Responses=
+        [
+          { StatusCode=200
+            ContentType="application/json"
+            ModelType=(typeof<Dummy>) }
+          
+          { StatusCode=200
+            ContentType="text/plain"
+            ModelType=(typeof<string>) }
+        ]
+    }
+  let route = !ctx.Routes |> Seq.exactlyOne
+  
+  let ss = sprintf "%A" webApp
+  printfn "ss: %s" ss
+  
+  Assert.Equal(exp.Path, route.Path)
+  Assert.Equal(exp.Verb, route.Verb)
+  Assert.Equal(exp.Responses.[0], route.Responses.[0])
+  Assert.Equal(2, route.Responses.Length)
   
