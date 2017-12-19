@@ -92,6 +92,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
 - [Benchmarks](#benchmarks)
 - [Building and developing](#building-and-developing)
 - [Contributing](#contributing)
+- [Nightly builds and NuGet feed](#nightly-builds-and-nuget-feed)
 - [Blog posts](#blog-posts)
 - [Videos](#videos)
 - [License](#license)
@@ -1778,6 +1779,20 @@ Only pull requests which pass all build checks and comply with the general codin
 If you have any further questions please let me know.
 
 You can file an [issue on GitHub](https://github.com/giraffe-fsharp/Giraffe/issues/new) or contact me via [https://dusted.codes/about](https://dusted.codes/about).
+
+## Nightly builds and NuGet feed
+
+All official Giraffe packages are published to the official and public NuGet feed.
+
+Unofficial builds (such as pre-release builds from the `develop` branch and pull requests) produce unofficial pre-release NuGet packages which can be pulled from the project's public NuGet feed on AppVeyor:
+
+```
+https://ci.appveyor.com/nuget/giraffe
+```
+
+If you add this source to your NuGet CLI or project settings then you can pull unofficial NuGet packages for quick feature testing or urgent hot fixes.
+
+**Please be aware that unofficial builds have not gone through the scrunity of offical releases and their usage is on your own risk.**
 
 ## Blog posts
 
