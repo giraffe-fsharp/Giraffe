@@ -180,9 +180,7 @@ if ($Run.IsPresent)
 
 if ($Pack.IsPresent)
 {
-    Write-Host "Packaging all NuGet packages..." -ForegroundColor Magenta
+    Write-Host "Packaging Giraffe NuGet package..." -ForegroundColor Magenta
 
     dotnet-pack $giraffe "-c $configuration"
-
-    Invoke-Cmd "nuget pack template/giraffe-template.nuspec"
 }

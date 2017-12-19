@@ -58,6 +58,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [negotiate](#negotiate)
     - [negotiateWith](#negotiatewith)
     - [htmlFile](#htmlfile)
+    - [html](#html)
     - [renderHtml](#renderhtml)
     - [redirectTo](#redirectto)
     - [portRoute](#portroute)
@@ -91,7 +92,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
 - [Benchmarks](#benchmarks)
 - [Building and developing](#building-and-developing)
 - [Contributing](#contributing)
-- [Contributors](#contributors)
+- [Nightly builds and NuGet feed](#nightly-builds-and-nuget-feed)
 - [Blog posts](#blog-posts)
 - [Videos](#videos)
 - [License](#license)
@@ -779,6 +780,19 @@ This http handler takes a rooted path of a html file or a path which is relative
 let app =
     choose [
         route  "/" >=> htmlFile "index.html"
+    ]
+```
+
+### html
+
+`html` sets or modifies the body of the `HttpResponse` with the contents of a single string variable. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
+
+#### Example:
+
+```fsharp
+let app =
+    choose [
+        route  "/" >=> html "<html><head><title>Hello World</title></head><body><p>Hello World</p></body></html>"
     ]
 ```
 
@@ -1603,6 +1617,8 @@ dotnet new -i "giraffe-template::*"
 
 Afterwards you can create a new Giraffe application by running `dotnet new giraffe`.
 
+For more information about the Giraffe tempalte please visit the official [giraffe-template repository](https://github.com/giraffe-fsharp/giraffe-template).
+
 ### Doing it manually
 
 Install the [Giraffe](https://www.nuget.org/packages/Giraffe) NuGet package:
@@ -1711,46 +1727,72 @@ Currently the best way to work with F# on .NET Core is to use [Visual Studio Cod
 
 Help and feedback is always welcome and pull requests get accepted.
 
-When contributing to this repository, please first discuss the change you wish to make via an open issue before submitting a pull request. For new feature requests please describe your idea in more detail and how it could benefit other users as well.
+### TL;DR
 
-Please be aware that Giraffe strictly aims to remain as light as possible while providing generic functionality for building functional web applications. New feature work must be applicable to a broader user base and if this requirement cannot be met sufficiently then a pull request might get rejected. In the case of doubt the maintainer will rather reject a potentially useful feature than adding one too many. This measure is to protect the repository from feature bloat over time and shall not be taken personally.
+- First open an issue to discuss your changes
+- After your change has been formally approved please submit your PR **against the develop branch**
+- Please follow the code convention by examining existing code
+- Add/modify the `README.md` as required
+- Add/modify unit tests as required
+- Please document your changes in the upcoming release notes in `RELEASE_NOTES.md`
+- PRs can only be approved and merged when all checks succeed (builds on Windows and Linux)
 
-When making changes please use existing code as a guideline for coding style and documentation. If you intend to add or change an existing `HttpHandler` then please update the README.md file to reflect these changes there as well. If applicable unit tests must be added or updated and the project must successfully build before a pull request can be accepted.
+### Discuss your change first
+
+When contributing to this repository, please first discuss the change you wish to make via an [open issue](https://github.com/giraffe-fsharp/Giraffe/issues/new) before submitting a pull request. For new feature requests please describe your idea in more detail and how it could benefit other users as well.
+
+Please be aware that Giraffe strictly aims to remain as light as possible while providing generic functionality for building functional web applications. New feature work must be applicable to a broader user base and if this requirement cannot be sufficiently met then a pull request might get rejected. In the case of doubt the maintainer might rather reject a potentially useful feature than adding one too many. This measure is to protect the repository from feature bloat and shall not be taken personally.
+
+### Code conventions
+
+When making changes please use existing code as a guideline for coding style and documentation. For example add spaces when creating tuples (`(a,b)` --> `(a, b)`), annotating variable types (`str:string` --> `str : string`) or other language constructs.
+
+Examples:
+
+```fsharp
+let someHttpHandler:HttpHandler =
+    fun (ctx:HttpContext) next -> task {
+        // Some work
+    }
+```
+
+should be:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (ctx : HttpContext) (next : HttpFunc) ->
+        task {
+            // Some work
+        }
+```
+
+### Keep documentation and unit tests up to date
+
+If you intend to add or change an existing `HttpHandler` then please update the `README.md` file to reflect these changes there as well. If applicable unit tests must be added or updated and the project must successfully build before a pull request can be accepted.
+
+### Submit a pull request against develop
+
+The `develop` branch is the main and only branch which should be used for all pull requests. A merge into `develop` means that your changes are scheduled to go live with the very next release, which could happen any time from the same day up to a couple weeks (depending on priorities and urgency).
+
+Only pull requests which pass all build checks and comply with the general coding guidelines can be approved.
 
 If you have any further questions please let me know.
 
 You can file an [issue on GitHub](https://github.com/giraffe-fsharp/Giraffe/issues/new) or contact me via [https://dusted.codes/about](https://dusted.codes/about).
 
-## Contributors
+## Nightly builds and NuGet feed
 
-Special thanks to all developers who helped me by submitting pull requests with new feature work, bug fixes and other improvements to keep the project in good shape (in no particular order):
+All official Giraffe packages are published to the official and public NuGet feed.
 
-- [slang25](https://github.com/slang25) (Added subRoute feature and general help to keep things in good shape)
-- [Nicolás Herrera](https://github.com/nicolocodev) (Added razor engine feature)
-- [Dave Shaw](https://github.com/xdaDaveShaw) (Extended sample application and general help to keep things in good shape)
-- [Tobias Burger](https://github.com/toburger) (Fixed issues with culture specific parsers)
-- [David Sinclair](https://github.com/dsincl12) (Created the dotnet-new template for Giraffe and fixed the default JSON formatting during serialization)
-- [Florian Verdonck](https://github.com/nojaf) (Ported Suave's experimental Html into Giraffe, implemented the warbler and general help with the project as well as feature development)
-- [Roman Melnikov](https://github.com/Neftedollar) (Added `redirectTo` route)
-- [Diego B. Fernandez](https://github.com/diegobfernandez) (Added support for the `Option<'T>` type in the query string model binding)
-- [Jimmy Byrd](https://github.com/TheAngryByrd) (Added Linux builds)
-- [Jon Canning](https://github.com/JonCanning) (Moved the Razor and DotLiquid http handlers into separate NuGet packages and added the `routeBind` handler as well as some useful `HttpContext` extensions and bug fixes)
-- [Andrew Grant](https://github.com/GraanJonlo) (Fixed bug in the `giraffe-template` NuGet package)
-- [Gerard](https://github.com/gerardtoconnor) (Changed the API to continuations instead of binding HttpHandlers and to tasks from async. Also added the TokenRouter feature and awful lot of general help and community support)
-- [Mitchell Tilbrook](https://github.com/marukami) (Helped to fix documentation)
-- [Ody Mbegbu](https://github.com/odytrice) (Helped to improve the giraffe-template)
-- [Reed Mullanix](https://github.com/TOTBWF) (Helped with bug fixes)
-- [Lukas Nordin](https://github.com/lukethenuke) (Helped with bug fixes)
-- [Banashek](https://github.com/Banashek) (Migrated Giraffe to .NET Core 2.0)
-- [Yevhenii Tsalko](https://github.com/YTsalko) (Migrated sample app to .NET Core 2.0)
-- [Tor Hovland](https://github.com/torhovland) (Helped with the sample applications, demonstrating CORS, JWT and configuration options)
-- [dawedawe](https://github.com/dawedawe) (README fixes)
-- [Dragan Jovanović](https://github.com/draganjovanovic1) (Changed the UseGiraffeErrorHandler method to allow chaining of middleware and added policy based auth handlers)
-- [Viquoc Quan](https://github.com/vtquan) (Fixed bug in giraffe-template)
-- [Kerry Jones](https://github.com/KerryRJ) (Helped to fix bugs and added custom JSON serialization support)
-- [Steffen Forkmann](https://github.com/forki) (Improved the htmlFile http handler and ported Suave's status code handlers as well as general help with the project)
+Unofficial builds (such as pre-release builds from the `develop` branch and pull requests) produce unofficial pre-release NuGet packages which can be pulled from the project's public NuGet feed on AppVeyor:
 
-If you submit a pull request please feel free to add yourself to this list as part of the PR.
+```
+https://ci.appveyor.com/nuget/giraffe
+```
+
+If you add this source to your NuGet CLI or project settings then you can pull unofficial NuGet packages for quick feature testing or urgent hot fixes.
+
+**Please be aware that unofficial builds have not gone through the scrunity of offical releases and their usage is on your own risk.**
 
 ## Blog posts
 

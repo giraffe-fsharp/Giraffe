@@ -1,6 +1,16 @@
 Release Notes
 =============
 
+## 0.1.0-beta-510
+
+#### Improvements
+
+- Explicitly set the encoding to UTF-8 when reading the HTTP body during `ReadBodyFromRequestAsync`
+
+#### New features
+
+- Added the `html` http handler which can be used to return a `text/html` response by passing in the html content as a string variable
+
 ## 0.1.0-beta-500
 
 #### New features
