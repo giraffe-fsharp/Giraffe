@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 0.1.0-beta-511
+
+#### Bug fixes
+
+- Fixed `ReadBodyFromRequestAsync` where the stream has been disposed before read could complete.
+
 ## 0.1.0-beta-510
 
 #### Improvements
