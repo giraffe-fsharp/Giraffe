@@ -82,16 +82,6 @@ let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreC
     with
     | _ -> None
 
-let private matchDict = 
-    dict [
-        'b', typeof<bool>           // bool
-        'c', typeof<char>           // char
-        's', typeof<string>         // string
-        'i', typeof<int32>          // int
-        'd', typeof<int64>          // int64
-        'f', typeof<float>          // float
-        'O', typeof<System.Guid>    // guid
-]
 let parseValidate (format : PrintfFormat<_,_,_,_, 'T>) =
 
     let t = typeof<'T>
@@ -101,12 +91,22 @@ let parseValidate (format : PrintfFormat<_,_,_,_, 'T>) =
     let mutable matches = 0
     for i in 0 .. path.Length - 1 do
         let mchar = path.[i]
-        if matchNext then
-            match matchDict.TryGetValue mchar with
-            | true , v -> 
-                parseChars <- (mchar,v) :: parseChars
-                matches <- matches + 1                            
-            | false, _ -> ()
+        if matchNext then    
+            match mchar with
+            | 'b' -> typeof<bool>           // bool
+            | 'c' -> typeof<char>           // char
+            | 's' -> typeof<string>         // string
+            | 'i' -> typeof<int32>          // int
+            | 'd' -> typeof<int64>          // int64
+            | 'f' -> typeof<float>          // float
+            | 'O' -> typeof<System.Guid>    // guid
+            | _   -> null
+            |> function
+            | null -> ()
+            | x -> 
+                parseChars <- (mchar,x) :: parseChars
+                matches <- matches + 1 
+
             matchNext <- false
         else
             if mchar = '%' then matchNext <- true
