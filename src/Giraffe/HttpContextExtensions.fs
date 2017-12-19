@@ -61,8 +61,10 @@ type HttpContext with
     /// ---------------------------
 
     member this.ReadBodyFromRequestAsync() =
-        use reader = new StreamReader(this.Request.Body, Text.Encoding.UTF8)
-        reader.ReadToEndAsync()
+        task {
+            use reader = new StreamReader(this.Request.Body, Text.Encoding.UTF8)
+            return! reader.ReadToEndAsync()
+        }
 
     member this.BindJsonAsync<'T>() = this.BindJsonAsync<'T> defaultJsonSerializerSettings
 
