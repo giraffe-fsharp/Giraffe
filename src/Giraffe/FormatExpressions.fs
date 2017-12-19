@@ -81,3 +81,56 @@ let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreC
             |> Some
     with
     | _ -> None
+
+let matchDict = 
+    dict [
+        'b', typeof<bool>           // bool
+        'c', typeof<char>           // char
+        's', typeof<string>         // string
+        'i', typeof<int32>          // int
+        'd', typeof<int64>          // int64
+        'f', typeof<float>          // float
+        'O', typeof<System.Guid>    // guid
+]
+let parseValidate (format : PrintfFormat<_,_,_,_, 'T>) =
+
+    let t = typeof<'T>
+    let path = format.Value
+    let mutable parseChars = []
+    let mutable matchNext = false
+    let mutable matches = 0
+    for i in 0 .. path.Length - 1 do
+        let mchar = path.[i]
+        if matchNext then
+            match matchDict.TryGetValue mchar with
+            | true , v -> 
+                parseChars <- (mchar,v) :: parseChars
+                matches <- matches + 1                            
+            | false, _ -> ()
+            matchNext <- false
+        else
+            if mchar = '%' then matchNext <- true
+
+    if FSharpType.IsTuple(t) then 
+        let types = FSharpType.GetTupleElements(t)
+        if types.Length <> matches then failwithf "Error reading match expression: tuple of %i vs chars of %i" types.Length matches
+        
+        let rec check(ls,pos) =
+            match ls, pos with
+            | [] , -1 -> ()
+            | (mchar,ct) :: xs , i -> 
+                if ct <> types.[i] then 
+                    failwithf "Error with routef parse types: '%%%c' for parse type %s does not match expected type %s at tuple param:%i" mchar ct.FullName types.[i].FullName (i + 1)
+                else
+                    check(xs,i - 1)
+            | x , y -> failwithf "Unknown parse validation error: %A [%i]" x y                
+
+        check( parseChars , types.Length - 1)                                        
+
+    else
+        if matches <> 1 then failwithf "Error reading match expression: %i match chars found when expecting one " matches
+        match parseChars with
+        | [(mchar,ct)] -> 
+            if ct <> t then failwithf "Error with routef parse type: '%%%c' for parse type %s does not match expected type %s" mchar ct.FullName t.FullName
+        | x -> failwithf "Unknown parse validation error: %A" x 
+

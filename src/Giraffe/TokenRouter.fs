@@ -279,7 +279,9 @@ let route (path:string) (fn:HttpHandler) (root:Node) =
 ///**Output Type**
 ///  * `parent` : `Node` - This parameter is applied by `router`, and is ommitted when building api such that function is partially applied fn
 ///  * `Node`
-let routef (path : PrintfFormat<_,_,_,_,'T>) (fn:'T -> HttpHandler) (root:Node)=
+let routef (path : PrintfFormat<_,_,_,_,'T>) (fn:'T -> HttpHandler) (root:Node) =
+    FormatExpressions.parseValidate path
+
 // parsing route that iterates down nodes, parses, and then continues down further notes if needed
     let last = path.Value.Length - 1
 
