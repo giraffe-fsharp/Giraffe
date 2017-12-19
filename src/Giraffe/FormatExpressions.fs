@@ -82,7 +82,7 @@ let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreC
     with
     | _ -> None
 
-let matchDict = 
+let private matchDict = 
     dict [
         'b', typeof<bool>           // bool
         'c', typeof<char>           // char
