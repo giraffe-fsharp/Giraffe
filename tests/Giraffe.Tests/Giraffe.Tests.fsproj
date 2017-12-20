@@ -29,7 +29,7 @@
     <Compile Include="FormatExpressionTests.fs" />
     <Compile Include="HttpHandlerTests.fs" />
     <Compile Include="AuthHandlerTests.fs" />
-    <Compile Include="XmlViewEngineTests.fs" />
+    <Compile Include="GiraffeViewEngineTests.fs" />
     <Compile Include="HttpContextExtensionsTests.fs" />
     <Compile Include="TokenRouterTests.fs" />
   </ItemGroup>

@@ -97,9 +97,9 @@ let validateFormat (format : PrintfFormat<_,_,_,_, 'T>) =
     let tuplePrint pos last name =
         let mutable result = "("
         for i in 0 .. last do
-            if i = pos 
+            if i = pos
             then result <- result + name
-            else result <- result + "_"             
+            else result <- result + "_"
             if i <> last then result <- result + ","
         result + ")"
 
@@ -119,7 +119,7 @@ let validateFormat (format : PrintfFormat<_,_,_,_, 'T>) =
     let rec charTypeMatch ls mchar =
         match ls with
         | [] -> ()
-        | (tchar,x) :: xs -> 
+        | (tchar,x) :: xs ->
             if tchar = mchar then
                 parseChars <- (mchar,x) :: parseChars
                 matches <- matches + 1
@@ -129,48 +129,46 @@ let validateFormat (format : PrintfFormat<_,_,_,_, 'T>) =
     let rec typeCharMatch ls (xtype:System.Type) =
         match ls with
         | [] -> sprintf "%s has no associated format char parameter" xtype.Name
-        | (tchar,x) :: xs -> 
+        | (tchar,x) :: xs ->
             if xtype = x then
                 sprintf "%s uses format char '%%%c'" xtype.Name tchar
             else
                 typeCharMatch xs xtype
 
-
     for i in 0 .. path.Length - 1 do
         let mchar = path.[i]
-        if matchNext then    
+        if matchNext then
             charTypeMatch mapping mchar
 
             matchNext <- false
         else
             if mchar = '%' then matchNext <- true
 
-    if FSharpType.IsTuple(t) then 
+    if FSharpType.IsTuple(t) then
         let types = FSharpType.GetTupleElements(t)
         if types.Length <> matches then failwithf "Format string error: Number of parameters (%i) does not match number of tuple variables (%i)." types.Length matches
-        
+
         let rec check(ls,pos) =
             match ls, pos with
             | [] , -1 -> ()
-            | (mchar,ct) :: xs , i -> 
+            | (mchar,ct) :: xs , i ->
                 if ct <> types.[i] then
                     let hdlFmt = tuplePrint i (types.Length - 1) types.[i].Name
                     let expFmt = tuplePrint i (types.Length - 1)  ct.Name
                     let guidance = typeCharMatch mapping types.[i]
 
-                    failwithf "Format string error: routef '%s' has type '%s' but handler expects '%s', mismatch on %s parameter '%%%c', %s." path expFmt hdlFmt (posPrint (i + 1)) mchar guidance   
+                    failwithf "Format string error: routef '%s' has type '%s' but handler expects '%s', mismatch on %s parameter '%%%c', %s." path expFmt hdlFmt (posPrint (i + 1)) mchar guidance
                 else
                     check(xs,i - 1)
-            | x , y -> failwithf "Format string error: Unkown validation error: %A [%i]." x y                
+            | x , y -> failwithf "Format string error: Unkown validation error: %A [%i]." x y
 
-        check( parseChars , types.Length - 1)                                        
+        check( parseChars , types.Length - 1)
 
     else
         if matches <> 1 then failwithf "Format string error: Number of parameters (%i) does not match single variable." matches
         match parseChars with
-        | [(mchar,ct)] -> 
-            if ct <> t then 
+        | [(mchar,ct)] ->
+            if ct <> t then
                 let guidance = typeCharMatch mapping t
                 failwithf "Format string error: routef '%s' has type '%s' but handler expects '%s', mismatch on parameter '%%%c', %s." path ct.Name t.Name mchar guidance
-        | x -> failwithf "Format string error: Unkown validation error: %A." x 
-
+        | x -> failwithf "Format string error: Unkown validation error: %A." x

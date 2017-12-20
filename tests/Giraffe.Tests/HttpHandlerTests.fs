@@ -10,7 +10,7 @@ open Microsoft.Extensions.Primitives
 open Xunit
 open NSubstitute
 open Newtonsoft.Json
-open XmlViewEngine
+open GiraffeViewEngine
 open Giraffe.Tests.Asserts
 open System
 
@@ -1504,7 +1504,7 @@ let ``GET "/api/{id}/" returns f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
 
 [<Fact>]
 let ``Test Parse Validation of %d as int`` () =
-    Assert.Throws( fun () -> 
+    Assert.Throws( fun () ->
         GET >=> choose [
             route   "/"       >=> text "Hello World"
             route   "/foo"    >=> text "bar"
@@ -1513,4 +1513,3 @@ let ``Test Parse Validation of %d as int`` () =
         |> ignore
     ) |> ignore
 
-    

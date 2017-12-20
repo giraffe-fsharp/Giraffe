@@ -10,7 +10,7 @@ open Microsoft.Extensions.Primitives
 open Xunit
 open Xunit.Abstractions
 open NSubstitute
-open XmlViewEngine
+open GiraffeViewEngine
 open TokenRouter
 open Giraffe.Tests.Asserts
 

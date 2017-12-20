@@ -21,7 +21,7 @@ open Newtonsoft.Json.Serialization
 open Giraffe.Tasks
 open Giraffe.Common
 open Giraffe.FormatExpressions
-open Giraffe.XmlViewEngine
+open Giraffe.GiraffeViewEngine
 
 type HttpFuncResult = Task<HttpContext option>
 type HttpFunc       = HttpContext -> HttpFuncResult
@@ -231,6 +231,7 @@ let routeCi (path : string) : HttpHandler =
 /// %d -> int64
 /// %f -> float/double
 let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
+    validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) true
         |> function
@@ -355,7 +356,7 @@ let html (document : string) : HttpHandler =
     setHttpHeader "Content-Type" "text/html"
     >=> (setBodyAsString document)
 
-/// Uses the Giraffe.XmlViewEngine to compile and render a HTML Document from
+/// Uses the Giraffe.GiraffeViewEngine to compile and render a HTML Document from
 /// an given XmlNode. The HTTP response is of Content-Type text/html.
 let renderHtml (document : XmlNode) : HttpHandler =
     document

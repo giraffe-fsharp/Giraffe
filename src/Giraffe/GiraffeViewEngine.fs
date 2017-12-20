@@ -13,7 +13,7 @@
 /// Thanks to Suave (https://github.com/SuaveIO/suave) for letting us borrow their code
 /// and thanks to Florian Verdonck (https://github.com/nojaf) for porting it to Giraffe.
 
-module Giraffe.XmlViewEngine
+module Giraffe.GiraffeViewEngine
 
 open System
 open System.Net
