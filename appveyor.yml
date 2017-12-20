@@ -11,8 +11,6 @@ test: off
 artifacts:
   - path: '**\Giraffe.*.nupkg'
     name: Giraffe NuGet packages
-  - path: '**\giraffe-template.*.nupkg'
-    name: Giraffe Template package
 nuget:
   account_feed: false
   project_feed: true
