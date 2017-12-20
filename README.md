@@ -22,6 +22,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
 ## Table of contents
 
 - [About](#about)
+- [Installation](#installation)
 - [Basics](#basics)
     - [HttpHandler](#httphandler)
     - [Combinators](#combinators)
@@ -87,7 +88,6 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [BindQueryString](#bindquerystring)
     - [BindModelAsync](#bindmodelasync)
 - [Error Handling](#error-handling)
-- [Installation](#installation)
 - [Sample applications](#sample-applications)
 - [Benchmarks](#benchmarks)
 - [Building and developing](#building-and-developing)
@@ -111,6 +111,46 @@ If you'd like to learn more about the motivation of this project please read my 
 It is not designed to be a competing web product which can be run standalone like NancyFx or Suave, but rather a lean micro framework which aims to complement ASP.NET Core where it comes short for functional developers. The fundamental idea is to build on top of the strong foundation of ASP.NET Core and re-use existing ASP.NET Core building blocks so F# developers can benefit from both worlds.
 
 You can think of [Giraffe](https://www.nuget.org/packages/Giraffe) as the functional counter part of the ASP.NET Core MVC framework.
+
+## Installation
+
+### Using dotnet-new
+
+The easiest way to get started with Giraffe is by installing the [`giraffe-template`](https://www.nuget.org/packages/giraffe-template) package, which adds a new template to your `dotnet new` command line tool:
+
+```
+dotnet new -i "giraffe-template::*"
+```
+
+Afterwards you can create a new Giraffe application by running `dotnet new giraffe`.
+
+For more information about the Giraffe tempalte please visit the official [giraffe-template repository](https://github.com/giraffe-fsharp/giraffe-template).
+
+### Doing it manually
+
+Install the [Giraffe](https://www.nuget.org/packages/Giraffe) NuGet package:
+
+```
+PM> Install-Package Giraffe
+```
+
+Create a web application and plug it into the ASP.NET Core middleware:
+
+```fsharp
+open Giraffe
+
+let webApp =
+    choose [
+        route "/ping"   >=> text "pong"
+        route "/"       >=> htmlFile "/pages/index.html" ]
+
+type Startup() =
+    member __.Configure (app : IApplicationBuilder)
+                        (env : IHostingEnvironment)
+                        (loggerFactory : ILoggerFactory) =
+
+        app.UseGiraffe webApp
+```
 
 ## Basics
 
@@ -1604,47 +1644,6 @@ type Startup() =
 ```
 
 It is recommended to set the error handler as the first middleware in the pipeline, so that any unhandled exception from a later middleware can be caught and processed by the error handling function.
-
-## Installation
-
-### Using dotnet-new
-
-The easiest way to get started with Giraffe is by installing the [`giraffe-template`](https://www.nuget.org/packages/giraffe-template) NuGet package, which adds a new template to your `dotnet new` command:
-
-```
-dotnet new -i "giraffe-template::*"
-```
-
-Afterwards you can create a new Giraffe application by running `dotnet new giraffe`.
-
-For more information about the Giraffe tempalte please visit the official [giraffe-template repository](https://github.com/giraffe-fsharp/giraffe-template).
-
-### Doing it manually
-
-Install the [Giraffe](https://www.nuget.org/packages/Giraffe) NuGet package:
-
-```
-PM> Install-Package Giraffe
-```
-
-Create a web application and plug it into the ASP.NET Core middleware:
-
-```fsharp
-open Giraffe.HttpHandlers
-open Giraffe.Middleware
-
-let webApp =
-    choose [
-        route "/ping"   >=> text "pong"
-        route "/"       >=> htmlFile "/pages/index.html" ]
-
-type Startup() =
-    member __.Configure (app : IApplicationBuilder)
-                        (env : IHostingEnvironment)
-                        (loggerFactory : ILoggerFactory) =
-
-        app.UseGiraffe webApp
-```
 
 ## Sample applications
 
