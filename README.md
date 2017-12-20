@@ -806,7 +806,7 @@ It is based on [Suave's Experimental Html](https://github.com/SuaveIO/suave/blob
 Create a function that accepts a model and returns an `XmlNode`:
 
 ```fsharp
-open Giraffe.XmlViewEngine
+open Giraffe.GiraffeViewEngine
 
 let model = { Name = "John Doe" }
 
@@ -1224,7 +1224,7 @@ let app =
 
 ### RenderHtmlAsync
 
-`ctx.RenderHtmlAsync someNode` can be used to return a [XmlViewEngine](#renderhtmlasync) node.
+`ctx.RenderHtmlAsync someNode` can be used to return a [GiraffeViewEngine](#renderhtmlasync) node.
 
 #### Example:
 
@@ -1654,7 +1654,7 @@ There are three basic sample applications in the [`/samples`](https://github.com
 
 ### Live apps
 
-An example of a live website which uses Giraffe is [https://buildstats.info](https://buildstats.info). It uses the [XmlViewEngine](#renderhtml) to build dynamically rich SVG images and Docker to run the application in the Google Container Engine (see [GitHub repository](https://github.com/dustinmoris/CI-BuildStats)).
+An example of a live website which uses Giraffe is [https://buildstats.info](https://buildstats.info). It uses the [GiraffeViewEngine](#renderhtml) to build dynamically rich SVG images and Docker to run the application in the Google Container Engine (see [GitHub repository](https://github.com/dustinmoris/CI-BuildStats)).
 
 More sample applications will be added in the future.
 

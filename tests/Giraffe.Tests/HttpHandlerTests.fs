@@ -10,8 +10,9 @@ open Microsoft.Extensions.Primitives
 open Xunit
 open NSubstitute
 open Newtonsoft.Json
-open XmlViewEngine
+open GiraffeViewEngine
 open Giraffe.Tests.Asserts
+open System
 
 // ---------------------------------
 // Helper functions
@@ -1500,3 +1501,15 @@ let ``GET "/api/{id}/" returns f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
             let body = getBody ctx
             Assert.Equal("f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
     }
+
+[<Fact>]
+let ``Test Parse Validation of %d as int`` () =
+    Assert.Throws( fun () ->
+        GET >=> choose [
+            route   "/"       >=> text "Hello World"
+            route   "/foo"    >=> text "bar"
+            routef "/foo/%s/%d" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
+            setStatusCode 404 >=> text "Not found" ]
+        |> ignore
+    ) |> ignore
+

@@ -15,7 +15,7 @@ open Microsoft.AspNetCore.TestHost
 open Xunit
 open NSubstitute
 open Newtonsoft.Json
-open Giraffe.XmlViewEngine
+open Giraffe.GiraffeViewEngine
 
 let assertFailf format args =
     let msg = sprintf format args

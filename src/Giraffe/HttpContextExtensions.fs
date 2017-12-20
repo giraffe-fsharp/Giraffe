@@ -14,7 +14,7 @@ open Microsoft.FSharp.Reflection
 open Microsoft.Net.Http.Headers
 open Newtonsoft.Json
 open Common
-open XmlViewEngine
+open GiraffeViewEngine
 
 type HttpContext with
 

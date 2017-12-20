@@ -1,6 +1,16 @@
 Release Notes
 =============
 
+## 0.1.0-beta-600
+
+#### Breaking changes
+
+- Renamed `Giraffe.XmlViewEngine` to `Giraffe.GiraffeViewEngine` as it represented more than just an XML view engine.
+
+#### New features
+
+- Added automatic validation of the format string inside `routef` and `routeCif` to notify users of the notorious `%d` vs `%i` error during startup.
+
 ## 0.1.0-beta-511
 
 #### Bug fixes
