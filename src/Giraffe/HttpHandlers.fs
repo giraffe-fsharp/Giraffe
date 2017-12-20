@@ -205,6 +205,7 @@ let route (path : string) : HttpHandler =
 /// %d -> int64
 /// %f -> float/double
 let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
+    validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) false
         |> function
