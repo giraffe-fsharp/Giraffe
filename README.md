@@ -847,6 +847,7 @@ Create a function that accepts a model and returns an `XmlNode`:
 
 ```fsharp
 open Giraffe.GiraffeViewEngine
+open Giraffe.GiraffeViewEngine.Attributes
 
 let model = { Name = "John Doe" }
 
@@ -863,8 +864,9 @@ let partial () =
 
 let personView model =
     [
-        div [] [
-                h3 [] (sprintf "Hello, %s" model.Name |> encodedText)
+        div [_class "container"] [
+                h3 [_title "Some title attribute"] (sprintf "Hello, %s" model.Name |> encodedText)
+                a [_href "https://github.com/giraffe-fsharp/Giraffe"] [encodedText "Github"]
             ]
         div [] [partial()]
     ] |> layout
@@ -874,6 +876,8 @@ let app =
         route "/" >=> (personView model |> renderHtml)
     ]
 ```
+
+Notice that attributes (from `Giraffe.GiraffeViewEngine.Attributes`) are prefixed with an underscore (_) to prevent naming collisions.
 
 ### redirectTo
 
