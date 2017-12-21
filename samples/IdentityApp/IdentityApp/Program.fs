@@ -18,6 +18,7 @@ open Microsoft.AspNetCore.Identity.EntityFrameworkCore
 open Microsoft.EntityFrameworkCore
 open Giraffe
 open Giraffe.GiraffeViewEngine
+open Giraffe.GiraffeViewEngine.Attributes
 
 // ---------------------------------
 // View engine
@@ -38,50 +39,50 @@ let masterPage (pageTitle : string) (content : XmlNode list) =
 let indexPage =
     [
         p [] [
-            a [ attr "href" "/register" ] [ rawText "Register" ]
+            a [ href "/register" ] [ rawText "Register" ]
         ]
         p [] [
-            a [ attr "href" "/user" ] [ rawText "User page" ]
+            a [ href "/user" ] [ rawText "User page" ]
         ]
     ] |> masterPage "Home"
 
 let registerPage =
     [
-        form [ attr "action" "/register"; attr "method" "POST" ] [
+        form [ action "/register"; attr "method" "POST" ] [
             div [] [
                 label [] [ rawText "Email:" ]
-                input [ attr "name" "Email"; attr "type" "text" ]
+                input [ name "Email"; attr "type" "text" ]
             ]
             div [] [
                 label [] [ rawText "User name:" ]
-                input [ attr "name" "UserName"; attr "type" "text" ]
+                input [ name "UserName"; attr "type" "text" ]
             ]
             div [] [
                 label [] [ rawText "Password:" ]
-                input [ attr "name" "Password"; attr "type" "password" ]
+                input [ name "Password"; attr "type" "password" ]
             ]
-            input [ attr "type" "submit" ]
+            input [ ``type`` "submit" ]
         ]
     ] |> masterPage "Register"
 
 let loginPage (loginFailed : bool) =
     [
-        if loginFailed then yield p [ attr "style" "color: Red;" ] [ rawText "Login failed." ]
+        if loginFailed then yield p [ ``style_attr`` "color: Red;" ] [ rawText "Login failed." ]
 
-        yield form [ attr "action" "/login"; attr "method" "POST" ] [
+        yield form [ action "/login"; attr "method" "POST" ] [
             div [] [
                 label [] [ rawText "User name:" ]
-                input [ attr "name" "UserName"; attr "type" "text" ]
+                input [ name "UserName"; attr "type" "text" ]
             ]
             div [] [
                 label [] [ rawText "Password:" ]
-                input [ attr "name" "Password"; attr "type" "password" ]
+                input [ name "Password"; attr "type" "password" ]
             ]
-            input [ attr "type" "submit" ]
+            input [ ``type`` "submit" ]
         ]
         yield p [] [
             rawText "Don't have an account yet?"
-            a [ attr "href" "/register" ] [ rawText "Go to registration" ]
+            a [ href "/register" ] [ rawText "Go to registration" ]
         ]
     ] |> masterPage "Login"
 

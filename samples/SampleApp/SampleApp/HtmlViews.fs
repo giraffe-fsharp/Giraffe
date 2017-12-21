@@ -1,6 +1,7 @@
 module SampleApp.HtmlViews
 
 open Giraffe.GiraffeViewEngine
+open Giraffe.GiraffeViewEngine.Attributes
 open SampleApp.Models
 
 let layout (content: XmlNode list) =
@@ -16,8 +17,9 @@ let partial () =
 
 let personView (model : Person) =
     [
-        div [] [
-                h3 [] [ sprintf "Hello, %s" model.Name |> encodedText ]
+        div [``class`` "container"] [
+                h3 [``title_attr`` "Some title attribute"] [ sprintf "Hello, %s" model.Name |> encodedText ]
+                a [href "https://github.com/giraffe-fsharp/Giraffe"] [encodedText "Github"]
             ]
         div [] [partial()]
     ] |> layout
