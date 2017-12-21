@@ -39,50 +39,50 @@ let masterPage (pageTitle : string) (content : XmlNode list) =
 let indexPage =
     [
         p [] [
-            a [ href "/register" ] [ rawText "Register" ]
+            a [ _href "/register" ] [ rawText "Register" ]
         ]
         p [] [
-            a [ href "/user" ] [ rawText "User page" ]
+            a [ _href "/user" ] [ rawText "User page" ]
         ]
     ] |> masterPage "Home"
 
 let registerPage =
     [
-        form [ action "/register"; attr "method" "POST" ] [
+        form [ _action "/register"; _method "POST" ] [
             div [] [
                 label [] [ rawText "Email:" ]
-                input [ name "Email"; attr "type" "text" ]
+                input [ _name "Email"; _type "text" ]
             ]
             div [] [
                 label [] [ rawText "User name:" ]
-                input [ name "UserName"; attr "type" "text" ]
+                input [ _name "UserName"; _type "text" ]
             ]
             div [] [
                 label [] [ rawText "Password:" ]
-                input [ name "Password"; attr "type" "password" ]
+                input [ _name "Password"; _type "password" ]
             ]
-            input [ ``type`` "submit" ]
+            input [ _type "submit" ]
         ]
     ] |> masterPage "Register"
 
 let loginPage (loginFailed : bool) =
     [
-        if loginFailed then yield p [ ``style_attr`` "color: Red;" ] [ rawText "Login failed." ]
+        if loginFailed then yield p [ _style "color: Red;" ] [ rawText "Login failed." ]
 
-        yield form [ action "/login"; attr "method" "POST" ] [
+        yield form [ _action "/login"; _method "POST" ] [
             div [] [
                 label [] [ rawText "User name:" ]
-                input [ name "UserName"; attr "type" "text" ]
+                input [ _name "UserName"; _type "text" ]
             ]
             div [] [
                 label [] [ rawText "Password:" ]
-                input [ name "Password"; attr "type" "password" ]
+                input [ _name "Password"; _type "password" ]
             ]
-            input [ ``type`` "submit" ]
+            input [ _type "submit" ]
         ]
         yield p [] [
             rawText "Don't have an account yet?"
-            a [ href "/register" ] [ rawText "Go to registration" ]
+            a [ _href "/register" ] [ rawText "Go to registration" ]
         ]
     ] |> masterPage "Login"
 

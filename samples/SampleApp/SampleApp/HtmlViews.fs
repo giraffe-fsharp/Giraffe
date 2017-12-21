@@ -17,9 +17,9 @@ let partial () =
 
 let personView (model : Person) =
     [
-        div [``class`` "container"] [
-                h3 [``title_attr`` "Some title attribute"] [ sprintf "Hello, %s" model.Name |> encodedText ]
-                a [href "https://github.com/giraffe-fsharp/Giraffe"] [encodedText "Github"]
+        div [_class "container"] [
+                h3 [_title "Some title attribute"] [ sprintf "Hello, %s" model.Name |> encodedText ]
+                a [_href "https://github.com/giraffe-fsharp/Giraffe"] [encodedText "Github"]
             ]
         div [] [partial()]
     ] |> layout

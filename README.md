@@ -864,9 +864,9 @@ let partial () =
 
 let personView model =
     [
-        div [``class`` "container"] [
-                h3 [``title_attr`` "Some title attribute"] (sprintf "Hello, %s" model.Name |> encodedText)
-                a [href "https://github.com/giraffe-fsharp/Giraffe"] [encodedText "Github"]
+        div [_class "container"] [
+                h3 [_title "Some title attribute"] (sprintf "Hello, %s" model.Name |> encodedText)
+                a [_href "https://github.com/giraffe-fsharp/Giraffe"] [encodedText "Github"]
             ]
         div [] [partial()]
     ] |> layout
@@ -876,6 +876,8 @@ let app =
         route "/" >=> (personView model |> renderHtml)
     ]
 ```
+
+Notice that attributes (from `Giraffe.GiraffeViewEngine.Attributes`) are prefixed with an underscore (_) to prevent naming collisions.
 
 ### redirectTo
 
