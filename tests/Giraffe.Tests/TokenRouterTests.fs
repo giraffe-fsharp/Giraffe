@@ -466,6 +466,56 @@ let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
+[<Fact>]
+let ``GET "/foo/johndoe/FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD" returns "Name: johndoe, Id: FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD"`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        router notFound [
+            GET [
+                route   "/"       => text "Hello World"
+                route   "/foo"    => text "bar"
+                routef "/foo/%s/bar" text
+                routef "/foo/%s/%O" (fun (name, id: Guid) -> text (sprintf "Name: %s, Id: %O" name id))
+            ]
+        ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/johndoe/FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "Name: johndoe, Id: FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD"
+
+    task {
+        let! result = app next ctx
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx, true)
+    }
+
+[<Fact>]
+let ``GET "/foo/johndoe/FE9CFE1935D44EDC9A955D38C4D579BD" returns "Name: johndoe, Id: FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD"`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        router notFound [
+            GET [
+                route   "/"       => text "Hello World"
+                route   "/foo"    => text "bar"
+                routef "/foo/%s/bar" text
+                routef "/foo/%s/%O" (fun (name, id: Guid) -> text (sprintf "Name: %s, Id: %O" name id))
+            ]
+        ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/johndoe/FE9CFE1935D44EDC9A955D38C4D579BD")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "Name: johndoe, Id: FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD"
+
+    task {
+        let! result = app next ctx
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx, true)
+    }
+
 // [<Fact>]
 // let ``POST "/POsT/1" returns "1"`` () =
 //     let ctx = Substitute.For<HttpContext>()
@@ -1367,7 +1417,7 @@ type DebugTests(output:ITestOutputHelper) =
                 Assert.Equal(expected, body)
         }
 
-    member __.``Test portRoute function`` () =
+    member __.``Test routePorts function`` () =
         let ctx = Substitute.For<HttpContext>()
         let notFound = (setStatusCode 404 >=> text "Not Found")
         let app1 =
@@ -1388,7 +1438,8 @@ type DebugTests(output:ITestOutputHelper) =
                         route "/newpassword2" => text "newpassword2" ]
                 ]
             ]
-        let app = portRoute [ (9001, app1); (9002, app2) ]
+
+        let app = routePorts [ (9001, app1); (9002, app2) ]
 
         let expected = "newpassword2"
         ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore

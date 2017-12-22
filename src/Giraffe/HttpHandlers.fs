@@ -204,6 +204,7 @@ let route (path : string) : HttpHandler =
 /// %i -> int
 /// %d -> int64
 /// %f -> float/double
+/// %O -> Guid
 let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -230,6 +231,7 @@ let routeCi (path : string) : HttpHandler =
 /// %i -> int
 /// %d -> int64
 /// %f -> float/double
+/// %O -> Guid
 let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -439,9 +441,9 @@ let redirectTo (permanent : bool) (location : string) : HttpHandler  =
         Task.FromResult (Some ctx)
 
 /// Filters an incoming HTTP request based on the port.
-let portRoute (fns : (int * HttpHandler) list) : HttpHandler =
+let routePorts (fns : (int * HttpHandler) list) : HttpHandler =
     fun next ->
-        let portMap = Dictionary<_,_>(fns.Length)
+        let portMap = Dictionary<_, _>(fns.Length)
         fns |> List.iter (fun (p, h) -> portMap.Add(p, h next))
         fun (ctx : HttpContext) ->
             let port = ctx.Request.Host.Port
