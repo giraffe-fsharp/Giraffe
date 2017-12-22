@@ -18,7 +18,6 @@ open Microsoft.AspNetCore.Identity.EntityFrameworkCore
 open Microsoft.EntityFrameworkCore
 open Giraffe
 open Giraffe.GiraffeViewEngine
-open Giraffe.GiraffeViewEngine.Attributes
 
 // ---------------------------------
 // View engine

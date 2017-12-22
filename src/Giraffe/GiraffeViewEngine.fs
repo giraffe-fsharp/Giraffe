@@ -196,7 +196,11 @@ let menu       = tag "menu"
 let menuitem   = voidTag "menuitem"
 let summary    = tag "summary"
 
-/// Attributes
+/// ---------------------------
+/// Default HTML attributes
+/// ---------------------------
+
+[<AutoOpen>]
 module Attributes =
     // https://www.w3.org/TR/html5/index.html#attributes-1
     let _abbr value = attr "abbr" value
