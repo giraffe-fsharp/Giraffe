@@ -1,21 +1,25 @@
 module Giraffe.FormatExpressions
 
+open System
 open System.Text.RegularExpressions
 open System.Net
 open Microsoft.FSharp.Reflection
 open FSharp.Core
 
 let formatStringMap =
+    let guidFormatStr =
+        "(([0-9A-Fa-f]{8}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{12})|([0-9A-Fa-f]{32}))"
+
     dict [
     // Char    Regex                    Parser
-    // ----------------------------------------------------------
-        'b', ("(?i:(true|false)){1}",   bool.Parse >> box)  // bool
-        'c', ("(.{1})",                 char       >> box)  // char
-        's', ("(.+)",                                 box)  // string
-        'i', ("(-?\d+)",                int32      >> box)  // int
-        'd', ("(-?\d+)",                int64      >> box)  // int64
-        'f', ("(-?\d+\.{1}\d+)",        float      >> box)  // float
-        'O', ("(([0-9A-Fa-f]{8}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{12})|([0-9A-Fa-f]{32}))",        Guid      >> box)  // guid
+    // -------------------------------------------------------------
+        'b', ("(?i:(true|false)){1}",   bool.Parse           >> box)  // bool
+        'c', ("(.{1})",                 char                 >> box)  // char
+        's', ("(.+)",                   WebUtility.UrlDecode >> box)  // string
+        'i', ("(-?\d+)",                int32                >> box)  // int
+        'd', ("(-?\d+)",                int64                >> box)  // int64
+        'f', ("(-?\d+\.{1}\d+)",        float                >> box)  // float
+        'O', (guidFormatStr,            Guid                 >> box)  // guid
     ]
 
 let convertToRegexPatternAndFormatChars (formatString : string) =
