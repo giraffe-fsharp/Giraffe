@@ -204,6 +204,7 @@ let route (path : string) : HttpHandler =
 /// %i -> int
 /// %d -> int64
 /// %f -> float/double
+/// %O -> Guid
 let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -230,6 +231,7 @@ let routeCi (path : string) : HttpHandler =
 /// %i -> int
 /// %d -> int64
 /// %f -> float/double
+/// %O -> Guid
 let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
