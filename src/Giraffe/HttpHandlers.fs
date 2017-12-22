@@ -1,3 +1,4 @@
+[<AutoOpen>]
 module Giraffe.HttpHandlers
 
 open System
@@ -20,7 +21,7 @@ open Newtonsoft.Json.Serialization
 open Giraffe.Tasks
 open Giraffe.Common
 open Giraffe.FormatExpressions
-open Giraffe.XmlViewEngine
+open Giraffe.GiraffeViewEngine
 
 type HttpFuncResult = Task<HttpContext option>
 type HttpFunc       = HttpContext -> HttpFuncResult
@@ -195,7 +196,16 @@ let route (path : string) : HttpHandler =
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 /// The arguments from the format string will be automatically resolved when the
 /// route matches and subsequently passed into the supplied routeHandler.
+///
+/// Supported format chars:
+/// %b -> bool
+/// %c -> char
+/// %s -> string
+/// %i -> int
+/// %d -> int64
+/// %f -> float/double
 let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
+    validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) false
         |> function
@@ -212,7 +222,16 @@ let routeCi (path : string) : HttpHandler =
 /// Filters an incoming HTTP request based on the request path (case insensitive).
 /// The arguments from the format string will be automatically resolved when the
 /// route matches and subsequently passed into the supplied routeHandler.
+///
+/// Supported format chars:
+/// %b -> bool
+/// %c -> char
+/// %s -> string
+/// %i -> int
+/// %d -> int64
+/// %f -> float/double
 let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
+    validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (getPath ctx) true
         |> function
@@ -326,19 +345,23 @@ let htmlFile (filePath : string) : HttpHandler =
                 else
                     let env = ctx.GetService<IHostingEnvironment>()
                     Path.Combine(env.ContentRootPath, filePath)
-            let! html = readFileAsString filePath
+            let! html = readFileAsStringAsync filePath
             return!
                 (setHttpHeader "Content-Type" "text/html"
                 >=> setBodyAsString html) next ctx
         }
 
-/// Uses the Giraffe.XmlViewEngine to compile and render a HTML Document from
+/// The HTTP response is of Content-Type text/html.
+let html (document : string) : HttpHandler =
+    setHttpHeader "Content-Type" "text/html"
+    >=> (setBodyAsString document)
+
+/// Uses the Giraffe.GiraffeViewEngine to compile and render a HTML Document from
 /// an given XmlNode. The HTTP response is of Content-Type text/html.
 let renderHtml (document : XmlNode) : HttpHandler =
-    setHttpHeader "Content-Type" "text/html"
-    >=> (document
-        |> renderHtmlDocument
-        |> setBodyAsString)
+    document
+    |> renderHtmlDocument
+    |> html
 
 /// Checks the HTTP Accept header of the request and determines the most appropriate
 /// response type from a given set of negotiationRules. If the Accept header cannot be
@@ -355,26 +378,31 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
                   (responseObj         : obj)
                   : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        (ctx.Request.GetTypedHeaders()).Accept
-        |> fun acceptedMimeTypes ->
-            match isNull acceptedMimeTypes || acceptedMimeTypes.Count = 0 with
-            | true  ->
-                negotiationRules.Keys
-                |> Seq.head
-                |> fun mediaType -> negotiationRules.[mediaType]
-                |> fun handler   -> handler responseObj next ctx
-            | false ->
-                List.ofSeq acceptedMimeTypes
-                |> List.filter (fun x -> negotiationRules.ContainsKey x.MediaType.Value)
-                |> fun mimeTypes ->
-                    match mimeTypes.Length with
-                    | 0 -> unacceptableHandler next ctx
-                    | _ ->
-                        mimeTypes
-                        |> List.sortByDescending (fun x -> if x.Quality.HasValue then x.Quality.Value else 1.0)
-                        |> List.head
-                        |> fun mimeType -> negotiationRules.[mimeType.MediaType.Value]
-                        |> fun handler  -> handler responseObj next ctx
+        let acceptedMimeTypes = (ctx.Request.GetTypedHeaders()).Accept
+        if isNull acceptedMimeTypes || acceptedMimeTypes.Count = 0 then
+            let kv = negotiationRules |> Seq.head
+            kv.Value responseObj next ctx
+        else
+            let mutable mimeType      = Unchecked.defaultof<_>
+            let mutable curQuality    = Double.NegativeInfinity
+            let mutable qualityOfRule = 1.
+            // Filter the list of acceptedMimeTypes by the negotiationRules
+            // and selects the mimetype with the greatest quality
+            for x in acceptedMimeTypes do
+                if negotiationRules.ContainsKey x.MediaType.Value then
+                    if x.Quality.HasValue then
+                        qualityOfRule <- x.Quality.Value
+                    else
+                        qualityOfRule <- 1.
+
+                    if curQuality < qualityOfRule then
+                        curQuality <- qualityOfRule
+                        mimeType <- x
+
+            if isNull mimeType then
+                unacceptableHandler next ctx
+            else
+                negotiationRules.[mimeType.MediaType.Value] responseObj next ctx
 
 /// Same as negotiateWith except that it specifies a default set of negotiation rules
 /// and a default unacceptableHandler.

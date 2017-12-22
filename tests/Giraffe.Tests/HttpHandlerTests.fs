@@ -6,18 +6,13 @@ open System.IO
 open System.Text
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
-open Microsoft.Extensions.Logging
 open Xunit
 open NSubstitute
-open Giraffe.HttpHandlers
-open Giraffe.Middleware
-open Giraffe.XmlViewEngine
-open Giraffe.DotLiquid.HttpHandlers
-open Giraffe.Tests.Asserts
-open Giraffe.Tasks
 open Newtonsoft.Json
+open GiraffeViewEngine
+open Giraffe.Tests.Asserts
+open System
 
 // ---------------------------------
 // Helper functions
@@ -168,7 +163,6 @@ let ``GET "/json" returns json object`` () =
     }
 
 [<Fact>]
-
 let ``GET "/json" with a custom json handler returns json object`` () =
     let customJson (dataObj : obj) : HttpHandler =
         let settings = JsonSerializerSettings()
@@ -274,41 +268,6 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
             let body = getBody ctx
             Assert.Equal(expected, body)
             Assert.Equal(404, ctx.Response.StatusCode)
-    }
-
-[<Fact>]
-let ``GET "/dotLiquid" returns rendered html view`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let dotLiquidTemplate =
-        "<html><head><title>DotLiquid</title></head>" +
-        "<body><p>{{ foo }} {{ bar }} is {{ age }} years old.</p>" +
-        "</body></html>"
-
-    let obj = { Foo = "John"; Bar = "Doe"; Age = 30 }
-
-    let app =
-        choose [
-            GET >=> choose [
-                route "/"          >=> text "Hello World"
-                route "/dotLiquid" >=> dotLiquid "text/html" dotLiquidTemplate obj ]
-            POST >=> choose [
-                route "/post/1"    >=> text "1" ]
-            setStatusCode 404      >=> text "Not found" ]
-
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/dotLiquid")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "<html><head><title>DotLiquid</title></head><body><p>John Doe is 30 years old.</p></body></html>"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None -> assertFailf "Result was expected to be %s" expected
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal(expected, body)
-            Assert.Equal("text/html", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -556,6 +515,30 @@ let ``POST "/POsT/523" returns "523"`` () =
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/POsT/523")) |> ignore
     ctx.Response.Body <- new MemoryStream()
     let expected = "523"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``GET "/foo/b%2Fc/bar" returns "b/c"`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            route   "/"       >=> text "Hello World"
+            route   "/foo"    >=> text "bar"
+            routef "/foo/%s/bar" text
+            routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/b%2Fc/bar")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "b/c"
 
     task {
         let! result = app next ctx
@@ -1518,3 +1501,15 @@ let ``GET "/api/{id}/" returns f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
             let body = getBody ctx
             Assert.Equal("f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
     }
+
+[<Fact>]
+let ``Test Parse Validation of %d as int`` () =
+    Assert.Throws( fun () ->
+        GET >=> choose [
+            route   "/"       >=> text "Hello World"
+            route   "/foo"    >=> text "bar"
+            routef "/foo/%s/%d" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
+            setStatusCode 404 >=> text "Not found" ]
+        |> ignore
+    ) |> ignore
+

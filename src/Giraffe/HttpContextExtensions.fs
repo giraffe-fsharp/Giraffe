@@ -1,7 +1,8 @@
-[<AutoOpenAttribute>]
+[<AutoOpen>]
 module Giraffe.HttpContextExtensions
 
 open System
+open System.Globalization
 open System.IO
 open System.Reflection
 open System.ComponentModel
@@ -12,8 +13,8 @@ open Microsoft.Extensions.Logging
 open Microsoft.FSharp.Reflection
 open Microsoft.Net.Http.Headers
 open Newtonsoft.Json
-open Giraffe.Common
-open Giraffe.XmlViewEngine
+open Common
+open GiraffeViewEngine
 
 type HttpContext with
 
@@ -26,6 +27,10 @@ type HttpContext with
 
     member this.GetLogger<'T>() =
         this.GetService<ILogger<'T>>()
+
+    member this.GetLogger (categoryName : string) =
+        let loggerFactory = this.GetService<ILoggerFactory>()
+        loggerFactory.CreateLogger categoryName
 
     /// ---------------------------
     /// Common helpers
@@ -55,43 +60,46 @@ type HttpContext with
     /// Model binding
     /// ---------------------------
 
-    member this.ReadBodyFromRequest() =
-        let body = this.Request.Body
-        use reader = new StreamReader(body, true)
-        reader.ReadToEndAsync()
+    member this.ReadBodyFromRequestAsync() =
+        task {
+            use reader = new StreamReader(this.Request.Body, Text.Encoding.UTF8)
+            return! reader.ReadToEndAsync()
+        }
 
-    member this.BindJson<'T>() = this.BindJson<'T> defaultJsonSerializerSettings
+    member this.BindJsonAsync<'T>() = this.BindJsonAsync<'T> defaultJsonSerializerSettings
 
-    member this.BindJson<'T> (settings : JsonSerializerSettings) =
+    member this.BindJsonAsync<'T> (settings : JsonSerializerSettings) =
         task {
             return deserializeJsonFromStream<'T> settings this.Request.Body
         }
 
-    member this.BindXml<'T>() =
+    member this.BindXmlAsync<'T>() =
         task {
-            let! body = this.ReadBodyFromRequest()
+            let! body = this.ReadBodyFromRequestAsync()
             return deserializeXml<'T> body
         }
 
-    member this.BindForm<'T>() =
+    member this.BindFormAsync<'T>(?cultureInfo : CultureInfo) =
         task {
-            let! form = this.Request.ReadFormAsync()
-            let obj   = Activator.CreateInstance<'T>()
-            let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
+            let! form   = this.Request.ReadFormAsync()
+            let culture = defaultArg cultureInfo CultureInfo.InvariantCulture
+            let obj     = Activator.CreateInstance<'T>()
+            let props   = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
             props
             |> Seq.iter (fun p ->
                 let strValue = ref (StringValues())
                 if form.TryGetValue(p.Name, strValue)
                 then
                     let converter = TypeDescriptor.GetConverter p.PropertyType
-                    let value = converter.ConvertFromInvariantString(strValue.Value.ToString())
+                    let value = converter.ConvertFromString(null, culture, strValue.Value.ToString())
                     p.SetValue(obj, value, null))
             return obj
         }
 
-    member this.BindQueryString<'T>() =
-        let obj   = Activator.CreateInstance<'T>()
-        let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
+    member this.BindQueryString<'T>(?cultureInfo : CultureInfo) =
+        let obj     = Activator.CreateInstance<'T>()
+        let culture = defaultArg cultureInfo CultureInfo.InvariantCulture
+        let props   = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
         props
         |> Seq.iter (fun p ->
             match this.TryGetQueryStringValue p.Name with
@@ -116,7 +124,7 @@ type HttpContext with
 
                 let converter = TypeDescriptor.GetConverter propertyType
 
-                let value = converter.ConvertFromInvariantString(queryValue)
+                let value = converter.ConvertFromString(null, culture, queryValue)
 
                 if isOptionType then
                     let cases = FSharpType.GetUnionCases(p.PropertyType)
@@ -130,9 +138,9 @@ type HttpContext with
                     p.SetValue(obj, value, null))
         obj
 
-    member this.BindModel<'T>() = this.BindModel<'T> defaultJsonSerializerSettings
+    member this.BindModelAsync<'T>(?cultureInfo) = this.BindModelAsync<'T>(defaultJsonSerializerSettings, ?cultureInfo = cultureInfo)
 
-    member this.BindModel<'T> (settings : JsonSerializerSettings) =
+    member this.BindModelAsync<'T> (settings : JsonSerializerSettings, ?cultureInfo : CultureInfo) =
         task {
             let method = this.Request.Method
             if method.Equals "POST" || method.Equals "PUT" then
@@ -143,11 +151,11 @@ type HttpContext with
                     | false -> failwithf "Could not parse Content-Type HTTP header value '%s'" original.Value
                     | true  ->
                         match parsed.Value.MediaType.Value with
-                        | "application/json"                  -> this.BindJson<'T> settings
-                        | "application/xml"                   -> this.BindXml<'T>()
-                        | "application/x-www-form-urlencoded" -> this.BindForm<'T>()
+                        | "application/json"                  -> this.BindJsonAsync<'T> settings
+                        | "application/xml"                   -> this.BindXmlAsync<'T>()
+                        | "application/x-www-form-urlencoded" -> this.BindFormAsync<'T>(?cultureInfo = cultureInfo)
                         | _ -> failwithf "Cannot bind model from Content-Type '%s'" original.Value
-            else return this.BindQueryString<'T>()
+            else return this.BindQueryString<'T>(?cultureInfo = cultureInfo)
         }
 
     /// ---------------------------
@@ -157,49 +165,49 @@ type HttpContext with
     member private this.SetHttpHeader (key : string) (value : obj) =
         this.Response.Headers.[key] <- StringValues(value.ToString())
 
-    member private this.WriteBytes (bytes : byte[]) =
+    member private this.WriteBytesAsync (bytes : byte[]) =
         this.SetHttpHeader "Content-Length" bytes.Length
         this.Response.Body.WriteAsync(bytes, 0, bytes.Length)
 
-    member private this.WriteString (value : string) =
-        value |> System.Text.Encoding.UTF8.GetBytes |> this.WriteBytes
+    member private this.WriteStringAsync (value : string) =
+        value |> System.Text.Encoding.UTF8.GetBytes |> this.WriteBytesAsync
 
-    member this.WriteJson (value : obj) = this.WriteJson(defaultJsonSerializerSettings, value)
+    member this.WriteJsonAsync (value : obj) = this.WriteJsonAsync(defaultJsonSerializerSettings, value)
 
-    member this.WriteJson (settings: JsonSerializerSettings, value : obj) =
+    member this.WriteJsonAsync (settings: JsonSerializerSettings, value : obj) =
         task {
             this.SetHttpHeader "Content-Type" "application/json"
-            do! serializeJson settings value |> this.WriteString
+            do! serializeJson settings value |> this.WriteStringAsync
             return Some this
         }
 
-    member this.WriteXml (value : obj) =
+    member this.WriteXmlAsync (value : obj) =
         task {
             this.SetHttpHeader "Content-Type" "application/xml"
-            do! value |> serializeXml |> this.WriteBytes
+            do! value |> serializeXml |> this.WriteBytesAsync
             return Some this
         }
 
-    member this.WriteText (value : string) =
+    member this.WriteTextAsync (value : string) =
         task {
             this.SetHttpHeader "Content-Type" "text/plain"
-            do! value |> this.WriteString
+            do! value |> this.WriteStringAsync
             return Some this
         }
 
-    member this.RenderHtml (value: XmlNode) =
+    member this.RenderHtmlAsync (value: XmlNode) =
         task {
             this.SetHttpHeader "Content-Type" "text/html"
-            do! value |> renderHtmlDocument |> this.WriteString
+            do! value |> renderHtmlDocument |> this.WriteStringAsync
             return Some this
         }
 
-    member this.ReturnHtmlFile (relativeFilePath: String) =
+    member this.ReturnHtmlFileAsync (relativeFilePath: String) =
         task {
             this.SetHttpHeader "Content-Type" "text/html"
             let env = this.GetService<IHostingEnvironment>()
-            let filePath = env.ContentRootPath + relativeFilePath
-            let! html = readFileAsString filePath
-            do! this.WriteString html
+            let filePath = Path.Combine(env.ContentRootPath, relativeFilePath)
+            let! html = readFileAsStringAsync filePath
+            do! this.WriteStringAsync html
             return Some this
         }

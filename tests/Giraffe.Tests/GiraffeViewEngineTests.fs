@@ -1,8 +1,8 @@
-module Giraffe.XmlViewEngineTests
+module Giraffe.GiraffeViewEngineTests
 
 open System
 open Xunit
-open Giraffe.XmlViewEngine
+open GiraffeViewEngine
 
 let removeNewLines (html:string):string =
     html.Replace(Environment.NewLine, String.Empty)

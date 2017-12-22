@@ -4,11 +4,10 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <AssemblyName>SampleApp.Tests</AssemblyName>
     <DebugType>portable</DebugType>
-    <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.0-preview-*" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.*" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.0.*" />
@@ -17,13 +16,12 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.0.*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.0.*" />
-    <PackageReference Include="xunit" Version="2.3.0-*" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.0-*" />
+    <PackageReference Include="xunit" Version="2.3.*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.*" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SampleApp\SampleApp.fsproj" />
-    <ProjectReference Include="..\..\..\src\Giraffe\Giraffe.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

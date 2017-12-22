@@ -2,7 +2,7 @@ module Giraffe.FormatExpressionTests
 
 open System
 open Xunit
-open Giraffe.FormatExpressions
+open FormatExpressions
 
 let assertFail msg = Assert.True(false, msg)
 
@@ -15,7 +15,7 @@ let ``Simple matching format string returns correct tuple`` () =
     tryMatchInput "/foo/%s/bar/%c/%b/test/%i" "/foo/john/bar/M/true/test/123" false
     |> function
         | None -> assertFail "Format failed to match input."
-        | Some (s1 : string, 
+        | Some (s1 : string,
                 c1 : char,
                 b1 : bool,
                 i1 : int) ->
@@ -29,7 +29,7 @@ let ``Format string with escaped "%" returns correct tuple`` () =
     tryMatchInput "/foo/%%s/%%%s/%c/%b/test/%i" "/foo/%s/%bar/M/true/test/123" false
     |> function
         | None -> assertFail "Format failed to match input."
-        | Some (s1 : string, 
+        | Some (s1 : string,
                 c1 : char,
                 b1 : bool,
                 i1 : int) ->
@@ -110,15 +110,15 @@ let ``Format string with single "%i" matches "0"`` () =
     |> function
         | None -> assertFail "Format failed to match input."
         | Some (i : int) -> Assert.Equal(0, i)
- 
-[<Fact>]       
+
+[<Fact>]
 let ``Format string with single "%i" matches int32 min value`` () =
     tryMatchInput "%i" "-2147483648" false
     |> function
         | None -> assertFail "Format failed to match input."
         | Some (i : int) -> Assert.Equal(Int32.MinValue, i)
- 
-[<Fact>]       
+
+[<Fact>]
 let ``Format string with single "%i" matches int32 max value`` () =
     tryMatchInput "%i" "2147483647" false
     |> function
@@ -131,14 +131,14 @@ let ``Format string with single "%d" matches "0"`` () =
     |> function
         | None -> assertFail "Format failed to match input."
         | Some (d : int64) -> Assert.Equal(0L, d)
-        
+
 [<Fact>]
 let ``Format string with single "%d" matches int64 min value`` () =
     tryMatchInput "%d" "-9223372036854775808" false
     |> function
         | None -> assertFail "Format failed to match input."
         | Some (d : int64) -> Assert.Equal(Int64.MinValue, d)
-        
+
 [<Fact>]
 let ``Format string with single "%d" matches int64 max value`` () =
     tryMatchInput "%d" "9223372036854775807" false
@@ -152,21 +152,21 @@ let ``Format string with single "%f" matches "0.0"`` () =
     |> function
         | None -> assertFail "Format failed to match input."
         | Some (f : float) -> Assert.Equal(0.0, f)
-        
+
 [<Fact>]
 let ``Format string with single "%f" matches "0.5"`` () =
     tryMatchInput "%f" "0.5" false
     |> function
         | None -> assertFail "Format failed to match input."
         | Some (f : float) -> Assert.Equal(0.5, f)
-        
+
 [<Fact>]
 let ``Format string with single "%f" matches "100500.7895"`` () =
     tryMatchInput "%f" "100500.7895" false
     |> function
         | None -> assertFail "Format failed to match input."
         | Some (f : float) -> Assert.Equal(100500.7895, f)
-        
+
 [<Fact>]
 let ``Format string with single "%f" matches "-45.342"`` () =
     tryMatchInput "%f" "-45.342" false
@@ -219,7 +219,7 @@ let ``Format string with single "%i" doesn't match int32 max value + 1`` () =
     |> function
         | None -> ()
         | Some _ -> assertFail "Should not have matched string"
-        
+
 [<Fact>]
 let ``Format string with single "%f" doesn't match "0"`` () =
     tryMatchInput "%f" "0" false

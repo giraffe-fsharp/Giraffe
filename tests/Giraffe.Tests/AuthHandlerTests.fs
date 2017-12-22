@@ -7,7 +7,6 @@ open System.Security.Claims
 open Microsoft.AspNetCore.Http
 open Xunit
 open NSubstitute
-open Giraffe.HttpHandlers
 open FsCheck
 open FsCheck.Xunit
 

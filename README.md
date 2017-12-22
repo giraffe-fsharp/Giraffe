@@ -1,6 +1,6 @@
 # Giraffe
 
-![Giraffe](https://raw.githubusercontent.com/dustinmoris/Giraffe/develop/giraffe.png)
+![Giraffe](https://raw.githubusercontent.com/giraffe-fsharp/Giraffe/develop/giraffe.png)
 
 A functional ASP.NET Core micro web framework for building rich web applications.
 
@@ -10,18 +10,19 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 | Windows | Linux |
 | :------ | :---- |
-| [![Windows Build status](https://ci.appveyor.com/api/projects/status/0ft2427dflip7wti/branch/develop?svg=true)](https://ci.appveyor.com/project/dustinmoris/giraffe/branch/develop) | [![Linux Build status](https://travis-ci.org/dustinmoris/Giraffe.svg?branch=develop)](https://travis-ci.org/dustinmoris/Giraffe/builds?branch=develop) |
-| [![Windows Build history](https://buildstats.info/appveyor/chart/dustinmoris/giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/giraffe/history) | [![Linux Build history](https://buildstats.info/travisci/chart/dustinmoris/Giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://travis-ci.org/dustinmoris/Giraffe/builds?branch=develop) |
+| [![Windows Build status](https://ci.appveyor.com/api/projects/status/0ft2427dflip7wti/branch/develop?svg=true)](https://ci.appveyor.com/project/dustinmoris/giraffe/branch/develop) | [![Linux Build status](https://travis-ci.org/giraffe-fsharp/Giraffe.svg?branch=develop)](https://travis-ci.org/giraffe-fsharp/Giraffe/builds?branch=develop) |
+| [![Windows Build history](https://buildstats.info/appveyor/chart/dustinmoris/giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/giraffe/history?branch=develop) | [![Linux Build history](https://buildstats.info/travisci/chart/giraffe-fsharp/Giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://travis-ci.org/giraffe-fsharp/Giraffe/builds?branch=develop) |
 
 #### ATTENTION:
 
-Giraffe was formerly known as [ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) and has been later [renamed to Giraffe](https://github.com/dustinmoris/Giraffe/issues/15) to better distinguish from AWS Lambda and to establish its own unique brand.
+Giraffe was formerly known as [ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) and has been later [renamed to Giraffe](https://github.com/giraffe-fsharp/Giraffe/issues/15) to better distinguish from AWS Lambda and to establish its own unique brand.
 
 The old NuGet package has been unlisted and will no longer receive any updates. Please use the [Giraffe NuGet package](https://www.nuget.org/packages/Giraffe) going forward.
 
 ## Table of contents
 
 - [About](#about)
+- [Installation](#installation)
 - [Basics](#basics)
     - [HttpHandler](#httphandler)
     - [Combinators](#combinators)
@@ -58,41 +59,40 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [negotiate](#negotiate)
     - [negotiateWith](#negotiatewith)
     - [htmlFile](#htmlfile)
+    - [html](#html)
     - [renderHtml](#renderhtml)
     - [redirectTo](#redirectto)
     - [portRoute](#portroute)
     - [warbler](#warbler)
+- [StatusCode HttpHandlers](#statuscode-httphandlers)
+    - [Intermediate](#intermediate)
+    - [Successful](#successful)
+    - [RequestErrors](#requesterrors)
+    - [ServerErrors](#servererrors)
 - [Additional HttpHandlers](#additional-httphandlers)
-    - [Giraffe.Razor](#girafferazor)
-        - [razorView](#razorview)
-        - [razorHtmlView](#razorhtmlview)
-    - [Giraffe.DotLiquid](#giraffedotliquid)
-        - [dotLiquid](#dotliquid)
-        - [dotLiquidTemplate](#dotliquidtemplate)
-        - [dotLiquidHtmlView](#dotliquidhtmlview)
     - [Giraffe.TokenRouter](#giraffetokenrouter)
         - [router](#router)
         - [routing functions](#routing-functions)
+    - [Additional NuGet packages](#additional-nuget-packages)
 - [Custom HttpHandlers](#custom-httphandlers)
 - [Nested Response Writing](#nested-response-writing)
-    - [WriteJson](#writejson)
-    - [WriteXml](#writexml)
-    - [WriteText](#writetext)
-    - [RenderHtml](#renderhtml-1)
-    - [ReturnHtmlFile](#returnhtmlfile)
+    - [WriteJsonAsync](#writejsonasync)
+    - [WriteXmlAsync](#writexmlasync)
+    - [WriteTextAsync](#writetextasync)
+    - [RenderHtmlAsync](#renderhtmlasync)
+    - [ReturnHtmlFileAsync](#returnhtmlfileasync)
 - [Model Binding](#model-binding)
-    - [BindJson](#bindjson)
-    - [BindXml](#bindxml)
-    - [BindForm](#bindform)
+    - [BindJsonAsync](#bindjsonasync)
+    - [BindXmlAsync](#bindxmlasync)
+    - [BindFormAsync](#bindformasync)
     - [BindQueryString](#bindquerystring)
-    - [BindModel](#bindmodel)
+    - [BindModelAsync](#bindmodelasync)
 - [Error Handling](#error-handling)
-- [Installation](#installation)
 - [Sample applications](#sample-applications)
 - [Benchmarks](#benchmarks)
 - [Building and developing](#building-and-developing)
 - [Contributing](#contributing)
-- [Contributors](#contributors)
+- [Nightly builds and NuGet feed](#nightly-builds-and-nuget-feed)
 - [Blog posts](#blog-posts)
 - [Videos](#videos)
 - [License](#license)
@@ -111,6 +111,46 @@ If you'd like to learn more about the motivation of this project please read my 
 It is not designed to be a competing web product which can be run standalone like NancyFx or Suave, but rather a lean micro framework which aims to complement ASP.NET Core where it comes short for functional developers. The fundamental idea is to build on top of the strong foundation of ASP.NET Core and re-use existing ASP.NET Core building blocks so F# developers can benefit from both worlds.
 
 You can think of [Giraffe](https://www.nuget.org/packages/Giraffe) as the functional counter part of the ASP.NET Core MVC framework.
+
+## Installation
+
+### Using dotnet-new
+
+The easiest way to get started with Giraffe is by installing the [`giraffe-template`](https://www.nuget.org/packages/giraffe-template) package, which adds a new template to your `dotnet new` command line tool:
+
+```
+dotnet new -i "giraffe-template::*"
+```
+
+Afterwards you can create a new Giraffe application by running `dotnet new giraffe`.
+
+For more information about the Giraffe tempalte please visit the official [giraffe-template repository](https://github.com/giraffe-fsharp/giraffe-template).
+
+### Doing it manually
+
+Install the [Giraffe](https://www.nuget.org/packages/Giraffe) NuGet package:
+
+```
+PM> Install-Package Giraffe
+```
+
+Create a web application and plug it into the ASP.NET Core middleware:
+
+```fsharp
+open Giraffe
+
+let webApp =
+    choose [
+        route "/ping"   >=> text "pong"
+        route "/"       >=> htmlFile "/pages/index.html" ]
+
+type Startup() =
+    member __.Configure (app : IApplicationBuilder)
+                        (env : IHostingEnvironment)
+                        (loggerFactory : ILoggerFactory) =
+
+        app.UseGiraffe webApp
+```
 
 ## Basics
 
@@ -178,9 +218,9 @@ let app =
 
 ### Tasks
 
-Another important aspect to Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core works only with tasks out of the box).
+Another important aspect to Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core only works with tasks out of the box).
 
-For this purpose Giraffe has it's own `task {}` workflow which comes with the `Giraffe.Tasks` module. Syntactically it works identical to F#'s async workflows:
+For this purpose Giraffe has it's own `task {}` workflow which comes with the `Giraffe.Tasks` NuGet package. Syntactically it works identical to F#'s async workflows:
 
 ```fsharp
 open Giraffe.Tasks
@@ -189,12 +229,12 @@ open Giraffe.HttpHandlers
 let personHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
-            let! person = ctx.BindModel<Person>()
+            let! person = ctx.BindModelAsync<Person>()
             return! json person next ctx
         }
 ```
 
-The `task {}` workflow is not strictly tied to Giraffe and can be used from anywhere in an F# application:
+The `task {}` workflow is not strictly tied to Giraffe and can also be used from other places in an F# application:
 
 ```fsharp
 open Giraffe.Tasks
@@ -211,29 +251,7 @@ let readFileAndDoSomething (filePath : string) =
     }
 ```
 
-Note, you can still continue to use regular `Async<'T>` workflows from within the `task{}` computation expression without having to manually convert back into a `Task<'T>`.
-
-If you were to write the same code with F#'s async workflow it would look something like this:
-
-
-```fsharp
-let readFileAndDoSomething (filePath : string) =
-    async {
-        use stream = new FileStream(filePath, FileMode.Open)
-        use reader = new StreamReader(stream)
-        let! contents =
-            reader.ReadToEndAsync()
-            |> Async.AwaitTask
-
-        // do something with contents
-
-        return contents
-    }
-```
-
-Apart from the convenience of not having to convert from a `Task<'T>` into an `Async<'T>` workflow and then back again into a `Task<'T>` when returning back to the ASP.NET Core pipeline it also proved to improve overall performance by two figure % in comparison to F#'s async implementation.
-
-The original code for Giraffe's task implementation has been taken from [Robert Peele](https://github.com/rspeele)'s [TaskBuilder.fs](https://github.com/rspeele/TaskBuilder.fs) and gradually modified to better fit Giraffe's use case for a highly scalable ASP.NET Core web application.
+For more information please visit the official [Giraffe.Tasks](https://github.com/giraffe-fsharp/Giraffe.Tasks) GitHub repository.
 
 ## Default HttpHandlers
 
@@ -644,7 +662,7 @@ let app =
     ]
 ```
 
-You can also use the [`WriteText`](#writetext) extension method to return a plain text response back to the client.
+You can also use the [`WriteTextAsync`](#writetextasync) extension method to return a plain text response back to the client.
 
 ### customJson
 
@@ -692,7 +710,7 @@ let app =
     ]
 ```
 
-Alternatively you can also use the [`WriteJson`](#writejson) extension method to return a custom serialized JSON response back to the client.
+Alternatively you can also use the [`WriteJsonAsync`](#writejsonasync) extension method to return a custom serialized JSON response back to the client.
 
 ### json
 
@@ -713,7 +731,7 @@ let app =
     ]
 ```
 
-You can also use the [`WriteJson`](#writejson) extension method to return a default serialized JSON response back to the client.
+You can also use the [`WriteJsonAsync`](#writejsonasync) extension method to return a default serialized JSON response back to the client.
 
 ### xml
 
@@ -735,7 +753,7 @@ let app =
     ]
 ```
 
-You can also use the [`WriteXml`](#writexml) extension method to return an XML response back to the client.
+You can also use the [`WriteXmlAsync`](#writexmlasync) extension method to return an XML response back to the client.
 
 ### negotiate
 
@@ -807,6 +825,19 @@ let app =
     ]
 ```
 
+### html
+
+`html` sets or modifies the body of the `HttpResponse` with the contents of a single string variable. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
+
+#### Example:
+
+```fsharp
+let app =
+    choose [
+        route  "/" >=> html "<html><head><title>Hello World</title></head><body><p>Hello World</p></body></html>"
+    ]
+```
+
 ### renderHtml
 
 `renderHtml` is a more functional way of generating HTML by composing HTML elements in F# to generate a rich Model-View output.
@@ -817,7 +848,8 @@ It is based on [Suave's Experimental Html](https://github.com/SuaveIO/suave/blob
 Create a function that accepts a model and returns an `XmlNode`:
 
 ```fsharp
-open Giraffe.XmlViewEngine
+open Giraffe.GiraffeViewEngine
+open Giraffe.GiraffeViewEngine.Attributes
 
 let model = { Name = "John Doe" }
 
@@ -834,8 +866,9 @@ let partial () =
 
 let personView model =
     [
-        div [] [
-                h3 [] (sprintf "Hello, %s" model.Name |> encodedText)
+        div [_class "container"] [
+                h3 [_title "Some title attribute"] (sprintf "Hello, %s" model.Name |> encodedText)
+                a [_href "https://github.com/giraffe-fsharp/Giraffe"] [encodedText "Github"]
             ]
         div [] [partial()]
     ] |> layout
@@ -845,6 +878,8 @@ let app =
         route "/" >=> (personView model |> renderHtml)
     ]
 ```
+
+Notice that attributes (from `Giraffe.GiraffeViewEngine.Attributes`) are prefixed with an underscore (_) to prevent naming collisions.
 
 ### redirectTo
 
@@ -917,148 +952,133 @@ A warbler will help to evaluate the function every time the route is hit.
 let warbler f a = f a a
 ```
 
+## StatusCode HttpHandlers
+
+Giraffe also offers a default set of so called `HttpStatusCodeHandlers`, which can be used to return a response with a specific HTTP status code.
+
+If you need to set the HTTP status code as part of a custom `HttpHandler` then please use the [`setStatusCode`](#setstatuscode) handler instead.
+
+Giraffe's default set of `HttpStatusCodeHandlers` are categorised in four sub modules:
+
+- [Intermediate](#intermediate) (1xx status codes)
+- [Successful](#successful) (2xx status codes)
+- [RequestErrors](#requesterrors) (4xx status codes)
+- [ServerErrors](#servererrors) (5xx status codes)
+
+For most `HttpStatusCodeHandlers` (except `Intermediate`) there are two available function versions - a lower case and an upper case version.
+
+The lower case version (e.g. `Successful.ok`) is the lower level function which let's you combine it with any other `HttpHandler`:
+
+Example:
+
+```fsharp
+let app = route `/` >=> Successful.ok (text "Hello World")
+```
+
+This is essentially the equivalent of:
+
+```fsharp
+let app = route `/` >=> setStatusCode 200 >=> text "Hello World"
+```
+
+The upper case version (e.g. `Successful.OK`) can be used to return an object back to the client through Giraffe's deafult content negotiation.
+
+Example:
+
+```fsharp
+type Person = { FirstName : string; LastName : string }
+
+let johnDoe = { FirstName = "John"; LastName = "Doe" }
+
+let app = choose [
+    route `/`     >=> Successful.OK "Hello World"
+    route `/john` >=> Successful.OK johnDoe
+]
+```
+
+In order to better explain the upper case version you could equally write the same code this way:
+
+```fsharp
+type Person = { FirstName : string; LastName : string }
+
+let johnDoe = { FirstName = "John"; LastName = "Doe" }
+
+let app = choose [
+    route `/`     >=> setStatusCode 200 >=> negotiate "Hello World"
+    route `/john` >=> setStatusCode 200 >=> negotiate johnDoe
+]
+```
+
+For HTTP 3xx status codes it is recommended to use the [redirectTo](#redirectto) http handler.
+
+### Intermediate
+
+| HTTP Status Code | Function name | Example |
+| ---------------- | ------------- | ------- |
+| 100 | CONTINUE | `route "/" >=> Intermediate.CONTINUE` |
+| 101 | SWITCHING_PROTO | `route "/" >=> Intermediate.SWITCHING_PROTO` |
+
+### Successful
+
+| HTTP Status Code | Function name | Example |
+| ---------------- | ------------- | ------- |
+| 200 | ok | `route "/" >=> Successful.ok (text "Hello World")` |
+| 200 | OK | `route "/" >=> Successful.OK "Hello World"` |
+| 201 | created | `route "/" >=> Successful.created (json someObj)` |
+| 201 | CREATED | `route "/" >=> Successful.CREATED someObj` |
+| 202 | accepted | `route "/" >=> Successful.accepted (xml someObj)` |
+| 202 | ACCEPTED | `route "/" >=> Successful.ACCEPTED someObj` |
+
+### RequestErrors
+
+| HTTP Status Code | Function name | Example |
+| ---------------- | ------------- | ------- |
+| 400 | badRequest | `route "/" >=> RequestErrors.badRequest (text "Don't like it")` |
+| 400 | BAD_REQUEST | `route "/" >=> RequestErrors.BAD_REQUEST "Don't like it"` |
+| 401 | unauthorized | `route "/" >=> RequestErrors.unauthorized "Basic" "MyApp" (text "Don't know who you are")` |
+| 401 | UNAUTHORIZED | `route "/" >=> RequestErrors.UNAUTHORIZED "Don't know who you are"` |
+| 403 | forbidden | `route "/" >=> RequestErrors.forbidden (text "Not enough permissions")` |
+| 403 | FORBIDDEN | `route "/" >=> RequestErrors.FORBIDDEN "Not enough permissions"` |
+| 404 | notFound | `route "/" >=> RequestErrors.notFound (text "Page not found")` |
+| 404 | NOT_FOUND | `route "/" >=> RequestErrors.NOT_FOUND "Page not found"` |
+| 405 | methodNotAllowed | `route "/" >=> RequestErrors.methodNotAllowed (text "Don't support this")` |
+| 405 | METHOD_NOT_ALLOWED | `route "/" >=> RequestErrors.METHOD_NOT_ALLOWED "Don't support this"` |
+| 406 | notAcceptable | `route "/" >=> RequestErrors.notAcceptable (text "Not having this")` |
+| 406 | NOT_ACCEPTABLE | `route "/" >=> RequestErrors.NOT_ACCEPTABLE "Not having this"` |
+| 409 | conflict | `route "/" >=> RequestErrors.conflict (text "some conflict")` |
+| 409 | CONFLICT | `route "/" >=> RequestErrors.CONFLICT "some conflict"` |
+| 410 | gone | `route "/" >=> RequestErrors.gone (text "Too late, not here anymore")` |
+| 410 | GONE | `route "/" >=> RequestErrors.GONE "Too late, not here anymore"` |
+| 415 | unsupportedMediaType | `route "/" >=> RequestErrors.unsupportedMediaType (text "Please send in different format")` |
+| 415 | UNSUPPORTED_MEDIA_TYPE | `route "/" >=> RequestErrors.UNSUPPORTED_MEDIA_TYPE "Please send in different format"` |
+| 422 | unprocessableEntity | `route "/" >=> RequestErrors.unprocessableEntity (text "Can't do anything with this")` |
+| 422 | UNPROCESSABLE_ENTITY | `route "/" >=> RequestErrors.UNPROCESSABLE_ENTITY "Can't do anything with this"` |
+| 428 | preconditionRequired | `route "/" >=> RequestErrors.preconditionRequired (test "Please do something else first")` |
+| 428 | PRECONDITION_REQUIRED | `route "/" >=> RequestErrors.PRECONDITION_REQUIRED "Please do something else first"` |
+| 429 | tooManyRequests | `route "/" >=> RequestErrors.tooManyRequests (text "Slow down champ")` |
+| 429 | TOO_MANY_REQUESTS | `route "/" >=> RequestErrors.TOO_MANY_REQUESTS "Slow down champ"` |
+
+Note that the `unauthorized` and `UNAUTHORIZED` functions require two additional parameters, an [authentication scheme](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication#Authentication_schemes) and a realm.
+
+### ServerErrors
+
+| HTTP Status Code | Function name | Example |
+| ---------------- | ------------- | ------- |
+| 500 | internalError | `route "/" >=> ServerErrors.internalError (text "Ops, something went wrong")` |
+| 500 | INTERNAL_ERROR | `route "/" >=> ServerErrors.INTERNAL_ERROR "Not implemented"` |
+| 501 | notImplemented | `route "/" >=> ServerErrors.notImplemented (text "Not implemented")` |
+| 501 | NOT_IMPLEMENTED | `route "/" >=> ServerErrors.NOT_IMPLEMENTED "Ops, something went wrong"` |
+| 502 | badGateway | `route "/" >=> ServerErrors.badGateway (text "Bad gateway")` |
+| 502 | BAD_GATEWAY | `route "/" >=> ServerErrors.BAD_GATEWAY "Bad gateway"` |
+| 503 | serviceUnavailable | `route "/" >=> ServerErrors.serviceUnavailable (text "Service unavailable")` |
+| 503 | SERVICE_UNAVAILABLE | `route "/" >=> ServerErrors.SERVICE_UNAVAILABLE "Service unavailable"` |
+| 504 | gatewayTimeout | `route "/" >=> ServerErrors.gatewayTimeout (text "Gateway timeout")` |
+| 504 | GATEWAY_TIMEOUT | `route "/" >=> ServerErrors.GATEWAY_TIMEOUT "Gateway timeout"` |
+| 505 | invalidHttpVersion | `route "/" >=> ServerErrors.invalidHttpVersion (text "Invalid HTTP version")` |
+
 ## Additional HttpHandlers
 
-There's a few additional `HttpHandler` functions which you can get through referencing extra NuGet packages.
-
-### Giraffe.Razor
-
-The `Giraffe.Razor` NuGet package adds additional `HttpHandler` functions to render Razor views from Giraffe.
-
-#### razorView
-
-`razorView` uses the official ASP.NET Core MVC Razor view engine to compile a page and set the body of the `HttpResponse`. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
-
-The `razorView` handler requires the view name, an object model and the contentType of the response to be passed in. It also requires to be enabled through the `AddRazorEngine` function during start-up.
-
-##### Example:
-Add the razor engine service during start-up:
-
-```fsharp
-open Giraffe.Razor.Middleware
-
-type Startup() =
-    member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =
-        let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
-        services.AddRazorEngine(viewsFolderPath) |> ignore
-```
-
-Use the razorView function:
-
-```fsharp
-open Giraffe.Razor.HttpHandlers
-
-let model = { WelcomeText = "Hello World" }
-
-let app =
-    choose [
-        // Assuming there is a view called "Index.cshtml"
-        route  "/" >=> razorView "text/html" "Index" model
-    ]
-```
-
-#### razorHtmlView
-
-`razorHtmlView` is the same as `razorView` except that it automatically sets the response as `text/html`.
-
-##### Example:
-Add the razor engine service during start-up:
-
-```fsharp
-open Giraffe.Razor.Middleware
-
-type Startup() =
-    member __.ConfigureServices (services : IServiceCollection, env : IHostingEnvironment) =
-        let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
-        services.AddRazorEngine(viewsFolderPath) |> ignore
-```
-
-Use the razorView function:
-
-```fsharp
-open Giraffe.Razor.HttpHandlers
-
-let model = { WelcomeText = "Hello World" }
-
-let app =
-    choose [
-        // Assuming there is a view called "Index.cshtml"
-        route  "/" >=> razorHtmlView "Index" model
-    ]
-```
-
-### Giraffe.DotLiquid
-
-The `Giraffe.DotLiquid` NuGet package adds additional `HttpHandler` functions to render DotLiquid templates in Giraffe.
-
-#### dotLiquid
-
-`dotLiquid` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
-
-The `dotLiquid` handler requires the content type and the actual template to be passed in as two string values together with an object model. This handler is supposed to be used as the base handler for other http handlers which want to utilize the DotLiquid template engine (e.g. you could create an SVG handler on top of it).
-
-##### Example:
-
-```fsharp
-open Giraffe.DotLiquid.HttpHandlers
-
-type Person =
-    {
-        FirstName : string
-        LastName  : string
-    }
-
-let template = "<html><head><title>DotLiquid</title></head><body><p>First name: {{ firstName }}<br />Last name: {{ lastName }}</p></body></html>"
-
-let app =
-    choose [
-        route  "/foo" >=> dotLiquid "text/html" template { FirstName = "Foo"; LastName = "Bar" }
-    ]
-```
-
-#### dotLiquidTemplate
-
-`dotLiquidTemplate` uses the [DotLiquid](http://dotliquidmarkup.org/) template engine to set or modify the body of the `HttpResponse`. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more.
-
-This http handler takes a relative path of a template file, an associated model and the contentType of the response as parameters.
-
-##### Example:
-
-```fsharp
-open Giraffe.DotLiquid.HttpHandlers
-
-type Person =
-    {
-        FirstName : string
-        LastName  : string
-    }
-
-let app =
-    choose [
-        route  "/foo" >=> dotLiquidTemplate "text/html" "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
-    ]
-```
-
-#### dotLiquidHtmlView
-
-`dotLiquidHtmlView` is the same as `dotLiquidTemplate` except that it automatically sets the response as `text/html`.
-
-##### Example:
-
-```fsharp
-open Giraffe.DotLiquid.HttpHandlers
-
-type Person =
-    {
-        FirstName : string
-        LastName  : string
-    }
-
-let app =
-    choose [
-        route  "/foo" >=> dotLiquidHtmlView "templates/person.html" { FirstName = "Foo"; LastName = "Bar" }
-    ]
-```
+There's a few additional `HttpHandler` functions which you can get through referencing extra modules or NuGet packages.
 
 ### Giraffe.TokenRouter
 
@@ -1104,14 +1124,14 @@ let notFound = setStatusCode 404 >=> text "Not found"
 let app =
     router notFound [
         route "/"       (text "index")
-        route "/about"  => text "about"
+        route "/about"  (text "about")
         routef "parsing/%s/%i" (fun (s,i) -> text (sprintf "Recieved %s & %i" s i))
         subRoute "/api" [
             GET [
-                route "/"       <| text "api index"
+                route "/"       (text "api index")
                 route "/about"  (text "api about")
                 subRoute "/v2" [
-                    route "/"       <| text "api v2 index"
+                    route "/"       (text "api v2 index")
                     route "/about"  (text "api v2 about")
                 ]
             ]
@@ -1119,6 +1139,13 @@ let app =
         ]
     ]
 ```
+
+### Additional NuGet packages
+
+There's more `HttpHandler` functions available through additional NuGet packages:
+
+- [Giraffe.Razor](https://github.com/giraffe-fsharp/Giraffe.Razor): Adds native Razor view functionality to Giraffe web applications.
+- [Giraffe.DotLiquid](https://github.com/giraffe-fsharp/Giraffe.DotLiquid): Adds native DotLiquid template functionality to Giraffe web applications.
 
 ## Custom HttpHandlers
 
@@ -1171,11 +1198,11 @@ let app =
 
 ## Nested Response Writing
 
-The `Giraffe.HttpContextExtensions` module exposes a default set of response writing functions which extend the `HttpContext` object. Instead of using the [`customJson`](#customjson), [`json`](#json), [`xml`](#xml), or [`text`](#text) handlers to compose a custom HttpHandler you can also use the `WriteJson`, `WriteXml` and `WriteText` extension methods to directly write to the response of the `HttpContext` and close the pipeline.
+The `Giraffe.HttpContextExtensions` module exposes a default set of response writing functions which extend the `HttpContext` object. Instead of using the [`customJson`](#customjson), [`json`](#json), [`xml`](#xml), or [`text`](#text) handlers to compose a custom HttpHandler you can also use the `WriteJsonAsync`, `WriteXmlAsync` and `WriteTextAsync` extension methods to directly write to the response of the `HttpContext` and close the pipeline.
 
-### WriteJson
+### WriteJsonAsync
 
-`ctx.WriteJson someObj` can be used to return a JSON response back to the client. Alternatively you can use `ctx.WriteJson (settings : JsoSerializerSettings) someObj` to customize the generated JSON before sending the response back to the client.
+`ctx.WriteJsonAsync someObj` can be used to return a JSON response back to the client. Alternatively you can use `ctx.WriteJsonAsync (settings : JsoSerializerSettings) someObj` to customize the generated JSON before sending the response back to the client.
 
 #### Example:
 
@@ -1190,7 +1217,7 @@ type Person =
 let myJsonHandler : HttpHandler =
     fun next ctx ->
         let person = { FirstName = "Foo"; LastName = "Bar" }
-        ctx.WriteJson person
+        ctx.WriteJsonAsync person
 
 let app =
     choose [
@@ -1198,9 +1225,9 @@ let app =
     ]
 ```
 
-### WriteXml
+### WriteXmlAsync
 
-`ctx.WriteXml someObj` can be used to return an XML response back to the client.
+`ctx.WriteXmlAsync someObj` can be used to return an XML response back to the client.
 
 #### Example:
 
@@ -1215,7 +1242,7 @@ type Person =
 let myXmlHandler : HttpHandler =
     fun next ctx ->
         let person = { FirstName = "Foo"; LastName = "Bar" }
-        ctx.WriteXml person
+        ctx.WriteXmlAsync person
 
 let app =
     choose [
@@ -1223,9 +1250,9 @@ let app =
     ]
 ```
 
-### WriteText
+### WriteTextAsync
 
-`ctx.WriteText "some text"` can be used to return a plain text response back to the client.
+`ctx.WriteTextAsync "some text"` can be used to return a plain text response back to the client.
 
 #### Example:
 
@@ -1233,7 +1260,7 @@ let app =
 let myTextHandler : HttpHandler =
     fun next ctx ->
         let str = "Hello World"
-        ctx.WriteText str
+        ctx.WriteTextAsync str
 
 let app =
     choose [
@@ -1241,9 +1268,9 @@ let app =
     ]
 ```
 
-### RenderHtml
+### RenderHtmlAsync
 
-`ctx.RenderHtml someNode` can be used to return a [XmlViewEngine](#renderhtml) node.
+`ctx.RenderHtmlAsync someNode` can be used to return a [GiraffeViewEngine](#renderhtmlasync) node.
 
 #### Example:
 
@@ -1257,7 +1284,7 @@ let myHtmlHandler =
                     h1 [] [EncodedText "Hello world"]
                 ]
             ]
-        ctx.RenderHtml(htmlDoc)
+        ctx.RenderHtmlAsync(htmlDoc)
 
 let app =
     choose [
@@ -1265,16 +1292,16 @@ let app =
     ]
 ```
 
-### ReturnHtmlFile
+### ReturnHtmlFileAsync
 
-`ctx.ReturnHtmlFile "./myPage.html"` can be used to return a html file. Note that the path should be relative, similar to [htmlFile](#htmlfile).
+`ctx.ReturnHtmlFileAsync "./myPage.html"` can be used to return a html file. Note that the path should be relative, similar to [htmlFile](#htmlfile).
 
 #### Example:
 
 ```fsharp
 let htmlFileHandler  =
     fun (next:HttpFunc) (ctx:HttpContext) ->
-        ctx.ReturnHtmlFile "./index.html"
+        ctx.ReturnHtmlFileAsync "./index.html"
 
 let app =
     choose [
@@ -1286,9 +1313,9 @@ let app =
 
 The `Giraffe.HttpContextExtensions` module exposes a default set of model binding functions which extend the `HttpContext` object.
 
-### BindJson
+### BindJsonAsync
 
-`ctx.BindJson<'T>()` can be used to bind a JSON payload to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserializer during model binding.
+`ctx.BindJsonAsync<'T>()` can be used to bind a JSON payload to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserialisation during model binding.
 
 #### Example
 
@@ -1305,7 +1332,7 @@ type Car =
     }
 ```
 
-Then create a new `HttpHandler` which uses `BindJson` and use it from an app:
+Then create a new `HttpHandler` which uses `BindJsonAsync` and use it from an app:
 
 ```fsharp
 open Giraffe.HttpHandlers
@@ -1315,7 +1342,7 @@ let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Binds a JSON payload to a Car object
-            let! car = ctx.BindJson<Car>()
+            let! car = ctx.BindJsonAsync<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
@@ -1345,9 +1372,9 @@ Accept: */*
 { "name": "DB9", "make": "Aston Martin", "wheels": 4, "built": "2016-01-01" }
 ```
 
-### bindXml
+### bindXmlAsync
 
-`ctx.BindXml<'T>()` can be used to bind an XML payload to a strongly typed model.
+`ctx.BindXmlAsync<'T>()` can be used to bind an XML payload to a strongly typed model.
 
 #### Example
 
@@ -1364,7 +1391,7 @@ type Car =
     }
 ```
 
-Then create a new `HttpHandler` which uses `BindXml` and use it from an app:
+Then create a new `HttpHandler` which uses `BindXmlAsync` and use it from an app:
 
 ```fsharp
 open Giraffe.HttpHandlers
@@ -1374,7 +1401,7 @@ let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Binds an XML payload to a Car object
-            let! car = ctx.BindXml<Car>()
+            let! car = ctx.BindXmlAsync<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
@@ -1409,9 +1436,9 @@ Accept: */*
 </Car>
 ```
 
-### bindForm
+### BindFormAsync
 
-`ctx.BindForm<'T>()` can be used to bind a form urlencoded payload to a strongly typed model.
+`ctx.BindFormAsync<'T>(?cultureInfo : CultureInfo)` can be used to bind a form urlencoded payload to a strongly typed model.
 
 #### Example
 
@@ -1428,7 +1455,7 @@ type Car =
     }
 ```
 
-Then create a new `HttpHandler` which uses `BindForm` and use it from an app:
+Then create a new `HttpHandler` which uses `BindFormAsync` and use it from an app:
 
 ```fsharp
 open Giraffe.HttpHandlers
@@ -1438,7 +1465,7 @@ let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Binds a form urlencoded payload to a Car object
-            let! car = ctx.BindForm<Car>()
+            let! car = ctx.BindFormAsync<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
@@ -1452,6 +1479,13 @@ let webApp =
                 route "/"    >=> text "index"
                 route "ping" >=> text "pong" ]
         POST >=> route "/car" >=> submitCar ]
+```
+
+You can also specify a `CultureInfo` parameter when binding from a form:
+
+```fsharp
+let british = CultureInfo.CreateSpecificCulture("en-GB")
+let! car = ctx.BindFormAsync<Car> british
 ```
 
 You can test the bind function by sending a HTTP request with a form payload:
@@ -1470,7 +1504,7 @@ Name=DB9&Make=Aston+Martin&Wheels=4&Built=2016-01-01
 
 ### bindQueryString
 
-`ctx.BindQueryString<'T>()` can be used to bind a query string to a strongly typed model.
+`ctx.BindQueryString<'T>(?cultureInfo : CultureInfo)` can be used to bind a query string to a strongly typed model.
 
 #### Example
 
@@ -1513,6 +1547,13 @@ let webApp =
                 route "/car" >=> submitCar ]
 ```
 
+You can also specify a `CultureInfo` parameter when binding from a query string:
+
+```fsharp
+let british = CultureInfo.CreateSpecificCulture("en-GB")
+let car = ctx.BindQueryString<Car> british
+```
+
 You can test the bind function by sending a HTTP request with a query string:
 
 ```
@@ -1523,9 +1564,9 @@ Accept: */*
 
 ```
 
-### bindModel
+### BindModelAsync
 
-`ctx.BindModel<'T>()` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserializer during model binding.
+`ctx.BindModelAsync<'T>(?cultureInfo : CultureInfo)` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserializer during model binding and/or a `CultureInfo` object.
 
 #### Example
 
@@ -1542,7 +1583,7 @@ type Car =
     }
 ```
 
-Then create a new `HttpHandler` which uses `BindModel` and use it from an app:
+Then create a new `HttpHandler` which uses `BindModelAsync` and use it from an app:
 
 ```fsharp
 open Giraffe.HttpHandlers
@@ -1552,7 +1593,7 @@ let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Binds a JSON, XML or form urlencoded payload to a Car object
-            let! car = ctx.BindModel<Car>()
+            let! car = ctx.BindModelAsync<Car>()
 
             // Serializes the Car object back into JSON
             // and sends it back as the response.
@@ -1568,6 +1609,13 @@ let webApp =
         // Can accept GET and POST requests and
         // bind a model from the payload or query string
         route "/car" >=> submitCar ]
+```
+
+You can also specify a `CultureInfo` parameter when using `BindModelAsync`:
+
+```fsharp
+let british = CultureInfo.CreateSpecificCulture("en-GB")
+let! car = ctx.BindModelAsync<Car> british
 ```
 
 ## Error Handling
@@ -1603,54 +1651,15 @@ type Startup() =
 
 It is recommended to set the error handler as the first middleware in the pipeline, so that any unhandled exception from a later middleware can be caught and processed by the error handling function.
 
-## Installation
-
-### Using dotnet-new
-
-The easiest way to get started with Giraffe is by installing the [`giraffe-template`](https://www.nuget.org/packages/giraffe-template) NuGet package, which adds a new template to your `dotnet new` command:
-
-```
-dotnet new -i "giraffe-template::*"
-```
-
-Afterwards you can create a new Giraffe application by running `dotnet new giraffe`.
-
-### Doing it manually
-
-Install the [Giraffe](https://www.nuget.org/packages/Giraffe) NuGet package:
-
-```
-PM> Install-Package Giraffe
-```
-
-Create a web application and plug it into the ASP.NET Core middleware:
-
-```fsharp
-open Giraffe.HttpHandlers
-open Giraffe.Middleware
-
-let webApp =
-    choose [
-        route "/ping"   >=> text "pong"
-        route "/"       >=> htmlFile "/pages/index.html" ]
-
-type Startup() =
-    member __.Configure (app : IApplicationBuilder)
-                        (env : IHostingEnvironment)
-                        (loggerFactory : ILoggerFactory) =
-
-        app.UseGiraffe webApp
-```
-
 ## Sample applications
 
 ### Demo apps
 
-There are three basic sample applications in the [`/samples`](https://github.com/dustinmoris/Giraffe/tree/develop/samples) folder. The [IdentityApp](https://github.com/dustinmoris/Giraffe/tree/develop/samples/IdentityApp) demonstrates how ASP.NET Core Identity can be used with Giraffe, the [JwtApp](https://github.com/dustinmoris/Giraffe/tree/develop/samples/JwtApp) shows how to configure JWT tokens in Giraffe and the [SampleApp](https://github.com/dustinmoris/Giraffe/tree/develop/samples/SampleApp) is a generic sample application covering multiple features.
+There are three basic sample applications in the [`/samples`](https://github.com/giraffe-fsharp/Giraffe/tree/develop/samples) folder. The [IdentityApp](https://github.com/giraffe-fsharp/Giraffe/tree/develop/samples/IdentityApp) demonstrates how ASP.NET Core Identity can be used with Giraffe, the [JwtApp](https://github.com/giraffe-fsharp/Giraffe/tree/develop/samples/JwtApp) shows how to configure JWT tokens in Giraffe and the [SampleApp](https://github.com/giraffe-fsharp/Giraffe/tree/develop/samples/SampleApp) is a generic sample application covering multiple features.
 
 ### Live apps
 
-An example of a live website which uses Giraffe is [https://buildstats.info](https://buildstats.info). It uses the [XmlViewEngine](#renderhtml) to build dynamically rich SVG images and Docker to run the application in the Google Container Engine (see [GitHub repository](https://github.com/dustinmoris/CI-BuildStats)).
+An example of a live website which uses Giraffe is [https://buildstats.info](https://buildstats.info). It uses the [GiraffeViewEngine](#renderhtml) to build dynamically rich SVG images and Docker to run the application in the Google Container Engine (see [GitHub repository](https://github.com/dustinmoris/CI-BuildStats)).
 
 More sample applications will be added in the future.
 
@@ -1675,7 +1684,7 @@ The build script supports the following flags:
 - `-All` will build and test all projects
 - `-Release` will build Giraffe with the `Release` configuration
 - `-Pack` will create a NuGet package for Giraffe and giraffe-template.
-- `-OnlyNetStandard` will build Giraffe only targeting the NETStandard1.6 framework ([see known issues](#known-issues))
+- `-OnlyNetStandard` will build Giraffe only targeting the NETStandard1.6 framework
 
 Examples:
 
@@ -1709,70 +1718,86 @@ Build and test all projects, use the `Release` build configuration and create al
 PS > .\build.ps1 -Release -All -Pack
 ```
 
+### Building on Linux or macOS
+
+In order to successfully run the build script on Linux or macOS you will have to [install PowerShell for Linux or Mac](https://github.com/PowerShell/PowerShell#get-powershell).
+
+Additionally you will have to [install the latest version of Mono](http://www.mono-project.com/download/) and execute the `./build.sh` script which will set the correct `FrameworkPathOverride` before subsequently executing the `./build.ps1` PowerShell script.
+
 ### Development environment
 
 Currently the best way to work with F# on .NET Core is to use [Visual Studio Code](https://code.visualstudio.com/) with the [Ionide](http://ionide.io/) extension. Intellisense and debugging is supported with the latest versions of both.
-
-#### Known issues
-
-Currently there is a known issue with Ionide where [Intellisense breaks when a project targets multiple frameworks](https://github.com/ionide/ionide-vscode-fsharp/issues/416).
-
-This issue affects Giraffe because it targets more than one framework and therefore breaks Intellisense when building the project with the default configuration.
-
-During development you can workaround this issue by invoking the build script with the `-OnlyNetStandard` flag:
-
-```
-PS > .\build.ps1 -OnlyNetStandard
-```
-
-This switch will override the default configuration and allow a frictionless development experience.
-
-The official build by the build server doesn't use this setting and builds the project against all supported target frameworks as you would expect it.
 
 ## Contributing
 
 Help and feedback is always welcome and pull requests get accepted.
 
-When contributing to this repository, please first discuss the change you wish to make via an open issue before submitting a pull request. For new feature requests please describe your idea in more detail and how it could benefit other users as well.
+### TL;DR
 
-Please be aware that Giraffe strictly aims to remain as light as possible while providing generic functionality for building functional web applications. New feature work must be applicable to a broader user base and if this requirement cannot be met sufficiently then a pull request might get rejected. In the case of doubt the maintainer will rather reject a potentially useful feature than adding one too many. This measure is to protect the repository from feature bloat over time and shall not be taken personally.
+- First open an issue to discuss your changes
+- After your change has been formally approved please submit your PR **against the develop branch**
+- Please follow the code convention by examining existing code
+- Add/modify the `README.md` as required
+- Add/modify unit tests as required
+- Please document your changes in the upcoming release notes in `RELEASE_NOTES.md`
+- PRs can only be approved and merged when all checks succeed (builds on Windows and Linux)
 
-When making changes please use existing code as a guideline for coding style and documentation. If you intend to add or change an existing `HttpHandler` then please update the README.md file to reflect these changes there as well. If applicable unit tests must be added or updated and the project must successfully build before a pull request can be accepted.
+### Discuss your change first
+
+When contributing to this repository, please first discuss the change you wish to make via an [open issue](https://github.com/giraffe-fsharp/Giraffe/issues/new) before submitting a pull request. For new feature requests please describe your idea in more detail and how it could benefit other users as well.
+
+Please be aware that Giraffe strictly aims to remain as light as possible while providing generic functionality for building functional web applications. New feature work must be applicable to a broader user base and if this requirement cannot be sufficiently met then a pull request might get rejected. In the case of doubt the maintainer might rather reject a potentially useful feature than adding one too many. This measure is to protect the repository from feature bloat and shall not be taken personally.
+
+### Code conventions
+
+When making changes please use existing code as a guideline for coding style and documentation. For example add spaces when creating tuples (`(a,b)` --> `(a, b)`), annotating variable types (`str:string` --> `str : string`) or other language constructs.
+
+Examples:
+
+```fsharp
+let someHttpHandler:HttpHandler =
+    fun (ctx:HttpContext) next -> task {
+        // Some work
+    }
+```
+
+should be:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (ctx : HttpContext) (next : HttpFunc) ->
+        task {
+            // Some work
+        }
+```
+
+### Keep documentation and unit tests up to date
+
+If you intend to add or change an existing `HttpHandler` then please update the `README.md` file to reflect these changes there as well. If applicable unit tests must be added or updated and the project must successfully build before a pull request can be accepted.
+
+### Submit a pull request against develop
+
+The `develop` branch is the main and only branch which should be used for all pull requests. A merge into `develop` means that your changes are scheduled to go live with the very next release, which could happen any time from the same day up to a couple weeks (depending on priorities and urgency).
+
+Only pull requests which pass all build checks and comply with the general coding guidelines can be approved.
 
 If you have any further questions please let me know.
 
-You can file an [issue on GitHub](https://github.com/dustinmoris/Giraffe/issues/new) or contact me via [https://dusted.codes/about](https://dusted.codes/about).
+You can file an [issue on GitHub](https://github.com/giraffe-fsharp/Giraffe/issues/new) or contact me via [https://dusted.codes/about](https://dusted.codes/about).
 
-## Contributors
+## Nightly builds and NuGet feed
 
-Special thanks to all developers who helped me by submitting pull requests with new feature work, bug fixes and other improvements to keep the project in good shape (in no particular order):
+All official Giraffe packages are published to the official and public NuGet feed.
 
-- [slang25](https://github.com/slang25) (Added subRoute feature and general help to keep things in good shape)
-- [Nicolás Herrera](https://github.com/nicolocodev) (Added razor engine feature)
-- [Dave Shaw](https://github.com/xdaDaveShaw) (Extended sample application and general help to keep things in good shape)
-- [Tobias Burger](https://github.com/toburger) (Fixed issues with culture specific parsers)
-- [David Sinclair](https://github.com/dsincl12) (Created the dotnet-new template for Giraffe and fixed the default JSON formatting during serialization)
-- [Florian Verdonck](https://github.com/nojaf) (Ported Suave's experimental Html into Giraffe, implemented the warbler and general help with the project as well as feature development)
-- [Roman Melnikov](https://github.com/Neftedollar) (Added `redirectTo` route)
-- [Diego B. Fernandez](https://github.com/diegobfernandez) (Added support for the `Option<'T>` type in the query string model binding)
-- [Jimmy Byrd](https://github.com/TheAngryByrd) (Added Linux builds)
-- [Jon Canning](https://github.com/JonCanning) (Moved the Razor and DotLiquid http handlers into separate NuGet packages and added the `routeBind` handler as well as some useful `HttpContext` extensions and bug fixes)
-- [Andrew Grant](https://github.com/GraanJonlo) (Fixed bug in the `giraffe-template` NuGet package)
-- [Gerard](https://github.com/gerardtoconnor) (Changed the API to continuations instead of binding HttpHandlers and to tasks from async. Also added the TokenRouter feature and awful lot of general help and community support)
-- [Mitchell Tilbrook](https://github.com/marukami) (Helped to fix documentation)
-- [Ody Mbegbu](https://github.com/odytrice) (Helped to improve the giraffe-template)
-- [Reed Mullanix](https://github.com/TOTBWF) (Helped with bug fixes)
-- [Lukas Nordin](https://github.com/lukethenuke) (Helped with bug fixes)
-- [Banashek](https://github.com/Banashek) (Migrated Giraffe to .NET Core 2.0)
-- [Yevhenii Tsalko](https://github.com/YTsalko) (Migrated sample app to .NET Core 2.0)
-- [Tor Hovland](https://github.com/torhovland) (Helped with the sample applications, demonstrating CORS, JWT and configuration options)
-- [dawedawe](https://github.com/dawedawe) (README fixes)
-- [Dragan Jovanović](https://github.com/draganjovanovic1) (Changed the UseGiraffeErrorHandler method to allow chaining of middleware and added policy based auth handlers)
-- [Viquoc Quan](https://github.com/vtquan) (Fixed bug in giraffe-template)
-- [Kerry Jones](https://github.com/KerryRJ) (Helped to fix bugs and added custom JSON serialization support)
-- [Steffen Forkmann](https://github.com/forki) (Improved the htmlFile http handler and ported Suave's status code handlers as well as general help with the project)
+Unofficial builds (such as pre-release builds from the `develop` branch and pull requests) produce unofficial pre-release NuGet packages which can be pulled from the project's public NuGet feed on AppVeyor:
 
-If you submit a pull request please feel free to add yourself to this list as part of the PR.
+```
+https://ci.appveyor.com/nuget/giraffe
+```
+
+If you add this source to your NuGet CLI or project settings then you can pull unofficial NuGet packages for quick feature testing or urgent hot fixes.
+
+**Please be aware that unofficial builds have not gone through the scrunity of offical releases and their usage is on your own risk.**
 
 ## Blog posts
 
@@ -1792,7 +1817,7 @@ If you have blogged about Giraffe, demonstrating a useful topic or some other ti
 
 ## License
 
-[Apache 2.0](https://raw.githubusercontent.com/dustinmoris/Giraffe/master/LICENSE)
+[Apache 2.0](https://raw.githubusercontent.com/giraffe-fsharp/Giraffe/master/LICENSE)
 
 ## Contact and Slack Channel
 

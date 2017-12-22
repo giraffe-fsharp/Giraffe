@@ -1,4 +1,3 @@
-
 /// ---------------------------
 /// Attribution to original authors of this code
 /// ---------------------------
@@ -14,7 +13,7 @@
 /// Thanks to Suave (https://github.com/SuaveIO/suave) for letting us borrow their code
 /// and thanks to Florian Verdonck (https://github.com/nojaf) for porting it to Giraffe.
 
-module Giraffe.XmlViewEngine
+module Giraffe.GiraffeViewEngine
 
 open System
 open System.Net
@@ -196,6 +195,113 @@ let dialog     = tag "dialog"
 let menu       = tag "menu"
 let menuitem   = voidTag "menuitem"
 let summary    = tag "summary"
+
+/// Attributes
+module Attributes =
+    // https://www.w3.org/TR/html5/index.html#attributes-1
+    let _abbr value = attr "abbr" value
+    let _accept value = attr "accept" value
+    let _acceptCharset value = attr "accept-charset" value
+    let _accesskey value = attr "accesskey" value
+    let _action value = attr "action" value
+    let _alt value = attr "alt" value
+    let _autocomplete value = attr "autocomplete" value
+    let _border value = attr "border" value
+    let _challenge value = attr "challenge" value
+    let _charset value = attr "charset" value
+    let _cite value = attr "cite" value
+    let _class value = attr "class" value
+    let _cols value = attr "cols" value
+    let _colspan value = attr "colspan" value
+    let _content value = attr "content" value
+    let _contenteditable value = attr "contenteditable" value
+    let _coords value = attr "coords" value
+    let _crossorigin value = attr "crossorigin" value
+    let _data value = attr "data" value
+    let _datetime value = attr "datetime" value
+    let _dir value = attr "dir" value
+    let _dirname value = attr "dirname" value
+    let _download value = attr "download" value
+    let _enctype value = attr "enctype" value
+    let _for value = attr "for" value
+    let _form value = attr "form" value
+    let _formaction value = attr "formaction" value
+    let _formenctype value = attr "formenctype" value
+    let _formmethod value = attr "formmethod" value
+    let _formtarget value = attr "formtarget" value
+    let _headers value = attr "headers" value
+    let _height value = attr "height" value
+    let _high value = attr "high" value
+    let _href value = attr "href" value
+    let _hreflang value = attr "hreflang" value
+    let _httpEquiv value = attr "http-equiv" value
+    let _id value = attr "id" value
+    let _keytype value = attr "keytype" value
+    let _kind value = attr "kind" value
+    let _label value = attr "label" value
+    let _lang value = attr "lang" value
+    let _list value = attr "list" value
+    let _low value = attr "low" value
+    let _manifest value = attr "manifest" value
+    let _max value = attr "max" value
+    let _maxlength value = attr "maxlength" value
+    let _media value = attr "media" value
+    let _mediagroup value = attr "mediagroup" value
+    let _method value = attr "method" value
+    let _min value = attr "min" value
+    let _minlength value = attr "minlength" value
+    let _name value = attr "name" value
+    let _optimum value = attr "optimum" value
+    let _pattern value = attr "pattern" value
+    let _placeholder value = attr "placeholder" value
+    let _poster value = attr "poster" value
+    let _preload value = attr "preload" value
+    let _rel value = attr "rel" value
+    let _rows value = attr "rows" value
+    let _rowspan value = attr "rowspan" value
+    let _sandbox value = attr "sandbox" value
+    let _spellcheck value = attr "spellcheck" value
+    let _scope value = attr "scope" value
+    let _shape value = attr "shape" value
+    let _size value = attr "size" value
+    let _sizes value = attr "sizes" value
+    let _span value = attr "span" value
+    let _src value = attr "src" value
+    let _srcdoc value = attr "srcdoc" value
+    let _srclang value = attr "srclang" value
+    let _start value = attr "start" value
+    let _step value = attr "step" value
+    let _style value = attr "style" value
+    let _tabindex value = attr "tabindex" value
+    let _target value = attr "target" value
+    let _title value = attr "title" value
+    let _translate value = attr "translate" value
+    let _type value = attr "type" value
+    let _usemap value = attr "usemap" value
+    let _value value = attr "value" value
+    let _width value = attr "width" value
+    let _wrap value = attr "wrap" value
+
+    let _async = flag "async"
+    let _autofocus = flag "autofocus"
+    let _autoplay = flag "autoplay"
+    let _checked = flag "checked"
+    let _controls = flag "controls"
+    let _default = flag "default"
+    let _defer = flag "defer"
+    let _disabled = flag "disabled"
+    let _formnovalidate = flag "formnovalidate"
+    let _hidden = flag "hidden"
+    let _ismap = flag "ismap"
+    let _loop = flag "loop"
+    let _multiple = flag "multiple"
+    let _muted = flag "muted"
+    let _novalidate = flag "novalidate"
+    let _readonly = flag "readonly"
+    let _required = flag "required"
+    let _reversed = flag "reversed"
+    let _selected = flag "selected"
+    let _typemustmatch = flag "typemustmatch"
 
 /// ---------------------------
 /// Render XML string

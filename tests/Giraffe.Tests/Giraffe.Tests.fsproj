@@ -4,26 +4,24 @@
     <TargetFrameworks>net461;netcoreapp2.0</TargetFrameworks>
     <AssemblyName>Giraffe.Tests</AssemblyName>
     <DebugType>portable</DebugType>
-    <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.0-preview-*" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.*" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.0.*" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.*" />
-    <PackageReference Include="xunit" Version="2.3.0-*" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.0-*" />
-    <PackageReference Include="NSubstitute" Version="2.0.*" />
-    <PackageReference Include="FsCheck" Version="2.10.*" />
-    <PackageReference Include="FsCheck.Xunit" Version="2.10.*" />
+    <PackageReference Include="xunit" Version="2.3.*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.*" />
+    <PackageReference Include="NSubstitute" Version="3.1.*" />
+    <PackageReference Include="FsCheck" Version="3.0.0-*" />
+    <PackageReference Include="FsCheck.Xunit" Version="3.0.0-*" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Giraffe\Giraffe.fsproj" />
-    <ProjectReference Include="..\..\src\Giraffe.DotLiquid\Giraffe.DotLiquid.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,14 +29,15 @@
     <Compile Include="FormatExpressionTests.fs" />
     <Compile Include="HttpHandlerTests.fs" />
     <Compile Include="AuthHandlerTests.fs" />
-    <Compile Include="XmlViewEngineTests.fs" />
-    <Compile Include="TasksTests.fs" />
+    <Compile Include="GiraffeViewEngineTests.fs" />
     <Compile Include="HttpContextExtensionsTests.fs" />
     <Compile Include="TokenRouterTests.fs" />
   </ItemGroup>
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy webroot\* bin\Debug\netcoreapp2.0\webroot\ /y" Condition="'$(IsWindows)' == 'true'" />
-    <Exec Command="xcopy webroot\* bin\Debug\net461\webroot\ /y" Condition="'$(IsWindows)' == 'true'" />
-    <Exec Command="cp webroot/* bin/Debug/netcoreapp2.0/webroot/" Condition="'$(IsWindows)' != 'true'" />
-  </Target>
+
+  <ItemGroup>
+    <Content Include="webroot\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>
