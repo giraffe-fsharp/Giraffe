@@ -62,7 +62,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [html](#html)
     - [renderHtml](#renderhtml)
     - [redirectTo](#redirectto)
-    - [portRoute](#portroute)
+    - [routePorts](#routeports)
     - [warbler](#warbler)
 - [StatusCode HttpHandlers](#statuscode-httphandlers)
     - [Intermediate](#intermediate)
@@ -442,6 +442,7 @@ The following format placeholders are currently supported:
 - `%i` for int32
 - `%d` for int64 (this is custom to Giraffe)
 - `%f` for float/double
+- `%O` for Guid
 
 #### Example:
 
@@ -449,10 +450,11 @@ The following format placeholders are currently supported:
 let app =
     choose [
         route  "/foo" >=> text "Foo"
-        routef "/bar/%s/%i" (fun (name, age) ->
+        routef "/bar/%s/%i/%O" (fun (name, age, id) ->
             // name is of type string
             // age is of type int
-            text (sprintf "Name: %s, Age: %i" name age))
+            // id is of type Guid
+            text (sprintf "Name: %s, Age: %i, Id: %O" name age id))
     ]
 ```
 
@@ -894,9 +896,9 @@ let app =
     ]
 ```
 
-### portRoute
+### routePorts
 
-If your web server is listening to multiple ports through `WebHost.UseUrls` then you can use the `portRoute` HttpHandler to easily filter incoming requests based on their port by providing a list of port number and HttpHandler (`(int * HttpHandler) list`).
+If your web server is listening to multiple ports through `WebHost.UseUrls` then you can use the `routePorts` HttpHandler to easily filter incoming requests based on their port by providing a list of port number and HttpHandler (`(int * HttpHandler) list`).
 
 #### Example
 ```fsharp
@@ -915,7 +917,7 @@ let app9002 =
         ]
     ]
 
-let app = portRoute [
+let app = routePorts [
     (9001, app9001)
     (9002, app9002)
 ]
