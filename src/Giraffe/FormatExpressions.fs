@@ -19,7 +19,7 @@ let formatStringMap =
         'i', ("(-?\d+)",                int32                >> box)  // int
         'd', ("(-?\d+)",                int64                >> box)  // int64
         'f', ("(-?\d+\.{1}\d+)",        float                >> box)  // float
-        'O', (guidFormatStr,            Guid                 >> box)  // guid
+        'O', (guidFormatStr,            Guid                 >> box)  // Guid
     ]
 
 let convertToRegexPatternAndFormatChars (formatString : string) =
