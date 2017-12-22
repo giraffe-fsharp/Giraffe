@@ -62,7 +62,7 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [html](#html)
     - [renderHtml](#renderhtml)
     - [redirectTo](#redirectto)
-    - [portRoute](#portroute)
+    - [routePorts](#routeports)
     - [warbler](#warbler)
 - [StatusCode HttpHandlers](#statuscode-httphandlers)
     - [Intermediate](#intermediate)
@@ -896,9 +896,9 @@ let app =
     ]
 ```
 
-### portRoute
+### routePorts
 
-If your web server is listening to multiple ports through `WebHost.UseUrls` then you can use the `portRoute` HttpHandler to easily filter incoming requests based on their port by providing a list of port number and HttpHandler (`(int * HttpHandler) list`).
+If your web server is listening to multiple ports through `WebHost.UseUrls` then you can use the `routePorts` HttpHandler to easily filter incoming requests based on their port by providing a list of port number and HttpHandler (`(int * HttpHandler) list`).
 
 #### Example
 ```fsharp
@@ -917,7 +917,7 @@ let app9002 =
         ]
     ]
 
-let app = portRoute [
+let app = routePorts [
     (9001, app9001)
     (9002, app9002)
 ]

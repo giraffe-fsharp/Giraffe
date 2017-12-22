@@ -1,6 +1,23 @@
 Release Notes
 =============
 
+## 0.1.0-beta 700
+
+#### Breaking changes
+
+- Renamed `portRoute` to `routePorts` to be more consistent with other routing functions (`route`, `routef`, `routeStartsWith`, etc.)
+
+#### New features
+
+- `routef` and `routeCif` both support `%O` for matching `System.Guid` values now
+- Added HTML attributes helper functions to the `GiraffeViewEngine`.
+
+Example:
+
+```fsharp
+let html = p [ _class "someCssClass"; _id "greetingsText" ] [ encodedText "Hello World" ]
+```
+
 ## 0.1.0-beta-600
 
 #### Breaking changes
