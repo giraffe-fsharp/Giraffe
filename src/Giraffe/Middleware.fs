@@ -3,13 +3,14 @@ module Giraffe.Middleware
 
 open System
 open System.Threading.Tasks
+open System.Xml
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.Extensions.FileProviders
+open Newtonsoft.Json
 open Giraffe.HttpHandlers
+open Giraffe.Serialization
 
 /// ---------------------------
 /// Logging helper functions
@@ -84,3 +85,22 @@ type IApplicationBuilder with
 
     member this.UseGiraffeErrorHandler (handler : ErrorHandler) =
         this.UseMiddleware<GiraffeErrorHandlerMiddleware> handler
+
+type IServiceCollection with
+    member this.AddGiraffeJson (settings : JsonSerializerSettings) =
+        this.AddSingleton<JsonSerializerSettings>(settings)
+            .AddSingleton<IJsonSerializer, NewtonsoftJsonSerializer>()
+
+    member this.AddGiraffeJson() =
+        Json.NewtonsoftJsonSerializer.DefaultSettings |> this.AddGiraffeJson
+
+    member this.AddGiraffeXml (writerSettings : XmlWriterSettings) =
+        this.AddSingleton<XmlWriterSettings>(writerSettings)
+            .AddTransient<IXmlSerializer, DefaultXmlSerializer>()
+
+    member this.AddGiraffeXml() =
+        Xml.DefaultXmlSerializer.DefaultSettings |> this.AddGiraffeXml
+
+    member this.AddGiraffe() =
+        this.AddGiraffeJson()
+            .AddGiraffeXml()

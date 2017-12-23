@@ -72,12 +72,13 @@ let jwtBearerOptions (cfg : JwtBearerOptions) =
     cfg.IncludeErrorDetails <- true
     cfg.Authority <- "https://accounts.google.com"
     cfg.Audience <- "your-oauth-2.0-client-id.apps.googleusercontent.com"
-    cfg.TokenValidationParameters <- new TokenValidationParameters (
+    cfg.TokenValidationParameters <- TokenValidationParameters (
         ValidIssuer = "accounts.google.com"
     )
 
 let configureServices (services : IServiceCollection) =
     services
+        .AddGiraffe()
         .AddAuthentication(authenticationOptions)
         .AddJwtBearer(Action<JwtBearerOptions> jwtBearerOptions) |> ignore
 
@@ -86,7 +87,7 @@ let configureLogging (builder : ILoggingBuilder) =
     builder.AddFilter(filter).AddConsole().AddDebug() |> ignore
 
 [<EntryPoint>]
-let main argv =
+let main _ =
     let contentRoot = Directory.GetCurrentDirectory()
     let webRoot     = Path.Combine(contentRoot, "WebRoot")
     WebHostBuilder()

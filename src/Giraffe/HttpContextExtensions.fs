@@ -12,9 +12,12 @@ open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Microsoft.FSharp.Reflection
 open Microsoft.Net.Http.Headers
-open Newtonsoft.Json
-open Common
 open GiraffeViewEngine
+open Giraffe.Serialization
+open Common
+
+let inline private missingServiceError (t : string) =
+    NullReferenceException (sprintf "Could not retrieve object of type '%s'. Please register all Giraffe dependencies by adding `services.AddGiraffe()` to your startup code. For more information please visit https://github.com/giraffe-fsharp/Giraffe." t)
 
 type HttpContext with
 
@@ -31,6 +34,16 @@ type HttpContext with
     member this.GetLogger (categoryName : string) =
         let loggerFactory = this.GetService<ILoggerFactory>()
         loggerFactory.CreateLogger categoryName
+
+    member this.GetJsonSerializer() : IJsonSerializer =
+        let serializer = this.GetService<IJsonSerializer>()
+        if isNull serializer then raise (missingServiceError "IJsonSerializer")
+        serializer
+
+    member this.GetXmlSerializer()  : IXmlSerializer  =
+        let serializer = this.GetService<IXmlSerializer>()
+        if isNull serializer then raise (missingServiceError "IXmlSerializer")
+        serializer
 
     /// ---------------------------
     /// Common helpers
@@ -66,17 +79,17 @@ type HttpContext with
             return! reader.ReadToEndAsync()
         }
 
-    member this.BindJsonAsync<'T>() = this.BindJsonAsync<'T> defaultJsonSerializerSettings
-
-    member this.BindJsonAsync<'T> (settings : JsonSerializerSettings) =
+    member this.BindJsonAsync<'T>() =
         task {
-            return deserializeJsonFromStream<'T> settings this.Request.Body
+            let serializer = this.GetJsonSerializer()
+            return! serializer.DeserializeAsync<'T> this.Request.Body
         }
 
     member this.BindXmlAsync<'T>() =
         task {
+            let serializer = this.GetXmlSerializer()
             let! body = this.ReadBodyFromRequestAsync()
-            return deserializeXml<'T> body
+            return serializer.Deserialize<'T> body
         }
 
     member this.BindFormAsync<'T>(?cultureInfo : CultureInfo) =
@@ -138,9 +151,7 @@ type HttpContext with
                     p.SetValue(obj, value, null))
         obj
 
-    member this.BindModelAsync<'T>(?cultureInfo) = this.BindModelAsync<'T>(defaultJsonSerializerSettings, ?cultureInfo = cultureInfo)
-
-    member this.BindModelAsync<'T> (settings : JsonSerializerSettings, ?cultureInfo : CultureInfo) =
+    member this.BindModelAsync<'T> (?cultureInfo : CultureInfo) =
         task {
             let method = this.Request.Method
             if method.Equals "POST" || method.Equals "PUT" then
@@ -151,7 +162,7 @@ type HttpContext with
                     | false -> failwithf "Could not parse Content-Type HTTP header value '%s'" original.Value
                     | true  ->
                         match parsed.Value.MediaType.Value with
-                        | "application/json"                  -> this.BindJsonAsync<'T> settings
+                        | "application/json"                  -> this.BindJsonAsync<'T>()
                         | "application/xml"                   -> this.BindXmlAsync<'T>()
                         | "application/x-www-form-urlencoded" -> this.BindFormAsync<'T>(?cultureInfo = cultureInfo)
                         | _ -> failwithf "Cannot bind model from Content-Type '%s'" original.Value
@@ -172,19 +183,19 @@ type HttpContext with
     member private this.WriteStringAsync (value : string) =
         value |> System.Text.Encoding.UTF8.GetBytes |> this.WriteBytesAsync
 
-    member this.WriteJsonAsync (value : obj) = this.WriteJsonAsync(defaultJsonSerializerSettings, value)
-
-    member this.WriteJsonAsync (settings: JsonSerializerSettings, value : obj) =
+    member this.WriteJsonAsync (value : obj) =
         task {
+            let serializer = this.GetJsonSerializer()
             this.SetHttpHeader "Content-Type" "application/json"
-            do! serializeJson settings value |> this.WriteStringAsync
+            do! serializer.Serialize value |> this.WriteStringAsync
             return Some this
         }
 
     member this.WriteXmlAsync (value : obj) =
         task {
+            let serializer = this.GetXmlSerializer()
             this.SetHttpHeader "Content-Type" "application/xml"
-            do! value |> serializeXml |> this.WriteBytesAsync
+            do! value |> serializer.Serialize |> this.WriteBytesAsync
             return Some this
         }
 

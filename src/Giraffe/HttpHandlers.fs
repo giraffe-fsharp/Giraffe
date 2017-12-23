@@ -13,11 +13,8 @@ open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
-open Microsoft.Extensions.DependencyInjection
 open FSharp.Core.Printf
-open Newtonsoft.Json
 open Newtonsoft.Json.Linq
-open Newtonsoft.Json.Serialization
 open Giraffe.Tasks
 open Giraffe.Common
 open Giraffe.FormatExpressions
@@ -320,21 +317,21 @@ let text (str : string) : HttpHandler =
     setHttpHeader "Content-Type" "text/plain"
     >=> setBodyAsString str
 
-/// Serializes an object to JSON with custom JsonSerializerSettings and writes it to the body of the HTTP response.
-/// It also sets the HTTP header Content-Type: application/json and sets the Content-Length header accordingly.
-let customJson (settings : JsonSerializerSettings) (dataObj : obj) : HttpHandler =
-    setHttpHeader "Content-Type" "application/json"
-    >=> setBodyAsString (serializeJson settings dataObj)
-
 /// Serializes an object to JSON and writes it to the body of the HTTP response.
 /// It also sets the HTTP header Content-Type: application/json and sets the Content-Length header accordingly.
-let json = customJson defaultJsonSerializerSettings
+let json (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let serializer = ctx.GetJsonSerializer()
+        (setHttpHeader "Content-Type" "application/json"
+        >=> setBodyAsString (serializer.Serialize dataObj)) next ctx
 
 /// Serializes an object to XML and writes it to the body of the HTTP response.
 /// It also sets the HTTP header Content-Type: application/xml and sets the Content-Length header accordingly.
 let xml (dataObj : obj) : HttpHandler =
-    setHttpHeader "Content-Type" "application/xml"
-    >=> setBody (serializeXml dataObj)
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let serializer = ctx.GetXmlSerializer()
+        (setHttpHeader "Content-Type" "application/xml"
+        >=> setBody (serializer.Serialize dataObj)) next ctx
 
 /// Reads a HTML file from disk and writes its contents to the body of the HTTP response
 /// with a Content-Type of text/html.
