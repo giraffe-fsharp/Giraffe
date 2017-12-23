@@ -122,6 +122,12 @@ type AppAnalyzeRules =
         { ModuleName="HttpHandlers"; FunctionName="routeCi" }, 
             (fun ctx -> (!ctx.Variables).Item "path" |> ctx.AddRoute (ctx.GetVerb()))
         
+        // route format
+        { ModuleName="HttpHandlers"; FunctionName="routef" }, 
+            (fun ctx -> 
+              (!ctx.Variables).Item "pathFormat" |> ctx.AddRoute (ctx.GetVerb())
+            )
+        
         // used to return raw text content
         { ModuleName="HttpHandlers"; FunctionName="text" }, 
             (fun ctx -> ctx.AddResponse 200 "text/plain" (typeof<string>))
@@ -162,7 +168,8 @@ let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
         match op with
         | Value (o,_) -> 
             ctx.SetVariable id.Name (o.ToString()) |> loop t
-        | _ -> loop op ctx
+        | o -> 
+            analyzeAll [op;t] ctx
         
     | NewUnionCase (a,b) -> analyzeAll b ctx
     | Application (left, right) ->
@@ -192,12 +199,26 @@ let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
     | NewRecord (``type``,_) -> 
         ctx.AddArgType ``type``
     | Var _ -> ctx
+    | NewObject(``constructor``, arguments) ->
+        let t = ``constructor``.DeclaringType
+        if t.IsGenericType
+        then 
+          let gt = t.GetGenericTypeDefinition()
+          let td = typedefof<PrintfFormat<_,_,_,_,_>>
+          if gt = td
+          then
+            match arguments with
+            | [Value (o,ty)] when ty = typeof<string> -> 
+                ctx.SetVariable "pathFormat" (o.ToString())
+            | _ -> ctx
+          else ctx
+        else ctx
     | e -> 
+        failwithf "not implemented %A" e
         printfn "not implemented %A" e
         ctx
   
   let ctx = AnalyzeContext.Empty
   let r = loop webapp ctx
   r.PushRoute()
-  r
 

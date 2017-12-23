@@ -197,7 +197,6 @@ let ``webapp is a simple route with verb `POST` with a more complex condition re
   Assert.Equal(2, route.Responses.Length)
   Assert.Equal(0, (!ctx.ArgTypes).Length)
 
-
 [<Fact>]
 let ``webapp is a simple routeCi with verb `GET` returning text`` () =
   let webApp =
@@ -208,6 +207,33 @@ let ``webapp is a simple routeCi with verb `GET` returning text`` () =
   let exp = 
     { Verb="GET"
       Path="/home"
+      Responses=
+        [
+          { StatusCode=200
+            ContentType="text/plain"
+            ModelType=(typeof<string>) }
+        ]
+    }
+  let route = !ctx.Routes |> Seq.exactlyOne
+  
+  Assert.Equal(exp.Path, route.Path)
+  Assert.Equal(exp.Verb, route.Verb)
+  Assert.Equal(exp.Responses.[0], route.Responses.[0])
+
+
+[<Fact>]
+let ``webapp is a simple routef with verb `GET` returning text and handler inner quotation`` () =
+  let webApp =
+    <@ GET >=> routef "/hello/%s" (fun name -> text "Home.") @>
+
+  let ss = sprintf "%A" webApp
+  
+
+  let ctx = analyze webApp AppAnalyzeRules.Default
+
+  let exp = 
+    { Verb="GET"
+      Path="/hello/%s"
       Responses=
         [
           { StatusCode=200
