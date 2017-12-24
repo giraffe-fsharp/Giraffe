@@ -176,7 +176,7 @@ if (!$ExcludeSamples.IsPresent -and !$Run.IsPresent)
 
     dotnet-restore $sampleAppTests
     dotnet-build   $sampleAppTests
-    dotnet-test    $sampleAppTests
+    dotnet-xunit   $sampleAppTests
 }
 
 if ($Run.IsPresent)
