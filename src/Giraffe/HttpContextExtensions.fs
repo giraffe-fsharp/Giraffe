@@ -12,9 +12,9 @@ open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Microsoft.FSharp.Reflection
 open Microsoft.Net.Http.Headers
-open GiraffeViewEngine
+open Giraffe.GiraffeViewEngine
 open Giraffe.Serialization
-open Common
+open Giraffe.Common
 
 let inline private missingServiceError (t : string) =
     NullReferenceException (sprintf "Could not retrieve object of type '%s'. Please register all Giraffe dependencies by adding `services.AddGiraffe()` to your startup code. For more information please visit https://github.com/giraffe-fsharp/Giraffe." t)

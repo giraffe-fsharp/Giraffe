@@ -9,8 +9,8 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Newtonsoft.Json
-open Giraffe.HttpHandlers
 open Giraffe.Serialization
+open Giraffe.Negotiation
 
 /// ---------------------------
 /// Logging helper functions
@@ -87,20 +87,9 @@ type IApplicationBuilder with
         this.UseMiddleware<GiraffeErrorHandlerMiddleware> handler
 
 type IServiceCollection with
-    member this.AddGiraffeJson (settings : JsonSerializerSettings) =
-        this.AddSingleton<JsonSerializerSettings>(settings)
-            .AddSingleton<IJsonSerializer, NewtonsoftJsonSerializer>()
-
-    member this.AddGiraffeJson() =
-        Json.NewtonsoftJsonSerializer.DefaultSettings |> this.AddGiraffeJson
-
-    member this.AddGiraffeXml (writerSettings : XmlWriterSettings) =
-        this.AddSingleton<XmlWriterSettings>(writerSettings)
-            .AddTransient<IXmlSerializer, DefaultXmlSerializer>()
-
-    member this.AddGiraffeXml() =
-        Xml.DefaultXmlSerializer.DefaultSettings |> this.AddGiraffeXml
-
     member this.AddGiraffe() =
-        this.AddGiraffeJson()
-            .AddGiraffeXml()
+        this.AddSingleton<JsonSerializerSettings>(Json.NewtonsoftJsonSerializer.DefaultSettings)
+            .AddSingleton<IJsonSerializer, NewtonsoftJsonSerializer>()
+            .AddSingleton<XmlWriterSettings>(Xml.DefaultXmlSerializer.DefaultSettings)
+            .AddSingleton<IXmlSerializer, DefaultXmlSerializer>()
+            .AddSingleton<INegotiationConfig, DefaultNegotiationConfig>()

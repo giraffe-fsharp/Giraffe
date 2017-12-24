@@ -39,11 +39,11 @@
   <ItemGroup>
     <Compile Include="Serialization.fs" />
     <Compile Include="Common.fs" />
-    <Compile Include="ComputationExpressions.fs" />
     <Compile Include="FormatExpressions.fs" />
     <Compile Include="GiraffeViewEngine.fs" />
     <Compile Include="HttpContextExtensions.fs" />
     <Compile Include="HttpHandlers.fs" />
+    <Compile Include="Negotiation.fs" />
     <Compile Include="HttpStatusCodeHandlers.fs" />
     <Compile Include="TokenParsers.fs" />
     <Compile Include="TokenRouter.fs" />

@@ -2,7 +2,7 @@ module Giraffe.GiraffeViewEngineTests
 
 open System
 open Xunit
-open GiraffeViewEngine
+open Giraffe.GiraffeViewEngine
 
 let removeNewLines (html:string):string =
     html.Replace(Environment.NewLine, String.Empty)

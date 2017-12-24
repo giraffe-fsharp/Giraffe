@@ -9,10 +9,11 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Primitives
 open Xunit
 open NSubstitute
-open GiraffeViewEngine
+open Newtonsoft.Json
+open Giraffe.GiraffeViewEngine
 open Giraffe.Tests.Asserts
 open Giraffe.Serialization
-open Newtonsoft.Json
+open Giraffe.Negotiation
 
 // ---------------------------------
 // Helper functions
@@ -49,6 +50,12 @@ let mockXml (ctx : HttpContext) =
     ctx.RequestServices
        .GetService(typeof<IXmlSerializer>)
        .Returns(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
+    |> ignore
+
+let mockNegotiation (ctx : HttpContext) =
+    ctx.RequestServices
+       .GetService(typeof<INegotiationConfig>)
+       .Returns(DefaultNegotiationConfig())
     |> ignore
 
 // ---------------------------------
@@ -852,6 +859,7 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
 
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx None
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -893,6 +901,7 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
 
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx None
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -934,6 +943,7 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
 
     let ctx = Substitute.For<HttpContext>()
     mockXml ctx
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -985,6 +995,7 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
 
     let ctx = Substitute.For<HttpContext>()
     mockXml ctx
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1036,6 +1047,7 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
 
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx None
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1077,6 +1089,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
 
     let ctx = Substitute.For<HttpContext>()
     mockXml ctx
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1128,6 +1141,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
 
     let ctx = Substitute.For<HttpContext>()
     mockXml ctx
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1178,6 +1192,7 @@ let ``Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1222,6 +1237,7 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1264,6 +1280,7 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
 
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx None
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
