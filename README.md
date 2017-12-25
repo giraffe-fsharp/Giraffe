@@ -1078,7 +1078,6 @@ Note that the `unauthorized` and `UNAUTHORIZED` functions require two additional
 
 ## Additional HttpHandlers
 
-There's a few additional `HttpHandler` functions which you can get through referencing extra modules or NuGet packages.
 
 ### Giraffe.TokenRouter
 
@@ -1142,7 +1141,7 @@ let app =
 
 ### Additional NuGet packages
 
-There's more `HttpHandler` functions available through additional NuGet packages:
+There are more `HttpHandler` functions available through additional NuGet packages:
 
 - [Giraffe.Razor](https://github.com/giraffe-fsharp/Giraffe.Razor): Adds native Razor view functionality to Giraffe web applications.
 - [Giraffe.DotLiquid](https://github.com/giraffe-fsharp/Giraffe.DotLiquid): Adds native DotLiquid template functionality to Giraffe web applications.
