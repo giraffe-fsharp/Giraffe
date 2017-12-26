@@ -13,19 +13,26 @@ let joinMaps (p:Map<'a,'b>) (q:Map<'a,'b>) =
 
 let getVerb = Option.defaultWith (fun _ -> "GET")
 
+let toString (o:obj) = o.ToString()
+
 type RouteInfos =
   { Verb:string
     Path:string
+    Parameters:Map<string, Type>
     Responses:ResponseInfos list }
 and ResponseInfos =
   { StatusCode:int
     ContentType:string
     ModelType:Type }
+    
+type PathFormat = 
+  { Template:string
+    ArgTypes:Type list }
 
 type AnalyzeContext =
   {
       ArgTypes : Type list ref
-      Variables : Map<string, string> ref
+      Variables : Map<string, obj> ref
       Routes : RouteInfos list ref
       Responses : ResponseInfos list ref
       Verb : string option
@@ -55,9 +62,9 @@ type AnalyzeContext =
     let rs = { StatusCode=code; ContentType=contentType; ModelType=modelType }
     __.Responses := rs :: !__.Responses
     __
-  member __.AddRoute verb path =
+  member __.AddRoute verb parameters path =
     __.PushRoute ()
-    __.CurrentRoute := Some { Verb=verb; Path=path; Responses=[] }
+    __.CurrentRoute := Some { Verb=verb; Path=path; Responses=[]; Parameters=parameters }
     __
   member __.ClearVariables () =
     { __ with Variables = ref Map.empty }
@@ -118,14 +125,16 @@ type AppAnalyzeRules =
       [ 
         // simple route
         { ModuleName="HttpHandlers"; FunctionName="route" }, 
-            (fun ctx -> (!ctx.Variables).Item "path" |> ctx.AddRoute (ctx.GetVerb()))
+            (fun ctx -> (!ctx.Variables).Item "path" |> toString |> ctx.AddRoute (ctx.GetVerb()) Map.empty)
         { ModuleName="HttpHandlers"; FunctionName="routeCi" }, 
-            (fun ctx -> (!ctx.Variables).Item "path" |> ctx.AddRoute (ctx.GetVerb()))
+            (fun ctx -> (!ctx.Variables).Item "path" |> toString |> ctx.AddRoute (ctx.GetVerb()) Map.empty)
         
         // route format
         { ModuleName="HttpHandlers"; FunctionName="routef" }, 
             (fun ctx -> 
-              (!ctx.Variables).Item "pathFormat" |> ctx.AddRoute (ctx.GetVerb())
+              let path = (!ctx.Variables).Item "pathFormat" :?> PathFormat
+              let parameters = path.ArgTypes |> List.mapi(fun i item -> (sprintf "arg%d" i), item) |> Map
+              ctx.AddRoute (ctx.GetVerb()) parameters path.Template
             )
         
         // used to return raw text content
@@ -209,7 +218,9 @@ let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
           then
             match arguments with
             | [Value (o,ty)] when ty = typeof<string> -> 
-                ctx.SetVariable "pathFormat" (o.ToString())
+                let types = t.GetGenericArguments() |> Seq.toList
+                let format:PathFormat = { Template=(o.ToString()); ArgTypes=types }
+                ctx.SetVariable "pathFormat" format
             | _ -> ctx
           else ctx
         else ctx

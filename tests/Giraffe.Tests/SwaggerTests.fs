@@ -51,6 +51,7 @@ let ``webapp is a simple route with verb `GET` returning text`` () =
   let exp = 
     { Verb="GET"
       Path="/home"
+      Parameters=Map.empty
       Responses=
         [
           { StatusCode=200
@@ -74,6 +75,7 @@ let ``webapp is a simple route with verb `POST` returning text`` () =
   let exp = 
     { Verb="POST"
       Path="/home"
+      Parameters=Map.empty
       Responses=
         [
           { StatusCode=200
@@ -102,6 +104,7 @@ let ``webapp is a simple route with verb `PUT` with a condition returning text``
   let exp = 
     { Verb="PUT"
       Path="/seconds"
+      Parameters=Map.empty
       Responses=
         [
           { StatusCode=200
@@ -132,6 +135,7 @@ let ``webapp is a simple route with verb `DELETE` with a condition returning tex
   let exp = 
     { Verb="DELETE"
       Path="/seconds"
+      Parameters=Map.empty
       Responses=
         [
           { StatusCode=200
@@ -175,6 +179,7 @@ let ``webapp is a simple route with verb `POST` with a more complex condition re
   let exp = 
     { Verb="POST"
       Path="/swagger/is/cool"
+      Parameters=Map.empty
       Responses=
         [
           { StatusCode=200
@@ -207,6 +212,7 @@ let ``webapp is a simple routeCi with verb `GET` returning text`` () =
   let exp = 
     { Verb="GET"
       Path="/home"
+      Parameters=Map.empty
       Responses=
         [
           { StatusCode=200
@@ -234,6 +240,7 @@ let ``webapp is a simple routef with verb `GET` returning text and handler inner
   let exp = 
     { Verb="GET"
       Path="/hello/%s"
+      Parameters=Map.empty
       Responses=
         [
           { StatusCode=200
