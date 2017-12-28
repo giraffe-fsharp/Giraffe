@@ -25,6 +25,11 @@ open System
 let assertThat (cmp:bool) =
   Assert.True cmp
 
+let assertMapEquals (m1:Map<'k,'v>) (m2:Map<'k,'v>) =
+  Assert.Equal(m1.Count, m2.Count)
+  for kv in m1 do
+    Assert.Equal(box kv.Value, box m2.[kv.Key])
+
 // ---------------------------------
 // Test Types
 // ---------------------------------
@@ -226,26 +231,20 @@ let ``webapp is a simple routeCi with verb `GET` returning text`` () =
   Assert.Equal(exp.Verb, route.Verb)
   Assert.Equal(exp.Responses.[0], route.Responses.[0])
 
-
 [<Fact>]
 let ``webapp is a simple routef with verb `GET` returning text and handler inner quotation`` () =
   let webApp =
     <@ GET >=> routef "/hello/%s" (fun name -> text "Home.") @>
-
-  let ss = sprintf "%A" webApp
-  
-
   let ctx = analyze webApp AppAnalyzeRules.Default
-
   let exp = 
-    { Verb="GET"
-      Path="/hello/%s"
-      Parameters=Map.empty
-      Responses=
+    { Verb = "GET"
+      Path = "/hello/%s"
+      Parameters = Map [ "arg0", typeof<string> ]
+      Responses =
         [
-          { StatusCode=200
-            ContentType="text/plain"
-            ModelType=(typeof<string>) }
+          { StatusCode = 200
+            ContentType = "text/plain"
+            ModelType = typeof<string> }
         ]
     }
   let route = !ctx.Routes |> Seq.exactlyOne
@@ -253,4 +252,34 @@ let ``webapp is a simple routef with verb `GET` returning text and handler inner
   Assert.Equal(exp.Path, route.Path)
   Assert.Equal(exp.Verb, route.Verb)
   Assert.Equal(exp.Responses.[0], route.Responses.[0])
+  assertMapEquals exp.Parameters route.Parameters
+  
+[<Fact>]
+let ``routef with verb `GET` and args [int, string, float] returning text and handler inner quotation`` () =
+  let webApp =
+    <@ GET >=> routef "/hello/%d/%s/%f" (fun (age, name, price) -> text "Home.") @>
+  let ctx = analyze webApp AppAnalyzeRules.Default
+  let exp = 
+    { Verb = "GET"
+      Path = "/hello/%d/%s/%f"
+      Parameters = Map
+                    [ "arg0", typeof<int> 
+                      "arg1", typeof<string>
+                      "arg2", typeof<float> ]
+      Responses =
+        [
+          { StatusCode = 200
+            ContentType = "text/plain"
+            ModelType = typeof<string> }
+        ]
+    }
+  let route = !ctx.Routes |> Seq.exactlyOne
+  
+  Assert.Equal(exp.Path, route.Path)
+  Assert.Equal(exp.Verb, route.Verb)
+  Assert.Equal(exp.Responses.[0], route.Responses.[0])
+  
+  assertMapEquals exp.Parameters route.Parameters
+
+  
 

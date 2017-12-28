@@ -217,13 +217,20 @@ let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
           if gt = td
           then
             match arguments with
-            | [Value (o,ty)] when ty = typeof<string> -> 
-                let types = t.GetGenericArguments() |> Seq.toList
+            | [Value (o,ty)] when ty = typeof<string> ->
+                let argType = t.GetGenericArguments() |> Seq.last
+                let types =
+                  if argType.IsGenericType
+                  then argType.GetGenericArguments() |> Seq.toList
+                  else [argType]
+
                 let format:PathFormat = { Template=(o.ToString()); ArgTypes=types }
                 ctx.SetVariable "pathFormat" format
             | _ -> ctx
           else ctx
         else ctx
+    | TupleGet (tupledArg, i) ->
+        ctx
     | e -> 
         failwithf "not implemented %A" e
         printfn "not implemented %A" e
