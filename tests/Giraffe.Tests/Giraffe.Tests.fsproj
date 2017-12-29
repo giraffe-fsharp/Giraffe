@@ -35,8 +35,8 @@
     <Compile Include="AuthHandlerTests.fs" />
     <Compile Include="GiraffeViewEngineTests.fs" />
     <Compile Include="HttpContextExtensionsTests.fs" />
-    <Compile Include="TokenRouterTests.fs" />
     <Compile Include="WebSocketTests.fs" />
+    <Compile Include="TokenRouterTests.fs" />
   </ItemGroup>
 
   <ItemGroup>
