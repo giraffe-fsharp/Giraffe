@@ -16,8 +16,8 @@ open Giraffe.TokenRouter
 
 let echoSocket (connectionManager : ConnectionManager) token =
     connectionManager.CreateSocket(
-        (fun _socket _socketID -> task { return true }),
-        (fun socket _socketID data -> SendText socket data token),
+        (fun _ref -> task { return true }),
+        (fun ref data -> SendText ref.WebSocket data token),
         token)
 
 let webApp cm token =
@@ -66,12 +66,34 @@ let ``Simple Echo Test`` () = task {
     Assert.Equal(expected,actual)
 }
 
+
+
 [<Theory>]
 [<InlineData(0)>]
 [<InlineData(1)>]
 [<InlineData(10)>]
-[<InlineData(100)>]
-[<InlineData(1000)>]
+//[<InlineData(100)>]
+//[<InlineData(1000)>]
+let ``Can create some clients`` (n:int) = task {
+    let token = CancellationToken.None
+    let cm = ConnectionManager()
+
+    use server = createServer (cm,token)
+    let! clients =
+        [1..n]
+        |> List.map (fun _ -> createClient(server,token))
+        |> Task.WhenAll
+
+    Assert.Equal(clients.Length,n)
+}
+
+
+[<Theory>]
+[<InlineData(0)>]
+[<InlineData(1)>]
+[<InlineData(10)>]
+//[<InlineData(100)>]
+//[<InlineData(1000)>]
 let ``Broadcast Test`` (n:int) = task {
     let token = CancellationToken.None
     let cm = ConnectionManager()
@@ -90,6 +112,6 @@ let ``Broadcast Test`` (n:int) = task {
         |> Array.map (fun ws -> receiveText (ws,token))
         |> Task.WhenAll
 
-    for i in 1..n do
-        Assert.Equal(expected, results.[i])
+    for x in results do
+        Assert.Equal(expected, x)
 }
