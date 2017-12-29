@@ -40,32 +40,69 @@ let useF (middlware : HttpContext -> (unit -> Task) -> Task<unit>) (app:IApplica
             ))
 
 
+let configure (app : IApplicationBuilder,cm,token) =
+    app.UseWebSockets()
+    |> useF (echoSocket cm token)
+    |> ignore
+
+    let abc = Giraffe.HttpStatusCodeHandlers.Successful.ok (text "ok")
+    app.UseGiraffe abc
+
+let createClient (server:TestServer,token) = task {
+    let wsClient = server.CreateWebSocketClient()
+    return! wsClient.ConnectAsync(server.BaseAddress, token)
+}
+
+let receiveText (websocket:WebSocket,token) = task {
+    let buffer = Array.zeroCreate DefaultWebSocketOptions.ReceiveBufferSize |> ArraySegment<byte>
+    let! _ = websocket.ReceiveAsync(buffer, token)
+    return ConvertToMsg buffer.Array
+}
+
+let createServer(cm,token) =
+    new TestServer(
+                WebHostBuilder()
+                    .Configure(fun app -> configure(app,cm,token)))
+
 [<Fact>]
 let ``Simple Echo Test`` () = task {
     let token = CancellationToken.None
     let cm = ConnectionManager()
-    let configure (app : IApplicationBuilder) =
-        app.UseWebSockets()
-        |> useF (echoSocket cm token)
-        |> ignore
 
-        let abc = Giraffe.HttpStatusCodeHandlers.Successful.ok (text "ok")
-        app.UseGiraffe abc
-
-    use server =
-         new TestServer(
-                WebHostBuilder()
-                    .Configure(fun app -> configure app))
-
-    let wsClient = server.CreateWebSocketClient()
-    let! websocket = wsClient.ConnectAsync(server.BaseAddress, token)
+    use server = createServer (cm,token)
+    let! wsClient = createClient(server, token)
 
     let expected = "Hello"
-    let! _ = SendText websocket expected token
-    let buffer = Array.zeroCreate DefaultWebSocketOptions.ReceiveBufferSize |> ArraySegment<byte>
-    
-    let! result = websocket.ReceiveAsync(buffer, token)
-    let actual = ConvertToMsg buffer.Array
+    let! _ = SendText wsClient expected token
+    let! actual = receiveText (wsClient,token)
 
     Assert.Equal(expected,actual)
+}
+
+[<Theory>]
+[<InlineData(0)>]
+[<InlineData(1)>]
+[<InlineData(10)>]
+[<InlineData(100)>]
+[<InlineData(1000)>]
+let ``Broadcast Test`` (n:int) = task {
+    let token = CancellationToken.None
+    let cm = ConnectionManager()
+
+    use server = createServer (cm,token)
+    let! clients =
+        [1..n]
+        |> List.map (fun _ -> createClient(server,token))
+        |> Task.WhenAll
+   
+    let expected = "Hello"
+    let! _ = cm.SendToAll(expected,token)
+
+    let! results =
+        clients
+        |> Array.map (fun ws -> receiveText (ws,token))
+        |> Task.WhenAll
+
+    for i in 1..n do
+        Assert.Equal(expected, results.[i])
 }
