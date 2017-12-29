@@ -14,30 +14,18 @@ open System.Threading
 open RequestErrors
 open Giraffe.TokenRouter
 
-let echoSocket (connectionManager : ConnectionManager) token next (ctx : HttpContext) = task {
-    if ctx.WebSockets.IsWebSocketRequest then
-        let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync()
-        let connected socket id = task {
-            ()
-        }
-
-        let onMessage data = task {
-            return! SendText websocket data token
-        }
-
-        do! connectionManager.RegisterClient(websocket,connected,onMessage,token)
-        return! Successful.OK (text "OK") next ctx
-    else
-        return! BAD_REQUEST (text "no websocket request") next ctx
-}
-
+let echoSocket (connectionManager : ConnectionManager) token =
+    connectionManager.CreateSocket(
+        (fun _socket _socketID -> task { return true }),
+        (fun socket _socketID data -> SendText socket data token),
+        token)
 
 let webApp cm token =
     let notfound = NOT_FOUND "Page not found"
    
     router notfound [
        GET [
-           route "/echo" (fun next ctx -> echoSocket cm token next ctx) 
+           route "/echo" (echoSocket cm token) 
        ]
     ]
 

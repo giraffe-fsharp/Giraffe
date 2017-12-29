@@ -47,7 +47,7 @@ let SendText (ws:WebSocket) (message:string) cancellationToken = task {
         return true
     else
         return false
-}        
+}
 
 type private WebSocketConnectionDictionary() =
     let sockets = new System.Collections.Concurrent.ConcurrentDictionary<string, WebSocket>()
@@ -104,7 +104,7 @@ type ConnectionManager(?messageSize) =
                 })
             |> Task.WhenAll
 
-        member private __.Receive<'Msg> (webSocket:WebSocket,messageF,cancellationToken:CancellationToken) = task {
+        member private __.Receive<'Msg> (webSocket:WebSocket,webSocketID:string,messageF,cancellationToken:CancellationToken) = task {
             let buffer = Array.zeroCreate messageSize |> ArraySegment<byte>
             use memoryStream = new IO.MemoryStream()
             let mutable endOfMessage = false
@@ -133,7 +133,7 @@ type ConnectionManager(?messageSize) =
                             let messageProcessingTask : System.Threading.Tasks.Task<bool> = 
                                 memoryStream.ToArray()
                                 |> ConvertToMsg
-                                |> messageF
+                                |> messageF webSocket webSocketID
 
                             messageProcessingTask.Wait()
 
@@ -146,13 +146,13 @@ type ConnectionManager(?messageSize) =
         }
 
         member this.RegisterClient<'Msg>(webSocket:WebSocket,websocketID,connectedF,messageF,cancellationToken:CancellationToken) = task {
-            let mutable running = true
             connections.AddSocket(websocketID,webSocket)
-            let t : System.Threading.Tasks.Task<unit> = connectedF webSocket websocketID
+            let t : System.Threading.Tasks.Task<bool> = connectedF webSocket websocketID
             t.Wait()
+            let mutable running = t.Result
 
             while running && not cancellationToken.IsCancellationRequested do
-                let! msg = this.Receive<'Msg>(webSocket,messageF,cancellationToken)
+                let! msg = this.Receive<'Msg>(webSocket,websocketID,messageF,cancellationToken)
                 running <- msg
 
             return! this.Disconnecting(websocketID)
@@ -170,3 +170,14 @@ type ConnectionManager(?messageSize) =
                         do! socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by the WebSocketManager", CancellationToken.None).ConfigureAwait(false)
             | _ -> ()
         }
+
+        member this.CreateSocket(onConnected,onMessage,cancellationToken) =
+            fun next (ctx : Microsoft.AspNetCore.Http.HttpContext) -> task {
+                if ctx.WebSockets.IsWebSocketRequest then
+                    let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync()
+
+                    do! this.RegisterClient(websocket,onConnected,onMessage,cancellationToken)
+                    return! Successful.ok (text "OK") next ctx
+                else
+                    return! HttpStatusCodeHandlers.RequestErrors.badRequest (text "no websocket request") next ctx
+            }
