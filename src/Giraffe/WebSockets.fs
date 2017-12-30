@@ -70,6 +70,8 @@ type private WebSocketConnectionDictionary() =
 
         member __.AllConnections = sockets |> Seq.toArray
 
+        member __.Count = sockets.Count
+
 type WebSocketReference = {
     WebSocket : WebSocket
     ID : string
@@ -94,31 +96,42 @@ type ConnectionManager(?messageSize) =
             let byteResponse =
                 msg
                 |> System.Text.Encoding.UTF8.GetBytes
+            
+            let segment = ArraySegment<byte>(byteResponse, 0, byteResponse.Length)
 
             if not (isNull webSocket) then
                 if webSocket.State = WebSocketState.Open then
-                    do! webSocket.SendAsync(new ArraySegment<byte>(byteResponse, 0, byteResponse.Length), WebSocketMessageType.Text, true, cancellationToken)
+                    do! webSocket.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken)
         }
 
-        member __.GetSocket(id:string) = connections.GetSocket id
+        member __.GetSocket(websocketID:string) = connections.GetSocket websocketID
 
-        member __.SendToAll(msg:string,cancellationToken:CancellationToken) =
+        member __.Count = connections.Count
+
+        member __.SendToAll(msg:string,cancellationToken:CancellationToken) = task {
             let byteResponse =
                 msg
                 |> System.Text.Encoding.UTF8.GetBytes
+            let segment = ArraySegment<byte>(byteResponse, 0, byteResponse.Length)
 
-            connections.AllConnections
-            |> Seq.map (fun kv -> task {
-                if not cancellationToken.IsCancellationRequested then
-                    let webSocket = kv.Value
-                    if webSocket.State = WebSocketState.Open then
-                        do! webSocket.SendAsync(new ArraySegment<byte>(byteResponse, 0, byteResponse.Length), WebSocketMessageType.Text, true, cancellationToken)
+            let! results =
+                connections.AllConnections
+                |> Array.map (fun kv -> task {
+                    if not cancellationToken.IsCancellationRequested then
+                        let webSocket = kv.Value
+                        if webSocket.State = WebSocketState.Open then
+                            do! webSocket.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken)
+                            return 1
+                        else
+                            if webSocket.State = WebSocketState.Closed then
+                                connections.RemoveSocket kv.Key |> ignore
+                            return 0
                     else
-                        if webSocket.State = WebSocketState.Closed then
-                            connections.RemoveSocket kv.Key |> ignore 
-                    return ()
-                })
-            |> Task.WhenAll
+                        return 0
+                    })
+                |> Task.WhenAll
+            return results |> Seq.sum
+        }
 
         member private __.Receive<'Msg> (reference:WebSocketReference,messageF: WebSocketReference -> string -> Task<bool>,cancellationToken:CancellationToken) = task {
             let buffer = Array.zeroCreate messageSize |> ArraySegment<byte>
@@ -190,8 +203,15 @@ type ConnectionManager(?messageSize) =
             }
 
         member this.CreateSocket(onConnected,onMessage,cancellationToken:CancellationToken) =
-            let websocketID = Guid.NewGuid().ToString()
-            this.CreateSocket(websocketID,onConnected,onMessage,cancellationToken)
+            fun next (ctx : Microsoft.AspNetCore.Http.HttpContext) -> task {
+                if ctx.WebSockets.IsWebSocketRequest then
+                    let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync()
+                    let reference = WebSocketReference.FromWebSocket(websocket)
+                    do! this.RegisterClient(reference,onConnected,onMessage,cancellationToken)
+                    return! Successful.ok (text "OK") next ctx
+                else
+                    return! HttpStatusCodeHandlers.RequestErrors.badRequest (text "no websocket request") next ctx
+            }
 
         member this.CreateSocket(websocketID:string,supportedProtocols:seq<WebSocketSubprotocol>,onConnected,onMessage,cancellationToken) =
             fun next (ctx : Microsoft.AspNetCore.Http.HttpContext) -> task {
@@ -209,5 +229,16 @@ type ConnectionManager(?messageSize) =
             }
 
         member this.CreateSocket(supportedProtocols:seq<WebSocketSubprotocol>,onConnected,onMessage,cancellationToken) =
-            let websocketID = Guid.NewGuid().ToString()
-            this.CreateSocket(websocketID,supportedProtocols,onConnected,onMessage,cancellationToken)
+            fun next (ctx : Microsoft.AspNetCore.Http.HttpContext) -> task {
+                if ctx.WebSockets.IsWebSocketRequest then
+                    match NegotiateSubProtocol(ctx.WebSockets.WebSocketRequestedProtocols,supportedProtocols) with
+                    | Some subProtocol ->
+                        let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync(subProtocol.Name)
+                        let reference = WebSocketReference.FromWebSocket websocket
+                        do! this.RegisterClient(reference,onConnected,onMessage,cancellationToken)
+                        return! Successful.ok (text "OK") next ctx
+                    | None ->
+                        return! HttpStatusCodeHandlers.RequestErrors.badRequest (text "websocket subprotocol not supported") next ctx
+                    else
+                        return! HttpStatusCodeHandlers.RequestErrors.badRequest (text "no websocket request") next ctx
+            }

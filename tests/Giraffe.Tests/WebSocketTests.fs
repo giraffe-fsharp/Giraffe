@@ -14,6 +14,7 @@ open System.Threading
 open RequestErrors
 open Giraffe.TokenRouter
 
+
 let echoSocket (connectionManager : ConnectionManager) token =
     connectionManager.CreateSocket(
         (fun _ref -> task { return true }),
@@ -80,12 +81,10 @@ let ``Simple Echo Test`` () = task {
 
 
 [<Theory>]
-[<InlineData(0)>]
-[<InlineData(1)>]
 [<InlineData(10)>]
-//[<InlineData(100)>]
-//[<InlineData(1000)>]
-let ``Can create some clients`` (n:int) = task {
+[<InlineData(100)>]
+[<InlineData(1000)>]
+let ``Can connect some clients`` (n:int) = task {
     let token = CancellationToken.None
     let cm = ConnectionManager()
 
@@ -95,7 +94,11 @@ let ``Can create some clients`` (n:int) = task {
         |> List.map (fun _ -> createClient(server,token))
         |> Task.WhenAll
 
-    Assert.Equal(clients.Length,n)
+    Assert.Equal(n,clients.Length)
+    Assert.Equal(n,cm.Count)
+
+    for x in clients do
+        Assert.Equal(WebSocketState.Open, x.State)
 }
 
 
@@ -103,8 +106,8 @@ let ``Can create some clients`` (n:int) = task {
 [<InlineData(0)>]
 [<InlineData(1)>]
 [<InlineData(10)>]
-//[<InlineData(100)>]
-//[<InlineData(1000)>]
+[<InlineData(100)>]
+[<InlineData(1000)>]
 let ``Broadcast Test`` (n:int) = task {
     let token = CancellationToken.None
     let cm = ConnectionManager()
@@ -116,11 +119,12 @@ let ``Broadcast Test`` (n:int) = task {
         |> Task.WhenAll
    
     let expected = "Hello"
-    let! _ = cm.SendToAll(expected,token)
+    let! sent = cm.SendToAll(expected,token)
+    Assert.Equal(n,sent)
 
-    let! results =
+    let! results = 
         clients
-        |> Array.map (fun ws -> receiveText (ws,token))
+        |> Seq.map (fun ws -> receiveText (ws,token))
         |> Task.WhenAll
 
     for x in results do
