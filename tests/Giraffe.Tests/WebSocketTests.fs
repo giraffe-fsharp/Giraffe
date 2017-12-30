@@ -42,8 +42,8 @@ let createClient (server:TestServer,cancellationToken) = task {
 
 let sendTextAsync (webSocket:WebSocket,message:string,cancellationToken) = task {
     if not (isNull webSocket) && webSocket.State = WebSocketState.Open then
-        let a = System.Text.Encoding.UTF8.GetBytes(message)
-        let buffer = new ArraySegment<byte>(a, 0, a.Length)
+        let bytes = System.Text.Encoding.UTF8.GetBytes(message)
+        let buffer = new ArraySegment<byte>(bytes, 0, bytes.Length)
         let! _ =  webSocket.SendAsync(buffer, WebSocketMessageType.Text, true, cancellationToken)
         return true
     else
