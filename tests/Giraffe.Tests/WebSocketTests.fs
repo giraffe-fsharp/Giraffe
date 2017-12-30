@@ -33,9 +33,9 @@ let configure (app : IApplicationBuilder,cm,cancellationToken) =
       .UseWebSockets()
       .UseGiraffe (webApp cm cancellationToken)
 
-let createClient (server:TestServer,cancellationToken) = task {
+let createClient (server:TestServer,route,cancellationToken) = task {
     let wsClient = server.CreateWebSocketClient()
-    let url = server.BaseAddress.AbsoluteUri + "echo"
+    let url = server.BaseAddress.AbsoluteUri + route
     return! wsClient.ConnectAsync(Uri(url), cancellationToken)
 }
 
@@ -81,7 +81,7 @@ let ``Simple Echo Test`` () = task {
     let cm = ConnectionManager()
 
     use server = createServer (cm, cancellationToken)
-    let! wsClient = createClient(server, cancellationToken)
+    let! wsClient = createClient(server, "echo", cancellationToken)
 
     let expected = "Hello"
     let! _ = sendTextAsync(wsClient,expected,cancellationToken)
@@ -103,7 +103,7 @@ let ``Can connect some clients`` (n:int) = task {
     use server = createServer (cm,cancellationToken)
     let! clients =
         [1..n]
-        |> List.map (fun _ -> createClient(server,cancellationToken))
+        |> List.map (fun _ -> createClient(server, "echo", cancellationToken))
         |> Task.WhenAll
 
     Assert.Equal(n,clients.Length)
@@ -127,7 +127,7 @@ let ``Broadcast Test`` (n:int) = task {
     use server = createServer (cm,cancellationToken)
     let! clients =
         [1..n]
-        |> List.map (fun _ -> createClient(server,cancellationToken))
+        |> List.map (fun _ -> createClient(server, "echo", cancellationToken))
         |> Task.WhenAll
    
     let expected = "Hello"
