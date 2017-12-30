@@ -41,9 +41,20 @@ let createClient (server:TestServer,token) = task {
 }
 
 let receiveText (websocket:WebSocket,token) = task {
-    let buffer = Array.zeroCreate DefaultWebSocketOptions.ReceiveBufferSize |> ArraySegment<byte>
-    let! _ = websocket.ReceiveAsync(buffer, token)
-    return ConvertToMsg buffer.Array
+    let moveBuffer (buffer: ArraySegment<'T>) count =
+        ArraySegment(buffer.Array, buffer.Offset + count, buffer.Count - count)
+
+    let rec receive receivedBytes = task {
+        let! result = websocket.ReceiveAsync(receivedBytes, token)
+        let currentBuffer = moveBuffer receivedBytes result.Count
+        if result.EndOfMessage then
+            return ConvertToMsg currentBuffer.Array
+        else
+            return! receive currentBuffer
+    }
+
+    let buffer = Array.zeroCreate DefaultWebSocketOptions.ReceiveBufferSize 
+    return! receive (ArraySegment buffer)
 }
 
 let createServer(cm,token) =
