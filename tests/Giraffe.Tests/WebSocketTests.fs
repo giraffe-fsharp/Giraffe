@@ -2,7 +2,6 @@ module Giraffe.WebSocketTests
 
 open System
 open System.Net.WebSockets
-open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.TestHost
@@ -14,19 +13,18 @@ open System.Threading
 open RequestErrors
 open Giraffe.TokenRouter
 
-
-let echoSocket (connectionManager : ConnectionManager) cancellationToken =
-    connectionManager.CreateSocket(
-        (fun _ref -> task { return true }),
-        (fun ref data -> SendText ref.WebSocket data cancellationToken),
-        cancellationToken)
-
-let webApp cm cancellationToken =
+let webApp (connectionManager:ConnectionManager) cancellationToken =
     let notfound = NOT_FOUND "Page not found"
    
     router notfound [
        GET [
-           route "/echo" (echoSocket cm cancellationToken) 
+           route "/echo" (
+               connectionManager.CreateSocket(
+                    (fun _ref -> task { return true }),
+                    (fun ref data -> task { 
+                            do! ref.SendTextAsync(data,cancellationToken)
+                            return true }),
+                    cancellationToken)) 
        ]
     ]
 
@@ -41,7 +39,18 @@ let createClient (server:TestServer,cancellationToken) = task {
     return! wsClient.ConnectAsync(Uri(url), cancellationToken)
 }
 
-let receiveText (websocket:WebSocket,cancellationToken) = task {
+
+let sendTextAsync (webSocket:WebSocket,message:string,cancellationToken) = task {
+    if not (isNull webSocket) && webSocket.State = WebSocketState.Open then
+        let a = System.Text.Encoding.UTF8.GetBytes(message)
+        let buffer = new ArraySegment<byte>(a, 0, a.Length)
+        let! _ =  webSocket.SendAsync(buffer, WebSocketMessageType.Text, true, cancellationToken)
+        return true
+    else
+        return false
+}
+
+let receiveTextAsync (websocket:WebSocket,cancellationToken) = task {
     let moveBuffer (buffer: ArraySegment<'T>) count =
         ArraySegment(buffer.Array, buffer.Offset + count, buffer.Count - count)
 
@@ -49,7 +58,10 @@ let receiveText (websocket:WebSocket,cancellationToken) = task {
         let! result = websocket.ReceiveAsync(receivedBytes, cancellationToken)
         let currentBuffer = moveBuffer receivedBytes result.Count
         if result.EndOfMessage then
-            return ConvertToMsg currentBuffer.Array
+            return 
+                currentBuffer.Array    
+                |> System.Text.Encoding.UTF8.GetString
+                |> fun s -> s.TrimEnd(char 0)
         else
             return! receive currentBuffer
     }
@@ -72,8 +84,8 @@ let ``Simple Echo Test`` () = task {
     let! wsClient = createClient(server, cancellationToken)
 
     let expected = "Hello"
-    let! _ = SendText wsClient expected cancellationToken
-    let! actual = receiveText (wsClient, cancellationToken)
+    let! _ = sendTextAsync(wsClient,expected,cancellationToken)
+    let! actual = receiveTextAsync(wsClient, cancellationToken)
 
     Assert.Equal(expected,actual)
 }
@@ -119,12 +131,11 @@ let ``Broadcast Test`` (n:int) = task {
         |> Task.WhenAll
    
     let expected = "Hello"
-    let! sent = cm.SendToAll(expected,cancellationToken)
-    Assert.Equal(n,sent)
+    do! cm.BroadcastTextAsync(expected,cancellationToken)
 
     let! results = 
         clients
-        |> Seq.map (fun ws -> receiveText (ws,cancellationToken))
+        |> Seq.map (fun ws -> receiveTextAsync (ws,cancellationToken))
         |> Task.WhenAll
 
     for x in results do
