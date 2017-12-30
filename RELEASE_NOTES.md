@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-## 0.1.0-beta 700
+## 0.1.0-beta-700
 
 #### Breaking changes
 
