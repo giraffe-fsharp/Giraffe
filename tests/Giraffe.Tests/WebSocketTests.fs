@@ -21,8 +21,8 @@ let webApp (connectionManager:ConnectionManager) cancellationToken =
            route "/echo" (
                connectionManager.CreateSocket(
                     (fun _ref -> task { return true }),
-                    (fun ref data -> task { 
-                            do! ref.SendTextAsync(data,cancellationToken)
+                    (fun ref msg -> task { 
+                            do! ref.SendTextAsync(msg,cancellationToken)
                             return true }),
                     cancellationToken)) 
        ]
