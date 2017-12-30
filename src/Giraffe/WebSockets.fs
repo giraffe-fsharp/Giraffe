@@ -35,30 +35,9 @@ let private negotiateSubProtocol(requestedSubProtocols,supportedProtocols:seq<We
         requestedSubProtocols |> Seq.contains supported.Name)
 
 
-type private WebSocketConnectionDictionary() =
-    let sockets = new System.Collections.Concurrent.ConcurrentDictionary<string, WebSocket>()
-
-    with 
-        member __.AddSocket(id:string,socket) =
-            sockets.AddOrUpdate(id, socket, Func<_,_,_>(fun _ _ -> socket)) |> ignore
-
-        member __.RemoveSocket websocketID = 
-            match sockets.TryRemove websocketID with
-            | true, s -> Some s
-            | _ -> None
-
-
-        member __.TryGetWebsocket websocketID = 
-            match sockets.TryGetValue websocketID with
-            | true, s -> Some s
-            | _ -> None
-
-        member __.AllConnections = sockets |> Seq.toArray
-
-        member __.Count = sockets.Count
-
 type WebSocketReference = {
     WebSocket : WebSocket
+    Subprotocol : WebSocketSubprotocol option
     ID : string
 }
     with
@@ -74,15 +53,41 @@ type WebSocketReference = {
                     do! this.WebSocket.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken)
         }
 
-        static member FromWebSocket(websocket) : WebSocketReference = {
+        static member FromWebSocket(websocket,?subprotocol) : WebSocketReference = {
             WebSocket  = websocket
+            Subprotocol = subprotocol
             ID = Guid.NewGuid().ToString()
         }
 
-        static member FromWebSocketWithID(websocket,websocketID) : WebSocketReference = {
+        static member FromWebSocketWithID(websocket,websocketID,?subprotocol) : WebSocketReference = {
             WebSocket  = websocket
+            Subprotocol = subprotocol
             ID = websocketID
         }
+
+
+
+type private WebSocketConnectionDictionary() =
+    let sockets = new System.Collections.Concurrent.ConcurrentDictionary<string, WebSocketReference>()
+
+    with 
+        member __.Add(reference:WebSocketReference) =
+            sockets.AddOrUpdate(reference.ID, reference, Func<_,_,_>(fun _ _ -> reference)) |> ignore
+
+        member __.Remove websocketID = 
+            match sockets.TryRemove websocketID with
+            | true, s -> Some s
+            | _ -> None
+
+
+        member __.TryGetReference websocketID = 
+            match sockets.TryGetValue websocketID with
+            | true, s -> Some s
+            | _ -> None
+
+        member __.AllConnections = sockets |> Seq.toArray
+
+        member __.Count = sockets.Count
 
 type ConnectionManager(?messageSize) =
     let messageSize = defaultArg messageSize DefaultWebSocketOptions.ReceiveBufferSize
@@ -92,10 +97,7 @@ type ConnectionManager(?messageSize) =
     with
 
         member __.TryGetWebSocket(websocketID:string) : WebSocketReference option = 
-            connections.TryGetWebsocket websocketID
-            |> Option.map (fun ws ->
-                { WebSocket = ws
-                  ID = websocketID })
+            connections.TryGetReference websocketID
 
         member __.Count = connections.Count
 
@@ -107,12 +109,12 @@ type ConnectionManager(?messageSize) =
                 connections.AllConnections
                 |> Seq.map (fun kv -> task {
                     if not cancellationToken.IsCancellationRequested then
-                        let webSocket = kv.Value
+                        let webSocket = kv.Value.WebSocket
                         if webSocket.State = WebSocketState.Open then
                             do! webSocket.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken)
                         else
                             if webSocket.State = WebSocketState.Closed then
-                                connections.RemoveSocket kv.Key |> ignore
+                                connections.Remove kv.Key |> ignore
                     })
                 |> Task.WhenAll
             return ()
@@ -155,7 +157,7 @@ type ConnectionManager(?messageSize) =
         }
 
         member private this.RegisterClient<'Msg>(reference:WebSocketReference,connectedF: WebSocketReference -> Task<bool>,messageF,cancellationToken:CancellationToken) = task {
-            connections.AddSocket(reference.ID,reference.WebSocket)
+            connections.Add reference
             let! connectionAccepted = connectedF reference
             let mutable running = connectionAccepted
             while running && not cancellationToken.IsCancellationRequested do
@@ -166,8 +168,9 @@ type ConnectionManager(?messageSize) =
         }
 
         member private __.Disconnecting (websocketID:string) = task {
-            match connections.RemoveSocket(websocketID) with
-            | Some socket ->
+            match connections.Remove websocketID with
+            | Some reference ->
+                let socket = reference.WebSocket
                 if not (isNull socket) then
                     if socket.State = WebSocketState.Open then
                         do! socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by the WebSocketManager", CancellationToken.None)
@@ -217,7 +220,7 @@ type ConnectionManager(?messageSize) =
                     match negotiateSubProtocol(ctx.WebSockets.WebSocketRequestedProtocols,supportedProtocols) with
                     | Some subProtocol ->
                         let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync(subProtocol.Name)
-                        let reference = WebSocketReference.FromWebSocket websocket
+                        let reference = WebSocketReference.FromWebSocket(websocket,subProtocol)
                         do! this.RegisterClient(reference,onConnected,onMessage,cancellationToken)
                         return! Successful.ok (text "OK") next ctx
                     | None ->
