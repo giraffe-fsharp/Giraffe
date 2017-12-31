@@ -79,9 +79,10 @@ type ConnectionManager(?messageSize) =
 
         member __.Count = connections.Count
 
-        member __.BroadcastTextAsync(msg:string,cancellationToken:CancellationToken) = task {
+        member __.BroadcastTextAsync(msg:string,?cancellationToken:CancellationToken) = task {
             let byteResponse = System.Text.Encoding.UTF8.GetBytes msg
             let segment = ArraySegment<byte>(byteResponse, 0, byteResponse.Length)
+            let cancellationToken = cancellationToken |> Option.defaultValue CancellationToken.None
 
             let! _ =
                 connections
@@ -163,12 +164,12 @@ type ConnectionManager(?messageSize) =
                     match supportedProtocols with
                     | None ->
                         let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync()
-                        return! run(websocket)
+                        return! run websocket
                     | Some supportedProtocols ->
                         match negotiateSubProtocol(ctx.WebSockets.WebSocketRequestedProtocols,supportedProtocols) with
                         | Some subProtocol ->
                             let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync(subProtocol.Name)
-                            return! run(websocket)
+                            return! run websocket
                         | None ->
                             return! HttpStatusCodeHandlers.RequestErrors.badRequest (text "websocket subprotocol not supported") next ctx
                 else
