@@ -64,37 +64,18 @@ type WebSocketReference = {
             ID = webSocketID |> Option.defaultWith (fun _ -> Guid.NewGuid().ToString())
         }
 
-type private WebSocketConnectionDictionary() =
-    let sockets = new System.Collections.Concurrent.ConcurrentDictionary<string, WebSocketReference>()
-
-    with 
-        member __.Add(reference:WebSocketReference) =
-            sockets.AddOrUpdate(reference.ID, reference, Func<_,_,_>(fun _ _ -> reference)) |> ignore
-
-        member __.Remove websocketID = 
-            match sockets.TryRemove websocketID with
-            | true, s -> Some s
-            | _ -> None
-
-
-        member __.TryGetReference websocketID = 
-            match sockets.TryGetValue websocketID with
-            | true, s -> Some s
-            | _ -> None
-
-        member __.AllConnections = sockets |> Seq.toArray
-
-        member __.Count = sockets.Count
 
 type ConnectionManager(?messageSize) =
     let messageSize = defaultArg messageSize DefaultWebSocketOptions.ReceiveBufferSize
 
-    let connections = WebSocketConnectionDictionary()
+    let connections = new System.Collections.Concurrent.ConcurrentDictionary<string, WebSocketReference>()
 
     with
 
         member __.TryGetWebSocket(websocketID:string) : WebSocketReference option = 
-            connections.TryGetReference websocketID
+            match connections.TryGetValue websocketID with
+            | true, r -> Some r
+            | _ -> None
 
         member __.Count = connections.Count
 
@@ -103,7 +84,7 @@ type ConnectionManager(?messageSize) =
             let segment = ArraySegment<byte>(byteResponse, 0, byteResponse.Length)
 
             let! _ =
-                connections.AllConnections
+                connections
                 |> Seq.map (fun kv -> task {
                     try
                         if not cancellationToken.IsCancellationRequested then
@@ -112,7 +93,7 @@ type ConnectionManager(?messageSize) =
                                 do! webSocket.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken)
                             else
                                 if webSocket.State = WebSocketState.Closed then
-                                    connections.Remove kv.Key |> ignore
+                                    connections.TryRemove kv.Key |> ignore
                     with
                     | _ -> () })
                 |> Task.WhenAll
@@ -156,19 +137,15 @@ type ConnectionManager(?messageSize) =
         }
 
         member private this.RegisterClient<'Msg>(reference:WebSocketReference,connectedF: WebSocketReference -> Task<unit>,messageF,cancellationToken:CancellationToken) = task {
-            connections.Add reference
+            connections.AddOrUpdate(reference.ID, reference, Func<_,_,_>(fun _ _ -> reference)) |> ignore
             do! connectedF reference
             let mutable running = true
             while running && not cancellationToken.IsCancellationRequested do
                 let! msg = this.Receive<'Msg>(reference,messageF,cancellationToken)
                 running <- msg
 
-            return! this.Disconnecting(reference.ID)
-        }
-
-        member private __.Disconnecting (websocketID:string) = task {
-            match connections.Remove websocketID with
-            | Some reference -> do! reference.CloseAsync()
+            match connections.TryRemove reference.ID with
+            | true, reference -> do! reference.CloseAsync()
             | _ -> ()
         }
 
