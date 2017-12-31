@@ -30,6 +30,11 @@ let assertMapEquals (m1:Map<'k,'v>) (m2:Map<'k,'v>) =
   for kv in m1 do
     Assert.Equal(box kv.Value, box m2.[kv.Key])
 
+let assertRoutesAreEqual (expected:RouteInfos list) (actual:RouteInfos list) =  
+    Assert.Equal(expected.Length, actual.Length)
+    for route in actual do
+      expected |> List.contains route |> assertThat
+      
 // ---------------------------------
 // Test Types
 // ---------------------------------
@@ -293,9 +298,7 @@ let ``app contains 1 route and 1 routef in GET`` () =
               route "/home" >=> text "Home." 
             ]
       ] @>
-    
-  //failwithf "webapp %A" webApp
-    
+        
   let ctx = analyze webApp AppAnalyzeRules.Default
   let exp =
     [
@@ -324,9 +327,7 @@ let ``app contains 1 route and 1 routef in GET`` () =
      }
     ]
   let routes = !ctx.Routes
-  Assert.Equal(exp.Length, routes.Length)
-  for route in routes do
-    exp |> List.contains route |> assertThat
+  assertRoutesAreEqual exp routes
 
 [<Fact>]
 let ``app contains 1 route and 1 routef in GET and POST`` () =
@@ -366,7 +367,5 @@ let ``app contains 1 route and 1 routef in GET and POST`` () =
     ]
   let routes = !ctx.Routes
   
-  Assert.Equal(routes.Length, exp.Length)
-  for route in routes do
-    exp |> List.contains route |> assertThat
+  assertRoutesAreEqual exp routes
   
