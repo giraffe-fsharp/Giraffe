@@ -67,13 +67,16 @@ type ConnectionManager(?messageSize) =
 
     with
 
+        /// Tries to find a WebSocket by ID. Returns None if the socket wasn't found.
         member __.TryGetWebSocket(websocketID:string) : WebSocketReference option = 
             match connections.TryGetValue websocketID with
             | true, r -> Some r
             | _ -> None
 
+        /// Returns the number of WebSocket connections.
         member __.Count = connections.Count
 
+        /// Sends a UTF-8 encoded text message to all WebSocket connections.
         member __.BroadcastTextAsync(msg:string,?cancellationToken:CancellationToken) = task {
             let byteResponse = System.Text.Encoding.UTF8.GetBytes msg
             let segment = ArraySegment<byte>(byteResponse, 0, byteResponse.Length)
@@ -145,6 +148,7 @@ type ConnectionManager(?messageSize) =
             | _ -> ()
         }
 
+        /// Creates a new WebSocket connection and negotiates the subprotocol.
         member this.CreateSocket(onConnected,onMessage,?webSocketID,?supportedProtocols:seq<WebSocketSubprotocol>,?cancellationToken) =
             let negotiateSubProtocol(requestedSubProtocols,supportedProtocols:seq<WebSocketSubprotocol>) =
                 supportedProtocols
