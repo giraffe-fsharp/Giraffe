@@ -1,11 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFrameworks>net461;netcoreapp2.0</TargetFrameworks>
     <AssemblyName>Giraffe.Tests</AssemblyName>
     <DebugType>portable</DebugType>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.*" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.0.*" />
@@ -19,11 +17,10 @@
     <PackageReference Include="FsCheck" Version="3.0.0-*" />
     <PackageReference Include="FsCheck.Xunit" Version="3.0.0-*" />
   </ItemGroup>
-
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Giraffe.Swagger\Giraffe.Swagger.fsproj" />
     <ProjectReference Include="..\..\src\Giraffe\Giraffe.fsproj" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Include="Asserts.fs" />
     <Compile Include="FormatExpressionTests.fs" />
@@ -34,11 +31,9 @@
     <Compile Include="TokenRouterTests.fs" />
     <Compile Include="SwaggerTests.fs" />
   </ItemGroup>
-
   <ItemGroup>
     <Content Include="webroot\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
 </Project>

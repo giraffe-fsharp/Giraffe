@@ -177,7 +177,6 @@ let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
     | Value (o,_) -> 
         ctx.AddArgType (o.GetType())
     
-    // Lambda (next, Call (None, choose, [handlers, next]))
     | Let (v, NewUnionCase (_,handlers), Lambda (next, Call (None, m, _))) when v.Name = "handlers" && m.Name = "choose" && m.DeclaringType.Name = "HttpHandlers" ->
     
         let ctxs = handlers |> List.map(fun e -> loop e ctx)
@@ -188,8 +187,6 @@ let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
               CurrentRoute = ctx.CurrentRoute
         }
      
-        //failwith ""
-        
     | Let (id,op,t) -> 
         match op with
         | Value (o,_) -> 
@@ -208,32 +205,15 @@ let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
         rules.ApplyMethodCall propertyInfo.DeclaringType.Name propertyInfo.Name ctx
     
     | Call(instance, method, args) when method.Name = "choose" && method.DeclaringType.Name = "HttpHandlers" ->
-//        let values =
-//            args
-//            |> List.choose (
-//                    function
-//                    | Value(varVal,_) -> Some varVal
-//                    | Var ds -> 
-//                        failwithf "not impl %A" ds
-//                        None
-//                    | e -> None
-//                ) 
-//    
         let ctxs = args |> List.map(fun e -> loop e (newContext()))
-        { AnalyzeContext.Empty 
+        { ctx 
             with 
-              Routes = ref (ctxs |> List.collect (fun c -> !c.Routes))
-              Responses = ref (ctxs |> List.collect (fun c -> !c.Responses))
+              Routes = ref (ctxs |> List.collect (fun c -> !c.Routes) |> List.append(!ctx.Routes) |> List.distinct)
+              Responses = ref (ctxs |> List.collect (fun c -> !c.Responses) |> List.append(!ctx.Responses)  |> List.distinct)
+              CurrentRoute = ctx.CurrentRoute
         }
     
     | Call(instance, method, args) ->
-//        let values =
-//            args
-//            |> List.choose (
-//                    function
-//                    | Value(varVal,_) -> Some varVal 
-//                    | e -> None
-//                ) 
         rules.ApplyMethodCall method.DeclaringType.Name method.Name ctx
     | Lambda(_, e2) -> 
         loop e2 ctx
