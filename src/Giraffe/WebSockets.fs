@@ -7,39 +7,30 @@ open System.Threading.Tasks
 open Giraffe.Tasks
 open Giraffe
 
-type SocketStatus =
-    | Connected of string
-
-
-[<RequireQualifiedAccess>]
-type WebSocketMsg<'Data> =
-   | StatusMsg of SocketStatus
-   | Opening
-   | Closing
-   | Error of string
-   | Data of 'Data
-
+/// WebSocket subprotocol type. For negotiation of subprotocols.
 type WebSocketSubprotocol = {
+    /// The subprotocol name.
     Name : string
 }
 
+/// Default WebSocket communication options.
 let DefaultWebSocketOptions = 
     let webSocketOptions = Microsoft.AspNetCore.Builder.WebSocketOptions()
     webSocketOptions.KeepAliveInterval <- TimeSpan.FromSeconds 120.
     webSocketOptions.ReceiveBufferSize <- 4 * 1024
     webSocketOptions
 
-let private negotiateSubProtocol(requestedSubProtocols,supportedProtocols:seq<WebSocketSubprotocol>) =
-    supportedProtocols
-    |> Seq.tryFind (fun (supported:WebSocketSubprotocol) ->
-        requestedSubProtocols |> Seq.contains supported.Name)
-
+/// Internal reference to a WebSocket. Includes WebSocketID and Subprotocol.
 type WebSocketReference = {
+    /// A reference to the WebSocket.
     WebSocket : WebSocket
+    /// The selected subprotocol.
     Subprotocol : WebSocketSubprotocol option
+    /// The internal ID of the WebSocket.
     ID : string
 }
     with
+        /// Sends a UTF-8 encoded text message to the WebSocket client.
         member this.SendTextAsync(msg:string,?cancellationToken) = task {
             let byteResponse = System.Text.Encoding.UTF8.GetBytes msg
             let segment = ArraySegment<byte>(byteResponse, 0, byteResponse.Length)
@@ -50,21 +41,25 @@ type WebSocketReference = {
                     do! this.WebSocket.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken)
         }
         
+
+        /// Closes the connection to the WebSocket client.
         member this.CloseAsync(?reason,?cancellationToken) = task {
             if not (isNull this.WebSocket) then
                 if this.WebSocket.State = WebSocketState.Open then
                     let cancellationToken = cancellationToken |> Option.defaultValue CancellationToken.None
-                    let reason = reason |> Option.defaultValue "Closed by the WebSocketManager"
+                    let reason = reason |> Option.defaultValue "Closed by the WebSocket server"
                     do! this.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, reason, cancellationToken)
         }
 
+        
+        /// Creates a new reference to a WebSocket.
         static member FromWebSocket(websocket,?webSocketID,?subProtocol) : WebSocketReference = {
             WebSocket  = websocket
             Subprotocol = subProtocol
             ID = webSocketID |> Option.defaultWith (fun _ -> Guid.NewGuid().ToString())
         }
 
-
+/// A connection manager keeps track of all connections that are open at a specific endpoint.
 type ConnectionManager(?messageSize) =
     let messageSize = defaultArg messageSize DefaultWebSocketOptions.ReceiveBufferSize
 
@@ -151,6 +146,11 @@ type ConnectionManager(?messageSize) =
         }
 
         member this.CreateSocket(onConnected,onMessage,?webSocketID,?supportedProtocols:seq<WebSocketSubprotocol>,?cancellationToken) =
+            let negotiateSubProtocol(requestedSubProtocols,supportedProtocols:seq<WebSocketSubprotocol>) =
+                supportedProtocols
+                |> Seq.tryFind (fun (supported:WebSocketSubprotocol) ->
+                    requestedSubProtocols |> Seq.contains supported.Name)
+
             fun next (ctx : Microsoft.AspNetCore.Http.HttpContext) -> task {
                 let run(websocket) = task {
                     let webSocketID = webSocketID |> Option.defaultWith (fun _ -> Guid.NewGuid().ToString())
@@ -161,17 +161,18 @@ type ConnectionManager(?messageSize) =
                 }
 
                 if ctx.WebSockets.IsWebSocketRequest then
+                    let requestedSubProtocols = ctx.WebSockets.WebSocketRequestedProtocols
                     match supportedProtocols with
-                    | None ->
-                        let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync()
-                        return! run websocket
-                    | Some supportedProtocols ->
-                        match negotiateSubProtocol(ctx.WebSockets.WebSocketRequestedProtocols,supportedProtocols) with
+                    | Some supportedProtocols when requestedSubProtocols |> Seq.isEmpty |> not ->
+                        match supportedProtocols |> Seq.tryFind (fun supported -> requestedSubProtocols |> Seq.contains supported.Name) with
                         | Some subProtocol ->
                             let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync(subProtocol.Name)
                             return! run websocket
                         | None ->
                             return! HttpStatusCodeHandlers.RequestErrors.badRequest (text "websocket subprotocol not supported") next ctx
+                    | _ ->
+                        let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync()
+                        return! run websocket                         
                 else
                     return! HttpStatusCodeHandlers.RequestErrors.badRequest (text "no websocket request") next ctx
             }
