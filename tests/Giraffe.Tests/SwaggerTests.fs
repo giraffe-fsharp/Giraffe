@@ -282,4 +282,91 @@ let ``routef with verb `GET` and args [int, string, float] returning text and ha
   assertMapEquals exp.Parameters route.Parameters
 
   
+[<Fact>]
+let ``app contains 1 route and 1 routef in GET`` () =
+  let webApp =
+    <@
+      choose [ 
+        GET >=> 
+          choose [
+              routef "/hello/%d/%s/%f" (fun (age, name, price) -> text "Home.")
+              route "/home" >=> text "Home." 
+            ]
+      ] @>
+    
+  //failwithf "webapp %A" webApp
+    
+  let ctx = analyze webApp AppAnalyzeRules.Default
+  let exp =
+    [
+     { Verb = "GET"
+       Path = "/hello/%d/%s/%f"
+       Parameters = Map
+                     [ "arg0", typeof<int> 
+                       "arg1", typeof<string>
+                       "arg2", typeof<float> ]
+       Responses =
+         [
+           { StatusCode = 200
+             ContentType = "text/plain"
+             ModelType = typeof<string> }
+         ]
+     }
+     { Verb="GET"
+       Path="/home"
+       Parameters=Map.empty
+       Responses=
+         [
+           { StatusCode=200
+             ContentType="text/plain"
+             ModelType=(typeof<string>) }
+         ]
+     }
+    ]
+  let routes = !ctx.Routes
+  Assert.Equal(exp.Length, routes.Length)
+  for route in routes do
+    exp |> List.contains route |> assertThat
 
+[<Fact>]
+let ``app contains 1 route and 1 routef in GET and POST`` () =
+  let webApp =
+    <@
+      choose [ 
+        GET >=> routef "/hello/%d/%s/%f" (fun (age, name, price) -> text "Home.")
+        POST >=> route "/home" >=> text "Home."
+      ] @>
+    
+  let ctx = analyze webApp AppAnalyzeRules.Default
+  let exp =
+    [
+     { Verb = "GET"
+       Path = "/hello/%d/%s/%f"
+       Parameters = Map
+                     [ "arg0", typeof<int> 
+                       "arg1", typeof<string>
+                       "arg2", typeof<float> ]
+       Responses =
+         [
+           { StatusCode = 200
+             ContentType = "text/plain"
+             ModelType = typeof<string> }
+         ]
+     }
+     { Verb="POST"
+       Path="/home"
+       Parameters=Map.empty
+       Responses=
+         [
+           { StatusCode=200
+             ContentType="text/plain"
+             ModelType=(typeof<string>) }
+         ]
+     }
+    ]
+  let routes = !ctx.Routes
+  
+  Assert.Equal(routes.Length, exp.Length)
+  for route in routes do
+    exp |> List.contains route |> assertThat
+  
