@@ -369,3 +369,38 @@ let ``app contains 1 route and 1 routef in GET and POST`` () =
   
   assertRoutesAreEqual exp routes
   
+
+[<Fact>]
+let ``GET route reading params in handler body and returning text`` () =
+  let webApp =
+    <@ POST 
+        >=> route "/hello" 
+              >=>
+                (fun next ctx ->
+                  let name = ctx.Request.Query.Item "name" |> Seq.head
+                  let nickname = ctx.Request.Form.Item "nickname" |> Seq.head
+                  let message = sprintf "hello %s" name
+                  text message next ctx) 
+                 @>
+
+//  failwithf "impl: %A" webApp
+
+  let ctx = analyze webApp AppAnalyzeRules.Default
+
+  let exp = 
+    { Verb = "POST"
+      Path = "/hello"
+      Parameters = Map [ "name", typeof<string> ; "nickname", typeof<string> ]
+      Responses =
+        [
+          { StatusCode = 200
+            ContentType = "text/plain"
+            ModelType = typeof<string> }
+        ]
+    }
+  let route = !ctx.Routes |> Seq.exactlyOne
+  
+  Assert.Equal(exp.Path, route.Path)
+  Assert.Equal(exp.Verb, route.Verb)
+  Assert.Equal(exp.Responses.[0], route.Responses.[0])
+  

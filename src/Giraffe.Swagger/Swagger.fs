@@ -161,6 +161,8 @@ type AppAnalyzeRules =
         // HTTP PATCH method
         { ModuleName="HttpHandlers"; FunctionName="PATCH" }, (fun ctx -> { ctx with Verb = (Some "PATCH") })
         
+//        { ModuleName="IFormCollection"; FunctionName="Item" }, (fun ctx -> ctx )
+        
       ] |> Map
     { MethodCalls=methodCalls }
 
@@ -214,7 +216,13 @@ let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
         }
     
     | Call(instance, method, args) ->
-        rules.ApplyMethodCall method.DeclaringType.Name method.Name ctx
+        let c1 = analyzeAll args ctx
+        rules.ApplyMethodCall method.DeclaringType.Name method.Name c1
+        
+    | PropertyGet (Some (PropertyGet (Some (PropertyGet (Some _, request, [])), form, [])), item, [Value varname]) ->
+        
+        { ctx with P }
+        
     | Lambda(_, e2) -> 
         loop e2 ctx
     | IfThenElse(ifExp, thenExp, elseExp) ->
@@ -247,7 +255,7 @@ let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
     | TupleGet (tupledArg, i) ->
         ctx
     | e -> 
-        failwithf "not implemented %A" e
+        //failwithf "not implemented %A" e
         printfn "not implemented %A" e
         ctx
   
