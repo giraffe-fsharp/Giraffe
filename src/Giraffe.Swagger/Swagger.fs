@@ -53,7 +53,7 @@ type AnalyzeContext =
       ArgTypes : Type list ref
       Variables : Map<string, obj> ref
       Routes : RouteInfos list ref
-      Responses : ResponseInfos list ref
+      Responses : ResponseInfos list
       Verb : string option
       CurrentRoute : RouteInfos option ref
       Parameters:ParamDescriptor list
@@ -65,7 +65,7 @@ type AnalyzeContext =
           Variables = ref Map.empty
           Routes = ref List.empty
           Verb = None
-          Responses = ref List.empty
+          Responses = List.empty
           CurrentRoute = ref None
           Parameters = List.empty
       }
@@ -75,14 +75,14 @@ type AnalyzeContext =
         let r = 
           { route 
               with 
-                Responses=(!__.Responses @ route.Responses |> List.distinct)
+                Responses=(__.Responses @ route.Responses |> List.distinct)
                 Parameters=(__.Parameters @ route.Parameters) 
           }
         __.Routes := r :: !__.Routes
         __.CurrentRoute := None
-        __.Responses := []
+        //__.Responses := []
         __.ArgTypes := []
-        { __ with Parameters=List.Empty }
+        { __ with Parameters=List.Empty; Responses=[] }
     | None -> 
         __.ArgTypes := []
         let routes = 
@@ -90,7 +90,7 @@ type AnalyzeContext =
             | route :: s -> 
                 { route 
                     with 
-                      Responses=(!__.Responses @ route.Responses |> List.distinct)
+                      Responses=(__.Responses @ route.Responses |> List.distinct)
                       Parameters=(__.Parameters @ route.Parameters |> List.distinct) 
                 } :: s
             | v -> v
@@ -98,8 +98,8 @@ type AnalyzeContext =
         __
   member __.AddResponse code contentType (modelType:Type) =
     let rs = { StatusCode=code; ContentType=contentType; ModelType=modelType }
-    __.Responses := rs :: !__.Responses
-    __
+    //__.Responses := rs :: __.Responses
+    { __ with Responses = rs :: __.Responses }
   member __.AddRoute verb parameters path =
     let ctx = __.PushRoute ()
     ctx.CurrentRoute := Some { Verb=verb; Path=path; Responses=[]; Parameters=( __.Parameters @ parameters) }
@@ -151,7 +151,7 @@ type AnalyzeContext =
         Variables = ref variables
         Routes = ref routes
         Verb = verb
-        Responses = ref (!__.Responses @ !other.Responses)
+        Responses = __.Responses @ other.Responses
         CurrentRoute = ref currentRoute
         Parameters = (__.Parameters @ other.Parameters) |> List.distinct
     }
@@ -248,7 +248,7 @@ let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
         { ctx 
             with 
               Routes = ref (ctxs |> List.collect (fun c -> !c.Routes) |> List.append(!ctx.Routes) |> List.distinct)
-              Responses = ref (ctxs |> List.collect (fun c -> !c.Responses) |> List.append(!ctx.Responses)  |> List.distinct)
+              Responses = (ctxs |> List.collect (fun c -> c.Responses) |> List.append(ctx.Responses)  |> List.distinct)
               CurrentRoute = ctx.CurrentRoute
         }
      
@@ -270,7 +270,7 @@ let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
         { ctx 
             with 
               Routes = ref (ctxs |> List.collect (fun c -> !c.Routes) |> List.append(!ctx.Routes) |> List.distinct)
-              Responses = ref (ctxs |> List.collect (fun c -> !c.Responses) |> List.append(!ctx.Responses)  |> List.distinct)
+              Responses = (ctxs |> List.collect (fun c -> c.Responses) |> List.append(ctx.Responses)  |> List.distinct)
               CurrentRoute = ctx.CurrentRoute
         }
     
