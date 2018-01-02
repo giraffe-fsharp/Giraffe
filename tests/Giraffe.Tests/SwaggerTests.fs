@@ -430,16 +430,17 @@ let ``Converting a route infos into route description`` () =
               In = FormData
               Required = true } ]
         Responses =
-          [
-            { StatusCode = 200
+          [ { StatusCode = 200
               ContentType = "application/json"
               ModelType = typeof<Dummy> }
             { StatusCode = 500
               ContentType = "text/plain"
-              ModelType = typeof<string> }
-          ]
+              ModelType = typeof<string> } ]
       }
   let doc = mkRouteDoc route
   Assert.Equal(route.Path, doc.Template)
   Assert.Equal(HttpVerb.Post, doc.Verb)
+  assertListDeepEqual route.Parameters doc.Params
+  
+  
   

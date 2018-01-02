@@ -379,13 +379,6 @@ module Generator =
         | "patch" -> Patch
         | "options" -> Options
         | _ -> Get
-  and ParamDescriptor =
-    { Name:string
-      Type:Type option
-      In:ParamContainer
-      Required:bool }
-    static member Named n =
-      {Name=n; Type=None; In=Query; Required=true}
   and ApiDescription =
     { Title:string
       Description:string
