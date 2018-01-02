@@ -337,6 +337,54 @@ module Generator =
   open Newtonsoft.Json.Serialization
   open Newtonsoft.Json.Linq
 
+  type Type with
+    member this.IsSwaggerPrimitive
+      with get () =
+        TypeHelpers.typeFormatsNames.ContainsKey this
+    member this.FormatAndName
+      with get () =
+        match this with
+        | _ when TypeHelpers.typeFormatsNames.ContainsKey this ->
+          Some (TypeHelpers.typeFormatsNames.Item this)
+        | _ when this.IsPrimitive ->
+          Some (TypeHelpers.typeFormatsNames.Item (typeof<string>))
+        | _ -> None
+
+    member this.Describes() : ObjectDefinition =
+
+      let optionalType (t:Type) = 
+        if (not t.IsGenericType) || t.GetGenericTypeDefinition() <> typedefof<Option<_>>
+        then None
+        else
+          let arg = t.GenericTypeArguments |> Seq.exactlyOne
+          Some arg
+
+      let rec describe (t:Type) = 
+        let descProp (tp:Type) name = 
+          match tp.FormatAndName with
+          | Some (ty,na) ->
+              Some (name, Primitive(ty,na))
+          | None ->
+              let t' = tp
+              if t = t'
+              then
+                None
+              else
+                let d = Ref(describe t')
+                Some (name, d)
+        let props =
+          t.GetProperties()
+          |> Seq.choose (
+              fun p ->
+                match optionalType p.PropertyType with
+                | Some t' -> descProp t' p.Name
+                | None -> descProp p.PropertyType p.Name
+          ) |> Map
+        {Id=t.Name; Properties=props}
+
+      describe this
+
+
   type JsonWriter with 
     member __.WriteProperty name (value:obj) =
       __.WritePropertyName name
@@ -579,4 +627,5 @@ module Generator =
   let mkRouteDoc (route:Analyzer.RouteInfos) : RouteDescriptor =
     { RouteDescriptor.Empty with 
         Template=route.Path
-        Verb=HttpVerb.Parse route.Verb }
+        Verb=HttpVerb.Parse route.Verb
+        Params=route.Parameters }
