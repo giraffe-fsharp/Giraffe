@@ -10,11 +10,10 @@
     <PackageId>Giraffe.Swagger</PackageId>
     <PackageTags>Giraffe;Swagger;ASP.NET Core;Lambda;FSharp;Functional;Http;Web;Framework;Micro;Service</PackageTags>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="FSharp.Quotations.Evaluator" Version="1.0.7" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Include="Swagger.fs" />
   </ItemGroup>

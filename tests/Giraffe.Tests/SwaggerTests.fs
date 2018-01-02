@@ -16,6 +16,7 @@ open Giraffe.Tests.Asserts
 open Giraffe
 open Giraffe.XmlViewEngine
 open Swagger
+open Swagger.Analyzer
 open System
 
 // ---------------------------------
