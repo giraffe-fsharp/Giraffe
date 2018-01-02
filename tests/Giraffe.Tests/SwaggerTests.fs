@@ -38,7 +38,8 @@ let assertRoutesAreEqual (expected:RouteInfos list) (actual:RouteInfos list) =
 let assertListDeepEqual (expected:'t list) (actual:'t list) =
   Assert.Equal(expected.Length, actual.Length)
   for item in expected do
-    actual |> List.contains item |> Assert.True
+    if actual |> List.contains item |> not
+    then failwithf "Cannot find %A in %A" item actual
       
 // ---------------------------------
 // Test Types
@@ -440,7 +441,15 @@ let ``GET route reading params in handler body and returning text`` () =
   let exp = 
     { Verb = "POST"
       Path = "/hello"
-      Parameters = [ ParamDescriptor.InQuery "name" typeof<string> ; ParamDescriptor.InForm "nickname" typeof<string> ]
+      Parameters = 
+        [ { Name = "name"
+            Type = None
+            In = Query
+            Required = true }
+          { Name = "nickname"
+            Type = None
+            In = FormData
+            Required = true } ]
       Responses =
         [
           { StatusCode = 200

@@ -85,6 +85,16 @@ type AnalyzeContext =
         { __ with Parameters=List.Empty }
     | None -> 
         __.ArgTypes := []
+        let routes = 
+            match !__.Routes with
+            | route :: s -> 
+                { route 
+                    with 
+                      Responses=(!__.Responses @ route.Responses |> List.distinct)
+                      Parameters=(__.Parameters @ route.Parameters |> List.distinct) 
+                } :: s
+            | v -> v
+        __.Routes := routes |> List.distinct
         __
   member __.AddResponse code contentType (modelType:Type) =
     let rs = { StatusCode=code; ContentType=contentType; ModelType=modelType }
@@ -113,12 +123,11 @@ type AnalyzeContext =
   member __.MergeWith (other:AnalyzeContext) =
     let variables = joinMaps !__.Variables !other.Variables
     let verb = 
-      match __.Verb with 
-      | Some v -> Some v
-      | None ->
-          match other.Verb with
-          | Some v -> Some v
-          | None -> None
+      match __.Verb, other.Verb with 
+      | Some v, None -> Some v
+      | None, Some v -> Some v
+      | None, None -> None
+      | Some v1, Some v2 -> Some v2
     
     let currentRoute = 
       match !__.CurrentRoute, !other.CurrentRoute with 
@@ -128,13 +137,15 @@ type AnalyzeContext =
           Some { 
             route1 
               with 
-                Parameters=(route1.Parameters @ route2.Parameters)
-                Responses=(route1.Responses @ route2.Responses)
+                Parameters = (route1.Parameters @ route2.Parameters) |> List.distinct
+                Responses = (route1.Responses @ route2.Responses) |> List.distinct
             }
       | None, None -> None
-      
     
-    let routes = !__.Routes @ !other.Routes |> List.map (fun route -> { route with Verb=(verb |> getVerb) })
+    let routes = 
+      !__.Routes @ !other.Routes 
+      |> List.map (fun route -> { route with Verb=(verb |> getVerb) })
+    
     {
         ArgTypes = ref (!__.ArgTypes @ !other.ArgTypes)
         Variables = ref variables
@@ -142,8 +153,14 @@ type AnalyzeContext =
         Verb = verb
         Responses = ref (!__.Responses @ !other.Responses)
         CurrentRoute = ref currentRoute
-        Parameters = __.Parameters @ other.Parameters
+        Parameters = (__.Parameters @ other.Parameters) |> List.distinct
     }
+
+let mergeWith (a:AnalyzeContext) =
+  a.MergeWith
+
+let pushRoute (a:AnalyzeContext) =
+  a.PushRoute()
 
 type MethodCallId = 
   { ModuleName:string
@@ -246,8 +263,7 @@ let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
     | Application (left, right) ->
         let c1 = loop right (newContext()) 
         let c2 = loop left (newContext())
-        let c3 = (c1.MergeWith c2)//.PushRoute()
-        (ctx.MergeWith c3).PushRoute()
+        c1 |> mergeWith c2 |> pushRoute
         
     | Call(instance, method, args) when method.Name = "choose" && method.DeclaringType.Name = "HttpHandlers" ->
         let ctxs = args |> List.map(fun e -> loop e (newContext()))
@@ -263,7 +279,11 @@ let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
         rules.ApplyMethodCall method.DeclaringType.Name method.Name c1
         
     | PropertyGet (Some (PropertyGet (Some (PropertyGet (Some _, request, [])), form, [])), item, [Value (varname,_)]) ->
-        ctx.AddParameter {Name=(varname.ToString()); Type=None; In=FormData; Required=true}
+        let c = 
+          match form.PropertyType.Name with
+          | "IFormCollection" -> FormData
+          | _ -> Query
+        ctx.AddParameter {Name=(varname.ToString()); Type=None; In=c; Required=true}
     
     | PropertyGet (instance, propertyInfo, pargs) ->
         rules.ApplyMethodCall propertyInfo.DeclaringType.Name propertyInfo.Name ctx
