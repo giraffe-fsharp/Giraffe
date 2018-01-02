@@ -1,6 +1,7 @@
 module Giraffe.Swagger
 
 open System
+open System.Linq.Expressions
 open Microsoft.FSharp.Quotations
 open Quotations.DerivedPatterns
 open Quotations.ExprShape
@@ -18,13 +19,31 @@ let toString (o:obj) = o.ToString()
 type RouteInfos =
   { Verb:string
     Path:string
-    Parameters:Map<string, Type>
+    Parameters:ParamDescriptor list
     Responses:ResponseInfos list }
 and ResponseInfos =
   { StatusCode:int
     ContentType:string
     ModelType:Type }
-    
+and ParamDescriptor =
+  { Name:string
+    Type:Type option
+    In:ParamContainer
+    Required:bool }
+  static member InQuery n t =
+    {Name=n; Type=(Some t); In=Query; Required=true}
+  static member InForm n t =
+      {Name=n; Type=(Some t); In=FormData; Required=true}
+  static member Named n =
+    {Name=n; Type=None; In=Query; Required=true}
+and ParamContainer =
+  | Query | Header | Path | FormData | Body
+  override __.ToString() =
+    match __ with
+    | Query -> "query" | Header -> "header"
+    | Path -> "path" | FormData -> "formData"
+    | Body -> "body"
+      
 type PathFormat = 
   { Template:string
     ArgTypes:Type list }
@@ -37,35 +56,46 @@ type AnalyzeContext =
       Responses : ResponseInfos list ref
       Verb : string option
       CurrentRoute : RouteInfos option ref
+      Parameters:ParamDescriptor list
   }
   static member Empty
     with get () =
       {
-          ArgTypes = ref []
+          ArgTypes = ref List.empty
           Variables = ref Map.empty
-          Routes = ref []
+          Routes = ref List.empty
           Verb = None
-          Responses = ref []
+          Responses = ref List.empty
           CurrentRoute = ref None
+          Parameters = List.empty
       }
   member __.PushRoute () =
     match !__.CurrentRoute with
     | Some route -> 
-        let r = { route with Responses=(!__.Responses |> List.distinct) }
+        let r = 
+          { route 
+              with 
+                Responses=(!__.Responses @ route.Responses |> List.distinct)
+                Parameters=(__.Parameters @ route.Parameters) 
+          }
         __.Routes := r :: !__.Routes
         __.CurrentRoute := None
         __.Responses := []
-    | None -> ()
-    __.ArgTypes := []
-    __
+        __.ArgTypes := []
+        { __ with Parameters=List.Empty }
+    | None -> 
+        __.ArgTypes := []
+        __
   member __.AddResponse code contentType (modelType:Type) =
     let rs = { StatusCode=code; ContentType=contentType; ModelType=modelType }
     __.Responses := rs :: !__.Responses
     __
   member __.AddRoute verb parameters path =
-    __.PushRoute ()
-    __.CurrentRoute := Some { Verb=verb; Path=path; Responses=[]; Parameters=parameters }
-    __
+    let ctx = __.PushRoute ()
+    ctx.CurrentRoute := Some { Verb=verb; Path=path; Responses=[]; Parameters=( __.Parameters @ parameters) }
+    ctx
+  member __.AddParameter parameter =
+    { __ with Parameters=(parameter :: __.Parameters) }
   member __.ClearVariables () =
     { __ with Variables = ref Map.empty }
   member __.SetVariable name value =
@@ -91,12 +121,18 @@ type AnalyzeContext =
           | None -> None
     
     let currentRoute = 
-      match !__.CurrentRoute with 
-      | Some v -> Some v
-      | None ->
-          match !other.CurrentRoute with
-          | Some v -> Some v
-          | None -> None
+      match !__.CurrentRoute, !other.CurrentRoute with 
+      | Some v, None -> Some v
+      | None, Some v -> Some v
+      | Some route1, Some route2 -> 
+          Some { 
+            route1 
+              with 
+                Parameters=(route1.Parameters @ route2.Parameters)
+                Responses=(route1.Responses @ route2.Responses)
+            }
+      | None, None -> None
+      
     
     let routes = !__.Routes @ !other.Routes |> List.map (fun route -> { route with Verb=(verb |> getVerb) })
     {
@@ -106,6 +142,7 @@ type AnalyzeContext =
         Verb = verb
         Responses = ref (!__.Responses @ !other.Responses)
         CurrentRoute = ref currentRoute
+        Parameters = __.Parameters @ other.Parameters
     }
 
 type MethodCallId = 
@@ -125,15 +162,20 @@ type AppAnalyzeRules =
       [ 
         // simple route
         { ModuleName="HttpHandlers"; FunctionName="route" }, 
-            (fun ctx -> (!ctx.Variables).Item "path" |> toString |> ctx.AddRoute (ctx.GetVerb()) Map.empty)
+            (fun ctx -> (!ctx.Variables).Item "path" |> toString |> ctx.AddRoute (ctx.GetVerb()) List.empty)
         { ModuleName="HttpHandlers"; FunctionName="routeCi" }, 
-            (fun ctx -> (!ctx.Variables).Item "path" |> toString |> ctx.AddRoute (ctx.GetVerb()) Map.empty)
+            (fun ctx -> (!ctx.Variables).Item "path" |> toString |> ctx.AddRoute (ctx.GetVerb()) List.empty)
         
         // route format
         { ModuleName="HttpHandlers"; FunctionName="routef" }, 
             (fun ctx -> 
               let path = (!ctx.Variables).Item "pathFormat" :?> PathFormat
-              let parameters = path.ArgTypes |> List.mapi(fun i item -> (sprintf "arg%d" i), item) |> Map
+              let parameters = 
+                path.ArgTypes 
+                |> List.mapi(
+                      fun i typ -> 
+                        let name = (sprintf "arg%d" i)
+                        ParamDescriptor.InQuery name typ)
               ctx.AddRoute (ctx.GetVerb()) parameters path.Template
             )
         
@@ -170,7 +212,11 @@ let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
   let rec loop exp (ctx:AnalyzeContext) : AnalyzeContext =
 
     let newContext() = 
-      { AnalyzeContext.Empty with Responses = ctx.Responses; ArgTypes = ctx.ArgTypes }
+      { AnalyzeContext.Empty with 
+          Responses = ctx.Responses
+          ArgTypes = ctx.ArgTypes
+          Parameters = ctx.Parameters
+          Routes = ctx.Routes }
 
     let analyzeAll exps c =
       exps |> Seq.fold (fun state e -> loop e state) c
@@ -200,12 +246,9 @@ let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
     | Application (left, right) ->
         let c1 = loop right (newContext()) 
         let c2 = loop left (newContext())
-        let c3 = (c1.MergeWith c2).PushRoute()
-        (c3.MergeWith ctx).PushRoute()
+        let c3 = (c1.MergeWith c2)//.PushRoute()
+        (ctx.MergeWith c3).PushRoute()
         
-    | PropertyGet (instance, propertyInfo, pargs) ->
-        rules.ApplyMethodCall propertyInfo.DeclaringType.Name propertyInfo.Name ctx
-    
     | Call(instance, method, args) when method.Name = "choose" && method.DeclaringType.Name = "HttpHandlers" ->
         let ctxs = args |> List.map(fun e -> loop e (newContext()))
         { ctx 
@@ -219,10 +262,12 @@ let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
         let c1 = analyzeAll args ctx
         rules.ApplyMethodCall method.DeclaringType.Name method.Name c1
         
-    | PropertyGet (Some (PropertyGet (Some (PropertyGet (Some _, request, [])), form, [])), item, [Value varname]) ->
-        
-        { ctx with P }
-        
+    | PropertyGet (Some (PropertyGet (Some (PropertyGet (Some _, request, [])), form, [])), item, [Value (varname,_)]) ->
+        ctx.AddParameter {Name=(varname.ToString()); Type=None; In=FormData; Required=true}
+    
+    | PropertyGet (instance, propertyInfo, pargs) ->
+        rules.ApplyMethodCall propertyInfo.DeclaringType.Name propertyInfo.Name ctx
+            
     | Lambda(_, e2) -> 
         loop e2 ctx
     | IfThenElse(ifExp, thenExp, elseExp) ->

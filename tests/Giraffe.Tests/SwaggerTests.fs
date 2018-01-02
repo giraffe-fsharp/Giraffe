@@ -31,9 +31,14 @@ let assertMapEquals (m1:Map<'k,'v>) (m2:Map<'k,'v>) =
     Assert.Equal(box kv.Value, box m2.[kv.Key])
 
 let assertRoutesAreEqual (expected:RouteInfos list) (actual:RouteInfos list) =  
-    Assert.Equal(expected.Length, actual.Length)
-    for route in actual do
-      expected |> List.contains route |> assertThat
+  Assert.Equal(expected.Length, actual.Length)
+  for route in actual do
+    expected |> List.contains route |> assertThat
+      
+let assertListDeepEqual (expected:'t list) (actual:'t list) =
+  Assert.Equal(expected.Length, actual.Length)
+  for item in expected do
+    actual |> List.contains item |> Assert.True
       
 // ---------------------------------
 // Test Types
@@ -61,7 +66,7 @@ let ``webapp is a simple route with verb `GET` returning text`` () =
   let exp = 
     { Verb="GET"
       Path="/home"
-      Parameters=Map.empty
+      Parameters=List.empty
       Responses=
         [
           { StatusCode=200
@@ -85,7 +90,7 @@ let ``webapp is a simple route with verb `POST` returning text`` () =
   let exp = 
     { Verb="POST"
       Path="/home"
-      Parameters=Map.empty
+      Parameters=List.empty
       Responses=
         [
           { StatusCode=200
@@ -114,7 +119,7 @@ let ``webapp is a simple route with verb `PUT` with a condition returning text``
   let exp = 
     { Verb="PUT"
       Path="/seconds"
-      Parameters=Map.empty
+      Parameters=List.empty
       Responses=
         [
           { StatusCode=200
@@ -145,7 +150,7 @@ let ``webapp is a simple route with verb `DELETE` with a condition returning tex
   let exp = 
     { Verb="DELETE"
       Path="/seconds"
-      Parameters=Map.empty
+      Parameters=List.empty
       Responses=
         [
           { StatusCode=200
@@ -189,7 +194,7 @@ let ``webapp is a simple route with verb `POST` with a more complex condition re
   let exp = 
     { Verb="POST"
       Path="/swagger/is/cool"
-      Parameters=Map.empty
+      Parameters=List.empty
       Responses=
         [
           { StatusCode=200
@@ -222,7 +227,7 @@ let ``webapp is a simple routeCi with verb `GET` returning text`` () =
   let exp = 
     { Verb="GET"
       Path="/home"
-      Parameters=Map.empty
+      Parameters=List.empty
       Responses=
         [
           { StatusCode=200
@@ -244,7 +249,7 @@ let ``webapp is a simple routef with verb `GET` returning text and handler inner
   let exp = 
     { Verb = "GET"
       Path = "/hello/%s"
-      Parameters = Map [ "arg0", typeof<string> ]
+      Parameters = [ ParamDescriptor.InQuery "arg0" typeof<string> ]
       Responses =
         [
           { StatusCode = 200
@@ -257,7 +262,7 @@ let ``webapp is a simple routef with verb `GET` returning text and handler inner
   Assert.Equal(exp.Path, route.Path)
   Assert.Equal(exp.Verb, route.Verb)
   Assert.Equal(exp.Responses.[0], route.Responses.[0])
-  assertMapEquals exp.Parameters route.Parameters
+  assertListDeepEqual exp.Parameters route.Parameters
   
 [<Fact>]
 let ``routef with verb `GET` and args [int, string, float] returning text and handler inner quotation`` () =
@@ -267,10 +272,9 @@ let ``routef with verb `GET` and args [int, string, float] returning text and ha
   let exp = 
     { Verb = "GET"
       Path = "/hello/%d/%s/%f"
-      Parameters = Map
-                    [ "arg0", typeof<int> 
-                      "arg1", typeof<string>
-                      "arg2", typeof<float> ]
+      Parameters = [ ParamDescriptor.InQuery "arg0" typeof<int> 
+                     ParamDescriptor.InQuery "arg1" typeof<string>
+                     ParamDescriptor.InQuery "arg2" typeof<float> ]
       Responses =
         [
           { StatusCode = 200
@@ -284,7 +288,7 @@ let ``routef with verb `GET` and args [int, string, float] returning text and ha
   Assert.Equal(exp.Verb, route.Verb)
   Assert.Equal(exp.Responses.[0], route.Responses.[0])
   
-  assertMapEquals exp.Parameters route.Parameters
+  assertListDeepEqual exp.Parameters route.Parameters
 
   
 [<Fact>]
@@ -304,10 +308,9 @@ let ``app contains 1 route and 1 routef in GET`` () =
     [
      { Verb = "GET"
        Path = "/hello/%d/%s/%f"
-       Parameters = Map
-                     [ "arg0", typeof<int> 
-                       "arg1", typeof<string>
-                       "arg2", typeof<float> ]
+       Parameters = [ ParamDescriptor.InQuery "arg0" typeof<int> 
+                      ParamDescriptor.InQuery "arg1" typeof<string>
+                      ParamDescriptor.InQuery "arg2" typeof<float> ]
        Responses =
          [
            { StatusCode = 200
@@ -317,7 +320,7 @@ let ``app contains 1 route and 1 routef in GET`` () =
      }
      { Verb="GET"
        Path="/home"
-       Parameters=Map.empty
+       Parameters=List.empty
        Responses=
          [
            { StatusCode=200
@@ -343,10 +346,9 @@ let ``app contains 1 route and 1 routef in GET and POST`` () =
     [
      { Verb = "GET"
        Path = "/hello/%d/%s/%f"
-       Parameters = Map
-                     [ "arg0", typeof<int> 
-                       "arg1", typeof<string>
-                       "arg2", typeof<float> ]
+       Parameters = [ ParamDescriptor.InQuery "arg0" typeof<int> 
+                      ParamDescriptor.InQuery "arg1" typeof<string>
+                      ParamDescriptor.InQuery "arg2" typeof<float> ]
        Responses =
          [
            { StatusCode = 200
@@ -356,7 +358,7 @@ let ``app contains 1 route and 1 routef in GET and POST`` () =
      }
      { Verb="POST"
        Path="/home"
-       Parameters=Map.empty
+       Parameters=List.empty
        Responses=
          [
            { StatusCode=200
@@ -369,6 +371,54 @@ let ``app contains 1 route and 1 routef in GET and POST`` () =
   
   assertRoutesAreEqual exp routes
   
+[<Fact>]
+let ``merging 2 analyze contexts does not loose data`` () =
+  let route1 = 
+    { Verb = "POST"
+      Path = "/hello"
+      Parameters = [ ParamDescriptor.InQuery "name" typeof<string> ; ParamDescriptor.InForm "nickname" typeof<string> ]
+      Responses =
+        [
+          { StatusCode = 200
+            ContentType = "text/plain"
+            ModelType = typeof<string> }
+        ]
+    }
+  let route2 = 
+    { Verb="GET"
+      Path="/home"
+      Parameters=List.empty
+      Responses=
+         [
+           { StatusCode=200
+             ContentType="text/plain"
+             ModelType=(typeof<string>) }
+         ]
+    }
+  let c1 = 
+    { ArgTypes = ref List.empty
+      Variables = ref Map.empty
+      Routes = ref List.empty
+      Verb = None
+      Responses = ref List.empty
+      CurrentRoute = ref None
+      Parameters = List.empty }
+  let c2 = 
+    { ArgTypes = ref [ typeof<string> ]
+      Variables = ref Map.empty
+      Routes = ref [route1]
+      Verb = Some "GET"
+      Responses = ref [
+                        { StatusCode = 200
+                          ContentType = "text/plain"
+                          ModelType = typeof<string> }
+                      ]
+      CurrentRoute = ref (Some route2)
+      Parameters = [ParamDescriptor.InQuery "age" typeof<int> ]
+    }
+  let c3 = (c1.MergeWith c2).PushRoute()
+  printfn "%A" c3
+  Assert.Equal(2, (!c3.Routes).Length)
 
 [<Fact>]
 let ``GET route reading params in handler body and returning text`` () =
@@ -383,14 +433,14 @@ let ``GET route reading params in handler body and returning text`` () =
                   text message next ctx) 
                  @>
 
-//  failwithf "impl: %A" webApp
+  //failwithf "impl: %A" webApp
 
   let ctx = analyze webApp AppAnalyzeRules.Default
 
   let exp = 
     { Verb = "POST"
       Path = "/hello"
-      Parameters = Map [ "name", typeof<string> ; "nickname", typeof<string> ]
+      Parameters = [ ParamDescriptor.InQuery "name" typeof<string> ; ParamDescriptor.InForm "nickname" typeof<string> ]
       Responses =
         [
           { StatusCode = 200
@@ -402,5 +452,6 @@ let ``GET route reading params in handler body and returning text`` () =
   
   Assert.Equal(exp.Path, route.Path)
   Assert.Equal(exp.Verb, route.Verb)
+  assertListDeepEqual exp.Parameters route.Parameters
   Assert.Equal(exp.Responses.[0], route.Responses.[0])
   
