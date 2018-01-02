@@ -374,55 +374,6 @@ let ``app contains 1 route and 1 routef in GET and POST`` () =
   assertRoutesAreEqual exp routes
   
 [<Fact>]
-let ``merging 2 analyze contexts does not loose data`` () =
-  let route1 = 
-    { Verb = "POST"
-      Path = "/hello"
-      Parameters = [ ParamDescriptor.InQuery "name" typeof<string> ; ParamDescriptor.InForm "nickname" typeof<string> ]
-      Responses =
-        [
-          { StatusCode = 200
-            ContentType = "text/plain"
-            ModelType = typeof<string> }
-        ]
-    }
-  let route2 = 
-    { Verb="GET"
-      Path="/home"
-      Parameters=List.empty
-      Responses=
-         [
-           { StatusCode=200
-             ContentType="text/plain"
-             ModelType=(typeof<string>) }
-         ]
-    }
-  let c1 = 
-    { ArgTypes = ref List.empty
-      Variables = ref Map.empty
-      Routes = ref List.empty
-      Verb = None
-      Responses = List.empty
-      CurrentRoute = ref None
-      Parameters = List.empty }
-  let c2 = 
-    { ArgTypes = ref [ typeof<string> ]
-      Variables = ref Map.empty
-      Routes = ref [route1]
-      Verb = Some "GET"
-      Responses = [
-                        { StatusCode = 200
-                          ContentType = "text/plain"
-                          ModelType = typeof<string> }
-                      ]
-      CurrentRoute = ref (Some route2)
-      Parameters = [ParamDescriptor.InQuery "age" typeof<int> ]
-    }
-  let c3 = (c1.MergeWith c2).PushRoute()
-  printfn "%A" c3
-  Assert.Equal(2, (!c3.Routes).Length)
-
-[<Fact>]
 let ``GET route reading params in handler body and returning text`` () =
   let webApp =
     <@ POST 
@@ -434,9 +385,6 @@ let ``GET route reading params in handler body and returning text`` () =
                   let message = sprintf "hello %s" name
                   text message next ctx) 
                  @>
-
-  //failwithf "impl: %A" webApp
-
   let ctx = analyze webApp AppAnalyzeRules.Default
 
   let exp = 
@@ -464,4 +412,34 @@ let ``GET route reading params in handler body and returning text`` () =
   Assert.Equal(exp.Verb, route.Verb)
   assertListDeepEqual exp.Parameters route.Parameters
   Assert.Equal(exp.Responses.[0], route.Responses.[0])
+  
+open Generator
+  
+[<Fact>]
+let ``Converting a route infos into route description`` () =
+  let route = 
+      { Verb = "POST"
+        Path = "/hello"
+        Parameters = 
+          [ { Name = "name"
+              Type = None
+              In = Query
+              Required = true }
+            { Name = "nickname"
+              Type = None
+              In = FormData
+              Required = true } ]
+        Responses =
+          [
+            { StatusCode = 200
+              ContentType = "application/json"
+              ModelType = typeof<Dummy> }
+            { StatusCode = 500
+              ContentType = "text/plain"
+              ModelType = typeof<string> }
+          ]
+      }
+  let doc = mkRouteDoc route
+  Assert.Equal(route.Path, doc.Template)
+  Assert.Equal(HttpVerb.Post, doc.Verb)
   

@@ -370,6 +370,15 @@ module Generator =
       | Post -> "post" | Delete -> "delete"
       | Options -> "options" | Head -> "head"
       | Patch -> "patch"
+    static member Parse (text:string) =
+        match text.ToLowerInvariant() with
+        | "put" -> Put
+        | "post" -> Post
+        | "delete" -> Delete
+        | "head" -> Head
+        | "patch" -> Patch
+        | "options" -> Options
+        | _ -> Get
   and ParamDescriptor =
     { Name:string
       Type:Type option
@@ -573,3 +582,8 @@ module Generator =
       settings.Converters.Add(new DefinitionsConverter())
       settings.Converters.Add(new ParamDefinitionConverter())
       JsonConvert.SerializeObject(__, settings)
+  
+  let mkRouteDoc (route:Analyzer.RouteInfos) : RouteDescriptor =
+    { RouteDescriptor.Empty with 
+        Template=route.Path
+        Verb=HttpVerb.Parse route.Verb }
