@@ -441,6 +441,12 @@ let ``Converting a route infos into route description`` () =
   Assert.Equal(route.Path, doc.Template)
   Assert.Equal(HttpVerb.Post, doc.Verb)
   assertListDeepEqual route.Parameters doc.Params
+  Assert.Equal(route.Responses.Length, doc.Responses.Count)
   
+  let success = doc.Responses.Item 200
+  let failure = doc.Responses.Item 500
+  
+  Assert.Equal("Dummy", success.Schema.Value.Id)
+  Assert.True(failure.Schema.IsNone)
   
   

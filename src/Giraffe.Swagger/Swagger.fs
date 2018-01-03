@@ -337,54 +337,6 @@ module Generator =
   open Newtonsoft.Json.Serialization
   open Newtonsoft.Json.Linq
 
-  type Type with
-    member this.IsSwaggerPrimitive
-      with get () =
-        TypeHelpers.typeFormatsNames.ContainsKey this
-    member this.FormatAndName
-      with get () =
-        match this with
-        | _ when TypeHelpers.typeFormatsNames.ContainsKey this ->
-          Some (TypeHelpers.typeFormatsNames.Item this)
-        | _ when this.IsPrimitive ->
-          Some (TypeHelpers.typeFormatsNames.Item (typeof<string>))
-        | _ -> None
-
-    member this.Describes() : ObjectDefinition =
-
-      let optionalType (t:Type) = 
-        if (not t.IsGenericType) || t.GetGenericTypeDefinition() <> typedefof<Option<_>>
-        then None
-        else
-          let arg = t.GenericTypeArguments |> Seq.exactlyOne
-          Some arg
-
-      let rec describe (t:Type) = 
-        let descProp (tp:Type) name = 
-          match tp.FormatAndName with
-          | Some (ty,na) ->
-              Some (name, Primitive(ty,na))
-          | None ->
-              let t' = tp
-              if t = t'
-              then
-                None
-              else
-                let d = Ref(describe t')
-                Some (name, d)
-        let props =
-          t.GetProperties()
-          |> Seq.choose (
-              fun p ->
-                match optionalType p.PropertyType with
-                | Some t' -> descProp t' p.Name
-                | None -> descProp p.PropertyType p.Name
-          ) |> Map
-        {Id=t.Name; Properties=props}
-
-      describe this
-
-
   type JsonWriter with 
     member __.WriteProperty name (value:obj) =
       __.WritePropertyName name
@@ -494,8 +446,79 @@ module Generator =
       v
     member __.ToJson() : string =
       __.ToJObject().ToString()
+  
+   module TypeHelpers =
+        //http://swagger.io/specification/ -> Data Types
+        let typeFormatsNames =
+            [
+              typeof<string>, ("string", "string")
+              typeof<int8>, ("integer", "int8")
+              typeof<int16>, ("integer", "int16")
+              typeof<int32>, ("integer", "int32")
+              typeof<int64>, ("integer", "int64")
+              typeof<bool>, ("boolean", "")
+              typeof<float>, ("float", "float32")
+              typeof<float32>, ("float", "float32")
+              typeof<uint8>, ("integer", "int8")
+              typeof<uint16>, ("integer", "int16")
+              typeof<uint32>, ("integer", "int32")
+              typeof<uint64>, ("integer", "int64")
+              typeof<DateTime>, ("string", "date-time")
+              typeof<byte array>, ("string", "binary")
+              typeof<byte list>, ("string", "binary")
+              typeof<byte seq>, ("string", "binary")
+              typeof<byte>, ("string", "byte")
+              typeof<Guid>, ("string", "string")
+            ] |> dict
+
+    type Type with
+      member this.IsSwaggerPrimitive
+        with get () =
+          TypeHelpers.typeFormatsNames.ContainsKey this
+      member this.FormatAndName
+        with get () =
+          match this with
+          | _ when TypeHelpers.typeFormatsNames.ContainsKey this ->
+            Some (TypeHelpers.typeFormatsNames.Item this)
+          | _ when this.IsPrimitive ->
+            Some (TypeHelpers.typeFormatsNames.Item (typeof<string>))
+          | _ -> None
+
+      member this.Describes() : ObjectDefinition =
+
+        let optionalType (t:Type) = 
+          if (not t.IsGenericType) || t.GetGenericTypeDefinition() <> typedefof<Option<_>>
+          then None
+          else
+            let arg = t.GenericTypeArguments |> Seq.exactlyOne
+            Some arg
+
+        let rec describe (t:Type) = 
+          let descProp (tp:Type) name = 
+            match tp.FormatAndName with
+            | Some (ty,na) ->
+                Some (name, Primitive(ty,na))
+            | None ->
+                let t' = tp
+                if t = t'
+                then
+                  None
+                else
+                  let d = Ref(describe t')
+                  Some (name, d)
+          let props =
+            t.GetProperties()
+            |> Seq.choose (
+                fun p ->
+                  match optionalType p.PropertyType with
+                  | Some t' -> descProp t' p.Name
+                  | None -> descProp p.PropertyType p.Name
+            ) |> Map
+          {Id=t.Name; Properties=props}
+
+        describe this
       
-  and ApiDescriptionConverter() =
+  type ApiDescriptionConverter() =
     inherit JsonConverter()
         override __.WriteJson(writer:JsonWriter,value:obj,_:JsonSerializer) =
           let d = unbox<ApiDescription>(value)
@@ -625,7 +648,19 @@ module Generator =
       JsonConvert.SerializeObject(__, settings)
   
   let mkRouteDoc (route:Analyzer.RouteInfos) : RouteDescriptor =
-    { RouteDescriptor.Empty with 
+  
+    let responses = 
+      route.Responses 
+      |> List.map (
+           fun rs ->
+            let schema = if rs.ModelType.IsSwaggerPrimitive then None else Some (rs.ModelType.Describes())
+            let model = { Description = sprintf "code %d returns %s" rs.StatusCode rs.ContentType
+                          Schema = schema }
+            (rs.StatusCode, model) )
+      |> dict
+    
+    { RouteDescriptor.Empty with
+        Responses=responses 
         Template=route.Path
         Verb=HttpVerb.Parse route.Verb
         Params=route.Parameters }
