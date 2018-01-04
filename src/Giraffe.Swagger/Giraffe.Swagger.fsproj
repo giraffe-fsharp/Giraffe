@@ -17,4 +17,13 @@
   <ItemGroup>
     <Compile Include="Swagger.fs" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="swagger-ui.zip" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="SwaggerUi.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Giraffe\Giraffe.fsproj" />
+  </ItemGroup>
 </Project>
