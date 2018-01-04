@@ -7,8 +7,8 @@ open System.IO.Compression
 open Giraffe.HttpHandlers
 open Microsoft.AspNetCore.Http
 
-let swaggerUiHandler swJsonPath =
-  fun (next : HttpFunc) (ctx : HttpContext) ->
+let swaggerUiHandler (swaggerUiPath:string) swJsonPath =
+  let handle (next : HttpFunc) (ctx : HttpContext) =
     let combineUrls (u1:string) (u2:string) =
       let sp = if u2.StartsWith "/" then u2.Substring 1 else u2
       u1 + sp
@@ -16,7 +16,11 @@ let swaggerUiHandler swJsonPath =
     let p =
       match ctx.Request.Path with
       | v when not v.HasValue -> "index.html"
-      | v -> v.Value
+      | v -> 
+          let path = v.Value.Substring(swaggerUiPath.Length)
+          if String.IsNullOrWhiteSpace path
+          then "index.html"
+          else path
 
     let assembly = System.Reflection.Assembly.GetExecutingAssembly()
     let fs = assembly.GetManifestResourceStream "swagger-ui.zip"
@@ -37,7 +41,10 @@ let swaggerUiHandler swJsonPath =
         r.ReadToEnd()
           .Replace("http://petstore.swagger.io/v2/swagger.json", (combineUrls "/" swJsonPath))
         |> r.CurrentEncoding.GetBytes
-      bytes |> setBody
+      setBody bytes next ctx
     | None ->
-        text "Ressource not found"
-    
+        (setStatusCode 404 >=> text "Ressource not found") next ctx
+  
+  routeStartsWithCi swaggerUiPath >=> handle
+
+
