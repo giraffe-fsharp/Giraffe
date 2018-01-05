@@ -516,6 +516,7 @@ let GET    fns = methodFns "GET"    fns
 let POST   fns = methodFns "POST"   fns
 let PUT    fns = methodFns "PUT"    fns
 let DELETE fns = methodFns "DELETE" fns
+let PATCH  fns = methodFns "PATCH"  fns
 
 ///**Description**
 /// HttpHandler funtion that accepts a list of route mapping functions and builds a route tree for fast processing of request routes
