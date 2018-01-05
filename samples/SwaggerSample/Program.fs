@@ -5,7 +5,6 @@ open System.IO
 open System.Security.Claims
 open System.Collections.Generic
 open System.Threading
-open System.Web.Http
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
@@ -97,14 +96,10 @@ let configureLogging (loggerBuilder : ILoggingBuilder) =
                  .AddConsole()
                  .AddDebug() |> ignore
 
-//System.Web.Http.Description
-
 [<EntryPoint>]
 let main _ =
     let contentRoot = Directory.GetCurrentDirectory()
     let webRoot     = Path.Combine(contentRoot, "WebRoot")
-    
-    //let config = GlobalConfiguration.Configuration
     
     WebHost.CreateDefaultBuilder()
         .UseWebRoot(webRoot)
