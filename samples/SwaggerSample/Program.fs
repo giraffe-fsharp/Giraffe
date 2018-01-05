@@ -5,6 +5,7 @@ open System.IO
 open System.Security.Claims
 open System.Collections.Generic
 open System.Threading
+open System.Web.Http
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
@@ -61,7 +62,7 @@ let webApp =
                 route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
                 route  "/once"       >=> (time() |> text)
                 route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
-                swaggerUiHandler "/swaggerui" ""
+                swaggerUiHandler "/swaggerui/" ""
             ]
         route "/car" >=> submitCar
         RequestErrors.notFound (text "Not Found") ]
@@ -78,6 +79,7 @@ let cookieAuth (o : CookieAuthenticationOptions) =
         o.ExpireTimeSpan      <- TimeSpan.FromDays 7.0
 
 let configureApp (app : IApplicationBuilder) =
+    
     app.UseGiraffeErrorHandler(errorHandler)
        .UseStaticFiles()
        .UseAuthentication()
@@ -88,16 +90,22 @@ let configureServices (services : IServiceCollection) =
         .AddAuthentication(authScheme)
         .AddCookie(cookieAuth)   |> ignore
     services.AddDataProtection() |> ignore
+    
 
 let configureLogging (loggerBuilder : ILoggingBuilder) =
     loggerBuilder.AddFilter(fun lvl -> lvl.Equals LogLevel.Error)
                  .AddConsole()
                  .AddDebug() |> ignore
 
+//System.Web.Http.Description
+
 [<EntryPoint>]
 let main _ =
     let contentRoot = Directory.GetCurrentDirectory()
     let webRoot     = Path.Combine(contentRoot, "WebRoot")
+    
+    //let config = GlobalConfiguration.Configuration
+    
     WebHost.CreateDefaultBuilder()
         .UseWebRoot(webRoot)
         .Configure(Action<IApplicationBuilder> configureApp)

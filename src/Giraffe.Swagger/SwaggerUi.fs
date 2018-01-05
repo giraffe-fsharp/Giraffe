@@ -27,11 +27,13 @@ let swaggerUiHandler (swaggerUiPath:string) swJsonPath =
     let zip = new ZipArchive(fs)
     match zip.Entries |> Seq.tryFind (fun e -> e.FullName = p) with
     | Some ze ->
-      
       let mimetype =
         match System.IO.Path.GetExtension p with
         | ".htm"
         | ".html" -> "text/html"
+        | ".css" -> "text/css"
+        | ".js" -> "text/javascript"
+        | ext when [".gif";".png";".jpeg";".jpg";".bmp";".webp"] |> List.contains ext -> sprintf "image/%s" ext
         | ext when ext.StartsWith "." -> "application/" + ext.Substring(1)
         | _ -> "application/octet-stream"
         
