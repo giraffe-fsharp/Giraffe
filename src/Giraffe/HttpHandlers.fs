@@ -336,6 +336,19 @@ let xml (dataObj : obj) : HttpHandler =
     setHttpHeader "Content-Type" "application/xml"
     >=> setBody (serializeXml dataObj)
 
+/// Returns the stream as PDF to the client.
+let pdf fileName (stream : Stream) : HttpHandler =
+    fun (next : HttpFunc) (ctx : Http.HttpContext) ->
+        task {
+            let l = int stream.Length
+            stream.Position <- int64 0
+            ctx.Response.Headers.["Content-Length"] <- StringValues(l.ToString())
+            ctx.Response.Headers.["Content-Type"] <- StringValues("application/pdf")
+            ctx.Response.Headers.["Content-Disposition"] <- StringValues(sprintf "attachment;filename='%s'" fileName)
+            do! stream.CopyToAsync(ctx.Response.Body)
+            return! next ctx
+        }
+
 /// Reads a HTML file from disk and writes its contents to the body of the HTTP response
 /// with a Content-Type of text/html.
 let htmlFile (filePath : string) : HttpHandler =
