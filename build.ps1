@@ -44,7 +44,6 @@ function Write-DotnetVersion
     Write-Host ".NET Core runtime version: $dotnetVersion" -ForegroundColor Cyan
 }
 
-function dotnet-restore ($project, $argv) { Invoke-Cmd "dotnet restore $project $argv" }
 function dotnet-build   ($project, $argv) { Invoke-Cmd "dotnet build $project $argv" }
 function dotnet-run     ($project, $argv) { Invoke-Cmd "dotnet run --project $project $argv" }
 function dotnet-test    ($project, $argv) { Invoke-Cmd "dotnet test $project $argv" }
@@ -148,15 +147,13 @@ $configuration = if ($Release.IsPresent) { "Release" } else { "Debug" }
 
 Write-Host "Building Giraffe..." -ForegroundColor Magenta
 $framework = Get-FrameworkArg $giraffe
-dotnet-restore $giraffe
 dotnet-build   $giraffe "-c $configuration $framework"
 
 if (!$ExcludeTests.IsPresent -and !$Run.IsPresent)
 {
     Write-Host "Building and running tests..." -ForegroundColor Magenta
     $framework = Get-FrameworkArg $giraffeTests
-
-    dotnet-restore $giraffeTests
+    
     dotnet-build   $giraffeTests $framework
     dotnet-xunit $giraffeTests "" 
 }
@@ -165,16 +162,10 @@ if (!$ExcludeSamples.IsPresent -and !$Run.IsPresent)
 {
     Write-Host "Building and testing samples..." -ForegroundColor Magenta
 
-    dotnet-restore $identityApp
     dotnet-build   $identityApp
-
-    dotnet-restore $jwtApp
     dotnet-build   $jwtApp
-
-    dotnet-restore $sampleApp
     dotnet-build   $sampleApp
 
-    dotnet-restore $sampleAppTests
     dotnet-build   $sampleAppTests
     dotnet-xunit   $sampleAppTests
 }
@@ -182,7 +173,6 @@ if (!$ExcludeSamples.IsPresent -and !$Run.IsPresent)
 if ($Run.IsPresent)
 {
     Write-Host "Launching sample application..." -ForegroundColor Magenta
-    dotnet-restore $sampleApp
     dotnet-build   $sampleApp
     dotnet-run     $sampleApp
 }
