@@ -11,6 +11,7 @@ open Microsoft.Extensions.DependencyInjection
 open Newtonsoft.Json
 open Giraffe.Serialization
 open Giraffe.Negotiation
+open Giraffe.Serialization.Json
 
 /// ---------------------------
 /// Logging helper functions
@@ -88,8 +89,6 @@ type IApplicationBuilder with
 
 type IServiceCollection with
     member this.AddGiraffe() =
-        this.AddSingleton<JsonSerializerSettings>(Json.NewtonsoftJsonSerializer.DefaultSettings)
-            .AddSingleton<IJsonSerializer, NewtonsoftJsonSerializer>()
-            .AddSingleton<XmlWriterSettings>(Xml.DefaultXmlSerializer.DefaultSettings)
-            .AddSingleton<IXmlSerializer, DefaultXmlSerializer>()
+        this.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer(NewtonsoftJsonSerializer.DefaultSettings))
+            .AddSingleton<IXmlSerializer>(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
             .AddSingleton<INegotiationConfig, DefaultNegotiationConfig>()

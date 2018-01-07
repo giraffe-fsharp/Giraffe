@@ -32,15 +32,24 @@ function Invoke-Cmd ($cmd)
     if ($LastExitCode -ne 0) { Write-Error "An error occured when executing '$cmd'."; return }
 }
 
+function dotnet-info                      { Invoke-Cmd "dotnet --info" }
 function dotnet-version                   { Invoke-Cmd "dotnet --version" }
 function dotnet-build   ($project, $argv) { Invoke-Cmd "dotnet build $project $argv" }
 function dotnet-run     ($project, $argv) { Invoke-Cmd "dotnet run --project $project $argv" }
 function dotnet-test    ($project, $argv) { Invoke-Cmd "dotnet test $project $argv" }
 function dotnet-pack    ($project, $argv) { Invoke-Cmd "dotnet pack $project $argv" }
-function dotnet-xunit   ($project, $argv) {
 
+function Get-DotNetRuntimeVersion
+{
+    $version = dotnet --info | Select-Object -Last 3 | Select-Object -First 1
+    $version.Split(":")[1].Trim()
+}
+
+function dotnet-xunit   ($project, $argv)
+{
+    $fxversion = Get-DotNetRuntimeVersion
     Push-Location (Get-Item $project).Directory.FullName
-    Invoke-Cmd "dotnet xunit $argv"
+    Invoke-Cmd "dotnet xunit -fxversion $fxversion $argv"
     Pop-Location
 }
 
