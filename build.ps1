@@ -32,30 +32,23 @@ function Invoke-Cmd ($cmd)
     if ($LastExitCode -ne 0) { Write-Error "An error occured when executing '$cmd'."; return }
 }
 
-function dotnet-version
-{
-    $dotnetVersion = Invoke-Cmd "dotnet --version"
-    return $dotnetVersion
+function dotnet-version                   { Invoke-Cmd "dotnet --version" }
+function dotnet-build   ($project, $argv) { Invoke-Cmd "dotnet build $project $argv" }
+function dotnet-run     ($project, $argv) { Invoke-Cmd "dotnet run --project $project $argv" }
+function dotnet-test    ($project, $argv) { Invoke-Cmd "dotnet test $project $argv" }
+function dotnet-pack    ($project, $argv) { Invoke-Cmd "dotnet pack $project $argv" }
+function dotnet-xunit   ($project, $argv) {
+
+    Push-Location (Get-Item $project).Directory.FullName
+    Invoke-Cmd "dotnet xunit $argv"
+    Pop-Location
 }
+
 function Write-DotnetVersion
 {
     $dotnetVersion = dotnet-version
     Write-Host ".NET Core runtime version: $dotnetVersion" -ForegroundColor Cyan
 }
-
-function dotnet-build   ($project, $argv) { Invoke-Cmd "dotnet build $project $argv" }
-function dotnet-run     ($project, $argv) { Invoke-Cmd "dotnet run --project $project $argv" }
-function dotnet-test    ($project, $argv) { Invoke-Cmd "dotnet test $project $argv" }
-function dotnet-xunit   ($project, $argv) {
-    # dotnet-tools must be run from the same directory as their proj file
-    Push-Location (Get-Item $project).Directory.FullName
-    # We need the dotnet version to pass to -fxversion
-    # see https://github.com/xunit/xunit/issues/1573 and https://github.com/dotnet/cli/issues/7901#issuecomment-352009367
-    $dotnetVersion = dotnet-version
-    Invoke-Cmd "dotnet xunit -fxversion $dotnetVersion $argv"
-    Pop-Location
-}
-function dotnet-pack    ($project, $argv) { Invoke-Cmd "dotnet pack $project $argv" }
 
 function Test-Version ($project)
 {

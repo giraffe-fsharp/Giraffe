@@ -4,6 +4,7 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <AssemblyName>SampleApp.Tests</AssemblyName>
     <DebugType>portable</DebugType>
+    <RuntimeFrameworkVersion>2.0.4</RuntimeFrameworkVersion>
   </PropertyGroup>
 
   <ItemGroup>
