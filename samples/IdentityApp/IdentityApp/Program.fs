@@ -247,12 +247,15 @@ let configureServices (services : IServiceCollection) =
     // Enable CORS
     services.AddCors() |> ignore
 
+    // Configure Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
 let configureLogging (builder : ILoggingBuilder) =
     let filter (l : LogLevel) = l.Equals LogLevel.Error
     builder.AddFilter(filter).AddConsole().AddDebug() |> ignore
 
 [<EntryPoint>]
-let main argv =
+let main _ =
     WebHostBuilder()
         .UseKestrel()
         .UseContentRoot(Directory.GetCurrentDirectory())

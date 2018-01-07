@@ -133,6 +133,7 @@ let configureApp (app : IApplicationBuilder) =
 
 let configureServices (services : IServiceCollection) =
     services
+        .AddGiraffe()
         .AddAuthentication(authScheme)
         .AddCookie(cookieAuth)   |> ignore
     services.AddDataProtection() |> ignore

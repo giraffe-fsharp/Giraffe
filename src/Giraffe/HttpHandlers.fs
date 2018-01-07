@@ -13,15 +13,16 @@ open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
-open Microsoft.Extensions.DependencyInjection
 open FSharp.Core.Printf
-open Newtonsoft.Json
 open Newtonsoft.Json.Linq
-open Newtonsoft.Json.Serialization
 open Giraffe.Tasks
 open Giraffe.Common
 open Giraffe.FormatExpressions
 open Giraffe.GiraffeViewEngine
+
+/// ---------------------------
+/// HttpHandler definition
+/// ---------------------------
 
 type HttpFuncResult = Task<HttpContext option>
 type HttpFunc       = HttpContext -> HttpFuncResult
@@ -320,21 +321,21 @@ let text (str : string) : HttpHandler =
     setHttpHeader "Content-Type" "text/plain"
     >=> setBodyAsString str
 
-/// Serializes an object to JSON with custom JsonSerializerSettings and writes it to the body of the HTTP response.
-/// It also sets the HTTP header Content-Type: application/json and sets the Content-Length header accordingly.
-let customJson (settings : JsonSerializerSettings) (dataObj : obj) : HttpHandler =
-    setHttpHeader "Content-Type" "application/json"
-    >=> setBodyAsString (serializeJson settings dataObj)
-
 /// Serializes an object to JSON and writes it to the body of the HTTP response.
 /// It also sets the HTTP header Content-Type: application/json and sets the Content-Length header accordingly.
-let json = customJson defaultJsonSerializerSettings
+let json (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let serializer = ctx.GetJsonSerializer()
+        (setHttpHeader "Content-Type" "application/json"
+        >=> setBodyAsString (serializer.Serialize dataObj)) next ctx
 
 /// Serializes an object to XML and writes it to the body of the HTTP response.
 /// It also sets the HTTP header Content-Type: application/xml and sets the Content-Length header accordingly.
 let xml (dataObj : obj) : HttpHandler =
-    setHttpHeader "Content-Type" "application/xml"
-    >=> setBody (serializeXml dataObj)
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let serializer = ctx.GetXmlSerializer()
+        (setHttpHeader "Content-Type" "application/xml"
+        >=> setBody (serializer.Serialize dataObj)) next ctx
 
 /// Reads a HTML file from disk and writes its contents to the body of the HTTP response
 /// with a Content-Type of text/html.
@@ -364,75 +365,6 @@ let renderHtml (document : XmlNode) : HttpHandler =
     document
     |> renderHtmlDocument
     |> html
-
-/// Checks the HTTP Accept header of the request and determines the most appropriate
-/// response type from a given set of negotiationRules. If the Accept header cannot be
-/// matched with a supported media type then it will invoke the unacceptableHandler.
-///
-/// The negotiationRules must be a dictionary of supported media types with a matching
-/// HttpHandler which can serve that particular media type.
-///
-/// Example:
-/// let negotiationRules = dict [ "application/json", json; "application/xml" , xml ]
-/// `json` and `xml` are both the respective default HttpHandler functions in this example.
-let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>)
-                  (unacceptableHandler : HttpHandler)
-                  (responseObj         : obj)
-                  : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        let acceptedMimeTypes = (ctx.Request.GetTypedHeaders()).Accept
-        if isNull acceptedMimeTypes || acceptedMimeTypes.Count = 0 then
-            let kv = negotiationRules |> Seq.head
-            kv.Value responseObj next ctx
-        else
-            let mutable mimeType      = Unchecked.defaultof<_>
-            let mutable curQuality    = Double.NegativeInfinity
-            let mutable qualityOfRule = 1.
-            // Filter the list of acceptedMimeTypes by the negotiationRules
-            // and selects the mimetype with the greatest quality
-            for x in acceptedMimeTypes do
-                if negotiationRules.ContainsKey x.MediaType.Value then
-                    if x.Quality.HasValue then
-                        qualityOfRule <- x.Quality.Value
-                    else
-                        qualityOfRule <- 1.
-
-                    if curQuality < qualityOfRule then
-                        curQuality <- qualityOfRule
-                        mimeType <- x
-
-            if isNull mimeType then
-                unacceptableHandler next ctx
-            else
-                negotiationRules.[mimeType.MediaType.Value] responseObj next ctx
-
-/// Same as negotiateWith except that it specifies a default set of negotiation rules
-/// and a default unacceptableHandler.
-///
-/// The supported media types are:
-/// */*              -> serializes object to JSON
-/// application/json -> serializes object to JSON
-/// application/xml  -> serializes object to XML
-/// text/xml         -> serializes object to XML
-/// text/plain       -> returns object's ToString() result
-let negotiate (responseObj : obj) : HttpHandler =
-    negotiateWith
-        // Default negotiation rules
-        (dict [
-            "*/*"             , json
-            "application/json", json
-            "application/xml" , xml
-            "text/xml"        , xml
-            "text/plain"      , fun x -> x.ToString() |> text
-        ])
-        // Default unacceptable HttpHandler
-        (fun (next : HttpFunc) (ctx : HttpContext) ->
-            (setStatusCode 406
-            >=> ((ctx.Request.Headers.["Accept"]).ToString()
-                |> sprintf "%s is unacceptable by the server."
-                |> text)) next ctx)
-        // response object
-        responseObj
 
 /// Redirects to a different location with a 302 or 301 (when permanent) HTTP status code.
 let redirectTo (permanent : bool) (location : string) : HttpHandler  =
