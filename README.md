@@ -48,7 +48,6 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
     - [setBody](#setbody)
     - [setBodyAsString](#setbodyasstring)
     - [text](#text)
-    - [customJson](#customjson)
     - [json](#json)
     - [xml](#xml)
     - [negotiate](#negotiate)
@@ -82,6 +81,10 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
     - [BindFormAsync](#bindformasync)
     - [BindQueryString](#bindquerystring)
     - [BindModelAsync](#bindmodelasync)
+- [Customizing Giraffe](#customizing-giraffe)
+    - [Customize JSON serialization](#customize-json-serialization)
+    - [Customize XML serialization](#customize-xml-serialization)
+    - [Customize Content negotiation](#customize-content-negotiation)
 - [Error Handling](#error-handling)
 - [Sample applications](#sample-applications)
 - [Benchmarks](#benchmarks)
@@ -659,54 +662,6 @@ let app =
 
 You can also use the [`WriteTextAsync`](#writetextasync) extension method to return a plain text response back to the client.
 
-### customJson
-
-`customJson` sets or modifies the body of the `HttpResponse` by sending a JSON serialized object with custom `JsonSerializerSettings` to the client. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more. It also sets the `Content-Type` HTTP header to `application/json`.
-
-#### Example:
-
-```fsharp
-type Person =
-    {
-        FirstName : string
-        LastName  : string
-    }
-
-let settings = JsonSerializerSettings(
-        Formatting = Formatting.Indented,
-        NullValueHandling = NullValueHandling.Ignore
-    )
-
-let app =
-    choose [
-        route  "/foo" >=> customJson settings { FirstName = "Foo"; LastName = "Bar" }
-    ]
-```
-
-You can also create a new http handler with the help of `customJson`:
-
-```fsharp
-type Person =
-    {
-        FirstName : string
-        LastName  : string
-    }
-
-let settings = JsonSerializerSettings(
-        Formatting = Formatting.Indented,
-        NullValueHandling = NullValueHandling.Ignore
-    )
-
-let formattedJson = customJson settings
-
-let app =
-    choose [
-        route  "/foo" >=> formattedJson { FirstName = "Foo"; LastName = "Bar" }
-    ]
-```
-
-Alternatively you can also use the [`WriteJsonAsync`](#writejsonasync) extension method to return a custom serialized JSON response back to the client.
-
 ### json
 
 `json` sets or modifies the body of the `HttpResponse` by sending a JSON serialized object to the client. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more. It also sets the `Content-Type` HTTP header to `application/json`.
@@ -726,7 +681,7 @@ let app =
     ]
 ```
 
-You can also use the [`WriteJsonAsync`](#writejsonasync) extension method to return a default serialized JSON response back to the client.
+You can also use the [`WriteJsonAsync`](#writejsonasync) extension method to return a serialized JSON response back to the client.
 
 ### xml
 
@@ -1192,11 +1147,11 @@ let app =
 
 ## Nested Response Writing
 
-The `Giraffe.HttpContextExtensions` module exposes a default set of response writing functions which extend the `HttpContext` object. Instead of using the [`customJson`](#customjson), [`json`](#json), [`xml`](#xml), or [`text`](#text) handlers to compose a custom HttpHandler you can also use the `WriteJsonAsync`, `WriteXmlAsync` and `WriteTextAsync` extension methods to directly write to the response of the `HttpContext` and close the pipeline.
+The `Giraffe.HttpContextExtensions` module exposes a default set of response writing functions which extend the `HttpContext` object. Instead of using the [`json`](#json), [`xml`](#xml), or [`text`](#text) handlers to compose a custom HttpHandler you can also use the `WriteJsonAsync`, `WriteXmlAsync` and `WriteTextAsync` extension methods to directly write to the response of the `HttpContext` and close the pipeline.
 
 ### WriteJsonAsync
 
-`ctx.WriteJsonAsync someObj` can be used to return a JSON response back to the client. Alternatively you can use `ctx.WriteJsonAsync (settings : JsoSerializerSettings) someObj` to customize the generated JSON before sending the response back to the client.
+`ctx.WriteJsonAsync someObj` can be used to return a JSON response back to the client.
 
 #### Example:
 
@@ -1309,7 +1264,7 @@ The `Giraffe.HttpContextExtensions` module exposes a default set of model bindin
 
 ### BindJsonAsync
 
-`ctx.BindJsonAsync<'T>()` can be used to bind a JSON payload to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserialisation during model binding.
+`ctx.BindJsonAsync<'T>()` can be used to bind a JSON payload to a strongly typed model.
 
 #### Example
 
@@ -1560,7 +1515,7 @@ Accept: */*
 
 ### BindModelAsync
 
-`ctx.BindModelAsync<'T>(?cultureInfo : CultureInfo)` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserializer during model binding and/or a `CultureInfo` object.
+`ctx.BindModelAsync<'T>(?cultureInfo : CultureInfo)` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model. Additionally you can pass in a `CultureInfo` object to customize the parsing of culture specific data like `DateTime` objects for example.
 
 #### Example
 
@@ -1611,6 +1566,176 @@ You can also specify a `CultureInfo` parameter when using `BindModelAsync`:
 let british = CultureInfo.CreateSpecificCulture("en-GB")
 let! car = ctx.BindModelAsync<Car> british
 ```
+
+## Customizing Giraffe
+
+Giraffe uses the [ASP.NET Core dependency injection](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection) framework to register and retrieve several services which can be used or overridden by applications.
+
+Currently you can modify the following functionality in Giraffe through dependency injection*:
+
+- [JSON serialization](#customize-json-serialization)
+- [XML serialization](#customize-xml-serialization)
+- [Content negotiation](#customize-content-negotiation)
+
+*) Note that in functional programming there is no direct equivalent to dependency injection as known in OOP and Giraffe uses the [service locator pattern](https://msdn.microsoft.com/en-us/library/ff648968.aspx) to work with ASP.NET's DI framework.
+
+### Customize JSON serialization
+
+By default Giraffe uses the [Newtonsoft's JSON.NET](https://www.newtonsoft.com/json) serializer for (de-)serializing JSON content. An application can modify the serializer by registering a new instance of the `IJsonSerializer` interface during application startup.
+
+#### Example: Customizing JsonSerializerSettings
+
+You can change the default `JsonSerializerSettings` of the `NewtonsoftJsonSerializer` by registering a new instance of `IJsonSerializer` in your application startup module:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now customize only the IJsonSerializer by providing a custom
+    // object of JsonSerializerSettings
+    let customSettings = JsonSerializerSettings(
+        Culture = CultureInfo("de-DE"))
+    services.AddSingleton<IJsonSerializer>(
+        NewtonsoftJsonSerializer(customSettings)) |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+#### Example: Using a different JSON serializer
+
+You can change the underlying JSON serializer to a complete different serializer alltogether by creating a new class which implements the `IJsonSerializer` interface:
+
+```fsharp
+type CustomJsonSerializer() =
+    interface IJsonSerializer with
+        member __.Serialize (o : obj) = // ...
+        member __.Deserialize<'T> (json : string) = // ...
+        member __.Deserialize<'T> (stream : Stream) = // ...
+        member __.DeserializeAsync<'T> (stream : Stream) = // ...
+```
+
+Then register a new instance of the newly created type during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now register your custom IJsonSerializer
+    services.AddSingleton<IJsonSerializer, CustomJsonSerializer>() |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+#### Example: Retrieving the JSON serializer from a custom HttpHandler
+
+If you need you retrieve the registered JSON serializer from a custom `HttpHandler` function then you can do this with the `GetJsonSerializer` extension method:
+
+```fsharp
+let customHandler (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let serializer = ctx.GetJsonSerializer()
+        // ... do more...
+```
+
+### Customize XML serialization
+
+By default Giraffe uses the `System.Xml.Serialization.XmlSerializer` for (de-)serializing XML content. An application can modify the serializer by registering a new instance of the `IXmlSerializer` interface during application startup.
+
+#### Example: Customizing XmlWriterSettings
+
+You can change the default `XmlWriterSettings` of the `DefaultXmlSerializer` by registering a new instance of `IXmlSerializer` in your application startup module:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now customize the IXmlSerializer
+    let customSettings =
+        XmlWriterSettings(
+                Encoding           = Encoding.UTF8,
+                Indent             = false,
+                OmitXmlDeclaration = true
+            )
+
+    services.AddSingleton<IXmlSerializer>(
+        DefaultXmlSerializer(customSettings)) |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+#### Example: Using a different XML serializer
+
+You can change the underlying XML serializer to a complete different serializer alltogether by creating a new class which implements the `IXmlSerializer` interface:
+
+```fsharp
+type CustomXmlSerializer() =
+    interface IXmlSerializer with
+        member __.Serialize (o : obj) = // ...
+        member __.Deserialize<'T> (xml : string) = // ...
+```
+
+Then register a new instance of the newly created type during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now register your custom IXmlSerializer
+    services.AddSingleton<IXmlSerializer, CustomXmlSerializer>() |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+#### Example: Retrieving the XML serializer from a custom HttpHandler
+
+If you need you retrieve the registered XML serializer from a custom `HttpHandler` function then you can do this with the `GetXmlSerializer` extension method:
+
+```fsharp
+let customHandler (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let serializer = ctx.GetXmlSerializer()
+        // ... do more...
+```
+
+### Customize Content negotiation
+
+ToDo
 
 ## Error Handling
 
