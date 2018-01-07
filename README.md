@@ -1735,7 +1735,116 @@ let customHandler (dataObj : obj) : HttpHandler =
 
 ### Customize Content negotiation
 
-ToDo
+The [`negotiate`](#negotiate) http handler let's an application automatically decide which `Content-Type` to return based on the client's HTTP request. By default the handler can return a JSON, XML or plain text response or return a HTTP status code `406` if none of these are accepted.
+
+An application can customize this behaviour by creating a new class of type `INegotiationConfig`.
+
+#### Example: Set a custom UnacceptableHandler when a response cannot be successfully negotiated
+
+If a client sends an `Accept` header which is not compatible with one of the supported content types by the web server then the `negotiate` handler will return an error response as defined by the `UnacceptableHandler`.
+
+First you have to create a new class which implements the `INegotiationConfig` interface and define a custom `UnacceptableHandler`. The `UnacceptableHandler` property is of type `HttpHandler`:
+
+```fsharp
+type CustomNegotiationConfig (baseConfig : INegotiationConfig) =
+    interface INegotiationConfig with
+        member __.Rules = baseConfig.Rules
+        member __.UnacceptableHandler =
+            setStatusCode 406
+            >=> text "You sent an Accept header which cannot be satisfied by the web server."
+```
+
+Then register an instance of the newly created class during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now register your custom INegotiationConfig
+    services.AddSingleton<INegotiationConfig>(
+        CustomNegotiationConfig(
+            DefaultNegotiationConfig())
+    ) |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+In this example the `CustomNegotiationConfig` uses composition to re-use other settings from the `DefaultNegotiationConfig` without having to rely on inheritance.
+
+#### Example: Configuring different negotiation rules
+
+The behaviour by which Giraffe negotiates a response with a client can be customized by setting the `Rules` property of an `INegotiationConfig` object. The `Rules` property is of type `IDictionary<string, obj -> HttpHandler>` and represents a key/value dictionary, where the key denotes a supported `Content-Type` and the value represents a function which turns a given `obj` into a `HttpHandler`.
+
+For example the rules of the `DefaultNegotiationConfig` looks as following:
+
+```fsharp
+dict [
+    "*/*"             , json
+    "application/json", json
+    "application/xml" , xml
+    "text/xml"        , xml
+    "text/plain"      , fun x -> x.ToString() |> text
+]
+```
+
+If a client has no particular preference (`*/*`) then the default response will be returned in JSON. A JSON response is also being sent when a client set `application/json` in its `Accept` header. In the case of `application/xml` or `text/xml` the `negotiate` handler will return a response via the `xml` handler.
+
+As you can see from the example the default dictionary uses the default `json` and `xml` http handler functions to define the response type. For a `text/plain` response a new function had to be created which accepts an `obj` and uses the `.ToString()` method in combination with the `text` http handler to return a plain text response.
+
+If you'd like to stop supporting the `text/xml` content type and add support for `application/bson` instead you would have to define a new `bson` handler first and then register a new dictionary of rules:
+
+```fsharp
+let bson (o : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        // Implement BSON handler here
+
+type CustomNegotiationConfig (baseConfig : INegotiationConfig) =
+    interface INegotiationConfig with
+        member __.UnacceptableHandler = baseConfig.UnacceptableHandler
+        member __.Rules =
+                dict [
+                    "*/*"              , json
+                    "application/json" , json
+                    "application/xml"  , xml
+                    "application/bson" , bson
+                    "text/plain"       , fun x -> x.ToString() |> text
+                ]
+```
+
+Then register an instance of the newly created class during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now register your custom INegotiationConfig
+    services.AddSingleton<INegotiationConfig>(
+        CustomNegotiationConfig(
+            DefaultNegotiationConfig())
+    ) |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+In this example the `CustomNegotiationConfig` uses composition to re-use other settings from the `DefaultNegotiationConfig` without having to rely on inheritance.
 
 ## Error Handling
 

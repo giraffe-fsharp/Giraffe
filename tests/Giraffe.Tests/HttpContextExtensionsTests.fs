@@ -682,7 +682,7 @@ let resultOfTask<'T> (task:Task<'T>) =
 
 [<Fact>]
 let ``ReturnHtmlFileAsync should return html from content folder`` () =
-    let testHandler =
+    let testHandler : HttpHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
             ctx.ReturnHtmlFileAsync "index.html"
 
