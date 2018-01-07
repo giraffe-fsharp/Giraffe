@@ -41,7 +41,7 @@ function dotnet-pack    ($project, $argv) { Invoke-Cmd "dotnet pack $project $ar
 
 function Get-DotNetRuntimeVersion
 {
-    $version = dotnet --info | Select-Object -Last 3 | Select-Object -First 1
+    $version = dotnet-info | Select-Object -Last 3 | Select-Object -First 1
     $version.Split(":")[1].Trim()
 }
 
