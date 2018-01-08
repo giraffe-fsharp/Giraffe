@@ -110,17 +110,21 @@ let choose (handlers : HttpHandler list) : HttpHandler =
             chooseHttpFunc funcs ctx
 
 /// Filters an incoming HTTP request based on the HTTP verb
-let httpVerb (verb : string) : HttpHandler =
+let httpVerb (validate : string -> bool) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        if ctx.Request.Method.Equals verb
+        if validate ctx.Request.Method
         then next ctx
         else abort
 
-let GET    : HttpHandler = httpVerb "GET"
-let POST   : HttpHandler = httpVerb "POST"
-let PUT    : HttpHandler = httpVerb "PUT"
-let PATCH  : HttpHandler = httpVerb "PATCH"
-let DELETE : HttpHandler = httpVerb "DELETE"
+let GET     : HttpHandler = httpVerb HttpMethods.IsGet
+let POST    : HttpHandler = httpVerb HttpMethods.IsPost
+let PUT     : HttpHandler = httpVerb HttpMethods.IsPut
+let PATCH   : HttpHandler = httpVerb HttpMethods.IsPatch
+let DELETE  : HttpHandler = httpVerb HttpMethods.IsDelete
+let HEAD    : HttpHandler = httpVerb HttpMethods.IsHead
+let OPTIONS : HttpHandler = httpVerb HttpMethods.IsOptions
+let TRACE   : HttpHandler = httpVerb HttpMethods.IsTrace
+let CONNECT : HttpHandler = httpVerb HttpMethods.IsConnect
 
 /// Filters an incoming HTTP request based on the accepted
 /// mime types of the client.
@@ -292,13 +296,13 @@ let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
 /// Sets the HTTP response status code.
 let setStatusCode (statusCode : int) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        ctx.Response.StatusCode <- statusCode
+        ctx.SetStatusCode statusCode
         next ctx
 
 /// Sets a HTTP header in the HTTP response.
 let setHttpHeader (key : string) (value : obj) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        ctx.Response.Headers.[key] <- StringValues(value.ToString())
+        ctx.SetHttpHeader key value
         next ctx
 
 /// Writes to the body of the HTTP response and sets the HTTP header Content-Length accordingly.

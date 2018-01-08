@@ -253,9 +253,9 @@ For more information please visit the official [Giraffe.Tasks](https://github.co
 
 ## Default HttpHandlers
 
-### GET, POST, PUT, PATCH, DELETE
+### GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS, TRACE, CONNECT
 
-`GET`, `POST`, `PUT`, `PATCH`, `DELETE` filters a request by the specified HTTP verb.
+`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`, `TRACE`, `CONNECT` filters a request by the specified HTTP verb.
 
 #### Example:
 

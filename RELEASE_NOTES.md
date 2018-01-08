@@ -20,6 +20,7 @@ Release Notes
 - Added a new `IXmlSerializer` interface which can be used to configure XML serialization in Giraffe
 - Added the `DefaultXmlSerializer` class which implements `IXmlSerializer` and gets auto registered when adding the Giraffe dependencies via `services.AddGiraffe()` in your startup code.
 - Added `PATCH` http handler to `Giraffe.TokenRouter`
+- Added `HEAD`, `OPTIONS`, `TRACE`, `CONNECT` http handlers
 
 ## 0.1.0-beta-700
 
