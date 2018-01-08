@@ -2,8 +2,8 @@
 module Giraffe.HttpContextExtensions
 
 open System
-open System.Globalization
 open System.IO
+open System.Globalization
 open System.Reflection
 open System.ComponentModel
 open Microsoft.AspNetCore.Http
@@ -16,14 +16,14 @@ open Giraffe.GiraffeViewEngine
 open Giraffe.Serialization
 open Giraffe.Common
 
-let inline private missingServiceError (t : string) =
-    NullReferenceException (sprintf "Could not retrieve object of type '%s'. Please register all Giraffe dependencies by adding `services.AddGiraffe()` to your startup code. For more information please visit https://github.com/giraffe-fsharp/Giraffe." t)
-
 type HttpContext with
 
     /// ---------------------------
     /// Dependency management
     /// ---------------------------
+
+    member private __.MissingServiceError (t : string) =
+        NullReferenceException (sprintf "Could not retrieve object of type '%s'. Please register all Giraffe dependencies by adding `services.AddGiraffe()` to your startup code. For more information please visit https://github.com/giraffe-fsharp/Giraffe." t)
 
     member this.GetService<'T>() =
         this.RequestServices.GetService(typeof<'T>) :?> 'T
@@ -37,17 +37,23 @@ type HttpContext with
 
     member this.GetJsonSerializer() : IJsonSerializer =
         let serializer = this.GetService<IJsonSerializer>()
-        if isNull serializer then raise (missingServiceError "IJsonSerializer")
+        if isNull serializer then raise (this.MissingServiceError "IJsonSerializer")
         serializer
 
     member this.GetXmlSerializer()  : IXmlSerializer  =
         let serializer = this.GetService<IXmlSerializer>()
-        if isNull serializer then raise (missingServiceError "IXmlSerializer")
+        if isNull serializer then raise (this.MissingServiceError "IXmlSerializer")
         serializer
 
     /// ---------------------------
     /// Common helpers
     /// ---------------------------
+
+    member this.SetStatusCode (httpStatusCode : int) =
+        this.Response.StatusCode <- httpStatusCode
+
+    member this.SetHttpHeader (key : string) (value : obj) =
+        this.Response.Headers.[key] <- StringValues(value.ToString())
 
     member this.TryGetRequestHeader (key : string) =
         match this.Request.Headers.TryGetValue key with
@@ -173,9 +179,6 @@ type HttpContext with
     /// Response writers
     /// ---------------------------
 
-    member private this.SetHttpHeader (key : string) (value : obj) =
-        this.Response.Headers.[key] <- StringValues(value.ToString())
-
     member private this.WriteBytesAsync (bytes : byte[]) =
         this.SetHttpHeader "Content-Length" bytes.Length
         this.Response.Body.WriteAsync(bytes, 0, bytes.Length)
@@ -206,14 +209,14 @@ type HttpContext with
             return Some this
         }
 
-    member this.RenderHtmlAsync (value: XmlNode) =
+    member this.RenderHtmlAsync (value : XmlNode) =
         task {
             this.SetHttpHeader "Content-Type" "text/html"
             do! value |> renderHtmlDocument |> this.WriteStringAsync
             return Some this
         }
 
-    member this.ReturnHtmlFileAsync (relativeFilePath: String) =
+    member this.ReturnHtmlFileAsync (relativeFilePath : String) =
         task {
             this.SetHttpHeader "Content-Type" "text/html"
             let env = this.GetService<IHostingEnvironment>()

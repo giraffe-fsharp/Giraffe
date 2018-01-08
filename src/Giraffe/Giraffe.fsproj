@@ -36,11 +36,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Serialization.fs" />
     <Compile Include="Common.fs" />
+    <Compile Include="Serialization.fs" />
     <Compile Include="FormatExpressions.fs" />
     <Compile Include="GiraffeViewEngine.fs" />
     <Compile Include="HttpContextExtensions.fs" />
+    <Compile Include="Streaming.fs" />
     <Compile Include="HttpHandlers.fs" />
     <Compile Include="Negotiation.fs" />
     <Compile Include="HttpStatusCodeHandlers.fs" />
