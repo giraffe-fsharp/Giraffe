@@ -39,10 +39,11 @@
     <Compile Include="Common.fs" />
     <Compile Include="Serialization.fs" />
     <Compile Include="FormatExpressions.fs" />
+    <Compile Include="Core.fs" />
     <Compile Include="GiraffeViewEngine.fs" />
     <Compile Include="HttpContextExtensions.fs" />
     <Compile Include="ModelBinding.fs" />
-    <Compile Include="HttpHandlers.fs" />
+    <Compile Include="Auth.fs" />
     <Compile Include="Routing.fs" />
     <Compile Include="ResponseWriters.fs" />
     <Compile Include="Streaming.fs" />

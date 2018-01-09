@@ -6,6 +6,10 @@ open System.Text.RegularExpressions
 open FSharp.Core
 open Microsoft.FSharp.Reflection
 
+/// ---------------------------
+/// String matching functions
+/// ---------------------------
+
 let formatStringMap =
     let guidFormatStr =
         "(([0-9A-Fa-f]{8}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{12})|([0-9A-Fa-f]{32}))"
@@ -86,6 +90,10 @@ let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreC
             |> Some
     with
     | _ -> None
+
+/// ---------------------------
+/// Validation helper functions
+/// ---------------------------
 
 let validateFormat (format : PrintfFormat<_,_,_,_, 'T>) =
 

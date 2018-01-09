@@ -1,13 +1,79 @@
 [<AutoOpen>]
-module Giraffe.HttpHandlers
+module Giraffe.Core
 
-open System.Security.Claims
+open System
 open System.Threading.Tasks
-open Microsoft.AspNetCore.Authentication
 open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.Hosting
+open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
-open Giraffe.Tasks
-open Giraffe.Common
+open Microsoft.Net.Http.Headers
+open Giraffe.Serialization
+
+/// ---------------------------
+/// HttpContext extensions
+/// ---------------------------
+
+type HttpContext with
+
+    /// Dependency management
+
+    member private __.MissingServiceError (t : string) =
+        NullReferenceException (sprintf "Could not retrieve object of type '%s'. Please register all Giraffe dependencies by adding `services.AddGiraffe()` to your startup code. For more information please visit https://github.com/giraffe-fsharp/Giraffe." t)
+
+    member this.GetService<'T>() =
+        this.RequestServices.GetService(typeof<'T>) :?> 'T
+
+    member this.GetLogger<'T>() =
+        this.GetService<ILogger<'T>>()
+
+    member this.GetLogger (categoryName : string) =
+        let loggerFactory = this.GetService<ILoggerFactory>()
+        loggerFactory.CreateLogger categoryName
+
+    member this.GetHostingEnvironment() =
+        this.GetService<IHostingEnvironment>()
+
+    member this.GetJsonSerializer() : IJsonSerializer =
+        let serializer = this.GetService<IJsonSerializer>()
+        if isNull serializer then raise (this.MissingServiceError "IJsonSerializer")
+        serializer
+
+    member this.GetXmlSerializer()  : IXmlSerializer  =
+        let serializer = this.GetService<IXmlSerializer>()
+        if isNull serializer then raise (this.MissingServiceError "IXmlSerializer")
+        serializer
+
+    /// Common helpers
+
+    member this.SetStatusCode (httpStatusCode : int) =
+        this.Response.StatusCode <- httpStatusCode
+
+    member this.SetHttpHeader (key : string) (value : obj) =
+        this.Response.Headers.[key] <- StringValues(value.ToString())
+
+    member this.SetContentType (contentType : string) =
+        this.SetHttpHeader HeaderNames.ContentType contentType
+
+    member this.TryGetRequestHeader (key : string) =
+        match this.Request.Headers.TryGetValue key with
+        | true, value -> Some (value.ToString())
+        | _           -> None
+
+    member this.GetRequestHeader (key : string) =
+        match this.Request.Headers.TryGetValue key with
+        | true, value -> Ok (value.ToString())
+        | _           -> Error (sprintf "HTTP request header '%s' is missing." key)
+
+    member this.TryGetQueryStringValue (key : string) =
+        match this.Request.Query.TryGetValue key with
+        | true, value -> Some (value.ToString())
+        | _           -> None
+
+    member this.GetQueryStringValue (key : string) =
+        match this.Request.Query.TryGetValue key with
+        | true, value -> Ok (value.ToString())
+        | _           -> Error (sprintf "Query string value '%s' is missing." key)
 
 /// ---------------------------
 /// HttpHandler definition
@@ -87,63 +153,6 @@ let OPTIONS : HttpHandler = httpVerb HttpMethods.IsOptions
 let TRACE   : HttpHandler = httpVerb HttpMethods.IsTrace
 let CONNECT : HttpHandler = httpVerb HttpMethods.IsConnect
 
-/// Filters an incoming HTTP request based on the accepted
-/// mime types of the client.
-let mustAccept (mimeTypes : string list) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        let headers = ctx.Request.GetTypedHeaders()
-        headers.Accept
-        |> Seq.map    (fun h -> h.ToString())
-        |> Seq.exists (fun h -> mimeTypes |> Seq.contains h)
-        |> function
-            | true  -> next ctx
-            | false -> abort
-
-/// Challenges the client to authenticate with a given authentication scheme.
-let challenge (authScheme : string) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        task {
-            do! ctx.ChallengeAsync authScheme
-            return! next ctx
-        }
-
-/// Signs off the current user.
-let signOff (authScheme : string) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        task {
-            do! ctx.SignOutAsync authScheme
-            return! next ctx
-        }
-
-/// Validates if a user satisfies a policy requirement.
-/// If not it will proceed with the authFailedHandler.
-let requiresAuthPolicy (policy : ClaimsPrincipal -> bool) (authFailedHandler : HttpHandler) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        if policy ctx.User
-        then next ctx
-        else authFailedHandler finish ctx
-
-/// Validates if a user is authenticated.
-/// If not it will proceed with the authFailedHandler.
-let requiresAuthentication (authFailedHandler : HttpHandler) : HttpHandler =
-    requiresAuthPolicy
-        (fun user -> isNotNull user && user.Identity.IsAuthenticated)
-        authFailedHandler
-
-/// Validates if a user is in a specific role.
-/// If not it will proceed with the authFailedHandler.
-let requiresRole (role : string) (authFailedHandler : HttpHandler) : HttpHandler =
-    requiresAuthPolicy
-        (fun user -> user.IsInRole role)
-        authFailedHandler
-
-/// Validates if a user has at least one of the specified roles.
-/// If not it will proceed with the authFailedHandler.
-let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) : HttpHandler =
-    requiresAuthPolicy
-        (fun user -> List.exists user.IsInRole roles)
-        authFailedHandler
-
 /// Attempts to clear the current HttpResponse object.
 /// This can be useful inside an error handler when the response
 /// needs to be overwritten in the case of a failure.
@@ -163,6 +172,18 @@ let setHttpHeader (key : string) (value : obj) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.SetHttpHeader key value
         next ctx
+
+/// Filters an incoming HTTP request based on the accepted
+/// mime types of the client.
+let mustAccept (mimeTypes : string list) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let headers = ctx.Request.GetTypedHeaders()
+        headers.Accept
+        |> Seq.map    (fun h -> h.ToString())
+        |> Seq.exists (fun h -> mimeTypes |> Seq.contains h)
+        |> function
+            | true  -> next ctx
+            | false -> abort
 
 /// Redirects to a different location with a 302 or 301 (when permanent) HTTP status code.
 let redirectTo (permanent : bool) (location : string) : HttpHandler  =
