@@ -37,11 +37,12 @@
     <Compile Include="AuthHandlerTests.fs" />
     <Compile Include="GiraffeViewEngineTests.fs" />
     <Compile Include="HttpContextExtensionsTests.fs" />
+    <Compile Include="StreamingTests.fs" />
     <Compile Include="TokenRouterTests.fs" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="webroot\*">
+    <Content Include="TestFiles\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

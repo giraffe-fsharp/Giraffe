@@ -1,4 +1,4 @@
-module Giraffe.HttpHandlerTests
+module Giraffe.Tests.HttpHandlerTests
 
 open System
 open System.Collections.Generic
@@ -10,9 +10,10 @@ open Microsoft.Extensions.Primitives
 open Xunit
 open NSubstitute
 open Newtonsoft.Json
+open Giraffe
 open Giraffe.GiraffeViewEngine
-open Giraffe.Tests.Asserts
 open Giraffe.Serialization
+open Giraffe.Tests.Asserts
 
 // ---------------------------------
 // Helper functions

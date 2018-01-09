@@ -1,4 +1,4 @@
-module Giraffe.GiraffeViewEngineTests
+module Giraffe.Tests.GiraffeViewEngineTests
 
 open System
 open Xunit

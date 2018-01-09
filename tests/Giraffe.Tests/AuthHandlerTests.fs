@@ -1,4 +1,4 @@
-module Giraffe.AuthHandlerTests
+module Giraffe.Tests.AuthHandlerTests
 
 open System.IO
 open System.Text
@@ -9,6 +9,7 @@ open Xunit
 open NSubstitute
 open FsCheck
 open FsCheck.Xunit
+open Giraffe
 
 // ---------------------------------
 // Helper functions

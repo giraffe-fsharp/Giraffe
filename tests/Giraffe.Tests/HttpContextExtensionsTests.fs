@@ -1,4 +1,4 @@
-module Giraffe.HttpContextExtensionsTests
+module Giraffe.Tests.HttpContextExtensionsTests
 
 open System
 open System.Globalization
@@ -695,14 +695,14 @@ let ``WriteHtmlFileAsync should return html from content folder`` () =
 
     let host =
         WebHostBuilder()
-            .UseContentRoot(Path.GetFullPath("webroot"))
+            .UseContentRoot(Path.GetFullPath("TestFiles"))
             .Configure(Action<IApplicationBuilder> configureApp)
 
     use server = new TestServer(host)
     use client = server.CreateClient()
 
     let expectedContent =
-        Path.Combine("webroot", "index.html")
+        Path.Combine("TestFiles", "index.html")
         |> File.ReadAllText
 
     let actualContent =
