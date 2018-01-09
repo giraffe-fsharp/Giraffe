@@ -4,7 +4,7 @@ open System.Collections.Generic
 open System.Text
 open Microsoft.FSharp.Reflection
 open Printf
-open Giraffe.HttpHandlers
+open Giraffe
 open Giraffe.TokenParsers
 
 // Implemenation of (router) Trie Node

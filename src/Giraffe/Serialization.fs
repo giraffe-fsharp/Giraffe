@@ -1,5 +1,9 @@
 namespace Giraffe.Serialization
 
+/// ---------------------------
+/// JSON
+/// ---------------------------
+
 [<AutoOpen>]
 module Json =
     open System.IO
@@ -38,6 +42,10 @@ module Json =
                     let sr = JsonSerializer.Create settings
                     return sr.Deserialize<'T> jr
                 }
+
+/// ---------------------------
+/// XML
+/// ---------------------------
 
 [<AutoOpen>]
 module Xml =

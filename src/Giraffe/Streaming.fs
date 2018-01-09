@@ -9,6 +9,10 @@ open Microsoft.AspNetCore.Http.Extensions
 open Microsoft.Extensions.Primitives
 open Microsoft.Net.Http.Headers
 
+/// ---------------------------
+/// HTTP Range parsing
+/// ---------------------------
+
 type internal RangeBoundary =
     {
         Start : int64
@@ -51,6 +55,10 @@ type RangeHeaderValue with
                     let startOfRange = contentLength - bytes
                     let endOfRange   = startOfRange + bytes - 1L
                     Range.Valid { Start = startOfRange; End = endOfRange }
+
+/// ---------------------------
+/// HttpContext extensions
+/// ---------------------------
 
 type HttpContext with
 

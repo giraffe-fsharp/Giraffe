@@ -41,7 +41,6 @@
     <Compile Include="FormatExpressions.fs" />
     <Compile Include="Core.fs" />
     <Compile Include="GiraffeViewEngine.fs" />
-    <Compile Include="HttpContextExtensions.fs" />
     <Compile Include="ModelBinding.fs" />
     <Compile Include="Auth.fs" />
     <Compile Include="Routing.fs" />
