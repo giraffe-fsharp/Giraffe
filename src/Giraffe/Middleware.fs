@@ -3,15 +3,11 @@ module Giraffe.Middleware
 
 open System
 open System.Threading.Tasks
-open System.Xml
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
-open Newtonsoft.Json
 open Giraffe.Serialization
-open Giraffe.Negotiation
-open Giraffe.Serialization.Json
 
 /// ---------------------------
 /// Logging helper functions

@@ -13,7 +13,6 @@ open Newtonsoft.Json
 open Giraffe.GiraffeViewEngine
 open Giraffe.Tests.Asserts
 open Giraffe.Serialization
-open Giraffe.Negotiation
 
 // ---------------------------------
 // Helper functions
@@ -825,7 +824,7 @@ let ``GET "/person" returns rendered HTML view`` () =
         choose [
             GET >=> choose [
                 route "/"          >=> text "Hello World"
-                route "/person"    >=> (personView johnDoe |> renderHtml) ]
+                route "/person"    >=> (personView johnDoe |> htmlView) ]
             POST >=> choose [
                 route "/post/1"    >=> text "1" ]
             setStatusCode 404      >=> text "Not found" ]

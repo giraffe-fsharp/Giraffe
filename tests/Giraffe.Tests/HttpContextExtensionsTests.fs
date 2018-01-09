@@ -647,7 +647,7 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
     }
 
 [<Fact>]
-let ``RenderHtmlAsync should add html to the context`` () =
+let ``WriteHtmlViewAsync should add html to the context`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
@@ -659,7 +659,7 @@ let ``RenderHtmlAsync should add html to the context`` () =
                         h1 [] [ EncodedText "Hello world" ]
                     ]
                 ]
-            ctx.RenderHtmlAsync(htmlDoc)
+            ctx.WriteHtmlViewAsync(htmlDoc)
 
     let app = route "/" >=> testHandler
 
@@ -681,10 +681,10 @@ let resultOfTask<'T> (task:Task<'T>) =
     task.Result
 
 [<Fact>]
-let ``ReturnHtmlFileAsync should return html from content folder`` () =
+let ``WriteHtmlFileAsync should return html from content folder`` () =
     let testHandler : HttpHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
-            ctx.ReturnHtmlFileAsync "index.html"
+            ctx.WriteHtmlFileAsync "index.html"
 
     let webApp = route "/" >=> testHandler
 

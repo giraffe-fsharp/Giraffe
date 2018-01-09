@@ -1,14 +1,14 @@
 namespace Giraffe
 
-open System
-open System.IO
-
 /// ---------------------------
-/// Helper functions
+/// Common helper functions
 /// ---------------------------
 
 module Common =
-    let inline isNotNull x = isNull x |> not
+    open System
+    open System.IO
+
+    let inline isNotNull x = not (isNull x)
 
     let inline strOption (str : string) =
         if String.IsNullOrEmpty str then None else Some str

@@ -41,8 +41,11 @@
     <Compile Include="FormatExpressions.fs" />
     <Compile Include="GiraffeViewEngine.fs" />
     <Compile Include="HttpContextExtensions.fs" />
-    <Compile Include="Streaming.fs" />
+    <Compile Include="ModelBinding.fs" />
     <Compile Include="HttpHandlers.fs" />
+    <Compile Include="Routing.fs" />
+    <Compile Include="ResponseWriters.fs" />
+    <Compile Include="Streaming.fs" />
     <Compile Include="Negotiation.fs" />
     <Compile Include="HttpStatusCodeHandlers.fs" />
     <Compile Include="TokenParsers.fs" />

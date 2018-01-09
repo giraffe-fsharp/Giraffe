@@ -1,24 +1,13 @@
 [<AutoOpen>]
 module Giraffe.HttpHandlers
 
-open System
-open System.Text
-open System.Collections.Generic
 open System.Security.Claims
 open System.Threading.Tasks
-open System.Text.RegularExpressions
-open System.IO
 open Microsoft.AspNetCore.Authentication
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Hosting
-open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
-open FSharp.Core.Printf
-open Newtonsoft.Json.Linq
 open Giraffe.Tasks
 open Giraffe.Common
-open Giraffe.FormatExpressions
-open Giraffe.GiraffeViewEngine
 
 /// ---------------------------
 /// HttpHandler definition
@@ -26,7 +15,7 @@ open Giraffe.GiraffeViewEngine
 
 type HttpFuncResult = Task<HttpContext option>
 type HttpFunc       = HttpContext -> HttpFuncResult
-type HttpHandler    = HttpFunc  -> HttpFunc
+type HttpHandler    = HttpFunc -> HttpFunc
 type ErrorHandler   = exn -> ILogger -> HttpHandler
 
 /// ---------------------------
@@ -35,43 +24,11 @@ type ErrorHandler   = exn -> ILogger -> HttpHandler
 
 let inline warbler f (next : HttpFunc) (ctx : HttpContext) = f (next, ctx) next ctx
 
-let private abort  : HttpFuncResult = Task.FromResult None
-let private finish : HttpFunc       = Some >> Task.FromResult
+let internal abort  : HttpFuncResult = Task.FromResult None
+let internal finish : HttpFunc       = Some >> Task.FromResult
 
 /// ---------------------------
-/// Sub route helper functions
-/// ---------------------------
-
-[<Literal>]
-let private RouteKey = "giraffe_route"
-
-let private getSavedSubPath (ctx : HttpContext) =
-    if ctx.Items.ContainsKey RouteKey
-    then ctx.Items.Item RouteKey |> string |> strOption
-    else None
-
-let private getPath (ctx : HttpContext) =
-    match getSavedSubPath ctx with
-    | Some p when ctx.Request.Path.Value.Contains p -> ctx.Request.Path.Value.[p.Length..]
-    | _   -> ctx.Request.Path.Value
-
-let private handlerWithRootedPath (path : string) (handler : HttpHandler) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        task {
-            let savedSubPath = getSavedSubPath ctx
-            ctx.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
-            let! result = handler next ctx
-            match result with
-            | Some _ -> ()
-            | None ->
-                match savedSubPath with
-                | Some savedSubPath -> ctx.Items.Item   RouteKey <- savedSubPath
-                | None              -> ctx.Items.Remove RouteKey |> ignore
-            return result
-        }
-
-/// ---------------------------
-/// Default HttpHandlers
+/// Default Combinators
 /// ---------------------------
 
 /// Combines two HttpHandler functions into one.
@@ -108,6 +65,10 @@ let choose (handlers : HttpHandler list) : HttpHandler =
         let funcs = handlers |> List.map (fun h -> h next)
         fun (ctx : HttpContext) ->
             chooseHttpFunc funcs ctx
+
+/// ---------------------------
+/// Default HttpHandlers
+/// ---------------------------
 
 /// Filters an incoming HTTP request based on the HTTP verb
 let httpVerb (validate : string -> bool) : HttpHandler =
@@ -191,108 +152,6 @@ let clearResponse : HttpHandler =
         ctx.Response.Clear()
         next ctx
 
-/// Filters an incoming HTTP request based on the request path (case sensitive).
-let route (path : string) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        if (getPath ctx).Equals path
-        then next ctx
-        else abort
-
-/// Filters an incoming HTTP request based on the request path (case sensitive).
-/// The arguments from the format string will be automatically resolved when the
-/// route matches and subsequently passed into the supplied routeHandler.
-///
-/// Supported format chars:
-/// %b -> bool
-/// %c -> char
-/// %s -> string
-/// %i -> int
-/// %d -> int64
-/// %f -> float/double
-/// %O -> Guid
-let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
-    validateFormat path
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        tryMatchInput path (getPath ctx) false
-        |> function
-            | None      -> abort
-            | Some args -> routeHandler args next ctx
-
-/// Filters an incoming HTTP request based on the request path (case insensitive).
-let routeCi (path : string) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        if String.Equals(getPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
-        then next ctx
-        else abort
-
-/// Filters an incoming HTTP request based on the request path (case insensitive).
-/// The arguments from the format string will be automatically resolved when the
-/// route matches and subsequently passed into the supplied routeHandler.
-///
-/// Supported format chars:
-/// %b -> bool
-/// %c -> char
-/// %s -> string
-/// %i -> int
-/// %d -> int64
-/// %f -> float/double
-/// %O -> Guid
-let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
-    validateFormat path
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        tryMatchInput path (getPath ctx) true
-        |> function
-            | None      -> abort
-            | Some args -> routeHandler args next ctx
-
-/// Filters an incoming HTTP request based on the request path (case insensitive).
-/// The parameters from the string will be used to create an instance of 'T
-/// and subsequently passed into the supplied routeHandler.
-let routeBind<'T> (route: string) (routeHandler : 'T -> HttpHandler) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        let pattern = route.Replace("{", "(?<").Replace("}", ">[^/\n]+)") |> sprintf "%s$"
-        let regex = Regex(pattern, RegexOptions.IgnoreCase)
-        let mtch = regex.Match ctx.Request.Path.Value
-        match mtch.Success with
-        | true ->
-            let groups = mtch.Groups
-            let o =
-                regex.GetGroupNames()
-                |> Array.skip 1
-                |> Array.map (fun x -> x, groups.[x].Value)
-                |> Array.filter (fun (_, x) -> x.Length > 0)
-                |> dict
-                |> JObject.FromObject
-                |> fun jo -> jo.ToObject<'T>()
-            routeHandler o next ctx
-        | _ -> abort
-
-/// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
-let routeStartsWith (subPath : string) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        if (getPath ctx).StartsWith subPath
-        then next ctx
-        else abort
-
-/// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
-let routeStartsWithCi (subPath : string) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        if (getPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase)
-        then next ctx
-        else abort
-
-/// Filters an incoming HTTP request based on a part of the request path (case sensitive).
-/// Subsequent route handlers inside the given handler function should omit the already validated path.
-let subRoute (path : string) (handler : HttpHandler) : HttpHandler =
-    routeStartsWith path >=>
-    handlerWithRootedPath path handler
-
-/// Filters an incoming HTTP request based on a part of the request path (case insensitive).
-/// Subsequent route handlers inside the given handler function should omit the already validated path.
-let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
-    routeStartsWithCi path >=>
-    handlerWithRootedPath path handler
-
 /// Sets the HTTP response status code.
 let setStatusCode (statusCode : int) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -305,87 +164,8 @@ let setHttpHeader (key : string) (value : obj) : HttpHandler =
         ctx.SetHttpHeader key value
         next ctx
 
-/// Writes to the body of the HTTP response and sets the HTTP header Content-Length accordingly.
-let setBody (bytes : byte array) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        task {
-            ctx.Response.Headers.["Content-Length"] <- StringValues(bytes.Length.ToString())
-            do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length)
-            return Some ctx
-        }
-
-/// Writes a string to the body of the HTTP response and sets the HTTP header Content-Length accordingly.
-let setBodyAsString (str : string) : HttpHandler =
-    Encoding.UTF8.GetBytes str
-    |> setBody
-
-/// Writes a string to the body of the HTTP response.
-/// It also sets the HTTP header Content-Type: text/plain and sets the Content-Length header accordingly.
-let text (str : string) : HttpHandler =
-    setHttpHeader "Content-Type" "text/plain"
-    >=> setBodyAsString str
-
-/// Serializes an object to JSON and writes it to the body of the HTTP response.
-/// It also sets the HTTP header Content-Type: application/json and sets the Content-Length header accordingly.
-let json (dataObj : obj) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        let serializer = ctx.GetJsonSerializer()
-        (setHttpHeader "Content-Type" "application/json"
-        >=> setBodyAsString (serializer.Serialize dataObj)) next ctx
-
-/// Serializes an object to XML and writes it to the body of the HTTP response.
-/// It also sets the HTTP header Content-Type: application/xml and sets the Content-Length header accordingly.
-let xml (dataObj : obj) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        let serializer = ctx.GetXmlSerializer()
-        (setHttpHeader "Content-Type" "application/xml"
-        >=> setBody (serializer.Serialize dataObj)) next ctx
-
-/// Reads a HTML file from disk and writes its contents to the body of the HTTP response
-/// with a Content-Type of text/html.
-let htmlFile (filePath : string) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        task {
-            let filePath =
-                if Path.IsPathRooted filePath then
-                    filePath
-                else
-                    let env = ctx.GetService<IHostingEnvironment>()
-                    Path.Combine(env.ContentRootPath, filePath)
-            let! html = readFileAsStringAsync filePath
-            return!
-                (setHttpHeader "Content-Type" "text/html"
-                >=> setBodyAsString html) next ctx
-        }
-
-/// The HTTP response is of Content-Type text/html.
-let html (document : string) : HttpHandler =
-    setHttpHeader "Content-Type" "text/html"
-    >=> (setBodyAsString document)
-
-/// Uses the Giraffe.GiraffeViewEngine to compile and render a HTML Document from
-/// an given XmlNode. The HTTP response is of Content-Type text/html.
-let renderHtml (document : XmlNode) : HttpHandler =
-    document
-    |> renderHtmlDocument
-    |> html
-
 /// Redirects to a different location with a 302 or 301 (when permanent) HTTP status code.
 let redirectTo (permanent : bool) (location : string) : HttpHandler  =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.Response.Redirect(location, permanent)
         Task.FromResult (Some ctx)
-
-/// Filters an incoming HTTP request based on the port.
-let routePorts (fns : (int * HttpHandler) list) : HttpHandler =
-    fun next ->
-        let portMap = Dictionary<_, _>(fns.Length)
-        fns |> List.iter (fun (p, h) -> portMap.Add(p, h next))
-        fun (ctx : HttpContext) ->
-            let port = ctx.Request.Host.Port
-            if port.HasValue then
-                match portMap.TryGetValue port.Value with
-                | true , func -> func ctx
-                | false, _    -> abort
-            else
-                abort

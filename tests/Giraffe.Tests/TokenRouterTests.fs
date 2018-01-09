@@ -14,7 +14,6 @@ open Newtonsoft.Json
 open Giraffe.Serialization
 open GiraffeViewEngine
 open Giraffe.TokenRouter
-open Giraffe.Negotiation
 open Giraffe.Tests.Asserts
 
 // ---------------------------------
@@ -842,7 +841,7 @@ let ``GET "/person" returns rendered HTML view`` () =
         router notFound [
             GET [
                 route "/"          => text "Hello World"
-                route "/person"    => (personView johnDoe |> renderHtml) ]
+                route "/person"    => (personView johnDoe |> htmlView) ]
             POST [
                 route "/post/1"    => text "1" ]
         ]

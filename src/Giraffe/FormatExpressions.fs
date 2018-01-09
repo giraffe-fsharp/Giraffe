@@ -1,10 +1,10 @@
 module Giraffe.FormatExpressions
 
 open System
-open System.Text.RegularExpressions
 open System.Net
-open Microsoft.FSharp.Reflection
+open System.Text.RegularExpressions
 open FSharp.Core
+open Microsoft.FSharp.Reflection
 
 let formatStringMap =
     let guidFormatStr =

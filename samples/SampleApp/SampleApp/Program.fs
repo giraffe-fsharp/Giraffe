@@ -106,7 +106,7 @@ let webApp =
                 route  "/user"       >=> mustBeUser >=> userHandler
                 route  "/john-only"  >=> mustBeJohn >=> userHandler
                 routef "/user/%i"    showUserHandler
-                route  "/person"     >=> (personView { Name = "Html Node" } |> renderHtml)
+                route  "/person"     >=> (personView { Name = "Html Node" } |> htmlView)
                 route  "/once"       >=> (time() |> text)
                 route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
                 route  "/configured" >=> configuredHandler
