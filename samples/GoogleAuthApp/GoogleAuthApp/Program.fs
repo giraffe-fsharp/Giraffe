@@ -1,173 +1,176 @@
 module GoogleAuthApp.App
 
 open System
-open System.IO
-open System.Net
-open System.Security.Claims
-open System.Security.Cryptography.X509Certificates
-open Microsoft.AspNetCore.Authentication
-open Microsoft.AspNetCore.Authentication.JwtBearer
-open Microsoft.AspNetCore.Server.Kestrel.Core
+open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.Authentication
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.IdentityModel.Tokens
 open Giraffe
-
-// ---------------------------------
-// HTTPS Config
-// ---------------------------------
-
-type EndpointScheme =
-    | Http
-    | Https
-
-type EndpointConfiguration =
-    {
-        Host          : string
-        Port          : int option
-        Scheme        : EndpointScheme
-        FilePath      : string option
-        Password      : string option
-        StoreName     : string option
-        StoreLocation : string option
-    }
-    static member Default =
-        {
-            Host          = "localhost"
-            Port          = Some 8080
-            Scheme        = Http
-            FilePath      = None
-            Password      = None
-            StoreName     = None
-            StoreLocation = None
-        }
-
-let loadCertificateFromStore (storeName : string)
-                             (location  : string)
-                             (cfg       : EndpointConfiguration)
-                             (env       : IHostingEnvironment) =
-    use store = new X509Store(storeName, Enum.Parse<StoreLocation> location)
-    store.Open OpenFlags.ReadOnly
-    let cert =
-        store.Certificates.Find(
-            X509FindType.FindBySubjectName,
-            cfg.Host,
-            not (env.IsDevelopment()))
-    match cert.Count with
-    | 0 -> raise(InvalidOperationException(sprintf "Certificate not found for %s." cfg.Host))
-    | _ -> cert.[0]
-
-let loadCertificate (cfg : EndpointConfiguration) (env : IHostingEnvironment) =
-    match cfg.StoreName, cfg.StoreLocation, cfg.FilePath, cfg.Password with
-    | Some n, Some l,      _,      _ -> loadCertificateFromStore n l cfg env
-    |      _,      _, Some f, Some p -> new X509Certificate2(f, p)
-    |      _,      _, Some f, None   -> new X509Certificate2(f)
-    | _ -> raise (InvalidOperationException("No valid certificate configuration found for the current endpoint."))
-
-type KestrelServerOptions with
-    member this.ConfigureEndpoints (endpoints : EndpointConfiguration list) =
-        let env    = this.ApplicationServices.GetRequiredService<IHostingEnvironment>()
-        endpoints
-        |> List.iter (fun endpoint ->
-            let port =
-                match endpoint.Port with
-                | Some p -> p
-                | None   ->
-                    match endpoint.Scheme.Equals "https" with
-                    | true  -> 443
-                    | false -> 80
-
-            let ipAddresses =
-                match endpoint.Host.Equals "localhost" with
-                | true  -> [ IPAddress.IPv6Loopback; IPAddress.Loopback ]
-                | false ->
-                    match IPAddress.TryParse endpoint.Host with
-                    | true, ip -> [ ip ]
-                    | false, _ -> [ IPAddress.IPv6Any ]
-
-            ipAddresses
-            |> List.iter (fun ip ->
-                this.Listen(ip, port, fun options ->
-                    match endpoint.Scheme with
-                    | Https ->
-                        loadCertificate endpoint env
-                        |> options.UseHttps
-                        |> ignore
-                    | Http  -> ()
-                )
-            )
-        )
+open Giraffe.GiraffeViewEngine
+open GoogleAuthApp.HttpsConfig
 
 // ---------------------------------
 // Web app
 // ---------------------------------
 
-type SimpleClaim = { Type: string; Value: string }
+module AuthSchemes =
 
-let authorize =
-    requiresAuthentication (challenge JwtBearerDefaults.AuthenticationScheme)
+    let cookie = "Cookies"
+    let google = "Google"
 
-let greet =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        let claim = ctx.User.FindFirst "name"
-        let name = claim.Value
-        text ("Hello " + name) next ctx
+module Urls =
 
-let showClaims =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        let claims = ctx.User.Claims
-        let simpleClaims = Seq.map (fun (i : Claim) -> {Type = i.Type; Value = i.Value}) claims
-        json simpleClaims next ctx
+    let index      = "/"
+    let login      = "/login"
+    let googleAuth = "/google-auth"
+    let user       = "/user"
+    let logout     = "/logout"
+    let missing    = "/missing"
 
-let webApp =
-    choose [
-        GET >=>
-            choose [
-                route "/"       >=> text "Public endpoint."
-                route "/greet"  >=> authorize >=> greet
-                route "/claims" >=> authorize >=> showClaims
+module Views =
+
+    let master (content: XmlNode list) =
+        html [] [
+            head [] [
+                title [] [ rawText "Google Auth Sample App" ]
             ]
-        setStatusCode 404 >=> text "Not Found" ]
+            body [] content
+        ]
 
-// ---------------------------------
-// Error handler
-// ---------------------------------
+    let index =
+        [
+            h1 [] [ rawText "Google Auth Sample App" ]
+            p [] [ rawText "Welcome to the Google Auth Sample App!" ]
+            ul [] [
+                li [] [ a [ _href Urls.login ] [ rawText "Login" ] ]
+                li [] [ a [ _href Urls.user ] [ rawText "User profile" ] ]
+            ]
+        ] |> master
 
-let errorHandler (ex : Exception) (logger : ILogger) =
-    logger.LogError(EventId(), ex, "An unhandled exception has occurred while executing the request.")
-    clearResponse >=> setStatusCode 500 >=> text ex.Message
+    let login =
+        [
+            h1 [] [ rawText "Login" ]
+            p [] [ rawText "Pick one of the options to log in:" ]
+            ul [] [
+                li [] [ a [ _href Urls.googleAuth ] [ rawText "Google" ] ]
+                li [] [ a [ _href Urls.missing ] [ rawText "Facebook" ] ]
+                li [] [ a [ _href Urls.missing ] [ rawText "Twitter" ] ]
+            ]
+            p [] [
+                a [ _href Urls.index ] [ rawText "Return to home." ]
+            ]
+        ] |> master
+
+    let user (claims : (string * string) seq) =
+        [
+            h1 [] [ rawText "User details" ]
+            h2 [] [ rawText "Claims:" ]
+            ul [] [
+                yield! claims |> Seq.map (
+                    fun (key, value) ->
+                        li [] [ sprintf "%s: %s" key value |> encodedText ] )
+            ]
+            p [] [
+                a [ _href Urls.logout ] [ rawText "Logout" ]
+            ]
+        ] |> master
+
+    let notFound =
+        [
+            h1 [] [ rawText "Not Found" ]
+            p [] [ rawText "The requested resource does not exist." ]
+            p [] [ rawText "Facebook and Twitter auth handlers have not been configured yet." ]
+            ul [] [
+                li [] [ a [ _href Urls.index ] [ rawText "Return to home." ] ]
+            ]
+        ] |> master
+
+module Handlers =
+
+    let signOut (scheme : string) : HttpHandler =
+        fun (next : HttpFunc) (ctx : HttpContext) ->
+            task {
+                do! ctx.SignOutAsync(scheme)
+                return! next ctx
+            }
+
+    let index : HttpHandler =
+        Views.index |> htmlView
+
+    let login : HttpHandler =
+        Views.login |> htmlView
+
+    let user : HttpHandler =
+        fun (next : HttpFunc) (ctx : HttpContext) ->
+            (ctx.User.Claims
+            |> Seq.map (fun c -> (c.Type, c.Value))
+            |> Views.user
+            |> htmlView) next ctx
+
+    let logout : HttpHandler =
+        signOut AuthSchemes.cookie
+        >=> redirectTo false Urls.index
+
+    let challenge (scheme : string) (redirectUri : string) : HttpHandler =
+        fun (next : HttpFunc) (ctx : HttpContext) ->
+            task {
+                do! ctx.ChallengeAsync(
+                        scheme,
+                        AuthenticationProperties(RedirectUri = redirectUri))
+                return! next ctx
+            }
+
+    let googleAuth = challenge AuthSchemes.google Urls.user
+
+    let authenticate : HttpHandler =
+        requiresAuthentication login
+
+    let notFound : HttpHandler =
+        setStatusCode 404 >=>
+        (Views.notFound |> htmlView)
+
+    let webApp =
+        choose [
+            GET >=>
+                choose [
+                    route Urls.index      >=> index
+                    route Urls.login      >=> login
+                    route Urls.user       >=> authenticate >=> user
+                    route Urls.logout     >=> logout
+                    route Urls.googleAuth >=> googleAuth
+                ]
+            notFound ]
+
+    let error (ex : Exception) (logger : ILogger) =
+        logger.LogError(EventId(), ex, "An unhandled exception has occurred while executing the request.")
+        clearResponse >=> setStatusCode 500 >=> text ex.Message
 
 // ---------------------------------
 // Config and Main
 // ---------------------------------
 
 let configureApp (app : IApplicationBuilder) =
-    app.UseAuthentication()
-       .UseGiraffeErrorHandler(errorHandler)
-       .UseStaticFiles()
-       .UseGiraffe webApp
-
-let authenticationOptions (o : AuthenticationOptions) =
-    o.DefaultAuthenticateScheme <- JwtBearerDefaults.AuthenticationScheme
-    o.DefaultChallengeScheme <- JwtBearerDefaults.AuthenticationScheme
-
-let jwtBearerOptions (cfg : JwtBearerOptions) =
-    cfg.SaveToken <- true
-    cfg.IncludeErrorDetails <- true
-    cfg.Authority <- "https://accounts.google.com"
-    cfg.Audience <- "1076119972881-h90n9gouqih9p78h52vlp0o3t3lpfs44.apps.googleusercontent.com"
-    cfg.TokenValidationParameters <- TokenValidationParameters (
-        ValidIssuer = "accounts.google.com"
-    )
+    app.UseGiraffeErrorHandler(Handlers.error)
+       .UseAuthentication()
+       .UseGiraffe Handlers.webApp
 
 let configureServices (services : IServiceCollection) =
-    services
-        .AddGiraffe()
-        .AddAuthentication(authenticationOptions)
-        .AddJwtBearer(Action<JwtBearerOptions> jwtBearerOptions) |> ignore
+    // Enable Authentication providers
+    services.AddAuthentication(fun o -> o.DefaultScheme <- AuthSchemes.cookie)
+            .AddCookie(
+                AuthSchemes.cookie, fun o ->
+                    o.LoginPath  <- PathString Urls.login
+                    o.LogoutPath <- PathString Urls.logout)
+            .AddGoogle(
+                AuthSchemes.google, fun o ->
+                    o.ClientId     <- "<google client id>"
+                    o.ClientSecret <- "<google client secret>")
+            |> ignore
+
+    // Add Giraffe dependencies
+    services.AddGiraffe() |> ignore
 
 let configureLogging (builder : ILoggingBuilder) =
     let filter (l : LogLevel) = l.Equals LogLevel.Error
@@ -181,16 +184,11 @@ let main _ =
             { EndpointConfiguration.Default with
                 Port     = Some 44340
                 Scheme   = Https
-                FilePath = Some "/Users/dustinmoris/Temp/https.pfx"
-                Password = Some "Just4Now" } ]
+                FilePath = Some "<path to self signed certificate>"
+                Password = Some "<password>" } ]
 
-    let contentRoot = Directory.GetCurrentDirectory()
-    let webRoot     = Path.Combine(contentRoot, "WebRoot")
     WebHostBuilder()
         .UseKestrel(fun o -> o.ConfigureEndpoints endpoints)
-        .UseContentRoot(contentRoot)
-        .UseIISIntegration()
-        .UseWebRoot(webRoot)
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(configureServices)
         .ConfigureLogging(configureLogging)

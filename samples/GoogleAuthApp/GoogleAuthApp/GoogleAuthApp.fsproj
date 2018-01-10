@@ -16,10 +16,9 @@
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel.Https" Version="2.0.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Server.IISIntegration" Version="2.0.*" />
-    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.0.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.0.*" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.0.*" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="2.0.*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.0.*" />
@@ -32,6 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="HttpsConfig.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
