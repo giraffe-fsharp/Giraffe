@@ -137,7 +137,7 @@ type HttpContext with
                 | Invalid ->
                     // If the range header was invalid then return an error response
                     this.SetHttpHeader HeaderNames.AcceptRanges this.RangeUnit
-                    this.SetHttpHeader HeaderNames.ContentRange (sprintf "*/%i" stream.Length)
+                    this.SetHttpHeader HeaderNames.ContentRange (sprintf "%s */%i" this.RangeUnit stream.Length)
                     this.SetStatusCode StatusCodes.Status416RangeNotSatisfiable
                     return Some this
                 | Valid range ->

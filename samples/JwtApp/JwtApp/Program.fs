@@ -1,7 +1,6 @@
 module JwtApp.App
 
 open System
-open System.Collections.Generic
 open System.IO
 open System.Security.Claims
 open Microsoft.AspNetCore.Authentication
