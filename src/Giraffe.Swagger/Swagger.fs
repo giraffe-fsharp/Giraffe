@@ -24,6 +24,8 @@ type ParamDescriptor =
     Required:bool }
   static member InQuery n t =
     {Name=n; Type=(Some t); In=Query; Required=true}
+  static member InPath n t =
+      {Name=n; Type=(Some t); In=Path; Required=true}
   static member InForm n t =
       {Name=n; Type=(Some t); In=FormData; Required=true}
   static member Named n =
@@ -38,6 +40,70 @@ and ParamContainer =
 
 module Analyzer =
   
+  type FormatParsed =
+    | StringPart | CharPart | BoolPart | IntPart
+    | DecimalPart | HexaPart
+  type FormatPart =
+    | Constant  of string
+    | Parsed    of FormatParsed
+  type FormatParser =
+    { Parts:FormatPart list ref
+      Buffer:char list ref
+      Format:string
+      Position:int ref }
+    static member Parse f =
+        { Parts = ref List.empty
+          Buffer = ref List.empty
+          Format = f
+          Position = ref 0 }.Parse()
+    member x.Acc (s:string) =
+        x.Buffer := !x.Buffer @ (s.ToCharArray() |> Seq.toList)
+    member x.Acc (c:char) =
+        x.Buffer := !x.Buffer @ [c]
+    member private x.Finished () =
+        !x.Position >= x.Format.Length
+    member x.Next() =
+        if x.Finished() |> not then
+            x.Format.Chars !x.Position |> x.Acc
+            x.Position := !x.Position + 1
+    member x.PreviewNext() =
+        if !x.Position >= x.Format.Length - 1
+        then None
+        else Some (x.Format.Chars (!x.Position))
+    member x.Push t =
+        x.Parts := !x.Parts @ t
+        x.Buffer := List.empty
+    member x.StringBuffer skip =
+        let c = !x.Buffer |> Seq.skip skip |> Seq.toArray
+        new String(c)
+    member x.Parse () =
+        while x.Finished() |> not do
+            x.Next()
+            match !x.Buffer with
+            | '%' :: '%' :: _ -> x.Push [Constant (x.StringBuffer 1)]
+            | '%' :: 'b' :: _ -> x.Push [Parsed BoolPart]
+            | '%' :: 'i' :: _
+            | '%' :: 'u' :: _
+            | '%' :: 'd' :: _ -> x.Push [Parsed IntPart]
+            | '%' :: 'c' :: _ -> x.Push [Parsed StringPart]
+            | '%' :: 's' :: _ -> x.Push [Parsed StringPart]
+            | '%' :: 'e' :: _
+            | '%' :: 'E' :: _
+            | '%' :: 'f' :: _
+            | '%' :: 'F' :: _
+            | '%' :: 'g' :: _
+            | '%' :: 'G' :: _ -> x.Push [Parsed DecimalPart]
+            | '%' :: 'x' :: _
+            | '%' :: 'X' :: _ -> x.Push [Parsed HexaPart]
+            | _ :: _ ->
+                let n = x.PreviewNext()
+                match n with
+                | Some '%' -> x.Push [Constant (x.StringBuffer 0)]
+                | _ -> ()
+            | _ -> ()
+        if !x.Buffer |> Seq.isEmpty |> not then x.Push [Constant (x.StringBuffer 0)]
+        !x.Parts
+
   type RouteInfos =
     { Verb:string
       Path:string
@@ -193,7 +259,7 @@ module Analyzer =
                   |> List.mapi(
                         fun i typ -> 
                           let name = (sprintf "arg%d" i)
-                          ParamDescriptor.InQuery name typ)
+                          ParamDescriptor.InPath name typ)
                 ctx.AddRoute (ctx.GetVerb()) parameters path.Template
               )
           
@@ -687,12 +753,10 @@ module Generator =
                      | None -> None
                   else 
                   Some (Ref(ty.Describes()))
-            let pd:ParamDefinition =
-                { Name = p.Name
-                  Type = t
-                  In = p.In.ToString()
-                  Required=p.Required }
-            pd
+            { Name = p.Name
+              Type = t
+              In = p.In.ToString()
+              Required=p.Required }
           )
     let pathDef =
       { Summary=""
@@ -702,8 +766,26 @@ module Generator =
         Produces=[]
         Tags=[]
         Parameters=parameters
-        Responses = dict [] } //:IDictionary<int, ResponseDoc> }  
-    route.Path, verb, pathDef
+        Responses = dict [] } //:IDictionary<int, ResponseDoc> }
+    
+    if parameters |> List.exists (fun p -> p.In = ParamContainer.Path.ToString())
+    then 
+      let parts = Analyzer.FormatParser.Parse route.Path
+      let tmpl =
+        parts
+        |> List.fold (
+            fun ((i,acc):(int*string)) (p:Analyzer.FormatPart) ->
+              match p with
+              | Analyzer.Constant c -> i, acc + c
+              | Analyzer.Parsed _ ->
+                  let pa = parameters.Item i 
+                  (i+1), sprintf "%s{%s}" acc pa.Name
+            ) (0,"")
+        |> snd
+
+      tmpl, verb, pathDef
+    else
+      route.Path, verb, pathDef
 
   let documentRoutes  (routes:Analyzer.RouteInfos list) =
     routes 

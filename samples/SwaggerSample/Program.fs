@@ -53,6 +53,10 @@ let submitCar =
             return! json car next ctx
         }
 
+let bonjour (firstName, lastName) =
+    let message = sprintf "Bonjour %s %s" lastName firstName
+    text message
+
 let documentedApp =
     <@
         choose [
@@ -60,18 +64,24 @@ let documentedApp =
                 choose [
                     route  "/"           >=> text "index"
                     route  "/ping"       >=> text "pong"
-                    route  "/error"      >=> (fun _ _ -> failwith "Something went wrong!")
-                    route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
-                    route  "/once"       >=> (time() |> text)
-                    route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
+//                    route  "/error"      >=> (fun _ _ -> failwith "Something went wrong!")
+//                    route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
+//                    route  "/once"       >=> (time() |> text)
+//                    route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
                 ]
-            route "/car" >=> submitCar
+//            route "/car" >=> submitCar
+            routef "/hello/%s/%s" (fun (firstName, lastName) -> bonjour (firstName, lastName))
+
             RequestErrors.notFound (text "Not Found") ]
     @>
     
 let docCtx = analyze documentedApp AppAnalyzeRules.Default
 
 let swaggerDoc =
+    let rawJson (str : string) : HttpHandler =
+        setHttpHeader "Content-Type" "application/json"
+        >=> setBodyAsString str
+
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             let description = 
@@ -89,7 +99,8 @@ let swaggerDoc =
                   Schemes=["http"]
                   Paths=paths
                   Definitions = dict [] } //:IDictionary<string,ObjectDefinition> }
-            return! json doc next ctx
+                  
+            return! rawJson (doc.ToJson()) next ctx
             }
 
 let webApp =
