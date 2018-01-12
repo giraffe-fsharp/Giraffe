@@ -8,6 +8,7 @@ open Quotations.ExprShape
 open Quotations.Patterns
 open Microsoft.FSharp.Reflection
 open FSharp.Quotations.Evaluator
+open Microsoft.AspNetCore.Http
 
 let joinMaps (p:Map<'a,'b>) (q:Map<'a,'b>) = 
     Map(Seq.concat [ (Map.toSeq p) ; (Map.toSeq q) ])
@@ -224,6 +225,9 @@ module Analyzer =
           
         ] |> Map
       { MethodCalls=methodCalls }
+  
+  let buildApp (webapp:Expr<HttpFunc -> HttpContext -> HttpFuncResult>) : HttpFunc -> HttpContext -> HttpFuncResult =
+    QuotationEvaluator.Evaluate webapp
   
   let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
     let rec loop exp (ctx:AnalyzeContext) : AnalyzeContext =
@@ -634,7 +638,7 @@ module Generator =
       BasePath:string
       Host:string
       Schemes:string list
-      Paths:IDictionary<string,IDictionary<HttpVerb,PathDefinition>>
+      Paths:Map<string, Map<HttpVerb,PathDefinition>>
       Definitions:IDictionary<string,ObjectDefinition> }
     member __.ToJson() =
       let settings = new JsonSerializerSettings(NullValueHandling = NullValueHandling.Ignore)
@@ -664,3 +668,64 @@ module Generator =
         Template=route.Path
         Verb=HttpVerb.Parse route.Verb
         Params=route.Parameters }
+
+  //IDictionary<string,IDictionary<HttpVerb,PathDefinition>>
+  let convertRouteInfos (route:Analyzer.RouteInfos) : (string * HttpVerb * PathDefinition) =
+    let verb = HttpVerb.Parse route.Verb
+    let parameters = 
+      route.Parameters
+      |> List.map (
+           fun p ->
+            let t = 
+              match p.Type with 
+              | None -> None 
+              | Some ty ->
+                  if ty.IsSwaggerPrimitive
+                  then
+                     match ty.FormatAndName with
+                     | Some v -> Some(Primitive v)
+                     | None -> None
+                  else 
+                  Some (Ref(ty.Describes()))
+            let pd:ParamDefinition =
+                { Name = p.Name
+                  Type = t
+                  In = p.In.ToString()
+                  Required=p.Required }
+            pd
+          )
+    let pathDef =
+      { Summary=""
+        Description=""
+        OperationId=""
+        Consumes=[]
+        Produces=[]
+        Tags=[]
+        Parameters=parameters
+        Responses = dict [] } //:IDictionary<int, ResponseDoc> }  
+    route.Path, verb, pathDef
+
+  let documentRoutes  (routes:Analyzer.RouteInfos list) =
+    routes 
+    |> Seq.map convertRouteInfos
+    |> Seq.mapi (
+         fun i (tmpl, verb, route) ->
+          let operationId = sprintf "Operation %d" i
+          if String.IsNullOrWhiteSpace route.OperationId 
+          then (tmpl, verb, { route with OperationId=operationId })
+          else (tmpl, verb, route)
+       )
+    |> Seq.groupBy (fun (tmpl, _, _) -> tmpl)
+    |> Seq.map (
+        fun (tmpl, items) ->
+           let paths =
+             items 
+             |> Seq.map (fun (_, verb, route) -> (verb, route))
+             |> Map
+           tmpl, paths
+       )
+    |> Map
+    
+    
+       
+       

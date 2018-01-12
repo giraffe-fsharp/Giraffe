@@ -16,8 +16,10 @@ open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
-open Giraffe.Swagger
-open Giraffe.SwaggerUi
+open Swagger
+open Analyzer
+open SwaggerUi
+open Giraffe.Swagger.Generator
 
 // ---------------------------------
 // Error handler
@@ -51,20 +53,51 @@ let submitCar =
             return! json car next ctx
         }
 
+let documentedApp =
+    <@
+        choose [
+            GET >=>
+                choose [
+                    route  "/"           >=> text "index"
+                    route  "/ping"       >=> text "pong"
+                    route  "/error"      >=> (fun _ _ -> failwith "Something went wrong!")
+                    route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
+                    route  "/once"       >=> (time() |> text)
+                    route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
+                ]
+            route "/car" >=> submitCar
+            RequestErrors.notFound (text "Not Found") ]
+    @>
+    
+let docCtx = analyze documentedApp AppAnalyzeRules.Default
+
+let swaggerDoc =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            let description = 
+                { ApiDescription.Empty 
+                    with
+                        Title="Sample 1"
+                        Description="Create a swagger with Giraffe"
+                }
+            let paths = documentRoutes !docCtx.Routes
+            let doc =
+                { Swagger="2.0"
+                  Info=description
+                  BasePath="/"
+                  Host="localhost:5000"
+                  Schemes=["http"]
+                  Paths=paths
+                  Definitions = dict [] } //:IDictionary<string,ObjectDefinition> }
+            return! json doc next ctx
+            }
+
 let webApp =
-    choose [
-        GET >=>
-            choose [
-                route  "/"           >=> text "index"
-                route  "/ping"       >=> text "pong"
-                route  "/error"      >=> (fun _ _ -> failwith "Something went wrong!")
-                route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
-                route  "/once"       >=> (time() |> text)
-                route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
-                swaggerUiHandler "/swaggerui/" ""
-            ]
-        route "/car" >=> submitCar
-        RequestErrors.notFound (text "Not Found") ]
+    choose [ 
+        route "/swagger.json" >=> swaggerDoc
+        swaggerUiHandler "/swaggerui/" "/swagger.json"
+        buildApp documentedApp
+    ]
 
 // ---------------------------------
 // Main
@@ -90,7 +123,6 @@ let configureServices (services : IServiceCollection) =
         .AddCookie(cookieAuth)   |> ignore
     services.AddDataProtection() |> ignore
     
-
 let configureLogging (loggerBuilder : ILoggingBuilder) =
     loggerBuilder.AddFilter(fun lvl -> lvl.Equals LogLevel.Error)
                  .AddConsole()
