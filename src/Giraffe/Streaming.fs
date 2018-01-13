@@ -69,7 +69,7 @@ module internal RangeHelper =
                     Ok { Start = startOfRange; End = endOfRange }
 
     /// Helper method to parse and validate the If-Range HTTP header
-    let matchesIfRange (request      : HttpRequest)
+    let isIfRangeValid (request      : HttpRequest)
                        (eTag         : EntityTagHeaderValue option)
                        (lastModified : DateTimeOffset option) =
         let ifRange = request.GetTypedHeaders().IfRange
@@ -141,8 +141,8 @@ type HttpContext with
                                  (lastModified          : DateTimeOffset option) =
         task {
             match this.ValidatePreConditions eTag lastModified with
-            | ConditionFailed        -> return this.NotModifiedResponse()
-            | NotModified            -> return this.PreConditionFailedResponse()
+            | ConditionFailed -> return this.NotModifiedResponse()
+            | NotModified     -> return this.PreConditionFailedResponse()
 
             // If all pre-conditions have been met (or didn't exist) then proceed with web request execution
             | IsMatch | NotSpecified ->
@@ -156,7 +156,7 @@ type HttpContext with
                     | None         -> return! this.WriteStreamToBodyAsync stream None
                     | Some ranges  ->
                         // Check and validate If-Range HTTP header
-                        match RangeHelper.matchesIfRange this.Request eTag lastModified with
+                        match RangeHelper.isIfRangeValid this.Request eTag lastModified with
                         | false -> return! this.WriteStreamToBodyAsync stream None
                         | true  ->
                             match RangeHelper.validateRanges ranges stream.Length with
