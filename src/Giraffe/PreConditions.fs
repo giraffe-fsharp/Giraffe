@@ -1,15 +1,15 @@
 [<AutoOpen>]
-module Giraffe.Conditional
+module Giraffe.PreConditions
 
 open System
 open System.Linq
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Headers
-open Microsoft.Net.Http.Headers
 open Microsoft.Extensions.Primitives
+open Microsoft.Net.Http.Headers
 open Giraffe.Common
 
-type PreConditionResult =
+type PreCondition =
     | NotSpecified
     | NotModified     // 304 Not Modifed
     | ConditionFailed // 412 Precondition Failed
@@ -79,10 +79,8 @@ type HttpContext with
                 | true  -> NotModified
                 | false -> IsMatch
 
-
-
     member this.ValidatePreConditions (eTag : EntityTagHeaderValue option) (lastModified : DateTimeOffset option) =
-        let bind (result : PreConditionResult) =
+        let bind (result : PreCondition) =
             function
             | NotModified     -> NotModified
             | ConditionFailed -> ConditionFailed
@@ -120,3 +118,11 @@ type HttpContext with
                     | result ->
                         result
                         |> bind (this.ValidateIfModifiedSince requestHeaders lastModified)
+
+    member this.NotModifiedResponse() =
+        this.SetStatusCode StatusCodes.Status304NotModified
+        Some this
+
+    member this.PreConditionFailedResponse() =
+        this.SetStatusCode StatusCodes.Status412PreconditionFailed
+        Some this
