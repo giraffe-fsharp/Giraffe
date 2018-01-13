@@ -11,6 +11,16 @@ open Microsoft.Net.Http.Headers
 open Giraffe.Serialization
 
 /// ---------------------------
+/// Useful extension methods
+/// ---------------------------
+
+type DateTime with
+    member this.ToHtmlString() = this.ToString("r")
+
+type DateTimeOffset with
+    member this.ToHtmlString() = this.ToString("r")
+
+/// ---------------------------
 /// HttpContext extensions
 /// ---------------------------
 

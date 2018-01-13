@@ -21,9 +21,9 @@ type internal RangeBoundary =
     member this.Length = this.End - this.Start + 1L
 
 type internal Range =
-| Missing
-| Invalid
-| Valid of RangeBoundary
+    | Missing
+    | Invalid
+    | Valid of RangeBoundary
 
 type RangeHeaderValue with
 
@@ -122,25 +122,32 @@ type HttpContext with
                 return Some this
         }
 
-    member this.WriteStreamAsync (enableRangeProcessing : bool) (stream : Stream) =
+    member this.WriteStreamAsync (enableRangeProcessing : bool)
+                                 (stream                : Stream)
+                                 (eTag                  : EntityTagHeaderValue option)
+                                 (lastModified          : DateTimeOffset option) =
         task {
-            if      not stream.CanSeek        then return! this.WriteStreamToBodyAsync stream None
-            else if not enableRangeProcessing then return! this.WriteStreamToBodyAsync stream None
-            else
-                match this.ParseRange stream.Length with
-                | Missing ->
-                    // If the range header is missing then return a normal response,
-                    // but additionally set the Accept-Ranges header to tell the client
-                    // that range processing is allowed.
-                    this.SetHttpHeader HeaderNames.AcceptRanges this.RangeUnit
-                    return! this.WriteStreamToBodyAsync stream None
-                | Invalid ->
-                    // If the range header was invalid then return an error response
-                    this.SetHttpHeader HeaderNames.AcceptRanges this.RangeUnit
-                    this.SetHttpHeader HeaderNames.ContentRange (sprintf "%s */%i" this.RangeUnit stream.Length)
-                    this.SetStatusCode StatusCodes.Status416RangeNotSatisfiable
-                    return Some this
-                | Valid range ->
-                    // Write a range to the response body
-                    return! this.WriteStreamToBodyAsync stream (Some range)
+            match this.ValidatePreConditions eTag lastModified with
+            | ConditionFailed        -> this.SetStatusCode StatusCodes.Status304NotModified;        return Some this
+            | NotModified            -> this.SetStatusCode StatusCodes.Status412PreconditionFailed; return Some this
+            | IsMatch | NotSpecified ->
+                if      not stream.CanSeek        then return! this.WriteStreamToBodyAsync stream None
+                else if not enableRangeProcessing then return! this.WriteStreamToBodyAsync stream None
+                else
+                    match this.ParseRange stream.Length with
+                    | Missing ->
+                        // If the range header is missing then return a normal response,
+                        // but additionally set the Accept-Ranges header to tell the client
+                        // that range processing is allowed.
+                        this.SetHttpHeader HeaderNames.AcceptRanges this.RangeUnit
+                        return! this.WriteStreamToBodyAsync stream None
+                    | Invalid ->
+                        // If the range header was invalid then return an error response
+                        this.SetHttpHeader HeaderNames.AcceptRanges this.RangeUnit
+                        this.SetHttpHeader HeaderNames.ContentRange (sprintf "%s */%i" this.RangeUnit stream.Length)
+                        this.SetStatusCode StatusCodes.Status416RangeNotSatisfiable
+                        return Some this
+                    | Valid range ->
+                        // Write a range to the response body
+                        return! this.WriteStreamToBodyAsync stream (Some range)
         }
