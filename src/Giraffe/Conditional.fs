@@ -95,7 +95,7 @@ type HttpContext with
 
         // Set ETag and Last-Modified in the response
         if eTag.IsSome         then responseHeaders.ETag         <- eTag.Value
-        if lastModified.IsNone then responseHeaders.LastModified <- Nullable(lastModified.Value)
+        if lastModified.IsSome then responseHeaders.LastModified <- Nullable(lastModified.Value)
 
         // Validate headers in correct precedence
         // RFC: https://tools.ietf.org/html/rfc7232#section-6

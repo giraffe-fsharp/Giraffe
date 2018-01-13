@@ -69,6 +69,8 @@ module WebApp =
         ]
 
     let errorHandler (ex : Exception) (_ : ILogger) : HttpHandler =
+        printfn "Error: %s" ex.Message
+        printfn "StackTrace:%s %s" Environment.NewLine ex.StackTrace
         setStatusCode 500 >=> text ex.Message
 
     let configureApp (app : IApplicationBuilder) =
