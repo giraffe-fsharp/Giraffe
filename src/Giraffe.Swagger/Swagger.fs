@@ -752,12 +752,26 @@ module Generator =
                      | Some v -> Some(Primitive v)
                      | None -> None
                   else 
-                  Some (Ref(ty.Describes()))
+                    Some (Ref(ty.Describes()))
             { Name = p.Name
               Type = t
               In = p.In.ToString()
               Required=p.Required }
           )
+          
+    let responses : ResponseDoc list =
+      route.Responses
+      |> List.map(
+           fun rs -> 
+            let ty = rs.ModelType
+            let schema = 
+              if ty.IsSwaggerPrimitive
+              then None
+              else Some (ty.Describes())
+            { ResponseDoc.Default 
+                with Schema=schema } 
+         )
+          
     let pathDef =
       { Summary=""
         Description=""

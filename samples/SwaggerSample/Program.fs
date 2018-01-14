@@ -64,13 +64,13 @@ let documentedApp =
                 choose [
                     route  "/"           >=> text "index"
                     route  "/ping"       >=> text "pong"
-//                    route  "/error"      >=> (fun _ _ -> failwith "Something went wrong!")
-//                    route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
-//                    route  "/once"       >=> (time() |> text)
-//                    route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
+                    route  "/error"      >=> (fun _ _ -> failwith "Something went wrong!")
+                    route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
+                    route  "/once"       >=> (time() |> text)
+                    route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
                 ]
-//            route "/car" >=> submitCar
-            routef "/hello/%s/%s" (fun (firstName, lastName) -> bonjour (firstName, lastName))
+            route "/car" >=> submitCar
+            routef "/hello/%s/%s" bonjour
 
             RequestErrors.notFound (text "Not Found") ]
     @>
