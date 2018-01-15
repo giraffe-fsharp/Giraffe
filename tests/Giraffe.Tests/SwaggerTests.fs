@@ -251,7 +251,7 @@ let ``webapp is a simple routef with verb `GET` returning text and handler inner
   let exp = 
     { Verb = "GET"
       Path = "/hello/%s"
-      Parameters = [ ParamDescriptor.InQuery "arg0" typeof<string> ]
+      Parameters = [ ParamDescriptor.InPath "arg0" typeof<string> ]
       Responses =
         [
           { StatusCode = 200
@@ -274,9 +274,9 @@ let ``routef with verb `GET` and args [int, string, float] returning text and ha
   let exp = 
     { Verb = "GET"
       Path = "/hello/%d/%s/%f"
-      Parameters = [ ParamDescriptor.InQuery "arg0" typeof<int> 
-                     ParamDescriptor.InQuery "arg1" typeof<string>
-                     ParamDescriptor.InQuery "arg2" typeof<float> ]
+      Parameters = [ ParamDescriptor.InPath "arg0" typeof<int> 
+                     ParamDescriptor.InPath "arg1" typeof<string>
+                     ParamDescriptor.InPath "arg2" typeof<float> ]
       Responses =
         [
           { StatusCode = 200
@@ -310,9 +310,9 @@ let ``app contains 1 route and 1 routef in GET`` () =
     [
      { Verb = "GET"
        Path = "/hello/%d/%s/%f"
-       Parameters = [ ParamDescriptor.InQuery "arg0" typeof<int> 
-                      ParamDescriptor.InQuery "arg1" typeof<string>
-                      ParamDescriptor.InQuery "arg2" typeof<float> ]
+       Parameters = [ ParamDescriptor.InPath "arg0" typeof<int> 
+                      ParamDescriptor.InPath "arg1" typeof<string>
+                      ParamDescriptor.InPath "arg2" typeof<float> ]
        Responses =
          [
            { StatusCode = 200
@@ -332,7 +332,8 @@ let ``app contains 1 route and 1 routef in GET`` () =
      }
     ]
   let routes = !ctx.Routes
-  assertRoutesAreEqual exp routes
+  assertListDeepEqual exp routes
+  //assertRoutesAreEqual exp routes
 
 [<Fact>]
 let ``app contains 1 route and 1 routef in GET and POST`` () =
@@ -348,9 +349,9 @@ let ``app contains 1 route and 1 routef in GET and POST`` () =
     [
      { Verb = "GET"
        Path = "/hello/%d/%s/%f"
-       Parameters = [ ParamDescriptor.InQuery "arg0" typeof<int> 
-                      ParamDescriptor.InQuery "arg1" typeof<string>
-                      ParamDescriptor.InQuery "arg2" typeof<float> ]
+       Parameters = [ ParamDescriptor.InPath "arg0" typeof<int> 
+                      ParamDescriptor.InPath "arg1" typeof<string>
+                      ParamDescriptor.InPath "arg2" typeof<float> ]
        Responses =
          [
            { StatusCode = 200
