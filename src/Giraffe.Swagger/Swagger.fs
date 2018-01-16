@@ -120,7 +120,7 @@ module Analyzer =
   type AnalyzeContext =
     {
         ArgTypes : Type list
-        Variables : Map<string, obj> ref
+        Variables : Map<string, obj>
         Routes : RouteInfos list ref
         Responses : ResponseInfos list
         Verb : string option
@@ -131,7 +131,7 @@ module Analyzer =
       with get () =
         {
             ArgTypes = List.empty
-            Variables = ref Map.empty
+            Variables = Map.empty
             Routes = ref List.empty
             Verb = None
             Responses = List.empty
@@ -172,20 +172,20 @@ module Analyzer =
     member __.AddParameter parameter =
       { __ with Parameters=(parameter :: __.Parameters) }
     member __.ClearVariables () =
-      { __ with Variables = ref Map.empty }
+      { __ with Variables = Map.empty }
     member __.SetVariable name value =
-      let vars = !__.Variables
-      if vars.ContainsKey name
-      then vars.Remove(name).Add(name, value)
-      else vars.Add(name, value)
-      |> fun vars -> __.Variables := vars
-      __
+      let vars = __.Variables
+      let nvars = 
+        if vars.ContainsKey name
+        then vars.Remove(name).Add(name, value)
+        else vars.Add(name, value)
+      { __ with Variables = nvars }
     member __.AddArgType ``type`` =
       { __ with ArgTypes = (``type`` :: __.ArgTypes) }
     member __.GetVerb() =
       __.Verb |> getVerb 
     member __.MergeWith (other:AnalyzeContext) =
-      let variables = joinMaps !__.Variables !other.Variables
+      let variables = joinMaps __.Variables other.Variables
       let verb = 
         match __.Verb, other.Verb with 
         | Some v, None -> Some v
@@ -212,7 +212,7 @@ module Analyzer =
       
       {
           ArgTypes = __.ArgTypes @ other.ArgTypes
-          Variables = ref variables
+          Variables = variables
           Routes = ref routes
           Verb = verb
           Responses = __.Responses @ other.Responses
@@ -243,14 +243,14 @@ module Analyzer =
         [ 
           // simple route
           { ModuleName="HttpHandlers"; FunctionName="route" }, 
-              (fun ctx -> (!ctx.Variables).Item "path" |> toString |> ctx.AddRoute (ctx.GetVerb()) List.empty)
+              (fun ctx -> ctx.Variables.Item "path" |> toString |> ctx.AddRoute (ctx.GetVerb()) List.empty)
           { ModuleName="HttpHandlers"; FunctionName="routeCi" }, 
-              (fun ctx -> (!ctx.Variables).Item "path" |> toString |> ctx.AddRoute (ctx.GetVerb()) List.empty)
+              (fun ctx -> ctx.Variables.Item "path" |> toString |> ctx.AddRoute (ctx.GetVerb()) List.empty)
           
           // route format
           { ModuleName="HttpHandlers"; FunctionName="routef" }, 
               (fun ctx -> 
-                let path = (!ctx.Variables).Item "pathFormat" :?> PathFormat
+                let path = ctx.Variables.Item "pathFormat" :?> PathFormat
                 let parameters = 
                   path.ArgTypes 
                   |> List.mapi(
