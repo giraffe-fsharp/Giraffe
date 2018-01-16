@@ -90,7 +90,7 @@ let swaggerDoc =
                         Title="Sample 1"
                         Description="Create a swagger with Giraffe"
                 }
-            let paths = documentRoutes !docCtx.Routes
+            let paths = documentRoutes docCtx.Routes
             let doc =
                 { Swagger="2.0"
                   Info=description

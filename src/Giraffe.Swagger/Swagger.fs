@@ -121,7 +121,7 @@ module Analyzer =
     {
         ArgTypes : Type list
         Variables : Map<string, obj>
-        Routes : RouteInfos list ref
+        Routes : RouteInfos list
         Responses : ResponseInfos list
         Verb : string option
         CurrentRoute : RouteInfos option ref
@@ -132,7 +132,7 @@ module Analyzer =
         {
             ArgTypes = List.empty
             Variables = Map.empty
-            Routes = ref List.empty
+            Routes = List.empty
             Verb = None
             Responses = List.empty
             CurrentRoute = ref None
@@ -147,12 +147,11 @@ module Analyzer =
                   Responses=(__.Responses @ route.Responses |> List.distinct)
                   Parameters=(__.Parameters @ route.Parameters) 
             }
-          __.Routes := r :: !__.Routes
           __.CurrentRoute := None
-          { __ with Parameters=List.Empty; Responses=[]; ArgTypes=[] }
+          { __ with Parameters=List.Empty; Responses=[]; ArgTypes=[]; Routes = r :: __.Routes }
       | None -> 
           let routes = 
-              match !__.Routes with
+              match __.Routes with
               | route :: s -> 
                   { route 
                       with 
@@ -160,8 +159,7 @@ module Analyzer =
                         Parameters=(__.Parameters @ route.Parameters |> List.distinct) 
                   } :: s
               | v -> v
-          __.Routes := routes |> List.distinct
-          { __ with ArgTypes=[] }
+          { __ with ArgTypes=[]; Routes = (List.distinct routes) }
     member __.AddResponse code contentType (modelType:Type) =
       let rs = { StatusCode=code; ContentType=contentType; ModelType=modelType }
       { __ with Responses = rs :: __.Responses }
@@ -207,13 +205,13 @@ module Analyzer =
         | None, None -> None
       
       let routes = 
-        !__.Routes @ !other.Routes 
+        __.Routes @ other.Routes 
         |> List.map (fun route -> { route with Verb=(verb |> getVerb) })
       
       {
           ArgTypes = __.ArgTypes @ other.ArgTypes
           Variables = variables
-          Routes = ref routes
+          Routes = routes
           Verb = verb
           Responses = __.Responses @ other.Responses
           CurrentRoute = ref currentRoute
@@ -314,8 +312,8 @@ module Analyzer =
           let ctxs = handlers |> List.map(fun e -> loop e ctx)
           { ctx 
               with 
-                Routes = ref (ctxs |> List.collect (fun c -> !c.Routes) |> List.append(!ctx.Routes) |> List.distinct)
-                Responses = (ctxs |> List.collect (fun c -> c.Responses) |> List.append(ctx.Responses)  |> List.distinct)
+                Routes = (ctxs |> List.collect (fun c -> c.Routes) |> List.append ctx.Routes |> List.distinct)
+                Responses = (ctxs |> List.collect (fun c -> c.Responses) |> List.append ctx.Responses  |> List.distinct)
                 CurrentRoute = ctx.CurrentRoute
           }
        
@@ -341,8 +339,8 @@ module Analyzer =
           let ctxs = args |> List.map(fun e -> loop e (newContext()))
           { ctx 
               with 
-                Routes = ref (ctxs |> List.collect (fun c -> !c.Routes) |> List.append(!ctx.Routes) |> List.distinct)
-                Responses = (ctxs |> List.collect (fun c -> c.Responses) |> List.append(ctx.Responses)  |> List.distinct)
+                Routes = (ctxs |> List.collect (fun c -> c.Routes) |> List.append ctx.Routes |> List.distinct)
+                Responses = (ctxs |> List.collect (fun c -> c.Responses) |> List.append ctx.Responses  |> List.distinct)
                 CurrentRoute = ctx.CurrentRoute
           }
       

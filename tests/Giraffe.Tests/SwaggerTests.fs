@@ -76,7 +76,7 @@ let ``webapp is a simple route with verb `GET` returning text`` () =
             ModelType=(typeof<string>) }
         ]
     }
-  let route = !ctx.Routes |> Seq.exactlyOne
+  let route = ctx.Routes |> Seq.exactlyOne
   
   Assert.Equal(exp.Path, route.Path)
   Assert.Equal(exp.Verb, route.Verb)
@@ -100,7 +100,7 @@ let ``webapp is a simple route with verb `POST` returning text`` () =
             ModelType=(typeof<string>) }
         ]
     }
-  let route = !ctx.Routes |> Seq.exactlyOne
+  let route = ctx.Routes |> Seq.exactlyOne
   
   Assert.Equal(exp.Path, route.Path)
   Assert.Equal(exp.Verb, route.Verb)
@@ -129,7 +129,7 @@ let ``webapp is a simple route with verb `PUT` with a condition returning text``
             ModelType=(typeof<string>) }
         ]
     }
-  let route = !ctx.Routes |> Seq.exactlyOne
+  let route = ctx.Routes |> Seq.exactlyOne
   
   Assert.Equal(exp.Path, route.Path)
   Assert.Equal(exp.Verb, route.Verb)
@@ -164,7 +164,7 @@ let ``webapp is a simple route with verb `DELETE` with a condition returning tex
             ModelType=(typeof<string>) }
         ]
     }
-  let route = !ctx.Routes |> Seq.exactlyOne
+  let route = ctx.Routes |> Seq.exactlyOne
   
   let ss = sprintf "%A" webApp
   printfn "ss: %s" ss
@@ -207,7 +207,7 @@ let ``webapp is a simple route with verb `POST` with a more complex condition re
             ModelType=(typeof<string>) }
         ]
     }
-  let route = !ctx.Routes |> Seq.exactlyOne
+  let route = ctx.Routes |> Seq.exactlyOne
   
   let ss = sprintf "%A" webApp
   printfn "ss: %s" ss
@@ -236,7 +236,7 @@ let ``webapp is a simple routeCi with verb `GET` returning text`` () =
             ModelType=(typeof<string>) }
         ]
     }
-  let route = !ctx.Routes |> Seq.exactlyOne
+  let route = ctx.Routes |> Seq.exactlyOne
   
   Assert.Equal(exp.Path, route.Path)
   Assert.Equal(exp.Verb, route.Verb)
@@ -258,7 +258,7 @@ let ``webapp is a simple routef with verb `GET` returning text and handler inner
             ModelType = typeof<string> }
         ]
     }
-  let route = !ctx.Routes |> Seq.exactlyOne
+  let route = ctx.Routes |> Seq.exactlyOne
   
   Assert.Equal(exp.Path, route.Path)
   Assert.Equal(exp.Verb, route.Verb)
@@ -283,7 +283,7 @@ let ``routef with verb `GET` and args [int, string, float] returning text and ha
             ModelType = typeof<string> }
         ]
     }
-  let route = !ctx.Routes |> Seq.exactlyOne
+  let route = ctx.Routes |> Seq.exactlyOne
   
   Assert.Equal(exp.Path, route.Path)
   Assert.Equal(exp.Verb, route.Verb)
@@ -330,7 +330,7 @@ let ``app contains 1 route and 1 routef in GET`` () =
          ]
      }
     ]
-  let routes = !ctx.Routes
+  let routes = ctx.Routes
   assertListDeepEqual exp routes
   //assertRoutesAreEqual exp routes
 
@@ -369,7 +369,7 @@ let ``app contains 1 route and 1 routef in GET and POST`` () =
          ]
      }
     ]
-  let routes = !ctx.Routes
+  let routes = ctx.Routes
   
   assertRoutesAreEqual exp routes
   
@@ -406,7 +406,7 @@ let ``GET route reading params in handler body and returning text`` () =
             ModelType = typeof<string> }
         ]
     }
-  let route = !ctx.Routes |> Seq.exactlyOne
+  let route = ctx.Routes |> Seq.exactlyOne
   
   Assert.Equal(exp.Path, route.Path)
   Assert.Equal(exp.Verb, route.Verb)
