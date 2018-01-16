@@ -141,8 +141,8 @@ type HttpContext with
                                  (lastModified          : DateTimeOffset option) =
         task {
             match this.ValidatePreConditions eTag lastModified with
-            | ConditionFailed -> return this.NotModifiedResponse()
-            | NotModified     -> return this.PreConditionFailedResponse()
+            | ConditionFailed -> return this.PreConditionFailedResponse()
+            | NotModified     -> return this.NotModifiedResponse()
 
             // If all pre-conditions have been met (or didn't exist) then proceed with web request execution
             | IsMatch | NotSpecified ->

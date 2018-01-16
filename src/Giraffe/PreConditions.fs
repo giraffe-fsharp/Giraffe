@@ -42,10 +42,10 @@ type HttpContext with
             match lastModified with
             | None              -> IsMatch
             | Some lastModified ->
-                match  requestHeaders.IfUnmodifiedSince.Value >= DateTimeOffset.UtcNow
-                    && requestHeaders.IfUnmodifiedSince.Value >= lastModified with
-                | true  -> ConditionFailed
-                | false -> IsMatch
+                match  requestHeaders.IfUnmodifiedSince.Value > DateTimeOffset.UtcNow
+                    || requestHeaders.IfUnmodifiedSince.Value >= lastModified with
+                | true  -> IsMatch
+                | false -> ConditionFailed
 
     member private this.ValidateIfNoneMatch (requestHeaders : RequestHeaders) (eTag : EntityTagHeaderValue option) =
         match  isNotNull requestHeaders.IfNoneMatch
