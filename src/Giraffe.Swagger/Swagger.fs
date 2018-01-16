@@ -119,7 +119,7 @@ module Analyzer =
   
   type AnalyzeContext =
     {
-        ArgTypes : Type list ref
+        ArgTypes : Type list
         Variables : Map<string, obj> ref
         Routes : RouteInfos list ref
         Responses : ResponseInfos list
@@ -130,7 +130,7 @@ module Analyzer =
     static member Empty
       with get () =
         {
-            ArgTypes = ref List.empty
+            ArgTypes = List.empty
             Variables = ref Map.empty
             Routes = ref List.empty
             Verb = None
@@ -149,10 +149,8 @@ module Analyzer =
             }
           __.Routes := r :: !__.Routes
           __.CurrentRoute := None
-          __.ArgTypes := []
-          { __ with Parameters=List.Empty; Responses=[] }
+          { __ with Parameters=List.Empty; Responses=[]; ArgTypes=[] }
       | None -> 
-          __.ArgTypes := []
           let routes = 
               match !__.Routes with
               | route :: s -> 
@@ -163,7 +161,7 @@ module Analyzer =
                   } :: s
               | v -> v
           __.Routes := routes |> List.distinct
-          __
+          { __ with ArgTypes=[] }
     member __.AddResponse code contentType (modelType:Type) =
       let rs = { StatusCode=code; ContentType=contentType; ModelType=modelType }
       { __ with Responses = rs :: __.Responses }
@@ -183,8 +181,7 @@ module Analyzer =
       |> fun vars -> __.Variables := vars
       __
     member __.AddArgType ``type`` =
-      __.ArgTypes := ``type`` :: !__.ArgTypes
-      __
+      { __ with ArgTypes = (``type`` :: __.ArgTypes) }
     member __.GetVerb() =
       __.Verb |> getVerb 
     member __.MergeWith (other:AnalyzeContext) =
@@ -214,7 +211,7 @@ module Analyzer =
         |> List.map (fun route -> { route with Verb=(verb |> getVerb) })
       
       {
-          ArgTypes = ref (!__.ArgTypes @ !other.ArgTypes)
+          ArgTypes = __.ArgTypes @ other.ArgTypes
           Variables = ref variables
           Routes = ref routes
           Verb = verb
@@ -270,7 +267,7 @@ module Analyzer =
           { ModuleName="HttpHandlers"; FunctionName="json" }, 
               (fun ctx ->
                   let modelType = 
-                    match !ctx.ArgTypes |> List.tryHead with
+                    match ctx.ArgTypes |> List.tryHead with
                     | Some t -> t
                     | None -> typeof<obj>
                   ctx.AddResponse 200 "application/json" modelType
@@ -330,6 +327,11 @@ module Analyzer =
               analyzeAll [op;t] ctx
           
       | NewUnionCase (a,b) -> analyzeAll b ctx
+      
+      | Application (PropertyGet (instance, propertyInfo, pargs), Coerce (Var arg, o)) ->
+          ctx.AddArgType arg.Type |> 
+            rules.ApplyMethodCall propertyInfo.DeclaringType.Name propertyInfo.Name
+          
       | Application (left, right) ->
           let c1 = loop right (newContext()) 
           let c2 = loop left (newContext())

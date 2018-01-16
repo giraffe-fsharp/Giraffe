@@ -171,8 +171,7 @@ let ``webapp is a simple route with verb `DELETE` with a condition returning tex
   
   Assert.Equal(exp.Path, route.Path)
   Assert.Equal(exp.Verb, route.Verb)
-  Assert.Equal(exp.Responses.[0], route.Responses.[0])
-  Assert.Equal(2, route.Responses.Length)
+  assertListDeepEqual exp.Responses route.Responses
   
 [<Fact>]
 let ``webapp is a simple route with verb `POST` with a more complex condition returning text or json`` () =
@@ -217,7 +216,7 @@ let ``webapp is a simple route with verb `POST` with a more complex condition re
   Assert.Equal(exp.Verb, route.Verb)
   Assert.Equal(exp.Responses.[0], route.Responses.[0])
   Assert.Equal(2, route.Responses.Length)
-  Assert.Equal(0, (!ctx.ArgTypes).Length)
+  Assert.Equal(0, ctx.ArgTypes.Length)
 
 [<Fact>]
 let ``webapp is a simple routeCi with verb `GET` returning text`` () =
