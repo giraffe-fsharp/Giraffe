@@ -1,4 +1,4 @@
-module Giraffe.Tests.PreConditionsTests
+module Giraffe.Tests.PreconditionsTests
 
 open System
 open System.Net

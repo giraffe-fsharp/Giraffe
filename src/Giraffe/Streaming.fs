@@ -140,8 +140,8 @@ type HttpContext with
                                  (eTag                  : EntityTagHeaderValue option)
                                  (lastModified          : DateTimeOffset option) =
         task {
-            match this.ValidatePreConditions eTag lastModified with
-            | ConditionFailed -> return this.PreConditionFailedResponse()
+            match this.ValidatePreconditions eTag lastModified with
+            | ConditionFailed -> return this.PreconditionFailedResponse()
             | NotModified     -> return this.NotModifiedResponse()
 
             // If all pre-conditions have been met (or didn't exist) then proceed with web request execution

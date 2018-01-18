@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Giraffe.PreConditions
+module Giraffe.Preconditions
 
 open System
 open System.Linq
@@ -9,7 +9,7 @@ open Microsoft.Extensions.Primitives
 open Microsoft.Net.Http.Headers
 open Giraffe.Common
 
-type PreCondition =
+type Precondition =
     | NotSpecified
     | NotModified
     | ConditionFailed
@@ -80,20 +80,20 @@ type HttpContext with
                 | true  -> IsMatch
                 | false -> NotModified
 
-    member this.ValidatePreConditions (eTag : EntityTagHeaderValue option) (lastModified : DateTimeOffset option) =
+    member this.ValidatePreconditions (eTag : EntityTagHeaderValue option) (lastModified : DateTimeOffset option) =
         // Parse headers
         let responseHeaders = this.Response.GetTypedHeaders()
         let requestHeaders  = this.Request.GetTypedHeaders()
 
         // Helper bind functions to chain validation functions
-        let bind (result : RequestHeaders -> PreCondition) =
+        let bind (result : RequestHeaders -> Precondition) =
             function
             | NotSpecified    -> result requestHeaders
             | IsMatch         -> result requestHeaders
             | ConditionFailed -> ConditionFailed
             | NotModified     -> NotModified
 
-        let ifNotSpecified (result : RequestHeaders -> PreCondition) =
+        let ifNotSpecified (result : RequestHeaders -> Precondition) =
             function
             | NotSpecified    -> result requestHeaders
             | IsMatch         -> IsMatch
@@ -106,7 +106,8 @@ type HttpContext with
 
         // Validate headers in correct precedence
         // RFC: https://tools.ietf.org/html/rfc7232#section-6
-        this.ValidateIfMatch eTag requestHeaders
+        requestHeaders
+        |> this.ValidateIfMatch eTag
         |> ifNotSpecified (this.ValidateIfUnmodifiedSince lastModified)
         |> bind (this.ValidateIfNoneMatch eTag)
         |> ifNotSpecified (this.ValidateIfModifiedSince lastModified)
@@ -115,6 +116,6 @@ type HttpContext with
         this.SetStatusCode StatusCodes.Status304NotModified
         Some this
 
-    member this.PreConditionFailedResponse() =
+    member this.PreconditionFailedResponse() =
         this.SetStatusCode StatusCodes.Status412PreconditionFailed
         Some this
