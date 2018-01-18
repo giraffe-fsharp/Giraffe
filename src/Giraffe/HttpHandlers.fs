@@ -28,18 +28,18 @@ type HttpFunc       = HttpContext -> HttpFuncResult
 type HttpHandler    = HttpFunc  -> HttpFunc
 type ErrorHandler   = exn -> ILogger -> HttpHandler
 
-/// ---------------------------
-/// Globally useful functions
-/// ---------------------------
+// ---------------------------
+// Globally useful functions
+// ---------------------------
 
 let inline warbler f (next : HttpFunc) (ctx : HttpContext) = f (next, ctx) next ctx
 
 let private abort  : HttpFuncResult = Task.FromResult None
 let private finish : HttpFunc       = Some >> Task.FromResult
 
-/// ---------------------------
-/// Sub route helper functions
-/// ---------------------------
+// ---------------------------
+// Sub route helper functions
+// ---------------------------
 
 [<Literal>]
 let private RouteKey = "giraffe_route"
@@ -69,9 +69,9 @@ let private handlerWithRootedPath (path : string) (handler : HttpHandler) : Http
             return result
         }
 
-/// ---------------------------
-/// Default HttpHandlers
-/// ---------------------------
+// ---------------------------
+// Default HttpHandlers
+// ---------------------------
 
 /// Combines two HttpHandler functions into one.
 let compose (handler1 : HttpHandler) (handler2 : HttpHandler) : HttpHandler =

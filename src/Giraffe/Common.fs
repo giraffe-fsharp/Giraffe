@@ -8,9 +8,9 @@ open System.Xml.Serialization
 open Newtonsoft.Json
 open Newtonsoft.Json.Serialization
 
-/// ---------------------------
-/// Helper functions
-/// ---------------------------
+// ---------------------------
+// Helper functions
+// ---------------------------
 
 let inline isNotNull x = isNull x |> not
 
@@ -24,9 +24,9 @@ let readFileAsStringAsync (filePath : string) =
         return! reader.ReadToEndAsync()
     }
 
-/// ---------------------------
-/// Serializers
-/// ---------------------------
+// ---------------------------
+// Serializers
+// ---------------------------
 
 let inline serializeJson       (settings : JsonSerializerSettings) x   = JsonConvert.SerializeObject(x, settings)
 let inline deserializeJson<'T> (settings : JsonSerializerSettings) str = JsonConvert.DeserializeObject<'T>(str, settings)

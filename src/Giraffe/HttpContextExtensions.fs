@@ -18,9 +18,9 @@ open GiraffeViewEngine
 
 type HttpContext with
 
-    /// ---------------------------
-    /// Dependency management
-    /// ---------------------------
+    // ---------------------------
+    // Dependency management
+    // ---------------------------
 
     member this.GetService<'T>() =
         this.RequestServices.GetService(typeof<'T>) :?> 'T
@@ -32,9 +32,9 @@ type HttpContext with
         let loggerFactory = this.GetService<ILoggerFactory>()
         loggerFactory.CreateLogger categoryName
 
-    /// ---------------------------
-    /// Common helpers
-    /// ---------------------------
+    // ---------------------------
+    // Common helpers
+    // ---------------------------
 
     member this.TryGetRequestHeader (key : string) =
         match this.Request.Headers.TryGetValue key with
@@ -56,9 +56,9 @@ type HttpContext with
         | true, value -> Ok (value.ToString())
         | _           -> Error (sprintf "Query string value '%s' is missing." key)
 
-    /// ---------------------------
-    /// Model binding
-    /// ---------------------------
+    // ---------------------------
+    // Model binding
+    // ---------------------------
 
     member this.ReadBodyFromRequestAsync() =
         task {
@@ -158,9 +158,9 @@ type HttpContext with
             else return this.BindQueryString<'T>(?cultureInfo = cultureInfo)
         }
 
-    /// ---------------------------
-    /// Response writers
-    /// ---------------------------
+    // ---------------------------
+    // Response writers
+    // ---------------------------
 
     member private this.SetHttpHeader (key : string) (value : obj) =
         this.Response.Headers.[key] <- StringValues(value.ToString())
