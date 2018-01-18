@@ -11,9 +11,9 @@ open Giraffe.Common
 
 type PreCondition =
     | NotSpecified
-    | NotModified     // 304 Not Modifed
-    | ConditionFailed // 412 Precondition Failed
-    | IsMatch         // Proceed 2xx
+    | NotModified
+    | ConditionFailed
+    | IsMatch
 
 type EntityTagHeaderValue with
     member __.FromString (isWeak : bool) (eTag : string) =
@@ -85,13 +85,20 @@ type HttpContext with
         let responseHeaders = this.Response.GetTypedHeaders()
         let requestHeaders  = this.Request.GetTypedHeaders()
 
-        // Helper bind function to chain validation functions
+        // Helper bind functions to chain validation functions
         let bind (result : RequestHeaders -> PreCondition) =
             function
-            | NotModified     -> NotModified
-            | ConditionFailed -> ConditionFailed
-            | IsMatch         -> result requestHeaders
             | NotSpecified    -> result requestHeaders
+            | IsMatch         -> result requestHeaders
+            | ConditionFailed -> ConditionFailed
+            | NotModified     -> NotModified
+
+        let ifNotSpecified (result : RequestHeaders -> PreCondition) =
+            function
+            | NotSpecified    -> result requestHeaders
+            | IsMatch         -> IsMatch
+            | ConditionFailed -> ConditionFailed
+            | NotModified     -> NotModified
 
         // Set ETag and Last-Modified in the response
         if eTag.IsSome         then responseHeaders.ETag         <- eTag.Value
@@ -100,26 +107,9 @@ type HttpContext with
         // Validate headers in correct precedence
         // RFC: https://tools.ietf.org/html/rfc7232#section-6
         this.ValidateIfMatch eTag requestHeaders
-        |> function
-            | NotSpecified ->
-                // Only validate If-Unmodified-Since when the If-Match was not set
-                this.ValidateIfUnmodifiedSince lastModified requestHeaders
-                |> bind (this.ValidateIfNoneMatch eTag)
-                |> function
-                    // If the If-None-Match is true skip the If-Modified-Since validation
-                    | IsMatch -> IsMatch
-                    | result ->
-                        result
-                        |> bind (this.ValidateIfModifiedSince lastModified)
-            | result ->
-                result
-                |> bind (this.ValidateIfNoneMatch eTag)
-                |> function
-                    // If the If-None-Match is true skip the If-Modified-Since validation
-                    | IsMatch -> IsMatch
-                    | result ->
-                        result
-                        |> bind (this.ValidateIfModifiedSince lastModified)
+        |> ifNotSpecified (this.ValidateIfUnmodifiedSince lastModified)
+        |> bind (this.ValidateIfNoneMatch eTag)
+        |> ifNotSpecified (this.ValidateIfModifiedSince lastModified)
 
     member this.NotModifiedResponse() =
         this.SetStatusCode StatusCodes.Status304NotModified
