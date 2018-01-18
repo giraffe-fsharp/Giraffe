@@ -199,7 +199,7 @@ If you would like to learn more about the `>=>` (fish) operator then please chec
 ##### Example:
 
 ```fsharp
-let app = route "/" >=> setStatusCode 200 >=> text "Hello World"
+let app = route "/" >=> Successful.OK "Hello World"
 ```
 
 #### choose
@@ -398,8 +398,7 @@ let app =
 ```fsharp
 let errorHandler (ex : Exception) (logger : ILogger) =
     clearResponse
-    >=> setStatusCode 500
-    >=> text ex.Message
+    >=> ServerErrors.INTERNAL_ERROR ex.Message
 
 let webApp =
     choose [
@@ -1097,7 +1096,7 @@ The `router` HttpHandler takes two arguments, a `HttpHandler` to execute when no
 Defining a basic router and routes
 
 ```fsharp
-let notFound = setStatusCode 404 >=> text "Not found"
+let notFound = RequestErrors.NOT_FOUND "Page not found"
 let app =
     router notFound [
         route "/"       (text "index")
@@ -1120,7 +1119,7 @@ The `subRoute` handler has been altered in order to accept an additional paramet
 Defining a basic router and routes
 
 ```fsharp
-let notFound = setStatusCode 404 >=> text "Not found"
+let notFound = RequestErrors.NOT_FOUND "Page not found"
 let app =
     router notFound [
         route "/"       (text "index")
@@ -1192,7 +1191,7 @@ let app =
                     route "/api/v1/bar" >=> text "bar"
                 ]
             )
-        setStatusCode 404 >=> text "Not found"
+        RequestErrors.NOT_FOUND "Page not found"
     ] : HttpHandler
 ```
 
@@ -1634,8 +1633,7 @@ For example you could create an error handler which logs the unhandled exception
 let errorHandler (ex : Exception) (logger : ILogger) =
     logger.LogError(EventId(), ex, "An unhandled exception has occurred while executing the request.")
     clearResponse
-    >=> setStatusCode 500
-    >=> text ex.Message
+    >=> ServerErrors.INTERNAL_ERROR ex.Message
 ```
 
 In order to enable the error handler you have to configure the error handler in your application startup:
