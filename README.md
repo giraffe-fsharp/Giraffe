@@ -13,11 +13,6 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 | [![Windows Build status](https://ci.appveyor.com/api/projects/status/0ft2427dflip7wti/branch/develop?svg=true)](https://ci.appveyor.com/project/dustinmoris/giraffe/branch/develop) | [![Linux Build status](https://travis-ci.org/giraffe-fsharp/Giraffe.svg?branch=develop)](https://travis-ci.org/giraffe-fsharp/Giraffe/builds?branch=develop) |
 | [![Windows Build history](https://buildstats.info/appveyor/chart/dustinmoris/giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/giraffe/history?branch=develop) | [![Linux Build history](https://buildstats.info/travisci/chart/giraffe-fsharp/Giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://travis-ci.org/giraffe-fsharp/Giraffe/builds?branch=develop) |
 
-#### ATTENTION:
-
-Giraffe was formerly known as [ASP.NET Core Lambda](https://www.nuget.org/packages/AspNetCore.Lambda) and has been later [renamed to Giraffe](https://github.com/giraffe-fsharp/Giraffe/issues/15) to better distinguish from AWS Lambda and to establish its own unique brand.
-
-The old NuGet package has been unlisted and will no longer receive any updates. Please use the [Giraffe NuGet package](https://www.nuget.org/packages/Giraffe) going forward.
 
 ## Table of contents
 
@@ -53,7 +48,6 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [setBody](#setbody)
     - [setBodyAsString](#setbodyasstring)
     - [text](#text)
-    - [customJson](#customjson)
     - [json](#json)
     - [xml](#xml)
     - [negotiate](#negotiate)
@@ -87,6 +81,10 @@ The old NuGet package has been unlisted and will no longer receive any updates. 
     - [BindFormAsync](#bindformasync)
     - [BindQueryString](#bindquerystring)
     - [BindModelAsync](#bindmodelasync)
+- [Customizing Giraffe](#customizing-giraffe)
+    - [Customize JSON serialization](#customize-json-serialization)
+    - [Customize XML serialization](#customize-xml-serialization)
+    - [Customize Content negotiation](#customize-content-negotiation)
 - [Error Handling](#error-handling)
 - [Sample applications](#sample-applications)
 - [Benchmarks](#benchmarks)
@@ -255,9 +253,9 @@ For more information please visit the official [Giraffe.Tasks](https://github.co
 
 ## Default HttpHandlers
 
-### GET, POST, PUT, PATCH, DELETE
+### GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS, TRACE, CONNECT
 
-`GET`, `POST`, `PUT`, `PATCH`, `DELETE` filters a request by the specified HTTP verb.
+`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`, `TRACE`, `CONNECT` filters a request by the specified HTTP verb.
 
 #### Example:
 
@@ -667,54 +665,6 @@ let app =
 
 You can also use the [`WriteTextAsync`](#writetextasync) extension method to return a plain text response back to the client.
 
-### customJson
-
-`customJson` sets or modifies the body of the `HttpResponse` by sending a JSON serialized object with custom `JsonSerializerSettings` to the client. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more. It also sets the `Content-Type` HTTP header to `application/json`.
-
-#### Example:
-
-```fsharp
-type Person =
-    {
-        FirstName : string
-        LastName  : string
-    }
-
-let settings = JsonSerializerSettings(
-        Formatting = Formatting.Indented,
-        NullValueHandling = NullValueHandling.Ignore
-    )
-
-let app =
-    choose [
-        route  "/foo" >=> customJson settings { FirstName = "Foo"; LastName = "Bar" }
-    ]
-```
-
-You can also create a new http handler with the help of `customJson`:
-
-```fsharp
-type Person =
-    {
-        FirstName : string
-        LastName  : string
-    }
-
-let settings = JsonSerializerSettings(
-        Formatting = Formatting.Indented,
-        NullValueHandling = NullValueHandling.Ignore
-    )
-
-let formattedJson = customJson settings
-
-let app =
-    choose [
-        route  "/foo" >=> formattedJson { FirstName = "Foo"; LastName = "Bar" }
-    ]
-```
-
-Alternatively you can also use the [`WriteJsonAsync`](#writejsonasync) extension method to return a custom serialized JSON response back to the client.
-
 ### json
 
 `json` sets or modifies the body of the `HttpResponse` by sending a JSON serialized object to the client. This http handler triggers a response to the client and other http handlers will not be able to modify the HTTP headers afterwards any more. It also sets the `Content-Type` HTTP header to `application/json`.
@@ -734,7 +684,7 @@ let app =
     ]
 ```
 
-You can also use the [`WriteJsonAsync`](#writejsonasync) extension method to return a default serialized JSON response back to the client.
+You can also use the [`WriteJsonAsync`](#writejsonasync) extension method to return a serialized JSON response back to the client.
 
 ### xml
 
@@ -1081,7 +1031,6 @@ Note that the `unauthorized` and `UNAUTHORIZED` functions require two additional
 
 ## Additional HttpHandlers
 
-There's a few additional `HttpHandler` functions which you can get through referencing extra modules or NuGet packages.
 
 ### Giraffe.TokenRouter
 
@@ -1145,7 +1094,7 @@ let app =
 
 ### Additional NuGet packages
 
-There's more `HttpHandler` functions available through additional NuGet packages:
+There are more `HttpHandler` functions available through additional NuGet packages:
 
 - [Giraffe.Razor](https://github.com/giraffe-fsharp/Giraffe.Razor): Adds native Razor view functionality to Giraffe web applications.
 - [Giraffe.DotLiquid](https://github.com/giraffe-fsharp/Giraffe.DotLiquid): Adds native DotLiquid template functionality to Giraffe web applications.
@@ -1201,11 +1150,11 @@ let app =
 
 ## Nested Response Writing
 
-The `Giraffe.HttpContextExtensions` module exposes a default set of response writing functions which extend the `HttpContext` object. Instead of using the [`customJson`](#customjson), [`json`](#json), [`xml`](#xml), or [`text`](#text) handlers to compose a custom HttpHandler you can also use the `WriteJsonAsync`, `WriteXmlAsync` and `WriteTextAsync` extension methods to directly write to the response of the `HttpContext` and close the pipeline.
+The `Giraffe.HttpContextExtensions` module exposes a default set of response writing functions which extend the `HttpContext` object. Instead of using the [`json`](#json), [`xml`](#xml), or [`text`](#text) handlers to compose a custom HttpHandler you can also use the `WriteJsonAsync`, `WriteXmlAsync` and `WriteTextAsync` extension methods to directly write to the response of the `HttpContext` and close the pipeline.
 
 ### WriteJsonAsync
 
-`ctx.WriteJsonAsync someObj` can be used to return a JSON response back to the client. Alternatively you can use `ctx.WriteJsonAsync (settings : JsoSerializerSettings) someObj` to customize the generated JSON before sending the response back to the client.
+`ctx.WriteJsonAsync someObj` can be used to return a JSON response back to the client.
 
 #### Example:
 
@@ -1318,7 +1267,7 @@ The `Giraffe.HttpContextExtensions` module exposes a default set of model bindin
 
 ### BindJsonAsync
 
-`ctx.BindJsonAsync<'T>()` can be used to bind a JSON payload to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserialisation during model binding.
+`ctx.BindJsonAsync<'T>()` can be used to bind a JSON payload to a strongly typed model.
 
 #### Example
 
@@ -1569,7 +1518,7 @@ Accept: */*
 
 ### BindModelAsync
 
-`ctx.BindModelAsync<'T>(?cultureInfo : CultureInfo)` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model. Alternatively you can pass in an additional object of type `JsonSerializerSettings` to customize the JSON deserializer during model binding and/or a `CultureInfo` object.
+`ctx.BindModelAsync<'T>(?cultureInfo : CultureInfo)` can be used to automatically detect the method and `Content-Type` of a HTTP request and automatically bind a JSON, XML,or form urlencoded payload or a query string to a strongly typed model. Additionally you can pass in a `CultureInfo` object to customize the parsing of culture specific data like `DateTime` objects for example.
 
 #### Example
 
@@ -1620,6 +1569,285 @@ You can also specify a `CultureInfo` parameter when using `BindModelAsync`:
 let british = CultureInfo.CreateSpecificCulture("en-GB")
 let! car = ctx.BindModelAsync<Car> british
 ```
+
+## Customizing Giraffe
+
+Giraffe uses the [ASP.NET Core dependency injection](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection) framework to register and retrieve several services which can be used or overridden by applications.
+
+Currently you can modify the following functionality in Giraffe through dependency injection*:
+
+- [JSON serialization](#customize-json-serialization)
+- [XML serialization](#customize-xml-serialization)
+- [Content negotiation](#customize-content-negotiation)
+
+*) Note that in functional programming there is no direct equivalent to dependency injection as known in OOP and Giraffe uses the [service locator pattern](https://msdn.microsoft.com/en-us/library/ff648968.aspx) to work with ASP.NET's DI framework.
+
+### Customize JSON serialization
+
+By default Giraffe uses the [Newtonsoft's JSON.NET](https://www.newtonsoft.com/json) serializer for (de-)serializing JSON content. An application can modify the serializer by registering a new instance of the `IJsonSerializer` interface during application startup.
+
+#### Example: Customizing JsonSerializerSettings
+
+You can change the default `JsonSerializerSettings` of the `NewtonsoftJsonSerializer` by registering a new instance of `IJsonSerializer` in your application startup module:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now customize only the IJsonSerializer by providing a custom
+    // object of JsonSerializerSettings
+    let customSettings = JsonSerializerSettings(
+        Culture = CultureInfo("de-DE"))
+    services.AddSingleton<IJsonSerializer>(
+        NewtonsoftJsonSerializer(customSettings)) |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+#### Example: Using a different JSON serializer
+
+You can change the underlying JSON serializer to a complete different serializer alltogether by creating a new class which implements the `IJsonSerializer` interface:
+
+```fsharp
+type CustomJsonSerializer() =
+    interface IJsonSerializer with
+        member __.Serialize (o : obj) = // ...
+        member __.Deserialize<'T> (json : string) = // ...
+        member __.Deserialize<'T> (stream : Stream) = // ...
+        member __.DeserializeAsync<'T> (stream : Stream) = // ...
+```
+
+Then register a new instance of the newly created type during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now register your custom IJsonSerializer
+    services.AddSingleton<IJsonSerializer, CustomJsonSerializer>() |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+#### Example: Retrieving the JSON serializer from a custom HttpHandler
+
+If you need you retrieve the registered JSON serializer from a custom `HttpHandler` function then you can do this with the `GetJsonSerializer` extension method:
+
+```fsharp
+let customHandler (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let serializer = ctx.GetJsonSerializer()
+        // ... do more...
+```
+
+### Customize XML serialization
+
+By default Giraffe uses the `System.Xml.Serialization.XmlSerializer` for (de-)serializing XML content. An application can modify the serializer by registering a new instance of the `IXmlSerializer` interface during application startup.
+
+#### Example: Customizing XmlWriterSettings
+
+You can change the default `XmlWriterSettings` of the `DefaultXmlSerializer` by registering a new instance of `IXmlSerializer` in your application startup module:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now customize the IXmlSerializer
+    let customSettings =
+        XmlWriterSettings(
+                Encoding           = Encoding.UTF8,
+                Indent             = false,
+                OmitXmlDeclaration = true
+            )
+
+    services.AddSingleton<IXmlSerializer>(
+        DefaultXmlSerializer(customSettings)) |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+#### Example: Using a different XML serializer
+
+You can change the underlying XML serializer to a complete different serializer alltogether by creating a new class which implements the `IXmlSerializer` interface:
+
+```fsharp
+type CustomXmlSerializer() =
+    interface IXmlSerializer with
+        member __.Serialize (o : obj) = // ...
+        member __.Deserialize<'T> (xml : string) = // ...
+```
+
+Then register a new instance of the newly created type during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now register your custom IXmlSerializer
+    services.AddSingleton<IXmlSerializer, CustomXmlSerializer>() |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+#### Example: Retrieving the XML serializer from a custom HttpHandler
+
+If you need you retrieve the registered XML serializer from a custom `HttpHandler` function then you can do this with the `GetXmlSerializer` extension method:
+
+```fsharp
+let customHandler (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let serializer = ctx.GetXmlSerializer()
+        // ... do more...
+```
+
+### Customize Content negotiation
+
+The [`negotiate`](#negotiate) http handler let's an application automatically decide which `Content-Type` to return based on the client's HTTP request. By default the handler can return a JSON, XML or plain text response or return a HTTP status code `406` if none of these are accepted.
+
+An application can customize this behaviour by creating a new class of type `INegotiationConfig`.
+
+#### Example: Set a custom UnacceptableHandler when a response cannot be successfully negotiated
+
+If a client sends an `Accept` header which is not compatible with one of the supported content types by the web server then the `negotiate` handler will return an error response as defined by the `UnacceptableHandler`.
+
+First you have to create a new class which implements the `INegotiationConfig` interface and define a custom `UnacceptableHandler`. The `UnacceptableHandler` property is of type `HttpHandler`:
+
+```fsharp
+type CustomNegotiationConfig (baseConfig : INegotiationConfig) =
+    interface INegotiationConfig with
+        member __.Rules = baseConfig.Rules
+        member __.UnacceptableHandler =
+            setStatusCode 406
+            >=> text "You sent an Accept header which cannot be satisfied by the web server."
+```
+
+Then register an instance of the newly created class during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now register your custom INegotiationConfig
+    services.AddSingleton<INegotiationConfig>(
+        CustomNegotiationConfig(
+            DefaultNegotiationConfig())
+    ) |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+In this example the `CustomNegotiationConfig` uses composition to re-use other settings from the `DefaultNegotiationConfig` without having to rely on inheritance.
+
+#### Example: Configuring different negotiation rules
+
+The behaviour by which Giraffe negotiates a response with a client can be customized by setting the `Rules` property of an `INegotiationConfig` object. The `Rules` property is of type `IDictionary<string, obj -> HttpHandler>` and represents a key/value dictionary, where the key denotes a supported `Content-Type` and the value represents a function which turns a given `obj` into a `HttpHandler`.
+
+For example the rules of the `DefaultNegotiationConfig` looks as following:
+
+```fsharp
+dict [
+    "*/*"             , json
+    "application/json", json
+    "application/xml" , xml
+    "text/xml"        , xml
+    "text/plain"      , fun x -> x.ToString() |> text
+]
+```
+
+If a client has no particular preference (`*/*`) then the default response will be returned in JSON. A JSON response is also being sent when a client set `application/json` in its `Accept` header. In the case of `application/xml` or `text/xml` the `negotiate` handler will return a response via the `xml` handler.
+
+As you can see from the example the default dictionary uses the default `json` and `xml` http handler functions to define the response type. For a `text/plain` response a new function had to be created which accepts an `obj` and uses the `.ToString()` method in combination with the `text` http handler to return a plain text response.
+
+If you'd like to stop supporting the `text/xml` content type and add support for `application/bson` instead you would have to define a new `bson` handler first and then register a new dictionary of rules:
+
+```fsharp
+let bson (o : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        // Implement BSON handler here
+
+type CustomNegotiationConfig (baseConfig : INegotiationConfig) =
+    interface INegotiationConfig with
+        member __.UnacceptableHandler = baseConfig.UnacceptableHandler
+        member __.Rules =
+                dict [
+                    "*/*"              , json
+                    "application/json" , json
+                    "application/xml"  , xml
+                    "application/bson" , bson
+                    "text/plain"       , fun x -> x.ToString() |> text
+                ]
+```
+
+Then register an instance of the newly created class during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now register your custom INegotiationConfig
+    services.AddSingleton<INegotiationConfig>(
+        CustomNegotiationConfig(
+            DefaultNegotiationConfig())
+    ) |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+In this example the `CustomNegotiationConfig` uses composition to re-use other settings from the `DefaultNegotiationConfig` without having to rely on inheritance.
 
 ## Error Handling
 

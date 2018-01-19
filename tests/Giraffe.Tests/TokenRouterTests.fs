@@ -10,8 +10,10 @@ open Microsoft.Extensions.Primitives
 open Xunit
 open Xunit.Abstractions
 open NSubstitute
+open Newtonsoft.Json
+open Giraffe.Serialization
 open GiraffeViewEngine
-open TokenRouter
+open Giraffe.TokenRouter
 open Giraffe.Tests.Asserts
 
 // ---------------------------------
@@ -37,6 +39,26 @@ let assertFailf format args =
 
 let notFound = setStatusCode 404 >=> text "Not found"
 let next : HttpFunc = Some >> Task.FromResult
+
+let mockJson (ctx : HttpContext) (settings : JsonSerializerSettings option) =
+    let jsonSettings =
+        defaultArg settings NewtonsoftJsonSerializer.DefaultSettings
+    ctx.RequestServices
+       .GetService(typeof<IJsonSerializer>)
+       .Returns(NewtonsoftJsonSerializer(jsonSettings))
+    |> ignore
+
+let mockXml (ctx : HttpContext) =
+    ctx.RequestServices
+       .GetService(typeof<IXmlSerializer>)
+       .Returns(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
+    |> ignore
+
+let mockNegotiation (ctx : HttpContext) =
+    ctx.RequestServices
+       .GetService(typeof<INegotiationConfig>)
+       .Returns(DefaultNegotiationConfig())
+    |> ignore
 
 // ---------------------------------
 // Test Types
@@ -147,6 +169,7 @@ let ``GET "/FOO" returns 404 "Not found"`` () =
 [<Fact>]
 let ``GET "/json" returns json object`` () =
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
     let app =
         router notFound [
             GET [
@@ -292,6 +315,7 @@ let ``POST "/text" with supported Accept header returns "good"`` () =
 [<Fact>]
 let ``POST "/json" with supported Accept header returns "json"`` () =
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
     let app =
         router notFound [
             GET [
@@ -392,13 +416,15 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
 // [<Fact>]
 // let ``GET "/JSON" returns "BaR"`` () =
 //     let ctx = Substitute.For<HttpContext>()
+//     mockJson ctx None
 //     let app =
-//         router notFound [ GET [
-//             route   "/"       => text "Hello World"
-//             route   "/foo"    => text "bar"
-//             route   "/json"   => json { Foo = "john"; Bar = "doe"; Age = 30 }
-//             routeCi "/json"   => text "BaR"
-//             ]
+//         router notFound [
+//             GET [
+//                 route   "/"       => text "Hello World"
+//                 route   "/foo"    => text "bar"
+//                 route   "/json"   => json { Foo = "john"; Bar = "doe"; Age = 30 }
+//                 routeCi "/json"   => text "BaR" ]
+//         ]
 
 //     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
 //     ctx.Request.Path.ReturnsForAnyArgs (PathString("/JSON")) |> ignore
@@ -429,7 +455,6 @@ let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/blah blah/bar")) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    //let expected = "blah%20blah"
     let expected = "blah blah"
 
     task {
@@ -816,7 +841,7 @@ let ``GET "/person" returns rendered HTML view`` () =
         router notFound [
             GET [
                 route "/"          => text "Hello World"
-                route "/person"    => (personView johnDoe |> renderHtml) ]
+                route "/person"    => (personView johnDoe |> htmlView) ]
             POST [
                 route "/post/1"    => text "1" ]
         ]
@@ -849,6 +874,8 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
+    mockNegotiation ctx
     let app =
         router notFound [
             GET [
@@ -891,6 +918,8 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
+    mockNegotiation ctx
     let app =
         router notFound [
             GET [
@@ -933,6 +962,8 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockXml ctx
+    mockNegotiation ctx
     let app =
         router notFound [
             GET [
@@ -985,6 +1016,8 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockXml ctx
+    mockNegotiation ctx
     let app =
         router notFound [
             GET [
@@ -1037,6 +1070,8 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
+    mockNegotiation ctx
     let app =
         router notFound [
             GET [
@@ -1079,6 +1114,8 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockXml ctx
+    mockNegotiation ctx
     let app =
         router notFound [
             GET [
@@ -1131,6 +1168,8 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockXml ctx
+    mockNegotiation ctx
     let app =
         router notFound [
             GET [
@@ -1183,6 +1222,7 @@ let ``Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockNegotiation ctx
     let app =
         router notFound [
             GET [
@@ -1229,6 +1269,7 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockNegotiation ctx
     let app =
         router notFound [
             GET [
@@ -1272,6 +1313,8 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
+    mockNegotiation ctx
     let app =
         router notFound [
             GET [

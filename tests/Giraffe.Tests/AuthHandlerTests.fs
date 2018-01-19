@@ -1,4 +1,4 @@
-module Giraffe.AuthHandlerTests
+module Giraffe.Tests.AuthHandlerTests
 
 open System.IO
 open System.Text
@@ -9,6 +9,7 @@ open Xunit
 open NSubstitute
 open FsCheck
 open FsCheck.Xunit
+open Giraffe
 
 // ---------------------------------
 // Helper functions
@@ -65,7 +66,7 @@ module TestApp =
     let private mustBeAdmin = requiresRole "admin" accessDenied
     let private mustBeOperatorOrAdmin = requiresRoleOf ["admin"; "operator"] accessDenied
 
-    let private isJohn (user: ClaimsPrincipal) = user.HasClaim (ClaimTypes.Name, "John")
+    let private isJohn (user : ClaimsPrincipal) = user.HasClaim (ClaimTypes.Name, "John")
     let private mustBeJohn = requiresAuthPolicy isJohn accessDenied
 
     let app =
@@ -185,13 +186,15 @@ module TestData =
 
     type AuthArb =
         static member Values =
-            [anonymousGen
-             nonJohnNoRoleGen
-             nonJohnAdminGen
-             nonJohnOperatorGen
-             johnNoRoleGen
-             johnAdminGen
-             johnOperatorGen]
+            [
+                anonymousGen
+                nonJohnNoRoleGen
+                nonJohnAdminGen
+                nonJohnOperatorGen
+                johnNoRoleGen
+                johnAdminGen
+                johnOperatorGen
+            ]
             |> Gen.oneof
             |> Arb.fromGen
 

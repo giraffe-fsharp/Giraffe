@@ -5,11 +5,9 @@ open System
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.Extensions.FileProviders
-open Giraffe.HttpHandlers
+open Giraffe.Serialization
 
 /// ---------------------------
 /// Logging helper functions
@@ -84,3 +82,9 @@ type IApplicationBuilder with
 
     member this.UseGiraffeErrorHandler (handler : ErrorHandler) =
         this.UseMiddleware<GiraffeErrorHandlerMiddleware> handler
+
+type IServiceCollection with
+    member this.AddGiraffe() =
+        this.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer(NewtonsoftJsonSerializer.DefaultSettings))
+            .AddSingleton<IXmlSerializer>(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
+            .AddSingleton<INegotiationConfig, DefaultNegotiationConfig>()
