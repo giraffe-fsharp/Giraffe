@@ -36,8 +36,9 @@ function Install-LatestDotNetCore
 {
     if ($env:APPVEYOR -eq $true)
     {
+        $downloadLink = "https://www.microsoft.com/net/download/thank-you/dotnet-sdk-2.1.4-windows-x86-installer"
         Write-Host "Downloading latest .NET Core SDK..." -ForegroundColor Magenta
-        Invoke-WebRequest "https://www.microsoft.com/net/download/thank-you/dotnet-sdk-2.1.4-windows-x64-installer" -OutFile "dotnet-core-sdk.exe"
+        Invoke-WebRequest $downloadLink -OutFile "dotnet-core-sdk.exe"
 
         Write-Host "Installing .NET Core SDK..." -ForegroundColor Magenta
         Invoke-Command -ScriptBlock { ./dotnet-core-sdk.exe /S /v/qn }
