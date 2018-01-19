@@ -102,8 +102,12 @@ type HttpContext with
                     p.PropertyType.GetTypeInfo().IsGenericType &&
                     p.PropertyType.GetGenericTypeDefinition() = typedefof<Option<_>>
 
+                let isNullableType =
+                    p.PropertyType.GetTypeInfo().IsGenericType &&
+                    p.PropertyType.GetGenericTypeDefinition() = typedefof<Nullable<_>>
+
                 let propertyType =
-                    if isOptionType then
+                    if isOptionType || isNullableType then
                         p.PropertyType.GetGenericArguments().[0]
                     else
                         p.PropertyType

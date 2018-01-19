@@ -33,6 +33,13 @@ type ModelWithOption =
     }
 
 [<CLIMutable>]
+type ModelWithNullable =
+    {
+        NullableInt: Nullable<int>
+        NullableDateTime: Nullable<DateTime>
+    }
+
+[<CLIMutable>]
 type Customer =
     {
         Name          : string
@@ -222,6 +229,33 @@ let ``BindQueryString with option property test`` () =
         let! _ = testRoute "?OptionalInt=1&OptionalString=Hi" { OptionalInt = Some 1; OptionalString = Some "Hi" }
         let! _ = testRoute "?" { OptionalInt = None; OptionalString = None }
         return!  testRoute "?OptionalInt=&OptionalString=" { OptionalInt = None; OptionalString = Some "" }
+    }
+
+[<Fact>]
+let ``BindQueryString with nullable property test`` () =
+    let testRoute queryStr expected =
+        let queryHandlerWithSome next (ctx : HttpContext) =
+            task {
+                let model = ctx.BindQueryString<ModelWithNullable>()
+                Assert.Equal(expected, model)
+                return! setStatusCode 200 next ctx
+            }
+
+        let app = GET >=> route "/" >=> queryHandlerWithSome
+
+        let ctx = Substitute.For<HttpContext>()
+        let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
+        ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+        ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+        ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+        ctx.Response.Body <- new MemoryStream()
+
+        app (Some >> Task.FromResult) ctx
+
+    task {
+        let! _ = testRoute "?NullableInt=1&NullableDateTime=2017-09-01" { NullableInt = Nullable<_>(1); NullableDateTime = Nullable<_>(DateTime(2017,09,01)) }
+        let! _ = testRoute "?" { NullableInt = Nullable<_>(); NullableDateTime = Nullable<_>() }
+        return!  testRoute "?NullableInt=&NullableDateTime=" { NullableInt = Nullable<_>(); NullableDateTime = Nullable<_>() }
     }
 
 
