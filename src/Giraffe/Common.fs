@@ -1,8 +1,8 @@
 namespace Giraffe
 
-/// ---------------------------
-/// Common helper functions
-/// ---------------------------
+// ---------------------------
+// Common helper functions
+// ---------------------------
 
 module Common =
     open System
@@ -20,9 +20,9 @@ module Common =
             return! reader.ReadToEndAsync()
         }
 
-/// ---------------------------
-/// Useful computation expressions
-/// ---------------------------
+// ---------------------------
+// Useful computation expressions
+// ---------------------------
 
 module ComputationExpressions =
 

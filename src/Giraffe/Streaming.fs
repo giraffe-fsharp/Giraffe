@@ -11,9 +11,9 @@ open Microsoft.Net.Http.Headers
 open Giraffe.Common
 open System.Collections.Generic
 
-/// ---------------------------
-/// HTTP Range parsing
-/// ---------------------------
+// ---------------------------
+// HTTP Range parsing
+// ---------------------------
 
 type internal RangeBoundary =
     {
@@ -85,9 +85,9 @@ module internal RangeHelper =
             | Some x -> x <= ifRange.LastModified.Value
         else true
 
-/// ---------------------------
-/// HttpContext extensions
-/// ---------------------------
+// ---------------------------
+// HttpContext extensions
+// ---------------------------
 
 type HttpContext with
     member internal __.RangeUnit = "bytes"

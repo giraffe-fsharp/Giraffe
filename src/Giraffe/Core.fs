@@ -10,9 +10,9 @@ open Microsoft.Extensions.Logging
 open Microsoft.Net.Http.Headers
 open Giraffe.Serialization
 
-/// ---------------------------
-/// Useful extension methods
-/// ---------------------------
+// ---------------------------
+// Useful extension methods
+// ---------------------------
 
 type DateTime with
     member this.ToHtmlString() = this.ToString("r")
@@ -20,9 +20,9 @@ type DateTime with
 type DateTimeOffset with
     member this.ToHtmlString() = this.ToString("r")
 
-/// ---------------------------
-/// HttpContext extensions
-/// ---------------------------
+// ---------------------------
+// HttpContext extensions
+// ---------------------------
 
 type HttpContext with
 
@@ -85,27 +85,27 @@ type HttpContext with
         | true, value -> Ok (value.ToString())
         | _           -> Error (sprintf "Query string value '%s' is missing." key)
 
-/// ---------------------------
-/// HttpHandler definition
-/// ---------------------------
+// ---------------------------
+// HttpHandler definition
+// ---------------------------
 
 type HttpFuncResult = Task<HttpContext option>
 type HttpFunc       = HttpContext -> HttpFuncResult
 type HttpHandler    = HttpFunc -> HttpFunc
 type ErrorHandler   = exn -> ILogger -> HttpHandler
 
-/// ---------------------------
-/// Globally useful functions
-/// ---------------------------
+// ---------------------------
+// Globally useful functions
+// ---------------------------
 
 let inline warbler f (next : HttpFunc) (ctx : HttpContext) = f (next, ctx) next ctx
 
 let internal abort  : HttpFuncResult = Task.FromResult None
 let internal finish : HttpFunc       = Some >> Task.FromResult
 
-/// ---------------------------
-/// Default Combinators
-/// ---------------------------
+// ---------------------------
+// Default Combinators
+// ---------------------------
 
 /// Combines two HttpHandler functions into one.
 let compose (handler1 : HttpHandler) (handler2 : HttpHandler) : HttpHandler =
@@ -142,9 +142,9 @@ let choose (handlers : HttpHandler list) : HttpHandler =
         fun (ctx : HttpContext) ->
             chooseHttpFunc funcs ctx
 
-/// ---------------------------
-/// Default HttpHandlers
-/// ---------------------------
+// ---------------------------
+// Default HttpHandlers
+// ---------------------------
 
 /// Filters an incoming HTTP request based on the HTTP verb
 let httpVerb (validate : string -> bool) : HttpHandler =
