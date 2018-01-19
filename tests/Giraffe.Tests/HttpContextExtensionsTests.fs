@@ -52,8 +52,8 @@ type ModelWithOption =
 [<CLIMutable>]
 type ModelWithNullable =
     {
-        NullableInt: Nullable<int>
-        NullableDateTime: Nullable<DateTime>
+        NullableInt      : Nullable<int>
+        NullableDateTime : Nullable<DateTime>
     }
 
 [<CLIMutable>]
