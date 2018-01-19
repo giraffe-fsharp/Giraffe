@@ -585,6 +585,7 @@ let app =
         (choose [
             subRouteCi "/v1"
                 (choose [
+                    route "" >=> text "Default"
                     route "/foo" >=> text "Foo 1"
                     route "/bar" >=> text "Bar 1" ])
             subRouteCi "/v2"
@@ -592,6 +593,8 @@ let app =
                     route "/foo" >=> text "Foo 2"
                     route "/bar" >=> text "Bar 2" ]) ])
 ```
+
+**NOTE:** For both `subRoute` and `subRouteCi` if you wish to have a route that represents a default e.g. `/api/v1` (from the above example) then you need to specify the route as `route ""` not `route "/"` this will not match, as `api/v1/` is a fundamentally different route according to the HTTP specification.  
 
 ### setStatusCode
 
