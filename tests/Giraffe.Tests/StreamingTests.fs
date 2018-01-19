@@ -59,7 +59,7 @@ module WebApp =
             let stream =
                 new FileStream(
                     "TestFiles/streaming.txt",
-                    FileMode.Open)
+                    FileMode.Open, FileAccess.Read)
             ctx.WriteStreamAsync enableRangeProcessing stream None None
 
     let webApp =

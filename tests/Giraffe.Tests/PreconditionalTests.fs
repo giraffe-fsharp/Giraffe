@@ -59,7 +59,7 @@ module WebApp =
             let stream =
                 new FileStream(
                     "TestFiles/streaming2.txt",
-                    FileMode.Open)
+                    FileMode.Open, FileAccess.Read)
             ctx.WriteStreamAsync enableRangeProcessing stream eTag lastModified
 
     let webApp eTag lastModified =
