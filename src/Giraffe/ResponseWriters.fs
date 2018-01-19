@@ -8,9 +8,9 @@ open Microsoft.Net.Http.Headers
 open Giraffe.Common
 open Giraffe.GiraffeViewEngine
 
-/// ---------------------------
-/// HttpContext extensions
-/// ---------------------------
+// ---------------------------
+// HttpContext extensions
+// ---------------------------
 
 type HttpContext with
 
@@ -61,9 +61,9 @@ type HttpContext with
         this.SetContentType "text/html"
         this.WriteStringAsync (renderHtmlDocument htmlView)
 
-/// ---------------------------
-/// HttpHandler functions
-/// ---------------------------
+// ---------------------------
+// HttpHandler functions
+// ---------------------------
 
 /// Writes a byte array to the body of the HTTP response and sets the HTTP Content-Length header accordingly.
 let setBody (bytes : byte array) : HttpHandler =

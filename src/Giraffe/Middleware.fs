@@ -9,9 +9,9 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe.Serialization
 
-/// ---------------------------
-/// Logging helper functions
-/// ---------------------------
+// ---------------------------
+// Logging helper functions
+// ---------------------------
 
 let private getRequestInfo (ctx : HttpContext) =
     (ctx.Request.Protocol,
@@ -19,9 +19,9 @@ let private getRequestInfo (ctx : HttpContext) =
      ctx.Request.Path.ToString())
     |||> sprintf "%s %s %s"
 
-/// ---------------------------
-/// Default middleware
-/// ---------------------------
+// ---------------------------
+// Default middleware
+// ---------------------------
 
 type GiraffeMiddleware (next          : RequestDelegate,
                         handler       : HttpHandler,
@@ -47,9 +47,9 @@ type GiraffeMiddleware (next          : RequestDelegate,
                 return! next.Invoke ctx
         } :> Task
 
-/// ---------------------------
-/// Error Handling middleware
-/// ---------------------------
+// ---------------------------
+// Error Handling middleware
+// ---------------------------
 
 type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
                                     errorHandler  : ErrorHandler,
@@ -71,9 +71,9 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
                     logger.LogError(EventId(0), ex2, "An exception was thrown attempting to handle the original exception.")
         } :> Task
 
-/// ---------------------------
-/// Extension methods for convenience
-/// ---------------------------
+// ---------------------------
+// Extension methods for convenience
+// ---------------------------
 
 type IApplicationBuilder with
     member this.UseGiraffe (handler : HttpHandler) =
