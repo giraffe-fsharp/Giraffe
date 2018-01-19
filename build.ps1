@@ -36,16 +36,14 @@ function Install-LatestDotNetCore
 {
     if ($env:APPVEYOR -eq $true)
     {
-        dotnet --info
+        $downloadLink = "https://download.microsoft.com/download/1/1/5/115B762D-2B41-4AF3-9A63-92D9680B9409/dotnet-sdk-2.1.4-win-x64.exe"
+        Write-Host "Downloading latest .NET Core SDK..." -ForegroundColor Magenta
+        (New-Object System.Net.WebClient).DownloadFile($downloadLink, "$env:APPVEYOR_BUILD_FOLDER\dotnet-core-sdk.exe")
 
-        # $downloadLink = "https://download.microsoft.com/download/1/1/5/115B762D-2B41-4AF3-9A63-92D9680B9409/dotnet-sdk-2.1.4-win-x64.exe"
-        # Write-Host "Downloading latest .NET Core SDK..." -ForegroundColor Magenta
-        # Invoke-WebRequest $downloadLink -OutFile "dotnet-core-sdk.exe"
+        Write-Host "Installing .NET Core SDK..." -ForegroundColor Magenta
+        Invoke-Command -ScriptBlock { ./dotnet-core-sdk.exe /S /v/qn }
 
-        # Write-Host "Installing .NET Core SDK..." -ForegroundColor Magenta
-        # Invoke-Command -ScriptBlock { ./dotnet-core-sdk.exe /S /v/qn }
-
-        # Write-Host "Installation succeeded." -ForegroundColor DarkGreen
+        Write-Host "Installation succeeded." -ForegroundColor DarkGreen
     }
 }
 
@@ -58,7 +56,12 @@ function dotnet-pack    ($project, $argv) { Invoke-Cmd "dotnet pack $project $ar
 
 function Get-DotNetRuntimeVersion
 {
-    $version = dotnet-info | Select-Object -Last 3 | Select-Object -First 1
+    $dotnetSdkVersion = dotnet-version
+
+    $lineNumberFromBottom = 3
+    if ($dotnetSdkVersion -eq "2.1.2") { $lineNumberFromBottom = 6 }
+
+    $version = dotnet-info | Select-Object -Last $lineNumberFromBottom | Select-Object -First 1
     $version.Split(":")[1].Trim()
 }
 
@@ -164,6 +167,8 @@ $sampleAppTests        = ".\samples\SampleApp\SampleApp.Tests\SampleApp.Tests.fs
 
 Update-AppVeyorBuildVersion $giraffe
 Test-Version $giraffe
+Write-DotnetVersion
+Write-DotnetInfo
 Install-LatestDotNetCore
 Write-DotnetVersion
 Write-DotnetInfo
