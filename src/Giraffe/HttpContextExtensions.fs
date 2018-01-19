@@ -98,13 +98,13 @@ type HttpContext with
             | None            -> ()
             | Some queryValue ->
 
-                let isOptionType =
-                    p.PropertyType.GetTypeInfo().IsGenericType &&
-                    p.PropertyType.GetGenericTypeDefinition() = typedefof<Option<_>>
-
-                let isNullableType =
-                    p.PropertyType.GetTypeInfo().IsGenericType &&
-                    p.PropertyType.GetGenericTypeDefinition() = typedefof<Nullable<_>>
+                let isOptionType, isNullableType =
+                    if p.PropertyType.GetTypeInfo().IsGenericType
+                    then 
+                        let typeDef = p.PropertyType.GetGenericTypeDefinition()
+                        (typeDef = typedefof<Option<_>>, 
+                         typeDef = typedefof<Nullable<_>>) 
+                    else (false, false)                          
 
                 let propertyType =
                     if isOptionType || isNullableType then
