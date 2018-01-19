@@ -32,6 +32,20 @@ function Invoke-Cmd ($cmd)
     if ($LastExitCode -ne 0) { Write-Error "An error occured when executing '$cmd'."; return }
 }
 
+function Install-LatestDotNetCore
+{
+    if ($env:APPVEYOR -eq $true)
+    {
+        Write-Host "Downloading latest .NET Core SDK..." -ForegroundColor Magenta
+        Invoke-WebRequest "https://www.microsoft.com/net/download/thank-you/dotnet-sdk-2.1.4-windows-x64-installer" -OutFile "dotnet-core-sdk.exe"
+
+        Write-Host "Installing .NET Core SDK..." -ForegroundColor Magenta
+        Invoke-Command -ScriptBlock { ./dotnet-core-sdk.exe /S /v/qn }
+
+        Write-Host "Installation succeeded." -ForegroundColor DarkGreen
+    }
+}
+
 function dotnet-info                      { Invoke-Cmd "dotnet --info" }
 function dotnet-version                   { Invoke-Cmd "dotnet --version" }
 function dotnet-build   ($project, $argv) { Invoke-Cmd "dotnet build $project $argv" }
@@ -147,6 +161,7 @@ $sampleAppTests        = ".\samples\SampleApp\SampleApp.Tests\SampleApp.Tests.fs
 
 Update-AppVeyorBuildVersion $giraffe
 Test-Version $giraffe
+Install-LatestDotNetCore
 Write-DotnetVersion
 Write-DotnetInfo
 Remove-OldBuildArtifacts
