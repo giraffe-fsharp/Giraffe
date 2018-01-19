@@ -988,7 +988,7 @@ For HTTP 3xx status codes it is recommended to use the [redirectTo](#redirectto)
 | 400 | badRequest | `route "/" >=> RequestErrors.badRequest (text "Don't like it")` |
 | 400 | BAD_REQUEST | `route "/" >=> RequestErrors.BAD_REQUEST "Don't like it"` |
 | 401 | unauthorized | `route "/" >=> RequestErrors.unauthorized "Basic" "MyApp" (text "Don't know who you are")` |
-| 401 | UNAUTHORIZED | `route "/" >=> RequestErrors.UNAUTHORIZED "Don't know who you are"` |
+| 401 | UNAUTHORIZED | `route "/" >=> RequestErrors.UNAUTHORIZED "Basic" "MyApp" "Don't know who you are"` |
 | 403 | forbidden | `route "/" >=> RequestErrors.forbidden (text "Not enough permissions")` |
 | 403 | FORBIDDEN | `route "/" >=> RequestErrors.FORBIDDEN "Not enough permissions"` |
 | 404 | notFound | `route "/" >=> RequestErrors.notFound (text "Page not found")` |
