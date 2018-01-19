@@ -6,9 +6,9 @@ open System.Text.RegularExpressions
 open FSharp.Core
 open Microsoft.FSharp.Reflection
 
-/// ---------------------------
-/// String matching functions
-/// ---------------------------
+// ---------------------------
+// String matching functions
+// ---------------------------
 
 let formatStringMap =
     let guidFormatStr =
@@ -91,9 +91,9 @@ let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreC
     with
     | _ -> None
 
-/// ---------------------------
-/// Validation helper functions
-/// ---------------------------
+// ---------------------------
+// Validation helper functions
+// ---------------------------
 
 let validateFormat (format : PrintfFormat<_,_,_,_, 'T>) =
 

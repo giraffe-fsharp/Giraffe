@@ -9,9 +9,9 @@ open Newtonsoft.Json.Linq
 open Giraffe.Common
 open Giraffe.FormatExpressions
 
-/// ---------------------------
-/// Private sub route helper functions
-/// ---------------------------
+// ---------------------------
+// Private sub route helper functions
+// ---------------------------
 
 [<Literal>]
 let private RouteKey = "giraffe_route"
@@ -41,9 +41,9 @@ let private handlerWithRootedPath (path : string) (handler : HttpHandler) : Http
             return result
         }
 
-/// ---------------------------
-/// Public routing HttpHandler functions
-/// ---------------------------
+// ---------------------------
+// Public routing HttpHandler functions
+// ---------------------------
 
 /// Filters an incoming HTTP request based on the port.
 let routePorts (fns : (int * HttpHandler) list) : HttpHandler =

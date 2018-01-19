@@ -14,9 +14,9 @@ open Giraffe.TokenParsers
 
 open NonStructuralComparison // needed for parser performance, non boxing of struct equality
 
-////////////////////////////////////////////////////
+// --------------------------------------
 // Node Token (Radix) Tree using node mapping functions
-////////////////////////////////////////////////////
+// --------------------------------------
 
 /// Tail Clip: clip end of 'str' string staring from int pos -> end
 let inline private (-|) (str:string) (from:int) = str.Substring(from,str.Length - from)
@@ -214,9 +214,9 @@ and ContType =
 | End of EndCont
 
 
-////////////////////////////////////////////////////
+// --------------------------------------
 // Helper Functions
-////////////////////////////////////////////////////
+// --------------------------------------
 
 // temporary compose out handler to allow composition out of route functions, same as wraping in () or using <|
 let inline (=>) (a:HttpHandler -> Node -> Node) (b:HttpHandler) = a b
@@ -251,10 +251,9 @@ let private getPostMatchNode fmt (nxt:char) (ils:MidCont list) =
             | _ -> go tfns (hfn::acc) no
     go ils [] None
 
-////////////////////////////////////////////////////
+// --------------------------------------
 // Routing Node Map Functions used to build trie
-////////////////////////////////////////////////////
-
+// --------------------------------------
 
 ///**Description**
 /// if url path value matches request, the HttpHandler function is run.

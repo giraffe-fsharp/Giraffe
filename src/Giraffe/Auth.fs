@@ -7,9 +7,9 @@ open Microsoft.AspNetCore.Http
 open Giraffe.Tasks
 open Giraffe.Common
 
-/// ---------------------------
-/// Auth HttpHandler functions
-/// ---------------------------
+// ---------------------------
+// Auth HttpHandler functions
+// ---------------------------
 
 /// Challenges the client to authenticate with a given authentication scheme.
 let challenge (authScheme : string) : HttpHandler =

@@ -5,9 +5,9 @@ open System
 open System.Collections.Generic
 open Microsoft.AspNetCore.Http
 
-/// ---------------------------
-/// Configuration types
-/// ---------------------------
+// ---------------------------
+// Configuration types
+// ---------------------------
 
 type INegotiationConfig =
     abstract member Rules : IDictionary<string, obj -> HttpHandler>
@@ -30,9 +30,9 @@ type DefaultNegotiationConfig() =
                     |> sprintf "%s is unacceptable by the server."
                     |> text)) next ctx
 
-/// ---------------------------
-/// HttpContext extensions
-/// ---------------------------
+// ---------------------------
+// HttpContext extensions
+// ---------------------------
 
 type HttpContext with
     member this.NegotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>)
@@ -65,9 +65,9 @@ type HttpContext with
         let config = this.GetService<INegotiationConfig>()
         this.NegotiateWith config.Rules config.UnacceptableHandler responseObj
 
-/// ---------------------------
-/// HttpHandler functions
-/// ---------------------------
+// ---------------------------
+// HttpHandler functions
+// ---------------------------
 
 /// Checks the HTTP Accept header of the request and determines the most appropriate
 /// response type from a given set of negotiationRules. If the Accept header cannot be
