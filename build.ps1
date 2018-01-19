@@ -5,8 +5,6 @@
 param
 (
     [switch] $Release,
-    [switch] $ExcludeRazor,
-    [switch] $ExcludeDotLiquid,
     [switch] $ExcludeTests,
     [switch] $ExcludeSamples,
     [switch] $Pack,
@@ -34,17 +32,53 @@ function Invoke-Cmd ($cmd)
     if ($LastExitCode -ne 0) { Write-Error "An error occured when executing '$cmd'."; return }
 }
 
-function Write-DotnetVersion
+function Install-LatestDotNetCore
 {
-    $dotnetVersion = Invoke-Cmd "dotnet --version"
-    Write-Host ".NET Core runtime version: $dotnetVersion" -ForegroundColor Cyan
+    if ($env:APPVEYOR -eq $true)
+    {
+        $downloadLink = "https://download.microsoft.com/download/1/1/5/115B762D-2B41-4AF3-9A63-92D9680B9409/dotnet-sdk-2.1.4-win-x64.exe"
+        Write-Host "Downloading latest .NET Core SDK..." -ForegroundColor Magenta
+        Invoke-WebRequest $downloadLink -OutFile "dotnet-core-sdk.exe"
+
+        Write-Host "Installing .NET Core SDK..." -ForegroundColor Magenta
+        Invoke-Command -ScriptBlock { ./dotnet-core-sdk.exe /S /v/qn }
+
+        Write-Host "Installation succeeded." -ForegroundColor DarkGreen
+    }
 }
 
-function dotnet-restore ($project, $argv) { Invoke-Cmd "dotnet restore $project $argv" }
+function dotnet-info                      { Invoke-Cmd "dotnet --info" }
+function dotnet-version                   { Invoke-Cmd "dotnet --version" }
 function dotnet-build   ($project, $argv) { Invoke-Cmd "dotnet build $project $argv" }
 function dotnet-run     ($project, $argv) { Invoke-Cmd "dotnet run --project $project $argv" }
 function dotnet-test    ($project, $argv) { Invoke-Cmd "dotnet test $project $argv" }
 function dotnet-pack    ($project, $argv) { Invoke-Cmd "dotnet pack $project $argv" }
+
+function Get-DotNetRuntimeVersion
+{
+    $version = dotnet-info | Select-Object -Last 3 | Select-Object -First 1
+    $version.Split(":")[1].Trim()
+}
+
+function dotnet-xunit   ($project, $argv)
+{
+    $fxversion = Get-DotNetRuntimeVersion
+    Push-Location (Get-Item $project).Directory.FullName
+    Invoke-Cmd "dotnet xunit -fxversion $fxversion $argv"
+    Pop-Location
+}
+
+function Write-DotnetVersion
+{
+    $dotnetSdkVersion = dotnet-version
+    Write-Host ".NET Core SDK version:      $dotnetSdkVersion" -ForegroundColor Cyan
+}
+
+function Write-DotnetInfo
+{
+    $dotnetRuntimeVersion = Get-DotNetRuntimeVersion
+    Write-Host ".NET Core Runtime version:  $dotnetRuntimeVersion" -ForegroundColor Cyan
+}
 
 function Test-Version ($project)
 {
@@ -120,9 +154,6 @@ if ($ClearOnly.IsPresent) {
 }
 
 $giraffe               = ".\src\Giraffe\Giraffe.fsproj"
-$giraffeRazor          = ".\src\Giraffe.Razor\Giraffe.Razor.fsproj"
-$giraffeDotLiquid      = ".\src\Giraffe.DotLiquid\Giraffe.DotLiquid.fsproj"
-$giraffeDotLiquidTests = ".\tests\Giraffe.DotLiquid.Tests\Giraffe.DotLiquid.Tests.fsproj"
 $giraffeTests          = ".\tests\Giraffe.Tests\Giraffe.Tests.fsproj"
 $identityApp           = ".\samples\IdentityApp\IdentityApp\IdentityApp.fsproj"
 $jwtApp                = ".\samples\JwtApp\JwtApp\JwtApp.fsproj"
@@ -131,98 +162,51 @@ $sampleAppTests        = ".\samples\SampleApp\SampleApp.Tests\SampleApp.Tests.fs
 
 Update-AppVeyorBuildVersion $giraffe
 Test-Version $giraffe
+Install-LatestDotNetCore
 Write-DotnetVersion
+Write-DotnetInfo
 Remove-OldBuildArtifacts
 
 $configuration = if ($Release.IsPresent) { "Release" } else { "Debug" }
 
 Write-Host "Building Giraffe..." -ForegroundColor Magenta
 $framework = Get-FrameworkArg $giraffe
-dotnet-restore $giraffe
 dotnet-build   $giraffe "-c $configuration $framework"
 
 if (!$ExcludeTests.IsPresent -and !$Run.IsPresent)
 {
     Write-Host "Building and running tests..." -ForegroundColor Magenta
     $framework = Get-FrameworkArg $giraffeTests
-    # Currently dotnet test does not work for net461 on Linux/Mac
-    # See: https://github.com/Microsoft/vstest/issues/1318
-    if (!(Test-IsWindows)) {
-        Write-Warning "Running tests only for .NET Core build, because dotnet test does not support net4x tests on Linux/Mac at the moment (see: https://github.com/Microsoft/vstest/issues/1318)."
-        $fw = Get-NetCoreTargetFramework $giraffeTests
-        $framework = "-f $fw"
-    }
-    dotnet-restore $giraffeTests
+
     dotnet-build   $giraffeTests $framework
-    dotnet-test    $giraffeTests $framework
-}
 
-if (!$ExcludeRazor.IsPresent)
-{
-    Write-Host "Building Giraffe.Razor..." -ForegroundColor Magenta
-    $framework = Get-FrameworkArg $giraffeRazor
-    dotnet-restore $giraffeRazor
-    dotnet-build   $giraffeRazor "-c $configuration $framework"
-}
-
-if (!$ExcludeDotLiquid.IsPresent)
-{
-    Write-Host "Building Giraffe.DotLiquid..." -ForegroundColor Magenta
-    $framework = Get-FrameworkArg $giraffeDotLiquid
-    dotnet-restore $giraffeDotLiquid
-    dotnet-build   $giraffeDotLiquid "-c $configuration $framework"
-
-    if (!$ExcludeTests.IsPresent -and !$Run.IsPresent)
-    {
-        Write-Host "Building and running DotLiquid tests..." -ForegroundColor Magenta
-        $framework = Get-FrameworkArg $giraffeDotLiquidTests
-        # Currently dotnet test does not work for net461 on Linux/Mac
-        # See: https://github.com/Microsoft/vstest/issues/1318
-        if (!(Test-IsWindows)) {
-            Write-Warning "Running tests only for .NET Core build, because dotnet test does not support net4x tests on Linux/Mac at the moment (see: https://github.com/Microsoft/vstest/issues/1318)."
-            $fw = Get-NetCoreTargetFramework $giraffeDotLiquidTests
-            $framework = "-f $fw"
-        }
-        dotnet-restore $giraffeDotLiquidTests
-        dotnet-build   $giraffeDotLiquidTests $framework
-        dotnet-test    $giraffeDotLiquidTests $framework
-    }
+    $xunitArgs = ""
+    if(!(Test-IsWindows)) { $tfw = Get-NetCoreTargetFramework $giraffeTests; $xunitArgs = "-framework $tfw" }
+    dotnet-xunit $giraffeTests $xunitArgs
 }
 
 if (!$ExcludeSamples.IsPresent -and !$Run.IsPresent)
 {
     Write-Host "Building and testing samples..." -ForegroundColor Magenta
 
-    dotnet-restore $identityApp
     dotnet-build   $identityApp
-
-    dotnet-restore $jwtApp
     dotnet-build   $jwtApp
-
-    dotnet-restore $sampleApp
     dotnet-build   $sampleApp
 
-    dotnet-restore $sampleAppTests
     dotnet-build   $sampleAppTests
-    dotnet-test    $sampleAppTests
+    dotnet-xunit   $sampleAppTests
 }
 
 if ($Run.IsPresent)
 {
     Write-Host "Launching sample application..." -ForegroundColor Magenta
-    dotnet-restore $sampleApp
     dotnet-build   $sampleApp
     dotnet-run     $sampleApp
 }
 
 if ($Pack.IsPresent)
 {
-    Write-Host "Packaging all NuGet packages..." -ForegroundColor Magenta
+    Write-Host "Packaging Giraffe NuGet package..." -ForegroundColor Magenta
 
     dotnet-pack $giraffe "-c $configuration"
-
-    if (!$ExcludeRazor.IsPresent) { dotnet-pack $giraffeRazor "-c $configuration" }
-    if (!$ExcludeDotLiquid.IsPresent) { dotnet-pack $giraffeDotLiquid "-c $configuration" }
-
-    Invoke-Cmd "nuget pack template/giraffe-template.nuspec"
 }

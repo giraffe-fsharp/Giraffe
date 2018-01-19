@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>Giraffe</AssemblyName>
-    <Version>0.1.0-beta-400</Version>
+    <Version>0.1.0-beta-700</Version>
     <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
     <Copyright>Copyright 2017 Dustin Moris Gorski</Copyright>
     <NeutralLanguage>en-GB</NeutralLanguage>
@@ -14,14 +14,13 @@
     <OutputType>Library</OutputType>
     <PackageId>Giraffe</PackageId>
     <PackageTags>Giraffe;ASP.NET Core;Lambda;FSharp;Functional;Http;Web;Framework;Micro;Service</PackageTags>
-    <PackageReleaseNotes>https://github.com/dustinmoris/giraffe/releases</PackageReleaseNotes>
-    <PackageIconUrl>https://raw.githubusercontent.com/dustinmoris/giraffe/master/giraffe-64x64.png</PackageIconUrl>
-    <PackageProjectUrl>https://github.com/dustinmoris/giraffe</PackageProjectUrl>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/dustinmoris/giraffe/master/LICENSE</PackageLicenseUrl>
+    <PackageReleaseNotes>https://raw.githubusercontent.com/giraffe-fsharp/giraffe/master/RELEASE_NOTES.md</PackageReleaseNotes>
+    <PackageIconUrl>https://raw.githubusercontent.com/giraffe-fsharp/giraffe/master/giraffe-64x64.png</PackageIconUrl>
+    <PackageProjectUrl>https://github.com/giraffe-fsharp/giraffe</PackageProjectUrl>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/giraffe-fsharp/giraffe/master/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/dustinmoris/giraffe</RepositoryUrl>
-    <NetStandardImplicitPackageVersion>2.0</NetStandardImplicitPackageVersion>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
   </PropertyGroup>
@@ -33,16 +32,22 @@
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.0.*" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.*" />
+    <PackageReference Include="Giraffe.Tasks" Version="0.1.0-beta-0*" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Tasks.fs" />
     <Compile Include="Common.fs" />
-    <Compile Include="ComputationExpressions.fs" />
+    <Compile Include="Serialization.fs" />
     <Compile Include="FormatExpressions.fs" />
-    <Compile Include="XmlViewEngine.fs" />
-    <Compile Include="HttpContextExtensions.fs" />
-    <Compile Include="HttpHandlers.fs" />
+    <Compile Include="Core.fs" />
+    <Compile Include="GiraffeViewEngine.fs" />
+    <Compile Include="ModelBinding.fs" />
+    <Compile Include="Auth.fs" />
+    <Compile Include="Routing.fs" />
+    <Compile Include="ResponseWriters.fs" />
+    <Compile Include="Preconditional.fs" />
+    <Compile Include="Streaming.fs" />
+    <Compile Include="Negotiation.fs" />
     <Compile Include="HttpStatusCodeHandlers.fs" />
     <Compile Include="TokenParsers.fs" />
     <Compile Include="TokenRouter.fs" />

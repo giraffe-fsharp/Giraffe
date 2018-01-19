@@ -3,21 +3,17 @@
 open System
 open System.IO
 open System.Text
-open System.Security.Claims
-open System.Collections.Generic
-open System.Threading
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Cors.Infrastructure
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Http.Features
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.AspNetCore.Identity
 open Microsoft.AspNetCore.Identity.EntityFrameworkCore
 open Microsoft.EntityFrameworkCore
 open Giraffe
-open Giraffe.XmlViewEngine
+open Giraffe.GiraffeViewEngine
 
 // ---------------------------------
 // View engine
@@ -38,50 +34,50 @@ let masterPage (pageTitle : string) (content : XmlNode list) =
 let indexPage =
     [
         p [] [
-            a [ attr "href" "/register" ] [ rawText "Register" ]
+            a [ _href "/register" ] [ rawText "Register" ]
         ]
         p [] [
-            a [ attr "href" "/user" ] [ rawText "User page" ]
+            a [ _href "/user" ] [ rawText "User page" ]
         ]
     ] |> masterPage "Home"
 
 let registerPage =
     [
-        form [ attr "action" "/register"; attr "method" "POST" ] [
+        form [ _action "/register"; _method "POST" ] [
             div [] [
                 label [] [ rawText "Email:" ]
-                input [ attr "name" "Email"; attr "type" "text" ]
+                input [ _name "Email"; _type "text" ]
             ]
             div [] [
                 label [] [ rawText "User name:" ]
-                input [ attr "name" "UserName"; attr "type" "text" ]
+                input [ _name "UserName"; _type "text" ]
             ]
             div [] [
                 label [] [ rawText "Password:" ]
-                input [ attr "name" "Password"; attr "type" "password" ]
+                input [ _name "Password"; _type "password" ]
             ]
-            input [ attr "type" "submit" ]
+            input [ _type "submit" ]
         ]
     ] |> masterPage "Register"
 
 let loginPage (loginFailed : bool) =
     [
-        if loginFailed then yield p [ attr "style" "color: Red;" ] [ rawText "Login failed." ]
+        if loginFailed then yield p [ _style "color: Red;" ] [ rawText "Login failed." ]
 
-        yield form [ attr "action" "/login"; attr "method" "POST" ] [
+        yield form [ _action "/login"; _method "POST" ] [
             div [] [
                 label [] [ rawText "User name:" ]
-                input [ attr "name" "UserName"; attr "type" "text" ]
+                input [ _name "UserName"; _type "text" ]
             ]
             div [] [
                 label [] [ rawText "Password:" ]
-                input [ attr "name" "Password"; attr "type" "password" ]
+                input [ _name "Password"; _type "password" ]
             ]
-            input [ attr "type" "submit" ]
+            input [ _type "submit" ]
         ]
         yield p [] [
             rawText "Don't have an account yet?"
-            a [ attr "href" "/register" ] [ rawText "Go to registration" ]
+            a [ _href "/register" ] [ rawText "Go to registration" ]
         ]
     ] |> masterPage "Login"
 
@@ -144,7 +140,7 @@ let loginHandler : HttpHandler =
             let! result = signInManager.PasswordSignInAsync(model.UserName, model.Password, true, false)
             match result.Succeeded with
             | true  -> return! redirectTo false "/user" next ctx
-            | false -> return! renderHtml (loginPage true) next ctx
+            | false -> return! htmlView (loginPage true) next ctx
         }
 
 let userHandler : HttpHandler =
@@ -152,7 +148,7 @@ let userHandler : HttpHandler =
         task {
             let userManager = ctx.GetService<UserManager<IdentityUser>>()
             let! user = userManager.GetUserAsync ctx.User
-            return! (user |> userPage |> renderHtml) next ctx
+            return! (user |> userPage |> htmlView) next ctx
         }
 
 let mustBeLoggedIn : HttpHandler =
@@ -170,9 +166,9 @@ let webApp =
     choose [
         GET >=>
             choose [
-                route "/"         >=> renderHtml indexPage
-                route "/register" >=> renderHtml registerPage
-                route "/login"    >=> renderHtml (loginPage false)
+                route "/"         >=> htmlView indexPage
+                route "/register" >=> htmlView registerPage
+                route "/login"    >=> htmlView (loginPage false)
 
                 route "/logout"   >=> mustBeLoggedIn >=> logoutHandler
                 route "/user"     >=> mustBeLoggedIn >=> userHandler
@@ -247,12 +243,15 @@ let configureServices (services : IServiceCollection) =
     // Enable CORS
     services.AddCors() |> ignore
 
+    // Configure Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
 let configureLogging (builder : ILoggingBuilder) =
     let filter (l : LogLevel) = l.Equals LogLevel.Error
     builder.AddFilter(filter).AddConsole().AddDebug() |> ignore
 
 [<EntryPoint>]
-let main argv =
+let main _ =
     WebHostBuilder()
         .UseKestrel()
         .UseContentRoot(Directory.GetCurrentDirectory())

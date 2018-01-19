@@ -13,11 +13,17 @@
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.0.*" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.*" />
+    <PackageReference Include="System.Net.Http" Version="4.3.*" />
     <PackageReference Include="xunit" Version="2.3.*" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.3.*" />
     <PackageReference Include="NSubstitute" Version="3.1.*" />
     <PackageReference Include="FsCheck" Version="3.0.0-*" />
     <PackageReference Include="FsCheck.Xunit" Version="3.0.0-*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.*" />
+    <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="2.0.*" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,14 +35,15 @@
     <Compile Include="FormatExpressionTests.fs" />
     <Compile Include="HttpHandlerTests.fs" />
     <Compile Include="AuthHandlerTests.fs" />
-    <Compile Include="XmlViewEngineTests.fs" />
-    <Compile Include="TasksTests.fs" />
+    <Compile Include="GiraffeViewEngineTests.fs" />
     <Compile Include="HttpContextExtensionsTests.fs" />
+    <Compile Include="StreamingTests.fs" />
+    <Compile Include="PreconditionalTests.fs" />
     <Compile Include="TokenRouterTests.fs" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="webroot\*">
+    <Content Include="TestFiles\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

@@ -1,4 +1,4 @@
-module Tests
+module SampleApp.Tests
 
 open System
 open System.Net
@@ -9,7 +9,6 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.TestHost
 open Microsoft.Extensions.DependencyInjection
 open Xunit
-open Giraffe
 
 // ---------------------------------
 // Test server/client setup
@@ -128,44 +127,3 @@ let ``Test /user/{id} returns success when logged in as user`` () =
     |> ensureSuccess
     |> readText
     |> shouldEqual "User ID: 1"
-
-[<Fact>]
-let ``Test /razor returns html content`` () =
-    use server = new TestServer(createHost())
-    use client = server.CreateClient()
-
-    let nl = Environment.NewLine
-    let expected = @"<!DOCTYPE html>
-<html>
-<head>
-    <title>Giraffe</title>
-    <link rel=""stylesheet"" type=""text/css"" href=""main.css"">
-</head>
-<body>
-
-<div>
-    <h3>Hello, Razor</h3>
-</div>
-<div>
-<p>Some partial text.</p></div>
-</body>
-</html>"
-
-    get client "/razor"
-    |> ensureSuccess
-    |> isOfType "text/html"
-    |> readText
-    |> shouldEqual expected
-
-[<Fact>]
-let ``Test /razorHello returns html content based on _ViewStart file`` () =
-    use server = new TestServer(createHost())
-    use client = server.CreateClient()
-
-    let expected = "Hello from _ViewStart file"
-
-    get client "/razorHello"
-    |> ensureSuccess
-    |> isOfType "text/html"
-    |> readText
-    |> shouldEqual expected

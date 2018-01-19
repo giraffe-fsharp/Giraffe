@@ -4,8 +4,8 @@ open System.Collections.Generic
 open System.Text
 open Microsoft.FSharp.Reflection
 open Printf
-open HttpHandlers
-open TokenParsers
+open Giraffe
+open Giraffe.TokenParsers
 
 // Implemenation of (router) Trie Node
 // --------------------------------------
@@ -135,8 +135,7 @@ type Node(token:string) =
         node.MidFns <- List.empty
         node.EndFns <- List.empty
 
-
-    static member ExtendPath (node:Node) (path:string) (rc:ContType) =        
+    static member ExtendPath (node:Node) (path:string) (rc:ContType) =
         if path = "" then
             Node.AddFn node rc
             node
@@ -196,7 +195,7 @@ and MidCont =
     member x.Precedence
         with get () =
             match x with
-            | MethodMatch _ -> 3 
+            | MethodMatch _ -> 3
             | ApplyMatch (c,_,_) -> (int c)
             | ApplyMatchAndComplete (c,_,_) -> 256 + (int c)
 
@@ -279,7 +278,9 @@ let route (path:string) (fn:HttpHandler) (root:Node) =
 ///**Output Type**
 ///  * `parent` : `Node` - This parameter is applied by `router`, and is ommitted when building api such that function is partially applied fn
 ///  * `Node`
-let routef (path : PrintfFormat<_,_,_,_,'T>) (fn:'T -> HttpHandler) (root:Node)=
+let routef (path : PrintfFormat<_,_,_,_,'T>) (fn:'T -> HttpHandler) (root:Node) =
+    FormatExpressions.validateFormat path
+
 // parsing route that iterates down nodes, parses, and then continues down further notes if needed
     let last = path.Value.Length - 1
 
@@ -348,7 +349,7 @@ let private processPath (abort:HttpHandler) (root:Node) : HttpHandler =
                             // no further nodes, either a static url didnt match or there is a pattern match required
                             mf( node.MidFns, nxtChar, [] )
                 else
-                    abort next ctx                        
+                    abort next ctx
             elif node.Token.Length = 0 then
                 match node.TryGetValue path.[pos] with
                 | true, cnode ->
@@ -428,10 +429,10 @@ let private processPath (abort:HttpHandler) (root:Node) : HttpHandler =
                         let tf = FSharpValue.PreComputeTupleConstructor(tupleType)
                         pfc.TupleFn <- Some tf // cache the tuple function (lazy eval)
                         tf values
-            
+
             let resultTask = pfc.fn input next ctx
-            task { 
-                let! result = resultTask 
+            task {
+                let! result = resultTask
                 match result with
                 | Some _ -> return! resultTask
                 | None -> return! abort next ctx
@@ -442,10 +443,10 @@ let private processPath (abort:HttpHandler) (root:Node) : HttpHandler =
             | [] -> abort next ctx
             | h :: _ ->
                 match h with
-                | HandlerMap fn -> 
+                | HandlerMap fn ->
                     let resultTask = fn next ctx // run function with all parameters
-                    task { 
-                        let! result = resultTask 
+                    task {
+                        let! result = resultTask
                         match result with
                         | Some _ -> return! resultTask
                         | None -> return! abort next ctx
@@ -506,15 +507,16 @@ let subRoute (path:string) (fns:(Node->Node) list) (parent:Node) : Node =
     child
 
 let private methodFns (meth:string) (fns:(Node->Node) list) (parent:Node) =
-    let child = Node("") 
+    let child = Node("")
     mapNode fns child
     parent.AddMidFn <| MethodMatch(meth,child)
     child
 
 let GET    fns = methodFns "GET"    fns
-let POST   fns = methodFns "POST"   fns 
+let POST   fns = methodFns "POST"   fns
 let PUT    fns = methodFns "PUT"    fns
-let DELETE fns = methodFns "DELETE" fns  
+let DELETE fns = methodFns "DELETE" fns
+let PATCH  fns = methodFns "PATCH"  fns
 
 ///**Description**
 /// HttpHandler funtion that accepts a list of route mapping functions and builds a route tree for fast processing of request routes
@@ -528,7 +530,7 @@ let router (abort:HttpHandler) (fns:(Node->Node) list) : HttpHandler =
     let root = Node("")
     // precompile the route functions into node trie
     mapNode fns root
-    
+
     //get path progress (if any so far)
     processPath abort root
 
