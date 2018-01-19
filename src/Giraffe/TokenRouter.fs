@@ -4,8 +4,8 @@ open System.Collections.Generic
 open System.Text
 open Microsoft.FSharp.Reflection
 open Printf
-open HttpHandlers
-open TokenParsers
+open Giraffe
+open Giraffe.TokenParsers
 
 // Implemenation of (router) Trie Node
 // --------------------------------------
@@ -516,6 +516,7 @@ let GET    fns = methodFns "GET"    fns
 let POST   fns = methodFns "POST"   fns
 let PUT    fns = methodFns "PUT"    fns
 let DELETE fns = methodFns "DELETE" fns
+let PATCH  fns = methodFns "PATCH"  fns
 
 ///**Description**
 /// HttpHandler funtion that accepts a list of route mapping functions and builds a route tree for fast processing of request routes

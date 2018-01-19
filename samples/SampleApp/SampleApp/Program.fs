@@ -106,7 +106,7 @@ let webApp =
                 route  "/user"       >=> mustBeUser >=> userHandler
                 route  "/john-only"  >=> mustBeJohn >=> userHandler
                 routef "/user/%i"    showUserHandler
-                route  "/person"     >=> (personView { Name = "Html Node" } |> renderHtml)
+                route  "/person"     >=> (personView { Name = "Html Node" } |> htmlView)
                 route  "/once"       >=> (time() |> text)
                 route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
                 route  "/configured" >=> configuredHandler
@@ -133,6 +133,7 @@ let configureApp (app : IApplicationBuilder) =
 
 let configureServices (services : IServiceCollection) =
     services
+        .AddGiraffe()
         .AddAuthentication(authScheme)
         .AddCookie(cookieAuth)   |> ignore
     services.AddDataProtection() |> ignore
@@ -144,10 +145,7 @@ let configureLogging (loggerBuilder : ILoggingBuilder) =
 
 [<EntryPoint>]
 let main _ =
-    let contentRoot = Directory.GetCurrentDirectory()
-    let webRoot     = Path.Combine(contentRoot, "WebRoot")
     WebHost.CreateDefaultBuilder()
-        .UseWebRoot(webRoot)
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(configureServices)
         .ConfigureLogging(configureLogging)

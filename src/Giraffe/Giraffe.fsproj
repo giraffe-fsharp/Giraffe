@@ -21,7 +21,6 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/dustinmoris/giraffe</RepositoryUrl>
-    <NetStandardImplicitPackageVersion>2.0</NetStandardImplicitPackageVersion>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
   </PropertyGroup>
@@ -38,11 +37,17 @@
 
   <ItemGroup>
     <Compile Include="Common.fs" />
-    <Compile Include="ComputationExpressions.fs" />
+    <Compile Include="Serialization.fs" />
     <Compile Include="FormatExpressions.fs" />
+    <Compile Include="Core.fs" />
     <Compile Include="GiraffeViewEngine.fs" />
-    <Compile Include="HttpContextExtensions.fs" />
-    <Compile Include="HttpHandlers.fs" />
+    <Compile Include="ModelBinding.fs" />
+    <Compile Include="Auth.fs" />
+    <Compile Include="Routing.fs" />
+    <Compile Include="ResponseWriters.fs" />
+    <Compile Include="Preconditional.fs" />
+    <Compile Include="Streaming.fs" />
+    <Compile Include="Negotiation.fs" />
     <Compile Include="HttpStatusCodeHandlers.fs" />
     <Compile Include="TokenParsers.fs" />
     <Compile Include="TokenRouter.fs" />

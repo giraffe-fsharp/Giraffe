@@ -1,8 +1,8 @@
-module Giraffe.FormatExpressionTests
+module Giraffe.Tests.FormatExpressionTests
 
 open System
 open Xunit
-open FormatExpressions
+open Giraffe.FormatExpressions
 
 let assertFail msg = Assert.True(false, msg)
 
