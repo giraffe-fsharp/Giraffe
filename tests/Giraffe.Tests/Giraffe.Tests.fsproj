@@ -33,10 +33,6 @@
   <ItemGroup>
     <Compile Include="Asserts.fs" />
     <Compile Include="FormatExpressionTests.fs" />
-    <!-- <Compile Include="RoutingTests.fs" />
-    <Compile Include="ResponseWritersTests.fs" />
-    <Compile Include="ModelBindingTests.fs" />
-    <Compile Include="NegotiationTests.fs" /> -->
     <Compile Include="HttpHandlerTests.fs" />
     <Compile Include="AuthHandlerTests.fs" />
     <Compile Include="GiraffeViewEngineTests.fs" />

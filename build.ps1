@@ -55,8 +55,14 @@ function dotnet-xunit   ($project, $argv)
 
 function Write-DotnetVersion
 {
-    $dotnetVersion = dotnet-version
-    Write-Host ".NET Core runtime version: $dotnetVersion" -ForegroundColor Cyan
+    $dotnetSdkVersion = dotnet-version
+    Write-Host ".NET Core SDK version:      $dotnetSdkVersion" -ForegroundColor Cyan
+}
+
+function Write-DotnetInfo
+{
+    $dotnetRuntimeVersion = Get-DotNetRuntimeVersion
+    Write-Host ".NET Core Runtime version:  $dotnetRuntimeVersion" -ForegroundColor Cyan
 }
 
 function Test-Version ($project)
@@ -142,6 +148,7 @@ $sampleAppTests        = ".\samples\SampleApp\SampleApp.Tests\SampleApp.Tests.fs
 Update-AppVeyorBuildVersion $giraffe
 Test-Version $giraffe
 Write-DotnetVersion
+Write-DotnetInfo
 Remove-OldBuildArtifacts
 
 $configuration = if ($Release.IsPresent) { "Release" } else { "Debug" }
@@ -156,7 +163,10 @@ if (!$ExcludeTests.IsPresent -and !$Run.IsPresent)
     $framework = Get-FrameworkArg $giraffeTests
 
     dotnet-build   $giraffeTests $framework
-    dotnet-xunit $giraffeTests ""
+
+    $xunitArgs = ""
+    if(!(Test-IsWindows)) { $tfw = Get-NetCoreTargetFramework $giraffeTests; $xunitArgs = "-framework $tfw" }
+    dotnet-xunit $giraffeTests $xunitArgs
 }
 
 if (!$ExcludeSamples.IsPresent -and !$Run.IsPresent)
