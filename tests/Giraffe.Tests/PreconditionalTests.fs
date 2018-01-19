@@ -58,7 +58,7 @@ module WebApp =
         fun (next : HttpFunc) (ctx : HttpContext) ->
             let stream =
                 new FileStream(
-                    "TestFiles/preconditions.txt",
+                    "TestFiles/streaming2.txt",
                     FileMode.Open)
             ctx.WriteStreamAsync enableRangeProcessing stream eTag lastModified
 

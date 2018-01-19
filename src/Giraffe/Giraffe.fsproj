@@ -45,7 +45,7 @@
     <Compile Include="Auth.fs" />
     <Compile Include="Routing.fs" />
     <Compile Include="ResponseWriters.fs" />
-    <Compile Include="Preconditions.fs" />
+    <Compile Include="Preconditional.fs" />
     <Compile Include="Streaming.fs" />
     <Compile Include="Negotiation.fs" />
     <Compile Include="HttpStatusCodeHandlers.fs" />

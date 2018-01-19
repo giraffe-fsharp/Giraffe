@@ -38,7 +38,7 @@
     <Compile Include="GiraffeViewEngineTests.fs" />
     <Compile Include="HttpContextExtensionsTests.fs" />
     <Compile Include="StreamingTests.fs" />
-    <Compile Include="PreconditionsTests.fs" />
+    <Compile Include="PreconditionalTests.fs" />
     <Compile Include="TokenRouterTests.fs" />
   </ItemGroup>
 

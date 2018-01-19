@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Giraffe.Preconditions
+module Giraffe.Preconditional
 
 open System
 open System.Linq
