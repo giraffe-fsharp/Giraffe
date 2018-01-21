@@ -325,7 +325,12 @@ module Analyzer =
               analyzeAll [op;t] ctx
           
       | NewUnionCase (a,b) -> analyzeAll b ctx
-      
+
+      | Application (Application (PropertyGet (None, op_GreaterEqualsGreater, []), exp1 ), ValueWithName _) ->
+          let c1 = loop exp1 (newContext())
+          let c = ctx |> pushRoute |> mergeWith c1 |> pushRoute
+          c 
+          
       | Application (PropertyGet (instance, propertyInfo, pargs), Coerce (Var arg, o)) ->
           ctx.AddArgType arg.Type |> 
             rules.ApplyMethodCall propertyInfo.DeclaringType.Name propertyInfo.Name
@@ -333,6 +338,8 @@ module Analyzer =
       | Application (left, right) ->
           let c1 = loop right (newContext()) 
           let c2 = loop left (newContext())
+//          let c1 = loop right ctx
+//          let c2 = loop left ctx
           c1 |> mergeWith c2 |> pushRoute
           
       | Call(instance, method, args) when method.Name = "choose" && method.DeclaringType.Name = "HttpHandlers" ->
@@ -780,7 +787,7 @@ module Generator =
         Produces=[]
         Tags=[]
         Parameters=parameters
-        Responses = dict [] } //:IDictionary<int, ResponseDoc> }
+        Responses = dict [] }
     
     if parameters |> List.exists (fun p -> p.In = ParamContainer.Path.ToString())
     then 

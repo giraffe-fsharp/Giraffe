@@ -23,7 +23,8 @@ let swaggerUiHandler (swaggerUiPath:string) swJsonPath =
           else path
 
     let assembly = System.Reflection.Assembly.GetExecutingAssembly()
-    let fs = assembly.GetManifestResourceStream "swagger-ui.zip"
+    let rn = assembly.GetManifestResourceNames() |> Seq.find (fun n -> n.EndsWith "swagger-ui.zip")
+    let fs = assembly.GetManifestResourceStream rn
     let zip = new ZipArchive(fs)
     match zip.Entries |> Seq.tryFind (fun e -> e.FullName = p) with
     | Some ze ->

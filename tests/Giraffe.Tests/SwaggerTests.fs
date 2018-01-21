@@ -450,3 +450,40 @@ let ``Converting a route infos into route description`` () =
   Assert.True(failure.Schema.IsNone)
   
   
+  
+[<Fact>]
+let ``app contains 2 choose in GET`` () =
+  let bonjour (firstName, lastName) =
+      let message = sprintf "Bonjour %s %s" lastName firstName
+      text message
+  let submitDummy =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            let! car = ctx.BindModelAsync<Dummy>()
+            return! json car next ctx
+        }
+
+  let webApp =
+    <@
+      choose [
+        GET >=>
+//            choose [
+//                  route  "/"           >=> text "index"
+//                  route  "/ping"       >=> text "pong"
+//                ]
+            route  "/"           >=> text "index"
+            route "/dummy" >=> submitDummy
+            routef "/hello/%s/%s" bonjour
+//            route  "/hello"       >=> text "bonjour"
+            
+//            RequestErrors.notFound (text "Not Found")
+      ] @>
+    
+  let ctx = analyze webApp AppAnalyzeRules.Default
+  printfn "ctx: %A" ctx
+ 
+  Assert.Equal(3, ctx.Routes.Length)
+  ctx.Routes |> List.exists (fun r -> r.Path = "/hello/%s/%s") |> Assert.True
+
+  
+  
