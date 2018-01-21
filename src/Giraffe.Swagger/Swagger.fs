@@ -324,12 +324,20 @@ module Analyzer =
           | o -> 
               analyzeAll [op;t] ctx
           
-      | NewUnionCase (a,b) -> analyzeAll b ctx
+      | NewUnionCase (_,exprs) ->
+          if List.isEmpty exprs
+          then ctx
+          else 
+            //analyzeAll exprs ctx
+            exprs 
+            |> List.map (fun e -> loop e (newContext()))
+            |> failwithf "exprs: %A"
+            //|> List.fold (fun state c -> state |> mergeWith c) ctx
 
       | Application (Application (PropertyGet (None, op_GreaterEqualsGreater, []), exp1 ), ValueWithName _) ->
           let c1 = loop exp1 (newContext())
           let c = ctx |> pushRoute |> mergeWith c1 |> pushRoute
-          c 
+          c
           
       | Application (PropertyGet (instance, propertyInfo, pargs), Coerce (Var arg, o)) ->
           ctx.AddArgType arg.Type |> 
