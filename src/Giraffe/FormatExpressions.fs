@@ -1,10 +1,14 @@
 module Giraffe.FormatExpressions
 
 open System
-open System.Text.RegularExpressions
 open System.Net
-open Microsoft.FSharp.Reflection
+open System.Text.RegularExpressions
 open FSharp.Core
+open Microsoft.FSharp.Reflection
+
+// ---------------------------
+// String matching functions
+// ---------------------------
 
 let formatStringMap =
     let guidFormatStr =
@@ -86,6 +90,10 @@ let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreC
             |> Some
     with
     | _ -> None
+
+// ---------------------------
+// Validation helper functions
+// ---------------------------
 
 let validateFormat (format : PrintfFormat<_,_,_,_, 'T>) =
 

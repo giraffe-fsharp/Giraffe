@@ -1,4 +1,4 @@
-module Giraffe.HttpContextExtensionsTests
+module Giraffe.Tests.HttpContextExtensionsTests
 
 open System
 open System.Globalization
@@ -15,6 +15,8 @@ open Microsoft.AspNetCore.TestHost
 open Xunit
 open NSubstitute
 open Newtonsoft.Json
+open Giraffe
+open Giraffe.Serialization
 open Giraffe.GiraffeViewEngine
 
 let assertFailf format args =
@@ -26,11 +28,32 @@ let getBody (ctx : HttpContext) =
     use reader = new StreamReader(ctx.Response.Body, Encoding.UTF8)
     reader.ReadToEnd()
 
+let mockJson (ctx : HttpContext) (settings : JsonSerializerSettings option) =
+    let jsonSettings =
+        defaultArg settings NewtonsoftJsonSerializer.DefaultSettings
+    ctx.RequestServices
+       .GetService(typeof<IJsonSerializer>)
+       .Returns(NewtonsoftJsonSerializer(jsonSettings))
+    |> ignore
+
+let mockXml (ctx : HttpContext) =
+    ctx.RequestServices
+       .GetService(typeof<IXmlSerializer>)
+       .Returns(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
+    |> ignore
+
 [<CLIMutable>]
 type ModelWithOption =
     {
         OptionalInt: int option
         OptionalString: string option
+    }
+
+[<CLIMutable>]
+type ModelWithNullable =
+    {
+        NullableInt      : Nullable<int>
+        NullableDateTime : Nullable<DateTime>
     }
 
 [<CLIMutable>]
@@ -53,6 +76,7 @@ type Customer =
 [<Fact>]
 let ``BindJsonAsync test`` () =
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
 
     let jsonHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -92,6 +116,7 @@ let ``BindJsonAsync test`` () =
 [<Fact>]
 let ``BindXmlAsync test`` () =
     let ctx = Substitute.For<HttpContext>()
+    mockXml ctx
 
     let xmlHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -182,7 +207,6 @@ let ``BindQueryString test`` () =
 
     let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-    let asdf = QueryCollection(query) :> IQueryCollection
     ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/query")) |> ignore
@@ -253,10 +277,38 @@ let ``BindQueryString with option property test`` () =
         return!  testRoute "?OptionalInt=&OptionalString=" { OptionalInt = None; OptionalString = Some "" }
     }
 
+[<Fact>]
+let ``BindQueryString with nullable property test`` () =
+    let testRoute queryStr expected =
+        let queryHandlerWithSome next (ctx : HttpContext) =
+            task {
+                let model = ctx.BindQueryString<ModelWithNullable>()
+                Assert.Equal(expected, model)
+                return! setStatusCode 200 next ctx
+            }
+
+        let app = GET >=> route "/" >=> queryHandlerWithSome
+
+        let ctx = Substitute.For<HttpContext>()
+        let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
+        ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+        ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+        ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+        ctx.Response.Body <- new MemoryStream()
+
+        app (Some >> Task.FromResult) ctx
+
+    task {
+        let! _ = testRoute "?NullableInt=1&NullableDateTime=2017-09-01" { NullableInt = Nullable<_>(1); NullableDateTime = Nullable<_>(DateTime(2017,09,01)) }
+        let! _ = testRoute "?" { NullableInt = Nullable<_>(); NullableDateTime = Nullable<_>() }
+        return!  testRoute "?NullableInt=&NullableDateTime=" { NullableInt = Nullable<_>(); NullableDateTime = Nullable<_>() }
+    }
+
 
 [<Fact>]
 let ``BindModelAsync with JSON content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
 
     let autoHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -298,11 +350,12 @@ let ``BindModelAsync with JSON content returns correct result`` () =
 [<Fact>]
 let ``BindModelAsync with JSON content that uses custom serialization settings returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx (Some (JsonSerializerSettings()))
 
     let autoHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
             task {
-                let! model = ctx.BindModelAsync<Customer>(JsonSerializerSettings())
+                let! model = ctx.BindModelAsync<Customer>()
                 return! text (model.ToString()) next ctx
             }
 
@@ -339,6 +392,7 @@ let ``BindModelAsync with JSON content that uses custom serialization settings r
 [<Fact>]
 let ``BindModelAsync with XML content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
+    mockXml ctx
 
     let autoHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -466,6 +520,7 @@ let ``BindModelAsync with culture aware form content returns correct result`` ()
 [<Fact>]
 let ``BindModelAsync with JSON content and a specific charset returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
 
     let autoHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -626,7 +681,7 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
     }
 
 [<Fact>]
-let ``RenderHtmlAsync should add html to the context`` () =
+let ``WriteHtmlViewAsync should add html to the context`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
@@ -635,10 +690,10 @@ let ``RenderHtmlAsync should add html to the context`` () =
                 html [] [
                     head [] []
                     body [] [
-                        h1 [] [EncodedText "Hello world"]
+                        h1 [] [ EncodedText "Hello world" ]
                     ]
                 ]
-            ctx.RenderHtmlAsync(htmlDoc)
+            ctx.WriteHtmlViewAsync(htmlDoc)
 
     let app = route "/" >=> testHandler
 
@@ -660,10 +715,10 @@ let resultOfTask<'T> (task:Task<'T>) =
     task.Result
 
 [<Fact>]
-let ``ReturnHtmlFileAsync should return html from content folder`` () =
-    let testHandler =
+let ``WriteHtmlFileAsync should return html from content folder`` () =
+    let testHandler : HttpHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
-            ctx.ReturnHtmlFileAsync "index.html"
+            ctx.WriteHtmlFileAsync "index.html"
 
     let webApp = route "/" >=> testHandler
 
@@ -674,14 +729,14 @@ let ``ReturnHtmlFileAsync should return html from content folder`` () =
 
     let host =
         WebHostBuilder()
-            .UseContentRoot(Path.GetFullPath("webroot"))
+            .UseContentRoot(Path.GetFullPath("TestFiles"))
             .Configure(Action<IApplicationBuilder> configureApp)
 
     use server = new TestServer(host)
     use client = server.CreateClient()
 
     let expectedContent =
-        Path.Combine("webroot", "index.html")
+        Path.Combine("TestFiles", "index.html")
         |> File.ReadAllText
 
     let actualContent =

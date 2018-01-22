@@ -3,14 +3,10 @@
 open System
 open System.IO
 open System.Text
-open System.Security.Claims
-open System.Collections.Generic
-open System.Threading
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Cors.Infrastructure
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Http.Features
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.AspNetCore.Identity
@@ -144,7 +140,7 @@ let loginHandler : HttpHandler =
             let! result = signInManager.PasswordSignInAsync(model.UserName, model.Password, true, false)
             match result.Succeeded with
             | true  -> return! redirectTo false "/user" next ctx
-            | false -> return! renderHtml (loginPage true) next ctx
+            | false -> return! htmlView (loginPage true) next ctx
         }
 
 let userHandler : HttpHandler =
@@ -152,7 +148,7 @@ let userHandler : HttpHandler =
         task {
             let userManager = ctx.GetService<UserManager<IdentityUser>>()
             let! user = userManager.GetUserAsync ctx.User
-            return! (user |> userPage |> renderHtml) next ctx
+            return! (user |> userPage |> htmlView) next ctx
         }
 
 let mustBeLoggedIn : HttpHandler =
@@ -170,9 +166,9 @@ let webApp =
     choose [
         GET >=>
             choose [
-                route "/"         >=> renderHtml indexPage
-                route "/register" >=> renderHtml registerPage
-                route "/login"    >=> renderHtml (loginPage false)
+                route "/"         >=> htmlView indexPage
+                route "/register" >=> htmlView registerPage
+                route "/login"    >=> htmlView (loginPage false)
 
                 route "/logout"   >=> mustBeLoggedIn >=> logoutHandler
                 route "/user"     >=> mustBeLoggedIn >=> userHandler
@@ -247,12 +243,15 @@ let configureServices (services : IServiceCollection) =
     // Enable CORS
     services.AddCors() |> ignore
 
+    // Configure Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
 let configureLogging (builder : ILoggingBuilder) =
     let filter (l : LogLevel) = l.Equals LogLevel.Error
     builder.AddFilter(filter).AddConsole().AddDebug() |> ignore
 
 [<EntryPoint>]
-let main argv =
+let main _ =
     WebHostBuilder()
         .UseKestrel()
         .UseContentRoot(Directory.GetCurrentDirectory())

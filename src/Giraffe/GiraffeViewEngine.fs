@@ -1,30 +1,30 @@
-/// ---------------------------
-/// Attribution to original authors of this code
-/// ---------------------------
-/// This code has been originally ported from Suave with small modifications afterwards.
-///
-/// The original code has been authored by
-/// * Henrik Feldt (https://github.com/haf)
-/// * Ademar Gonzalez (https://github.com/ademar)
-///
-/// You can find the original implementation here:
-/// https://github.com/SuaveIO/suave/blob/master/src/Experimental/Html.fs
-///
-/// Thanks to Suave (https://github.com/SuaveIO/suave) for letting us borrow their code
-/// and thanks to Florian Verdonck (https://github.com/nojaf) for porting it to Giraffe.
+// ---------------------------
+// Attribution to original authors of this code
+// ---------------------------
+// This code has been originally ported from Suave with small modifications afterwards.
+//
+// The original code has been authored by
+// * Henrik Feldt (https://github.com/haf)
+// * Ademar Gonzalez (https://github.com/ademar)
+//
+// You can find the original implementation here:
+// https://github.com/SuaveIO/suave/blob/master/src/Experimental/Html.fs
+//
+// Thanks to Suave (https://github.com/SuaveIO/suave) for letting us borrow their code
+// and thanks to Florian Verdonck (https://github.com/nojaf) for porting it to Giraffe.
 
 module Giraffe.GiraffeViewEngine
 
 open System
 open System.Net
 
-/// ---------------------------
-/// Definition of different HTML content
-///
-/// For more info check:
-/// - https://developer.mozilla.org/en-US/docs/Web/HTML/Element
-/// - https://www.w3.org/TR/html5/syntax.html#void-elements
-/// ---------------------------
+// ---------------------------
+// Definition of different HTML content
+//
+// For more info check:
+// - https://developer.mozilla.org/en-US/docs/Web/HTML/Element
+// - https://www.w3.org/TR/html5/syntax.html#void-elements
+// ---------------------------
 
 type XmlAttribute =
     | KeyValue of string * string
@@ -38,9 +38,9 @@ type XmlNode =
     | EncodedText of string                    // XML encoded text content
     | RawText     of string                    // Raw text content
 
-/// ---------------------------
-/// Building blocks
-/// ---------------------------
+// ---------------------------
+// Building blocks
+// ---------------------------
 
 let attr (key : string) (value : string) = KeyValue (key, value)
 let flag (key : string) = Boolean key
@@ -59,14 +59,14 @@ let rawText     (content : string) = RawText content
 let emptyText                      = rawText ""
 let comment     (content : string) = rawText (sprintf "<!-- %s -->" content)
 
-/// ---------------------------
-/// Default HTML elements
-/// ---------------------------
+// ---------------------------
+// Default HTML elements
+// ---------------------------
 
-/// Main root
+// Main root
 let html       = tag "html"
 
-/// Document metadata
+// Document metadata
 let ``base``   = voidTag "base"
 let head       = tag "head"
 let link attr  = voidTag "link" attr
@@ -74,7 +74,7 @@ let meta attr  = voidTag "meta" attr
 let style      = tag "style"
 let title      = tag "title"
 
-/// Content sectioning
+// Content sectioning
 let body       = tag "body"
 let address    = tag "address"
 let article    = tag "article"
@@ -91,7 +91,7 @@ let header     = tag "header"
 let nav        = tag "nav"
 let section    = tag "section"
 
-/// Text content
+// Text content
 let dd         = tag "dd"
 let div        = tag "div"
 let dl         = tag "dl"
@@ -106,7 +106,7 @@ let p          = tag "p"
 let pre        = tag "pre"
 let ul         = tag "ul"
 
-/// Inline text semantics
+// Inline text semantics
 let a          = tag "a"
 let abbr       = tag "abbr"
 let b          = tag "b"
@@ -138,7 +138,7 @@ let u          = tag "u"
 let var        = tag "var"
 let wbr        = voidTag "wbr"
 
-/// Image and multimedia
+// Image and multimedia
 let area       = voidTag "area"
 let audio      = tag "audio"
 let img        = voidTag "img"
@@ -146,22 +146,22 @@ let map        = tag "map"
 let track      = voidTag "track"
 let video      = tag "video"
 
-/// Embedded content
+// Embedded content
 let embed      = voidTag "embed"
 let object     = tag "object"
 let param      = voidTag "param"
 let source     = voidTag "source"
 
-/// Scripting
+// Scripting
 let canvas     = tag "canvas"
 let noscript   = tag "noscript"
 let script     = tag "script"
 
-/// Demarcating edits
+// Demarcating edits
 let del        = tag "del"
 let ins        = tag "ins"
 
-/// Table content
+// Table content
 let caption    = tag "caption"
 let col        = voidTag "col"
 let colgroup   = tag "colgroup"
@@ -173,7 +173,7 @@ let th         = tag "th"
 let thead      = tag "thead"
 let tr         = tag "tr"
 
-/// Forms
+// Forms
 let button     = tag "button"
 let datalist   = tag "datalist"
 let fieldset   = tag "fieldset"
@@ -189,16 +189,16 @@ let progress   = tag "progress"
 let select     = tag "select"
 let textarea   = tag "textarea"
 
-/// Interactive elements
+// Interactive elements
 let details    = tag "details"
 let dialog     = tag "dialog"
 let menu       = tag "menu"
 let menuitem   = voidTag "menuitem"
 let summary    = tag "summary"
 
-/// ---------------------------
-/// Default HTML attributes
-/// ---------------------------
+// ---------------------------
+// Default HTML attributes
+// ---------------------------
 
 [<AutoOpen>]
 module Attributes =
@@ -307,9 +307,9 @@ module Attributes =
     let _selected           = flag "selected"
     let _typemustmatch      = flag "typemustmatch"
 
-/// ---------------------------
-/// Render XML string
-/// ---------------------------
+// ---------------------------
+// Render XML string
+// ---------------------------
 
 let rec private nodeToString (htmlStyle : bool) (node : XmlNode) =
     let startElementToString selfClosing (elemName, attributes : XmlAttribute array) =
