@@ -63,7 +63,7 @@ let documentedApp =
             GET >=>
 //                choose [
             route  "/"           >=> text "index"
-//                    route  "/ping"       >=> text "pong"
+            route  "/ping"       >=> text "pong"
 ////                    route  "/error"      >=> (fun _ _ -> failwith "Something went wrong!")
 ////                    route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
 ////                    route  "/once"       >=> (time() |> text)

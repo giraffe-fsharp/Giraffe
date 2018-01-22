@@ -496,9 +496,9 @@ let ``app contains 2 choose in GET`` () =
       choose [
         GET >=>
             route  "/"           >=> text "index"
-//            route "/dummy" >=> submitDummy
+            route "/dummy" >=> submitDummy
             route  "/toto"           >=> text "toto"
-//            routef "/hello/%s/%s" bonjour
+            routef "/hello/%s/%s" bonjour
       ] @>
     
   let ctx = analyze webApp AppAnalyzeRules.Default
@@ -527,21 +527,21 @@ let ``app contains 2 choose in GET`` () =
               ModelType=(typeof<string>) }
           ]
       }
-//      { Verb="GET"
-//        Path="/toto"
-//        Parameters=List.empty
-//        Responses=
-//          [
-//            { StatusCode=200
-//              ContentType="text/plain"
-//              ModelType=(typeof<string>) }
-//          ]
-//      }
-//      { Verb="GET"
-//        Path="/dummy"
-//        Parameters=List.empty
-//        Responses=List.empty
-//      }
+      { Verb="GET"
+        Path="/toto"
+        Parameters=List.empty
+        Responses=
+          [
+            { StatusCode=200
+              ContentType="text/plain"
+              ModelType=(typeof<string>) }
+          ]
+      }
+      { Verb="GET"
+        Path="/dummy"
+        Parameters=List.empty
+        Responses=List.empty
+      }
      ]
   
 //  failwithf "exp: %A" webApp

@@ -308,7 +308,6 @@ module Analyzer =
           ctx.AddArgType (o.GetType())
       
       | Let (v, NewUnionCase (_,handlers), Lambda (next, Call (None, m, _))) when v.Name = "handlers" && m.Name = "choose" && m.DeclaringType.Name = "HttpHandlers" ->
-      
           let ctxs = handlers |> List.map(fun e -> loop e ctx)
           { ctx 
               with 
@@ -322,17 +321,16 @@ module Analyzer =
           | Value (o,_) -> 
               ctx.SetVariable id.Name (o.ToString()) |> loop t
           | o -> 
-              analyzeAll [op;t] ctx
+              analyzeAll [o;t] ctx // (newContext())
+                //|> mergeWith ctx
           
       | NewUnionCase (_,exprs) ->
-          if List.isEmpty exprs
-          then ctx
-          else 
-            //analyzeAll exprs ctx
-            exprs 
-            |> List.map (fun e -> loop e (newContext()))
-            |> failwithf "exprs: %A"
-            //|> List.fold (fun state c -> state |> mergeWith c) ctx
+          let mustPush = 
+            match exprs with
+            | Let _ :: _ -> true
+            | _ -> false 
+          let r = analyzeAll exprs ctx
+          if mustPush then pushRoute r else r
 
       | Application (Application (PropertyGet (None, op_GreaterEqualsGreater, []), exp1 ), ValueWithName _) ->
           let c1 = loop exp1 (newContext())
@@ -346,8 +344,6 @@ module Analyzer =
       | Application (left, right) ->
           let c1 = loop right (newContext()) 
           let c2 = loop left (newContext())
-//          let c1 = loop right ctx
-//          let c2 = loop left ctx
           c1 |> mergeWith c2 |> pushRoute
           
       | Call(instance, method, args) when method.Name = "choose" && method.DeclaringType.Name = "HttpHandlers" ->
