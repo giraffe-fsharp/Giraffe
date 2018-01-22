@@ -68,6 +68,7 @@ let ``webapp is a simple route with verb `GET` returning text`` () =
   let exp = 
     { Verb="GET"
       Path="/home"
+      MetaData=Map.empty
       Parameters=List.empty
       Responses=
         [
@@ -92,6 +93,7 @@ let ``webapp is a simple route with verb `POST` returning text`` () =
   let exp = 
     { Verb="POST"
       Path="/home"
+      MetaData=Map.empty
       Parameters=List.empty
       Responses=
         [
@@ -121,6 +123,7 @@ let ``webapp is a simple route with verb `PUT` with a condition returning text``
   let exp = 
     { Verb="PUT"
       Path="/seconds"
+      MetaData=Map.empty
       Parameters=List.empty
       Responses=
         [
@@ -152,6 +155,7 @@ let ``webapp is a simple route with verb `DELETE` with a condition returning tex
   let exp = 
     { Verb="DELETE"
       Path="/seconds"
+      MetaData=Map.empty
       Parameters=List.empty
       Responses=
         [
@@ -195,6 +199,7 @@ let ``webapp is a simple route with verb `POST` with a more complex condition re
   let exp = 
     { Verb="POST"
       Path="/swagger/is/cool"
+      MetaData=Map.empty
       Parameters=List.empty
       Responses=
         [
@@ -221,13 +226,14 @@ let ``webapp is a simple route with verb `POST` with a more complex condition re
 [<Fact>]
 let ``webapp is a simple routeCi with verb `GET` returning text`` () =
   let webApp =
-    <@ GET >=> routeCi "/home" >=> text "Home." @>
+    <@ GET >=> routeCi "/home" >=> operationId "home page" >=> text "Home." @>
 
   let ctx = analyze webApp AppAnalyzeRules.Default
 
   let exp = 
     { Verb="GET"
       Path="/home"
+      MetaData=Map.empty
       Parameters=List.empty
       Responses=
         [
@@ -250,6 +256,7 @@ let ``webapp is a simple routef with verb `GET` returning text and handler inner
   let exp = 
     { Verb = "GET"
       Path = "/hello/%s"
+      MetaData=Map.empty
       Parameters = [ ParamDescriptor.InPath "arg0" typeof<string> ]
       Responses =
         [
@@ -273,6 +280,7 @@ let ``routef with verb `GET` and args [int, string, float] returning text and ha
   let exp = 
     { Verb = "GET"
       Path = "/hello/%d/%s/%f"
+      MetaData=Map.empty
       Parameters = [ ParamDescriptor.InPath "arg0" typeof<int> 
                      ParamDescriptor.InPath "arg1" typeof<string>
                      ParamDescriptor.InPath "arg2" typeof<float> ]
@@ -309,6 +317,7 @@ let ``app contains 1 route and 1 routef in GET`` () =
     [
      { Verb = "GET"
        Path = "/hello/%d/%s/%f"
+       MetaData=Map.empty
        Parameters = [ ParamDescriptor.InPath "arg0" typeof<int> 
                       ParamDescriptor.InPath "arg1" typeof<string>
                       ParamDescriptor.InPath "arg2" typeof<float> ]
@@ -321,6 +330,7 @@ let ``app contains 1 route and 1 routef in GET`` () =
      }
      { Verb="GET"
        Path="/home"
+       MetaData=Map.empty
        Parameters=List.empty
        Responses=
          [
@@ -332,7 +342,6 @@ let ``app contains 1 route and 1 routef in GET`` () =
     ]
   let routes = ctx.Routes
   assertListDeepEqual exp routes
-  //assertRoutesAreEqual exp routes
 
 [<Fact>]
 let ``app contains 1 route and 1 routef in GET and POST`` () =
@@ -348,6 +357,7 @@ let ``app contains 1 route and 1 routef in GET and POST`` () =
     [
      { Verb = "GET"
        Path = "/hello/%d/%s/%f"
+       MetaData=Map.empty
        Parameters = [ ParamDescriptor.InPath "arg0" typeof<int> 
                       ParamDescriptor.InPath "arg1" typeof<string>
                       ParamDescriptor.InPath "arg2" typeof<float> ]
@@ -360,6 +370,7 @@ let ``app contains 1 route and 1 routef in GET and POST`` () =
      }
      { Verb="POST"
        Path="/home"
+       MetaData=Map.empty
        Parameters=List.empty
        Responses=
          [
@@ -390,6 +401,7 @@ let ``GET route reading params in handler body and returning text`` () =
   let exp = 
     { Verb = "POST"
       Path = "/hello"
+      MetaData=Map.empty
       Parameters = 
         [ { Name = "name"
             Type = None
@@ -420,6 +432,7 @@ let ``Converting a route infos into route description`` () =
   let route = 
       { Verb = "POST"
         Path = "/hello"
+        MetaData=Map.empty
         Parameters = 
           [ { Name = "name"
               Type = None
@@ -458,6 +471,7 @@ let ``context merge with an empty one`` () =
       Variables = Map [("path", unbox "/toto")];
       Routes = [{Verb = "GET";
                  Path = "/toto";
+                 MetaData=Map.empty
                  Parameters = [];
                  Responses = [{StatusCode = 200;
                                ContentType = "text/plain";
@@ -508,6 +522,7 @@ let ``app contains 2 choose in GET`` () =
      [
       { Verb = "GET"
         Path = "/hello/%s/%s"
+        MetaData=Map.empty
         Parameters = [ ParamDescriptor.InPath "arg0" typeof<string> 
                        ParamDescriptor.InPath "arg1" typeof<string> ]
         Responses =
@@ -519,6 +534,7 @@ let ``app contains 2 choose in GET`` () =
       }
       { Verb="GET"
         Path="/"
+        MetaData=Map.empty
         Parameters=List.empty
         Responses=
           [
@@ -529,6 +545,7 @@ let ``app contains 2 choose in GET`` () =
       }
       { Verb="GET"
         Path="/toto"
+        MetaData=Map.empty
         Parameters=List.empty
         Responses=
           [
@@ -539,6 +556,7 @@ let ``app contains 2 choose in GET`` () =
       }
       { Verb="GET"
         Path="/dummy"
+        MetaData=Map.empty
         Parameters=List.empty
         Responses=List.empty
       }

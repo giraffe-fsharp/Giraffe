@@ -38,6 +38,9 @@ and ParamContainer =
     | Path -> "path" | FormData -> "formData"
     | Body -> "body"
 
+let operationId (opId:string) next = 
+  next
+
 module Analyzer =
   
   type FormatParsed =
@@ -107,6 +110,7 @@ module Analyzer =
   type RouteInfos =
     { Verb:string
       Path:string
+      MetaData:Map<string, string>
       Parameters:ParamDescriptor list
       Responses:ResponseInfos list }
   and ResponseInfos =
@@ -165,7 +169,7 @@ module Analyzer =
       { __ with Responses = rs :: __.Responses }
     member __.AddRoute verb parameters path =
       let ctx = __.PushRoute ()
-      ctx.CurrentRoute := Some { Verb=verb; Path=path; Responses=[]; Parameters=( __.Parameters @ parameters) }
+      ctx.CurrentRoute := Some { Verb=verb; Path=path; Responses=[]; Parameters=( __.Parameters @ parameters); MetaData=Map.empty }
       ctx
     member __.AddParameter parameter =
       { __ with Parameters=(parameter :: __.Parameters) }
@@ -281,6 +285,24 @@ module Analyzer =
           { ModuleName="HttpHandlers"; FunctionName="DELETE" }, (fun ctx -> { ctx with Verb = (Some "DELETE") })
           // HTTP PATCH method
           { ModuleName="HttpHandlers"; FunctionName="PATCH" }, (fun ctx -> { ctx with Verb = (Some "PATCH") })
+          
+          
+          { ModuleName="Swagger"; FunctionName="operationId" }, 
+              (fun ctx ->
+                let opId = ctx.Variables.Item "opId" |> toString
+                match !ctx.CurrentRoute with
+                | Some r ->
+                    let nr = r.MetaData.Add("operationId", opId)                    
+                    ctx.CurrentRoute := Some { r with MetaData=nr }
+                    ctx
+                | None -> 
+                    match ctx.Routes with
+                    | r :: t ->
+                      let nr = r.MetaData.Add("operationId", opId)                    
+                      let route = { r with MetaData=nr }
+                      { ctx with Routes= route :: t }
+                    | _ -> ctx
+                )
           
   //        { ModuleName="IFormCollection"; FunctionName="Item" }, (fun ctx -> ctx )
           
@@ -782,11 +804,11 @@ module Generator =
             { ResponseDoc.Default 
                 with Schema=schema } 
          )
-          
+    let operationId = if route.MetaData.ContainsKey "operationId" then route.MetaData.["operationId"] else ""
     let pathDef =
       { Summary=""
         Description=""
-        OperationId=""
+        OperationId=operationId
         Consumes=[]
         Produces=[]
         Tags=[]
