@@ -1125,7 +1125,7 @@ let app =
     router notFound [
         route "/"       (text "index")
         route "/about"  (text "about")
-        routef "parsing/%s/%i" (fun (s,i) -> text (sprintf "Recieved %s & %i" s i))
+        routef "parsing/%s/%i" (fun (s,i) -> text (sprintf "Received %s & %i" s i))
         subRoute "/api" [
             GET [
                 route "/"       (text "api index")
