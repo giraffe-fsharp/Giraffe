@@ -17,10 +17,9 @@ type Precondition =
 
 type EntityTagHeaderValue with
     member __.FromString (isWeak : bool) (eTag : string) =
-        EntityTagHeaderValue(StringSegment(eTag), isWeak)
+        EntityTagHeaderValue(StringSegment(sprintf "\"%s\"" eTag), isWeak)
 
 type HttpContext with
-
     member private this.IsHeadOrGetRequest() =
         HttpMethods.IsHead this.Request.Method || HttpMethods.IsGet this.Request.Method
 

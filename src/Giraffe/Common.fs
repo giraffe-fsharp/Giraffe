@@ -1,40 +1,67 @@
-namespace Giraffe
+[<AutoOpen>]
+module Giraffe.Common
+
+open System
+open System.IO
+
+// ---------------------------
+// Useful extension methods
+// ---------------------------
+
+type DateTime with
+    /// ** Description **
+    /// Converts a `DateTime` object into an RFC3339 formatted `string`.
+    /// ** Specification **
+    /// https://www.ietf.org/rfc/rfc3339.txt
+    /// ** Output **
+    /// Formatted string value.
+    member this.ToHtmlString() = this.ToString("r")
+
+type DateTimeOffset with
+    /// ** Description **
+    /// Converts a `DateTimeOffset` object into an RFC3339 formatted `string`.
+    /// ** Specification **
+    /// https://www.ietf.org/rfc/rfc3339.txt
+    /// ** Output **
+    /// Formatted string value.
+    member this.ToHtmlString() = this.ToString("r")
 
 // ---------------------------
 // Common helper functions
 // ---------------------------
 
-module Common =
-    open System
-    open System.IO
+/// ** Description **
+/// Checks if an object is not null.
+///
+/// ** Parameters **
+///     - `x`: The object to validate against `null`.
+///
+/// ** Output **
+/// Returns `true` if the object is not `null` otherwise `false`.
+let inline isNotNull x = not (isNull x)
 
-    let inline isNotNull x = not (isNull x)
+/// ** Description **
+/// Converts a `string` into a `string option` where `null` or an empty string will be converted to `None` and everything else to `Some string`.
+///
+/// ** Parameters **
+///     - `str`: The string value to be converted into an option of string.
+///
+/// ** Output **
+/// Returns `None` if the string was `null` or empty otherwise `Some string`.
+let inline strOption (str : string) =
+    if String.IsNullOrEmpty str then None else Some str
 
-    let inline strOption (str : string) =
-        if String.IsNullOrEmpty str then None else Some str
-
-    let readFileAsStringAsync (filePath : string) =
-        task {
-            use stream = new FileStream(filePath, FileMode.Open)
-            use reader = new StreamReader(stream)
-            return! reader.ReadToEndAsync()
-        }
-
-// ---------------------------
-// Useful computation expressions
-// ---------------------------
-
-module ComputationExpressions =
-
-    type OptionBuilder() =
-        member __.Bind(v, f) = Option.bind f v
-        member __.Return v   = Some v
-        member __.Zero()     = None
-
-    let opt = OptionBuilder()
-
-    type ResultBuilder() =
-        member __.Bind(v, f) = Result.bind f v
-        member __.Return v   = Ok v
-
-    let res = ResultBuilder()
+/// ** Description **
+/// Reads a file asynchronously from the file system.
+///
+/// ** Parameters **
+///     - `filePath`: The absolute path of the file.
+///
+/// ** Output **
+/// Returns the string contents of the file wrapped in a Task.
+let readFileAsStringAsync (filePath : string) =
+    task {
+        use stream = new FileStream(filePath, FileMode.Open)
+        use reader = new StreamReader(stream)
+        return! reader.ReadToEndAsync()
+    }

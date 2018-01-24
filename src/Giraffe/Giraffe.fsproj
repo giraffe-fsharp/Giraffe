@@ -37,6 +37,7 @@
 
   <ItemGroup>
     <Compile Include="Common.fs" />
+    <Compile Include="ComputationExpressions.fs" />
     <Compile Include="Serialization.fs" />
     <Compile Include="FormatExpressions.fs" />
     <Compile Include="Core.fs" />
