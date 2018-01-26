@@ -1,5 +1,6 @@
 [<AutoOpen>]
 module Giraffe.ModelBinding
+
 open System
 open System.IO
 open System.Text
@@ -12,18 +13,30 @@ open Microsoft.Net.Http.Headers
 open Microsoft.FSharp.Reflection
 
 type HttpContext with
+    /// ** Description **
+    /// Reads the entire body of the `HttpRequest` asynchronously and returns it as a `string` value.
+    /// ** Output **
+    /// Returns the contents of the request body as a `Task<string>`.
     member this.ReadBodyFromRequestAsync() =
         task {
             use reader = new StreamReader(this.Request.Body, Encoding.UTF8)
             return! reader.ReadToEndAsync()
         }
 
+    /// ** Description **
+    /// Uses the `IJsonSerializer` to deserializes the entire body of the `HttpRequest` asynchronously into an object of type `'T`.
+    /// ** Output **
+    /// Returns a `Task<'T>`.
     member this.BindJsonAsync<'T>() =
         task {
             let serializer = this.GetJsonSerializer()
             return! serializer.DeserializeAsync<'T> this.Request.Body
         }
 
+    /// ** Description **
+    /// Uses the `IXmlSerializer` to deserializes the entire body of the `HttpRequest` asynchronously into an object of type `'T`.
+    /// ** Output **
+    /// Returns a `Task<'T>`.
     member this.BindXmlAsync<'T>() =
         task {
             let serializer = this.GetXmlSerializer()
@@ -31,7 +44,13 @@ type HttpContext with
             return serializer.Deserialize<'T> body
         }
 
-    member this.BindFormAsync<'T> (?cultureInfo : CultureInfo) =
+    /// ** Description **
+    /// Parses all input elements of a HTML form into an object of type `'T`.
+    /// ** Parameters **
+    ///     - `cultureInfo`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
+    /// ** Output **
+    /// Returns a `Task<'T>`.
+    member this.BindFormAsync<'T> (cultureInfo : CultureInfo option) =
         task {
             let! form   = this.Request.ReadFormAsync()
             let culture = defaultArg cultureInfo CultureInfo.InvariantCulture
@@ -48,7 +67,13 @@ type HttpContext with
             return obj
         }
 
-    member this.BindQueryString<'T> (?cultureInfo : CultureInfo) =
+    /// ** Description **
+    /// Parses all parameters of a request's query string into an object of type `'T`.
+    /// ** Parameters **
+    ///     - `cultureInfo`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
+    /// ** Output **
+    /// Returns a `Task<'T>`.
+    member this.BindQueryString<'T> (cultureInfo : CultureInfo option) =
         let obj     = Activator.CreateInstance<'T>()
         let culture = defaultArg cultureInfo CultureInfo.InvariantCulture
         let props   = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
@@ -60,11 +85,11 @@ type HttpContext with
 
                 let isOptionType, isNullableType =
                     if p.PropertyType.GetTypeInfo().IsGenericType
-                    then 
+                    then
                         let typeDef = p.PropertyType.GetGenericTypeDefinition()
-                        (typeDef = typedefof<Option<_>>, 
-                         typeDef = typedefof<Nullable<_>>) 
-                    else (false, false)                          
+                        (typeDef = typedefof<Option<_>>,
+                         typeDef = typedefof<Nullable<_>>)
+                    else (false, false)
 
                 let propertyType =
                     if isOptionType || isNullableType then
@@ -94,7 +119,13 @@ type HttpContext with
                     p.SetValue(obj, value, null))
         obj
 
-    member this.BindModelAsync<'T> (?cultureInfo : CultureInfo) =
+    /// ** Description **
+    /// Parses the request body into an object of type `'T` based on the request's `Content-Type` header.
+    /// ** Parameters **
+    ///     - `cultureInfo`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
+    /// ** Output **
+    /// Returns a `Task<'T>`.
+    member this.BindModelAsync<'T> (cultureInfo : CultureInfo option) =
         task {
             let method = this.Request.Method
             if method.Equals "POST" || method.Equals "PUT" then
@@ -107,7 +138,7 @@ type HttpContext with
                         match parsed.Value.MediaType.Value with
                         | "application/json"                  -> this.BindJsonAsync<'T>()
                         | "application/xml"                   -> this.BindXmlAsync<'T>()
-                        | "application/x-www-form-urlencoded" -> this.BindFormAsync<'T>(?cultureInfo = cultureInfo)
+                        | "application/x-www-form-urlencoded" -> this.BindFormAsync<'T>(cultureInfo = cultureInfo)
                         | _ -> failwithf "Cannot bind model from Content-Type '%s'" original.Value
-            else return this.BindQueryString<'T>(?cultureInfo = cultureInfo)
+            else return this.BindQueryString<'T>(cultureInfo = cultureInfo)
         }

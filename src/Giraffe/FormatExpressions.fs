@@ -10,7 +10,7 @@ open Microsoft.FSharp.Reflection
 // String matching functions
 // ---------------------------
 
-let formatStringMap =
+let private formatStringMap =
     let guidFormatStr =
         "(([0-9A-Fa-f]{8}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{12})|([0-9A-Fa-f]{32}))"
 
@@ -26,7 +26,7 @@ let formatStringMap =
         'O', (guidFormatStr,            Guid                 >> box)  // Guid
     ]
 
-let convertToRegexPatternAndFormatChars (formatString : string) =
+let private convertToRegexPatternAndFormatChars (formatString : string) =
     let rec convert (chars : char list) =
         match chars with
         | '%' :: '%' :: tail ->
@@ -46,6 +46,13 @@ let convertToRegexPatternAndFormatChars (formatString : string) =
     |> convert
     |> (fun (pattern, formatChars) -> sprintf "^%s$" pattern, formatChars)
 
+/// ** Description **
+/// Tries to parse an input string based on a given format string and return a tuple of all parsed arguments.
+/// ** Parameters **
+///     - `format`: The format string which shall be used for parsing.
+///     - `input`: The input string from which the parsed arguments shall be extracted.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreCase : bool) =
     try
         let pattern, formatChars =
@@ -95,6 +102,12 @@ let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreC
 // Validation helper functions
 // ---------------------------
 
+/// ** Description **
+/// Validates if a given format string can be matched with a given tuple.
+/// ** Parameters **
+///     - `format`: The format string which shall be used for parsing.
+/// ** Output **
+/// Returns `unit` if validation was successful otherwise will throw an `Exception`.
 let validateFormat (format : PrintfFormat<_,_,_,_, 'T>) =
 
     let mapping = [
