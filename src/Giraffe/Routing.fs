@@ -6,7 +6,6 @@ open System.Collections.Generic
 open System.Text.RegularExpressions
 open Microsoft.AspNetCore.Http
 open Newtonsoft.Json.Linq
-open Giraffe.Common
 open Giraffe.FormatExpressions
 
 // ---------------------------

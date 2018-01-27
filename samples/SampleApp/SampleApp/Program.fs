@@ -102,7 +102,7 @@ let webApp =
                 route  "/ping"       >=> text "pong"
                 route  "/error"      >=> (fun _ _ -> failwith "Something went wrong!")
                 route  "/login"      >=> loginHandler
-                route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
+                route  "/logout"     >=> signOut authScheme >=> text "Successfully logged out."
                 route  "/user"       >=> mustBeUser >=> userHandler
                 route  "/john-only"  >=> mustBeJohn >=> userHandler
                 routef "/user/%i"    showUserHandler

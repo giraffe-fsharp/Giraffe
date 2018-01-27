@@ -4,8 +4,6 @@ module Giraffe.Auth
 open System.Security.Claims
 open Microsoft.AspNetCore.Authentication
 open Microsoft.AspNetCore.Http
-open Giraffe.Tasks
-open Giraffe.Common
 
 /// ** Description **
 /// Challenges a client to authenticate via a specific `authScheme`.

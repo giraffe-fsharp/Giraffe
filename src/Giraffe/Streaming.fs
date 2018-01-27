@@ -4,12 +4,11 @@ module Giraffe.Streaming
 open System
 open System.IO
 open System.Linq
+open System.Collections.Generic
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Extensions
 open Microsoft.Extensions.Primitives
 open Microsoft.Net.Http.Headers
-open Giraffe.Common
-open System.Collections.Generic
 
 // ---------------------------
 // HTTP Range parsing
@@ -159,11 +158,11 @@ type HttpContext with
                                  (lastModified          : DateTimeOffset option) =
         task {
             match this.ValidatePreconditions eTag lastModified with
-            | ConditionFailed -> return this.PreconditionFailedResponse()
-            | NotModified     -> return this.NotModifiedResponse()
+            | ConditionFailed     -> return this.PreconditionFailedResponse()
+            | ResourceNotModified -> return this.NotModifiedResponse()
 
             // If all pre-conditions have been met (or didn't exist) then proceed with web request execution
-            | IsMatch | NotSpecified ->
+            | AllConditionsMet | NoConditionsSpecified ->
                 if      not stream.CanSeek        then return! this.WriteStreamToBodyAsync stream None
                 else if not enableRangeProcessing then return! this.WriteStreamToBodyAsync stream None
                 else

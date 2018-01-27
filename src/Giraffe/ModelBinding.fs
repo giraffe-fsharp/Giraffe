@@ -50,7 +50,7 @@ type HttpContext with
     ///     - `cultureInfo`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
     /// ** Output **
     /// Returns a `Task<'T>`.
-    member this.BindFormAsync<'T> (cultureInfo : CultureInfo option) =
+    member this.BindFormAsync<'T> (?cultureInfo : CultureInfo) =
         task {
             let! form   = this.Request.ReadFormAsync()
             let culture = defaultArg cultureInfo CultureInfo.InvariantCulture
@@ -73,7 +73,7 @@ type HttpContext with
     ///     - `cultureInfo`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
     /// ** Output **
     /// Returns a `Task<'T>`.
-    member this.BindQueryString<'T> (cultureInfo : CultureInfo option) =
+    member this.BindQueryString<'T> (?cultureInfo : CultureInfo) =
         let obj     = Activator.CreateInstance<'T>()
         let culture = defaultArg cultureInfo CultureInfo.InvariantCulture
         let props   = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
@@ -125,7 +125,7 @@ type HttpContext with
     ///     - `cultureInfo`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
     /// ** Output **
     /// Returns a `Task<'T>`.
-    member this.BindModelAsync<'T> (cultureInfo : CultureInfo option) =
+    member this.BindModelAsync<'T> (?cultureInfo : CultureInfo) =
         task {
             let method = this.Request.Method
             if method.Equals "POST" || method.Equals "PUT" then
@@ -138,7 +138,7 @@ type HttpContext with
                         match parsed.Value.MediaType.Value with
                         | "application/json"                  -> this.BindJsonAsync<'T>()
                         | "application/xml"                   -> this.BindXmlAsync<'T>()
-                        | "application/x-www-form-urlencoded" -> this.BindFormAsync<'T>(cultureInfo = cultureInfo)
+                        | "application/x-www-form-urlencoded" -> this.BindFormAsync<'T>(?cultureInfo = cultureInfo)
                         | _ -> failwithf "Cannot bind model from Content-Type '%s'" original.Value
-            else return this.BindQueryString<'T>(cultureInfo = cultureInfo)
+            else return this.BindQueryString<'T>(?cultureInfo = cultureInfo)
         }

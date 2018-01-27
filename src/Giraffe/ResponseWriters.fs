@@ -5,7 +5,6 @@ open System.IO
 open System.Text
 open Microsoft.AspNetCore.Http
 open Microsoft.Net.Http.Headers
-open Giraffe.Common
 open Giraffe.GiraffeViewEngine
 
 // ---------------------------

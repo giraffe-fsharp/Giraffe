@@ -105,9 +105,10 @@ let runTask task =
     |> Async.RunSynchronously
 
 let createETag (eTag : string) =
-    Some (
-        Microsoft.Net.Http.Headers.EntityTagHeaderValue(
-            Microsoft.Extensions.Primitives.StringSegment(eTag)))
+    Some (Microsoft.Net.Http.Headers.EntityTagHeaderValue.FromString false eTag)
+
+let createWeakETag (eTag : string) =
+    Some (Microsoft.Net.Http.Headers.EntityTagHeaderValue.FromString true eTag)
 
 // ---------------------------------
 // Compose web request functions
@@ -162,7 +163,7 @@ let hasContentRange (value : string) (response : HttpResponseMessage) =
     response
 
 let hasETag (eTag : string) (response : HttpResponseMessage) =
-    Assert.Equal(eTag, response.Headers.ETag.Tag)
+    Assert.Equal(eTag, (response.Headers.ETag.ToString()))
     response
 
 let hasLastModified (lastModified : DateTimeOffset) (response : HttpResponseMessage) =
@@ -208,7 +209,7 @@ let ``HTTP GET with If-Match and no ETag`` () =
 let ``HTTP GET with If-Match and not matching ETag`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-Match" "\"111\", \"222\", \"333\""
-    |> makeRequest (createETag "\"000\"") None
+    |> makeRequest (createETag "000") None
     |> isStatus HttpStatusCode.PreconditionFailed
     |> readBytes
     |> shouldBeEmpty
@@ -217,7 +218,7 @@ let ``HTTP GET with If-Match and not matching ETag`` () =
 let ``HTTP GET with If-Match and matching ETag`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-Match" "\"111\", \"222\", \"333\""
-    |> makeRequest (createETag "\"222\"") None
+    |> makeRequest (createETag "222") None
     |> isStatus HttpStatusCode.OK
     |> hasContentLength 62L
     |> readBytes
@@ -293,7 +294,7 @@ let ``HTTP GET with If-None-Match without ETag`` () =
 let ``HTTP GET with If-None-Match with non-matching ETag`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-None-Match" "\"111\", \"222\", \"333\""
-    |> makeRequest (createETag "\"444\"") None
+    |> makeRequest (createETag "444") None
     |> isStatus HttpStatusCode.OK
     |> hasContentLength 62L
     |> readBytes
@@ -304,7 +305,7 @@ let ``HTTP GET with If-None-Match with non-matching ETag`` () =
 let ``HTTP GET with If-None-Match with matching ETag`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-None-Match" "\"111\", \"222\", \"333\""
-    |> makeRequest (createETag "\"333\"") None
+    |> makeRequest (createETag "333") None
     |> isStatus HttpStatusCode.NotModified
     |> readBytes
     |> shouldBeEmpty
@@ -313,7 +314,7 @@ let ``HTTP GET with If-None-Match with matching ETag`` () =
 let ``HTTP HEAD with If-None-Match with matching ETag`` () =
     createRequest HttpMethod.Head Urls.rangeProcessingDisabled
     |> addHeader "If-None-Match" "\"111\", \"222\", \"333\""
-    |> makeRequest (createETag "\"222\"") None
+    |> makeRequest (createETag "222") None
     |> isStatus HttpStatusCode.NotModified
     |> readBytes
     |> shouldBeEmpty
@@ -322,7 +323,7 @@ let ``HTTP HEAD with If-None-Match with matching ETag`` () =
 let ``HTTP POST with If-None-Match with matching ETag`` () =
     createRequest HttpMethod.Post Urls.rangeProcessingDisabled
     |> addHeader "If-None-Match" "\"111\", \"222\", \"333\""
-    |> makeRequest (createETag "\"111\"") None
+    |> makeRequest (createETag "111") None
     |> isStatus HttpStatusCode.PreconditionFailed
     |> readBytes
     |> shouldBeEmpty
@@ -391,9 +392,20 @@ let ``HTTP POST with If-Modified-Since not in the future and with smaller lastMo
 [<Fact>]
 let ``Endpoint with eTag has ETag HTTP header set`` () =
     createRequest HttpMethod.Post Urls.rangeProcessingDisabled
-    |> makeRequest (createETag "\"abc\"") None
+    |> makeRequest (createETag "abc") None
     |> isStatus HttpStatusCode.OK
     |> hasETag "\"abc\""
+    |> hasContentLength 62L
+    |> readBytes
+    |> printBytes
+    |> shouldEqual "48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90"
+
+[<Fact>]
+let ``Endpoint with weak eTag has ETag HTTP header set`` () =
+    createRequest HttpMethod.Post Urls.rangeProcessingDisabled
+    |> makeRequest (createWeakETag "abc") None
+    |> isStatus HttpStatusCode.OK
+    |> hasETag "W/\"abc\""
     |> hasContentLength 62L
     |> readBytes
     |> printBytes
@@ -413,13 +425,12 @@ let ``Endpoint with lastModified has Last-Modified HTTP header set`` () =
 
 [<Fact>]
 let ``HTTP GET with matching If-Match ignores non-matching If-Unmodified-Since`` () =
-    let eTag              = "\"abc\""
     let lastModified      = DateTimeOffset.UtcNow.AddDays(-9.0)
     let ifUnmodifiedSince = lastModified.AddDays(-1.0).ToHtmlString()
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
-    |> addHeader "If-Match" eTag
+    |> addHeader "If-Match" "\"abc\""
     |> addHeader "If-Unmodified-Since" ifUnmodifiedSince
-    |> makeRequest (createETag eTag) (Some lastModified)
+    |> makeRequest (createETag "abc") (Some lastModified)
     |> isStatus HttpStatusCode.OK
     |> hasContentLength 62L
     |> readBytes
@@ -428,14 +439,13 @@ let ``HTTP GET with matching If-Match ignores non-matching If-Unmodified-Since``
 
 [<Fact>]
 let ``HTTP GET with non-matching If-None-Match ignores not matching If-Modified-Since`` () =
-    let eTag              = "\"abc\""
-    let ifNoneMatch       = "\"123\""
-    let lastModified      = DateTimeOffset.UtcNow.AddDays(-5.0)
-    let ifModifiedSince   = lastModified.AddDays(1.0).ToHtmlString()
+    let ifNoneMatch     = "\"123\""
+    let lastModified    = DateTimeOffset.UtcNow.AddDays(-5.0)
+    let ifModifiedSince = lastModified.AddDays(1.0).ToHtmlString()
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-None-Match" ifNoneMatch
     |> addHeader "If-Modified-Since" ifModifiedSince
-    |> makeRequest (createETag eTag) (Some lastModified)
+    |> makeRequest (createETag "abc") (Some lastModified)
     |> isStatus HttpStatusCode.OK
     |> hasContentLength 62L
     |> readBytes
