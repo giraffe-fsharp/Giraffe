@@ -61,7 +61,6 @@ let inline strOption (str : string) =
 /// Returns the string contents of the file wrapped in a Task.
 let readFileAsStringAsync (filePath : string) =
     task {
-        use stream = new FileStream(filePath, FileMode.Open)
-        use reader = new StreamReader(stream)
+        use reader = new StreamReader(filePath)
         return! reader.ReadToEndAsync()
     }
