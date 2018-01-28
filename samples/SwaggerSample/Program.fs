@@ -64,18 +64,19 @@ let documentedApp =
     <@
         choose [
             GET >=>
-                choose [
-                        route  "/"           >=> text "index" 
-                        route  "/ping"       >=> text "pong"
-                        route  "/error"      >=> (fun _ _ -> failwith "Something went wrong!")
-                        route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
-                        route  "/once"       >=> (time() |> text)
-                        route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
-                        route "/car" >=> submitCar
-                        
-                        // Swagger operation id can be defined like this or with DocumentationAddendums
-                        operationId "say_hello_in_french" ==> routef "/hello/%s/%s" bonjour
-                ]
+               choose [
+                    route  "/"           >=> text "index" 
+                    route  "/ping"       >=> text "pong"
+                    route  "/error"      >=> (fun _ _ -> failwith "Something went wrong!")
+                    route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
+                    route  "/once"       >=> (time() |> text)
+                    route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
+                    route "/car" >=> submitCar
+                    
+                    // Swagger operation id can be defined like this or with DocumentationAddendums
+                    operationId "say_hello_in_french" ==> routef "/hello/%s/%s" bonjour
+               ]
+            route  "/test"       >=> text "test"
             POST >=>  
                 choose [
                         route "/hello" 
@@ -96,11 +97,22 @@ let documentedApp =
 
 let docAddendums =
     fun (route:Analyzer.RouteInfos) (path:string,verb:HttpVerb,pathDef:PathDefinition) ->
-        match path,verb with
-        | "/", HttpVerb.Get ->
+    
+        // routef params are automatically added to swagger, but you can customize their names like this 
+        let changeParamName oldName newName (parameters:ParamDefinition list) =
+            parameters |> Seq.find (fun p -> p.Name = oldName) |> fun p -> { p with Name = newName }
+    
+        match path,verb,pathDef with
+        | _,_, def when def.OperationId = "say_hello_in_french" ->
+            let firstname = def.Parameters |> changeParamName "arg0" "Firstname"
+            let lastname = def.Parameters |> changeParamName "arg1" "Lastname"
+            "/hello/{Firstname}/{Lastname}", verb, { def with Parameters = [firstname; lastname] }
+        | "/", HttpVerb.Get,def ->
             // This is another solution to add operation id or other infos
-            path, verb, { pathDef with OperationId = "Home"; Tags=["home page"] }
+            path, verb, { def with OperationId = "Home"; Tags=["home page"] }
         | _ -> path,verb,pathDef
+
+let port = 5000
 
 let webApp = 
     documents documentedApp 
@@ -115,6 +127,7 @@ let webApp =
             
             { c with 
                 Description = describeWith
+                Host = sprintf "localhost:%d" port
                 DocumentationAddendums = docAddendums
                 MethodCallRules = 
                         (fun rules -> 
@@ -160,7 +173,10 @@ let main _ =
     let contentRoot = Directory.GetCurrentDirectory()
     let webRoot     = Path.Combine(contentRoot, "WebRoot")
     
+    let url = sprintf "http://+:%d" port
+    
     WebHost.CreateDefaultBuilder()
+        .UseUrls(url)
         .UseWebRoot(webRoot)
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(configureServices)
