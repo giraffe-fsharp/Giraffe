@@ -70,7 +70,8 @@ let documentedApp =
                         route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
                 ]
             route "/car" >=> submitCar
-            routef "/hello/%s/%s" bonjour >=> operationId "say_hello"
+            //routef "/hello/%s/%s" bonjour >=> operationId "say_hello"
+            operationId "say_hello" ==> routef "/hello/%s/%s" bonjour
 
             RequestErrors.notFound (text "Not Found") ]
     @>

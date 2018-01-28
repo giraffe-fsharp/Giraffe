@@ -38,6 +38,9 @@ and ParamContainer =
     | Path -> "path" | FormData -> "formData"
     | Body -> "body"
 
+// used to facilitate quotation expression analysis
+let (==>) = (>=>)
+
 let operationId (opId:string) next = 
   next
 
@@ -286,7 +289,6 @@ module Analyzer =
           // HTTP PATCH method
           { ModuleName="HttpHandlers"; FunctionName="PATCH" }, (fun ctx -> { ctx with Verb = (Some "PATCH") })
           
-          
           { ModuleName="Swagger"; FunctionName="operationId" }, 
               (fun ctx ->
                 let opId = ctx.Variables.Item "opId" |> toString
@@ -303,8 +305,6 @@ module Analyzer =
                       { ctx with Routes= route :: t }
                     | _ -> ctx
                 )
-          
-  //        { ModuleName="IFormCollection"; FunctionName="Item" }, (fun ctx -> ctx )
           
         ] |> Map
       { MethodCalls=methodCalls }
@@ -343,8 +343,7 @@ module Analyzer =
           | Value (o,_) -> 
               ctx.SetVariable id.Name (o.ToString()) |> loop t
           | o -> 
-              analyzeAll [o;t] ctx // (newContext())
-                //|> mergeWith ctx
+              analyzeAll [o;t] ctx
           
       | NewUnionCase (_,exprs) ->
           let mustPush = 
@@ -354,6 +353,13 @@ module Analyzer =
           let r = analyzeAll exprs ctx
           if mustPush then pushRoute r else r
 
+      | Application (Application (PropertyGet (None, op, []), Let (varname, Value (name,_), Lambda (_,  Call (None, method, _))) ), exp2) when op.Name = "op_EqualsEqualsGreater" ->
+          let c2 = loop exp2 AnalyzeContext.Empty
+          let vars = c2.Variables.Add (varname.Name, name)
+          let c3 = { c2 with Variables=vars }
+          let c4 = rules.ApplyMethodCall method.DeclaringType.Name method.Name c3
+          c4 |> pushRoute |> mergeWith ctx |> pushRoute
+      
       | Application (Application (PropertyGet (None, op_GreaterEqualsGreater, []), exp1 ), ValueWithName _) ->
           let c1 = loop exp1 (newContext())
           let c = ctx |> pushRoute |> mergeWith c1 |> pushRoute
@@ -457,7 +463,6 @@ module Generator =
       Verb:HttpVerb
       Responses:IDictionary<int, ResponseDoc> }
     static member Empty =
-      //let defaultResponses = dict [ (200, ResponseDoc.Default) ]
       { Template=""; Description=""; Params=[]; Verb=Get; Summary=""
         OperationId=""; Produces=[]; Responses=dict[]; Consumes=[]; Tags = [] }
   and ResponseDoc =
@@ -768,7 +773,6 @@ module Generator =
         Verb=HttpVerb.Parse route.Verb
         Params=route.Parameters }
 
-  //IDictionary<string,IDictionary<HttpVerb,PathDefinition>>
   let convertRouteInfos (route:Analyzer.RouteInfos) : (string * HttpVerb * PathDefinition) =
     let verb = HttpVerb.Parse route.Verb
     let parameters = 
