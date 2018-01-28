@@ -71,14 +71,13 @@ let documentedApp =
                     route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
                     route  "/once"       >=> (time() |> text)
                     route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
-                    route "/car" >=> submitCar
-                    
                     // Swagger operation id can be defined like this or with DocumentationAddendums
                     operationId "say_hello_in_french" ==> routef "/hello/%s/%s" bonjour
                ]
             route  "/test"       >=> text "test"
             POST >=>  
                 choose [
+                        route "/car" >=> submitCar
                         route "/hello" 
                           >=>
                             (fun next ctx ->
@@ -87,8 +86,7 @@ let documentedApp =
                               let message = sprintf "hello %s" name
                               if name <> "kevin"
                               then text message next ctx
-                              else
-                                httpFailWith "your are blacklisted" next ctx
+                              else httpFailWith "your are blacklisted" next ctx
                                )
                   ]
 
@@ -110,6 +108,12 @@ let docAddendums =
         | "/", HttpVerb.Get,def ->
             // This is another solution to add operation id or other infos
             path, verb, { def with OperationId = "Home"; Tags=["home page"] }
+        
+        | "/car", HttpVerb.Post,def ->
+            let ndef = 
+                (def.AddConsume "model" "application/json" Body typeof<Car>)
+                    .AddResponse 200 "application/json" "A car" typeof<Car>
+            path, verb, ndef
         | _ -> path,verb,pathDef
 
 let port = 5000

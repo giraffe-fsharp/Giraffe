@@ -524,17 +524,6 @@ module Generator =
   and ObjectDefinition =
     { Id:string
       Properties:IDictionary<string, PropertyDefinition> }
-  and PathDefinition =
-    { Summary:string
-      Description:string
-      OperationId:string
-      Consumes:string list
-      Produces:string list
-      Tags:string list
-      Parameters:ParamDefinition list
-      Responses:IDictionary<int, ResponseDoc> }
-    member __.ShouldSerializeParameters() =
-      __.Parameters.Length > 0
   and PropertyDefinition =
     | Primitive of Type:string*Format:string
     | Ref of ObjectDefinition
@@ -641,6 +630,33 @@ module Generator =
           {Id=t.Name; Properties=props}
 
         describe this
+      
+  type PathDefinition =
+    { Summary:string
+      Description:string
+      OperationId:string
+      Consumes:string list
+      Produces:string list
+      Tags:string list
+      Parameters:ParamDefinition list
+      Responses:Map<int, ResponseDoc> }
+    member __.ShouldSerializeParameters() =
+      __.Parameters.Length > 0
+    member __.AddResponse code mimetype description (modelType:Type) =
+      let dt = modelType.Describes()
+      let rs = __.Responses.Add(code, { Description=description; Schema=Some dt })
+      let produces = mimetype :: __.Produces
+      { __ with Responses=rs; Produces=produces }
+    member __.AddConsume name mimetype (``in``:ParamContainer) (modelType:Type) =
+      let dt = modelType.Describes()
+      let parameters = 
+          { Name=name
+            Type=Some (PropertyDefinition.Ref dt)
+            In=``in``.ToString()
+            Required=true } :: __.Parameters
+      let consumes = mimetype :: __.Consumes
+      { __ with Consumes=consumes; Parameters=parameters }
+        
       
   type ApiDescriptionConverter() =
     inherit JsonConverter()
@@ -825,7 +841,7 @@ module Generator =
               else Some (ty.Describes())
             rs.StatusCode, { ResponseDoc.Default with Schema=schema } 
          )
-      |> dict
+      |> Map
     let operationId = if route.MetaData.ContainsKey "operationId" then route.MetaData.["operationId"] else ""
     
     let consumes = 
@@ -885,6 +901,9 @@ module Generator =
 open Generator
 open Analyzer
 
+let definitionOfType (t:Type) =
+  t.Describes()
+
 let swaggerDoc docCtx addendums (description:ApiDescription -> ApiDescription) schemes host basePath =
   let rawJson (str : string) : HttpHandler =
       setHttpHeader "Content-Type" "application/json"
@@ -893,6 +912,11 @@ let swaggerDoc docCtx addendums (description:ApiDescription -> ApiDescription) s
   fun (next : HttpFunc) (ctx : HttpContext) ->
       task {
           let paths = documentRoutes docCtx.Routes addendums
+          let definitions = 
+            paths
+            |> Seq.collect(fun p -> p.Value |> Seq.collect (fun v -> v.Value.Responses |> Seq.choose(fun r -> r.Value.Schema))) 
+            |> Seq.toList
+            |> List.distinct
           let doc =
               { Swagger="2.0"
                 Info=description ApiDescription.Empty
@@ -900,7 +924,7 @@ let swaggerDoc docCtx addendums (description:ApiDescription -> ApiDescription) s
                 Host=host
                 Schemes=schemes
                 Paths=paths
-                Definitions = dict [] }
+                Definitions = (definitions |> List.map (fun d -> d.Id,d) |> Map) }
                 
           return! rawJson (doc.ToJson()) next ctx
           }
