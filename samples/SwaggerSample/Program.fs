@@ -72,6 +72,8 @@ let documentedApp =
                         route  "/once"       >=> (time() |> text)
                         route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
                         route "/car" >=> submitCar
+                        
+                        // Swagger operation id can be defined like this or with DocumentationAddendums
                         operationId "say_hello_in_french" ==> routef "/hello/%s/%s" bonjour
                 ]
             POST >=>  
@@ -91,56 +93,38 @@ let documentedApp =
 
             RequestErrors.notFound (text "Not Found") ]
     @>
-    
-let methodCalls = 
-    AppAnalyzeRules.Default.MethodCalls
-        .Add ({ ModuleName="App"; FunctionName="httpFailWith" }, 
-                (fun ctx -> 
-                    ctx.AddResponse 500 "text/plain" (typeof<string>)
-             ))
-
-let rules = { AppAnalyzeRules.Default with MethodCalls=methodCalls }
-let docCtx = analyze documentedApp rules
-
-let swaggerDoc addendums =
-    let rawJson (str : string) : HttpHandler =
-        setHttpHeader "Content-Type" "application/json"
-        >=> setBodyAsString str
-
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        task {
-            let description = 
-                { ApiDescription.Empty 
-                    with
-                        Title="Sample 1"
-                        Description="Create a swagger with Giraffe"
-                }
-            let paths = documentRoutes docCtx.Routes addendums
-            let doc =
-                { Swagger="2.0"
-                  Info=description
-                  BasePath="/"
-                  Host="localhost:5000"
-                  Schemes=["http"]
-                  Paths=paths
-                  Definitions = dict [] }
-                  
-            return! rawJson (doc.ToJson()) next ctx
-            }
 
 let docAddendums =
     fun (route:Analyzer.RouteInfos) (path:string,verb:HttpVerb,pathDef:PathDefinition) ->
         match path,verb with
         | "/", HttpVerb.Get ->
-            path, verb, { pathDef with OperationId = "Home" }
+            // This is another solution to add operation id or other infos
+            path, verb, { pathDef with OperationId = "Home"; Tags=["home page"] }
         | _ -> path,verb,pathDef
 
-let webApp =
-    choose [ 
-        route "/swagger.json" >=> swaggerDoc docAddendums
-        swaggerUiHandler "/swaggerui/" "/swagger.json"
-        buildApp documentedApp
-    ]
+let webApp = 
+    documents documentedApp 
+        (fun c ->
+            let describeWith desc  = 
+                { desc
+                    with
+                        Title="Sample 1"
+                        Description="Create a swagger with Giraffe"
+                        TermsOfService="Coucou"
+                } 
+            
+            { c with 
+                Description = describeWith
+                DocumentationAddendums = docAddendums
+                MethodCallRules = 
+                        (fun rules -> 
+                            // You can extend quotation expression analysis
+                            rules.Add ({ ModuleName="App"; FunctionName="httpFailWith" }, 
+                               (fun ctx -> 
+                                   ctx.AddResponse 500 "text/plain" (typeof<string>)
+                        )))
+            }
+        )
 
 // ---------------------------------
 // Main

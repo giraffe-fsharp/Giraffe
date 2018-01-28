@@ -874,6 +874,58 @@ module Generator =
        )
     |> Map
     
-    
-       
+open Generator
+open Analyzer
+
+let swaggerDoc docCtx addendums (description:ApiDescription -> ApiDescription) schemes host basePath =
+  let rawJson (str : string) : HttpHandler =
+      setHttpHeader "Content-Type" "application/json"
+      >=> setBodyAsString str
+
+  fun (next : HttpFunc) (ctx : HttpContext) ->
+      task {
+          let paths = documentRoutes docCtx.Routes addendums
+          let doc =
+              { Swagger="2.0"
+                Info=description ApiDescription.Empty
+                BasePath=basePath
+                Host=host
+                Schemes=schemes
+                Paths=paths
+                Definitions = dict [] }
+                
+          return! rawJson (doc.ToJson()) next ctx
+          }
+
+type DocumentationConfig =
+    { MethodCallRules : Map<MethodCallId, AnalyzeRuleBody> -> Map<MethodCallId, AnalyzeRuleBody>
+      DocumentationAddendums : DocumentationAddendumProvider
+      Description : ApiDescription -> ApiDescription
+      BasePath : string
+      Host : string
+      Schemes : string list
+      SwaggerUrl : string
+      SwaggerUiUrl : string }
+    static member Default =
+        { MethodCallRules=fun m -> m
+          Description=fun d -> d
+          BasePath="/"
+          Host="localhost"
+          Schemes=["http"]
+          DocumentationAddendums=DefaultDocumentationAddendumProvider
+          SwaggerUrl="/swagger.json"
+          SwaggerUiUrl="/swaggerui/"}
+
+let documents webapp (configuration:DocumentationConfig->DocumentationConfig) =
+  let config = configuration DocumentationConfig.Default
+  let rules = { AppAnalyzeRules.Default with MethodCalls=(config.MethodCallRules AppAnalyzeRules.Default.MethodCalls) }
+  let docCtx = analyze webapp rules
+  let webPart = swaggerDoc docCtx config.DocumentationAddendums config.Description config.Schemes config.Host config.BasePath
+  let swaggerJson = route config.SwaggerUrl >=> webPart
+  choose [ 
+          swaggerJson
+          Giraffe.SwaggerUi.swaggerUiHandler config.SwaggerUiUrl config.SwaggerUrl
+          buildApp webapp
+      ]
+
        
