@@ -266,8 +266,16 @@ module Analyzer =
               )
           
           // used to return raw text content
+          { ModuleName="HttpHandlers"; FunctionName="setStatusCode" }, 
+              (fun ctx -> 
+                let code = ctx.Variables.Item "statusCode" |> toString |> Int32.Parse
+                ctx.AddResponse code "text/plain" (typeof<string>)
+              )
+
+          // used to return raw text content
           { ModuleName="HttpHandlers"; FunctionName="text" }, 
               (fun ctx -> ctx.AddResponse 200 "text/plain" (typeof<string>))
+              
           // used to return json content
           { ModuleName="HttpHandlers"; FunctionName="json" }, 
               (fun ctx ->
@@ -773,7 +781,10 @@ module Generator =
         Verb=HttpVerb.Parse route.Verb
         Params=route.Parameters }
 
-  let convertRouteInfos (route:Analyzer.RouteInfos) : (string * HttpVerb * PathDefinition) =
+  type DocumentationAddendumProvider = Analyzer.RouteInfos -> string * HttpVerb * PathDefinition -> string * HttpVerb * PathDefinition
+  let DefaultDocumentationAddendumProvider = fun _ doc -> doc
+
+  let convertRouteInfos (route:Analyzer.RouteInfos) (addendums:DocumentationAddendumProvider) : (string * HttpVerb * PathDefinition) =
     let verb = HttpVerb.Parse route.Verb
     let parameters = 
       route.Parameters
@@ -822,29 +833,29 @@ module Generator =
         Tags=[]
         Parameters=parameters
         Responses=responses }
-    
-    if parameters |> List.exists (fun p -> p.In = ParamContainer.Path.ToString())
-    then 
-      let parts = Analyzer.FormatParser.Parse route.Path
-      let tmpl =
-        parts
-        |> List.fold (
-            fun ((i,acc):(int*string)) (p:Analyzer.FormatPart) ->
-              match p with
-              | Analyzer.Constant c -> i, acc + c
-              | Analyzer.Parsed _ ->
-                  let pa = parameters.Item i 
-                  (i+1), sprintf "%s{%s}" acc pa.Name
-            ) (0,"")
-        |> snd
+    let result =
+      if parameters |> List.exists (fun p -> p.In = ParamContainer.Path.ToString())
+      then 
+        let parts = Analyzer.FormatParser.Parse route.Path
+        let tmpl =
+          parts
+          |> List.fold (
+              fun ((i,acc):(int*string)) (p:Analyzer.FormatPart) ->
+                match p with
+                | Analyzer.Constant c -> i, acc + c
+                | Analyzer.Parsed _ ->
+                    let pa = parameters.Item i 
+                    (i+1), sprintf "%s{%s}" acc pa.Name
+              ) (0,"")
+          |> snd
+        tmpl, verb, pathDef
+      else
+        route.Path, verb, pathDef
+    addendums route result
 
-      tmpl, verb, pathDef
-    else
-      route.Path, verb, pathDef
-
-  let documentRoutes  (routes:Analyzer.RouteInfos list) =
+  let documentRoutes (routes:Analyzer.RouteInfos list) addendums =
     routes 
-    |> Seq.map convertRouteInfos
+    |> Seq.map (fun r -> convertRouteInfos r addendums)
     |> Seq.mapi (
          fun i (tmpl, verb, route) ->
           let operationId = sprintf "Operation %d" i

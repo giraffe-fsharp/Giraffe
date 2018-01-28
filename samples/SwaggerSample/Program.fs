@@ -57,6 +57,9 @@ let bonjour (firstName, lastName) =
     let message = sprintf "%s %s, vous avez le bonjour de Giraffe !" lastName firstName
     text message
 
+let httpFailWith message =
+    setStatusCode 500 >=> text message
+
 let documentedApp =
     <@
         choose [
@@ -79,15 +82,27 @@ let documentedApp =
                               let name = ctx.Request.Form.Item "name" |> Seq.head
                               let nickname = ctx.Request.Form.Item "nickname" |> Seq.head
                               let message = sprintf "hello %s" name
-                              text message next ctx)
+                              if name <> "kevin"
+                              then text message next ctx
+                              else
+                                httpFailWith "your are blacklisted" next ctx
+                               )
                   ]
 
             RequestErrors.notFound (text "Not Found") ]
     @>
     
-let docCtx = analyze documentedApp AppAnalyzeRules.Default
+let methodCalls = 
+    AppAnalyzeRules.Default.MethodCalls
+        .Add ({ ModuleName="App"; FunctionName="httpFailWith" }, 
+                (fun ctx -> 
+                    ctx.AddResponse 500 "text/plain" (typeof<string>)
+             ))
 
-let swaggerDoc =
+let rules = { AppAnalyzeRules.Default with MethodCalls=methodCalls }
+let docCtx = analyze documentedApp rules
+
+let swaggerDoc addendums =
     let rawJson (str : string) : HttpHandler =
         setHttpHeader "Content-Type" "application/json"
         >=> setBodyAsString str
@@ -100,7 +115,7 @@ let swaggerDoc =
                         Title="Sample 1"
                         Description="Create a swagger with Giraffe"
                 }
-            let paths = documentRoutes docCtx.Routes
+            let paths = documentRoutes docCtx.Routes addendums
             let doc =
                 { Swagger="2.0"
                   Info=description
@@ -113,9 +128,16 @@ let swaggerDoc =
             return! rawJson (doc.ToJson()) next ctx
             }
 
+let docAddendums =
+    fun (route:Analyzer.RouteInfos) (path:string,verb:HttpVerb,pathDef:PathDefinition) ->
+        match path,verb with
+        | "/", HttpVerb.Get ->
+            path, verb, { pathDef with OperationId = "Home" }
+        | _ -> path,verb,pathDef
+
 let webApp =
     choose [ 
-        route "/swagger.json" >=> swaggerDoc
+        route "/swagger.json" >=> swaggerDoc docAddendums
         swaggerUiHandler "/swaggerui/" "/swagger.json"
         buildApp documentedApp
     ]
