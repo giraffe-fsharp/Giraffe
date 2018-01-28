@@ -2,6 +2,7 @@ module Giraffe.Swagger
 
 open System
 open System.Linq.Expressions
+open System.Reflection
 open Microsoft.FSharp.Quotations
 open Quotations.DerivedPatterns
 open Quotations.ExprShape
@@ -17,6 +18,29 @@ let getVerb = Option.defaultWith (fun _ -> "GET")
 
 let toString (o:obj) = o.ToString()
 
+type HttpVerb =
+  | Get | Put | Post | Delete | Options | Head | Patch
+  override __.ToString() =
+    match __ with
+    | Get -> "get" | Put -> "put"
+    | Post -> "post" | Delete -> "delete"
+    | Options -> "options" | Head -> "head"
+    | Patch -> "patch"
+  static member TryParse (text:string) =
+      match text.ToLowerInvariant() with
+      | "put" -> Some Put
+      | "post" -> Some Post
+      | "delete" -> Some Delete
+      | "head" -> Some Head
+      | "patch" -> Some Patch
+      | "options" -> Some Options
+      | _ -> None
+  static member Parse (text:string) =
+    text |> HttpVerb.TryParse |> Option.defaultWith (fun _ -> Get)
+
+let (|IsHttpVerb|_|) (prop:PropertyInfo) =
+  HttpVerb.TryParse prop.Name
+  
 type ParamDescriptor =
   { Name:string
     Type:Type option
@@ -210,15 +234,10 @@ module Analyzer =
                   Responses = (route1.Responses @ route2.Responses) |> List.distinct
               }
         | None, None -> None
-      
-      let routes = 
-        __.Routes @ other.Routes 
-        |> List.map (fun route -> { route with Verb=(verb |> getVerb) })
-      
       {
           ArgTypes = __.ArgTypes @ other.ArgTypes
           Variables = variables
-          Routes = routes
+          Routes = __.Routes @ other.Routes
           Verb = verb
           Responses = __.Responses @ other.Responses
           CurrentRoute = ref currentRoute
@@ -326,6 +345,7 @@ module Analyzer =
       let newContext() = 
         { AnalyzeContext.Empty with 
             Responses = ctx.Responses
+            Verb = ctx.Verb
             ArgTypes = ctx.ArgTypes
             Parameters = ctx.Parameters
             Routes = ctx.Routes }
@@ -361,6 +381,11 @@ module Analyzer =
           let r = analyzeAll exprs ctx
           if mustPush then pushRoute r else r
 
+      | Application (Application (PropertyGet (None, op, _), PropertyGet (None, (IsHttpVerb verb), _)), exp) when op.Name = "op_GreaterEqualsGreater" ->
+          let v = Some(verb.ToString())
+          let ctx = { ctx with Verb=v }
+          loop exp ctx
+          
       | Application (Application (PropertyGet (None, op, []), Let (varname, Value (name,_), Lambda (_,  Call (None, method, _))) ), exp2) when op.Name = "op_EqualsEqualsGreater" ->
           let c2 = loop exp2 AnalyzeContext.Empty
           let vars = c2.Variables.Add (varname.Name, name)
@@ -368,7 +393,7 @@ module Analyzer =
           let c4 = rules.ApplyMethodCall method.DeclaringType.Name method.Name c3
           c4 |> pushRoute |> mergeWith ctx |> pushRoute
       
-      | Application (Application (PropertyGet (None, op_GreaterEqualsGreater, []), exp1 ), ValueWithName _) ->
+      | Application (Application (PropertyGet (None, op, []), exp1 ), ValueWithName _) when op.Name = "op_GreaterEqualsGreater" ->
           let c1 = loop exp1 (newContext())
           let c = ctx |> pushRoute |> mergeWith c1 |> pushRoute
           c
@@ -478,23 +503,6 @@ module Generator =
       Schema:ObjectDefinition option }
     static member Default = {Description="Not documented"; Schema=None}
     member __.IsDefault() = __ = ResponseDoc.Default
-  and HttpVerb =
-    | Get | Put | Post | Delete | Options | Head | Patch
-    override __.ToString() =
-      match __ with
-      | Get -> "get" | Put -> "put"
-      | Post -> "post" | Delete -> "delete"
-      | Options -> "options" | Head -> "head"
-      | Patch -> "patch"
-    static member Parse (text:string) =
-        match text.ToLowerInvariant() with
-        | "put" -> Put
-        | "post" -> Post
-        | "delete" -> Delete
-        | "head" -> Head
-        | "patch" -> Patch
-        | "options" -> Options
-        | _ -> Get
   and ApiDescription =
     { Title:string
       Description:string
