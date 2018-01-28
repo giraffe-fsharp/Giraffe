@@ -795,8 +795,7 @@ module Generator =
               In = p.In.ToString()
               Required=p.Required }
           )
-          
-    let responses : ResponseDoc list =
+    let responses =
       route.Responses
       |> List.map(
            fun rs -> 
@@ -805,19 +804,24 @@ module Generator =
               if ty.IsSwaggerPrimitive
               then None
               else Some (ty.Describes())
-            { ResponseDoc.Default 
-                with Schema=schema } 
+            rs.StatusCode, { ResponseDoc.Default with Schema=schema } 
          )
+      |> dict
     let operationId = if route.MetaData.ContainsKey "operationId" then route.MetaData.["operationId"] else ""
+    
+    let consumes = 
+      if parameters |> List.exists (fun p -> p.In = ParamContainer.FormData.ToString())
+      then ["application/x-www-form-urlencoded"] else []
+    
     let pathDef =
       { Summary=""
         Description=""
         OperationId=operationId
-        Consumes=[]
+        Consumes=consumes
         Produces=[]
         Tags=[]
         Parameters=parameters
-        Responses = dict [] }
+        Responses=responses }
     
     if parameters |> List.exists (fun p -> p.In = ParamContainer.Path.ToString())
     then 

@@ -54,7 +54,7 @@ let submitCar =
         }
 
 let bonjour (firstName, lastName) =
-    let message = sprintf "Bonjour %s %s" lastName firstName
+    let message = sprintf "%s %s, vous avez le bonjour de Giraffe !" lastName firstName
     text message
 
 let documentedApp =
@@ -68,10 +68,19 @@ let documentedApp =
                         route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
                         route  "/once"       >=> (time() |> text)
                         route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
+                        route "/car" >=> submitCar
+                        operationId "say_hello_in_french" ==> routef "/hello/%s/%s" bonjour
                 ]
-            route "/car" >=> submitCar
-            //routef "/hello/%s/%s" bonjour >=> operationId "say_hello"
-            operationId "say_hello" ==> routef "/hello/%s/%s" bonjour
+            POST >=>  
+                choose [
+                        route "/hello" 
+                          >=>
+                            (fun next ctx ->
+                              let name = ctx.Request.Form.Item "name" |> Seq.head
+                              let nickname = ctx.Request.Form.Item "nickname" |> Seq.head
+                              let message = sprintf "hello %s" name
+                              text message next ctx)
+                  ]
 
             RequestErrors.notFound (text "Not Found") ]
     @>
@@ -99,7 +108,7 @@ let swaggerDoc =
                   Host="localhost:5000"
                   Schemes=["http"]
                   Paths=paths
-                  Definitions = dict [] } //:IDictionary<string,ObjectDefinition> }
+                  Definitions = dict [] }
                   
             return! rawJson (doc.ToJson()) next ctx
             }
