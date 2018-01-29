@@ -41,12 +41,9 @@ function dotnet-pack    ($project, $argv) { Invoke-Cmd "dotnet pack $project $ar
 
 function Get-DotNetRuntimeVersion
 {
-    $dotnetSdkVersion = dotnet-version
-
-    $lineNumberFromBottom = 3
-    if ($dotnetSdkVersion -eq "2.1.2") { $lineNumberFromBottom = 6 }
-
-    $version = dotnet-info | Select-Object -Last $lineNumberFromBottom | Select-Object -First 1
+    $info = dotnet-info
+    [System.Array]::Reverse($info)
+    $version = $info | Where-Object { $_.Contains("Version")  } | Select-Object -First 1
     $version.Split(":")[1].Trim()
 }
 
