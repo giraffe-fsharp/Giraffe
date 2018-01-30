@@ -12,6 +12,8 @@ module Json =
     open Newtonsoft.Json.Serialization
     open Giraffe
 
+    /// ** Description **
+    /// Interface defining JSON serialization methods. Use this interface to customize JSON serialization in Giraffe.
     [<AllowNullLiteral>]
     type IJsonSerializer =
         abstract member Serialize            : obj    -> string
@@ -19,6 +21,9 @@ module Json =
         abstract member Deserialize<'T>      : Stream -> 'T
         abstract member DeserializeAsync<'T> : Stream -> Task<'T>
 
+    /// ** Description **
+    /// Default JSON serializer in Giraffe.
+    /// Serializes objects to camel cased JSON code.
     type NewtonsoftJsonSerializer (settings : JsonSerializerSettings) =
         static member DefaultSettings =
             JsonSerializerSettings(
@@ -54,11 +59,16 @@ module Xml =
     open System.Xml
     open System.Xml.Serialization
 
+    /// ** Description **
+    /// Interface defining XML serialization methods. Use this interface to customize XML serialization in Giraffe.
     [<AllowNullLiteral>]
     type IXmlSerializer =
         abstract member Serialize       : obj    -> byte array
         abstract member Deserialize<'T> : string -> 'T
 
+    /// ** Description **
+    /// Default XML serializer in Giraffe.
+    /// Serializes objects to UTF8 encoded indented XML code.
     type DefaultXmlSerializer (settings : XmlWriterSettings) =
         static member DefaultSettings =
             XmlWriterSettings(

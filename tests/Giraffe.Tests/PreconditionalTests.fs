@@ -4,7 +4,6 @@ open System
 open System.Net
 open System.Net.Http
 open System.IO
-open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.TestHost
@@ -54,18 +53,14 @@ module Urls =
 
 module WebApp =
 
-    let streamHandler (enableRangeProcessing : bool) eTag lastModified : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            let stream =
-                new FileStream(
-                    "TestFiles/streaming2.txt",
-                    FileMode.Open, FileAccess.Read)
-            ctx.WriteStreamAsync enableRangeProcessing stream eTag lastModified
+    let streamHandler (enableRangeProcessing : bool) args : HttpHandler =
+        args
+        ||> streamFile enableRangeProcessing "TestFiles/streaming2.txt"
 
-    let webApp eTag lastModified =
+    let webApp args =
         choose [
-            route Urls.rangeProcessingEnabled  >=> streamHandler true eTag lastModified
-            route Urls.rangeProcessingDisabled >=> streamHandler false eTag lastModified
+            route Urls.rangeProcessingEnabled  >=> streamHandler true args
+            route Urls.rangeProcessingDisabled >=> streamHandler false args
         ]
 
     let errorHandler (ex : Exception) (_ : ILogger) : HttpHandler =
@@ -73,9 +68,9 @@ module WebApp =
         printfn "StackTrace:%s %s" Environment.NewLine ex.StackTrace
         setStatusCode 500 >=> text ex.Message
 
-    let configureApp eTag lastModified (app : IApplicationBuilder) =
+    let configureApp args (app : IApplicationBuilder) =
         app.UseGiraffeErrorHandler(errorHandler)
-           .UseGiraffe(webApp eTag lastModified)
+           .UseGiraffe(webApp args)
 
     let configureServices (services : IServiceCollection) =
         services.AddGiraffe() |> ignore
@@ -84,10 +79,10 @@ module WebApp =
 // Test server/client setup
 // ---------------------------------
 
-let createHost eTag lastModified =
+let createHost args =
     WebHostBuilder()
         .UseContentRoot(Directory.GetCurrentDirectory())
-        .Configure(Action<IApplicationBuilder> (WebApp.configureApp eTag lastModified))
+        .Configure(Action<IApplicationBuilder> (WebApp.configureApp args))
         .ConfigureServices(Action<IServiceCollection> WebApp.configureServices)
 
 // ---------------------------------
@@ -119,7 +114,7 @@ let createRequest (method : HttpMethod) (path : string) =
     new HttpRequestMessage(method, url)
 
 let makeRequest eTag lastModified (request : HttpRequestMessage) =
-    use server = new TestServer(createHost eTag lastModified)
+    use server = new TestServer(createHost (eTag, lastModified))
     use client = server.CreateClient()
     request
     |> client.SendAsync
