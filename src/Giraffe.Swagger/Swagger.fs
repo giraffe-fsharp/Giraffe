@@ -41,7 +41,7 @@ type HttpVerb =
 let (|IsHttpVerb|_|) (prop:PropertyInfo) =
   HttpVerb.TryParse prop.Name
 
-let mergeMetaData (m1:Map<string,string>) (m2:Map<string,string>) =
+let mergeMaps (m1:Map<'k,'v>) (m2:Map<'k,'v>) =
   m1
   |> Map.fold (
     fun state k v -> 
@@ -184,7 +184,7 @@ module Analyzer =
     member __.PushRoute () =
       match !__.CurrentRoute with
       | Some route -> 
-          let meta = mergeMetaData __.MetaData route.MetaData
+          let meta = mergeMaps __.MetaData route.MetaData
           let r = 
             { route 
                 with 
@@ -198,7 +198,7 @@ module Analyzer =
           let routes = 
               match __.Routes with
               | route :: s ->
-                  let meta = mergeMetaData __.MetaData route.MetaData 
+                  let meta = mergeMaps __.MetaData route.MetaData 
                   { route 
                       with 
                         Responses=(__.Responses @ route.Responses |> List.distinct)
@@ -250,7 +250,7 @@ module Analyzer =
                   Responses = (route1.Responses @ route2.Responses) |> List.distinct
               }
         | None, None -> None
-      let meta = mergeMetaData __.MetaData other.MetaData
+      let meta = mergeMaps __.MetaData other.MetaData
       {
           ArgTypes = __.ArgTypes @ other.ArgTypes
           Variables = variables
@@ -343,8 +343,8 @@ module Analyzer =
           { ModuleName="HttpHandlers"; FunctionName="PATCH" }, (fun ctx -> { ctx with Verb = (Some "PATCH") })
           
           { ModuleName="Swagger"; FunctionName="operationId" }, (handleSingleArgRule "opId" "operationId")
-          
           { ModuleName="Swagger"; FunctionName="consumes" }, (handleSingleArgRule "modelType" "consumes")
+          { ModuleName="Swagger"; FunctionName="produces" }, (handleSingleArgRule "modelType" "produces")
           
         ] |> Map
       { MethodCalls=methodCalls }
@@ -897,6 +897,18 @@ module Generator =
               In = p.In.ToString()
               Required=p.Required })
        |> List.append consumedTypes
+       
+    let producedTypes =
+      match route.MetaData |> Map.tryFind "produces" with
+      | Some t -> 
+          let ty = t |> Type.GetType
+          let schema = 
+            if ty.IsSwaggerPrimitive
+            then None
+            else Some (ty.Describes())
+          Map [200, { ResponseDoc.Default with Schema=schema }]
+      | None -> Map.empty
+    
     let responses =
       route.Responses
       |> List.map(
@@ -908,18 +920,20 @@ module Generator =
               else Some (ty.Describes())
             rs.StatusCode, { ResponseDoc.Default with Schema=schema } 
          )
-      |> Map
+      |> Map |> mergeMaps producedTypes
     let operationId = if route.MetaData.ContainsKey "operationId" then route.MetaData.["operationId"] else ""
     let consumes = 
       if parameters |> List.exists (fun p -> p.In = ParamContainer.FormData.ToString())
       then ["application/x-www-form-urlencoded"] else []
+    
+    let produces = []
     
     let pathDef =
       { Summary=""
         Description=""
         OperationId=operationId
         Consumes=consumes
-        Produces=[]
+        Produces=produces
         Tags=[]
         Parameters=parameters
         Responses=responses }
