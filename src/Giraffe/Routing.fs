@@ -44,7 +44,12 @@ let private handlerWithRootedPath (path : string) (handler : HttpHandler) : Http
 // Public routing HttpHandler functions
 // ---------------------------
 
+/// ** Description **
 /// Filters an incoming HTTP request based on the port.
+/// ** Parameters **
+///     - `fns`: List of port to `HttpHandler` mappings
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let routePorts (fns : (int * HttpHandler) list) : HttpHandler =
     fun next ->
         let portMap = Dictionary<_, _>(fns.Length)
@@ -58,25 +63,37 @@ let routePorts (fns : (int * HttpHandler) list) : HttpHandler =
             else
                 abort
 
+/// ** Description **
 /// Filters an incoming HTTP request based on the request path (case sensitive).
+/// ** Parameters **
+///     - `path`: Request path.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let route (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (getPath ctx).Equals path
         then next ctx
         else abort
 
+/// ** Description **
 /// Filters an incoming HTTP request based on the request path (case sensitive).
-/// The arguments from the format string will be automatically resolved when the
-/// route matches and subsequently passed into the supplied routeHandler.
+/// If the route matches the incoming HTTP request then the arguments from the `PrintfFormat<...>` will be automatically resolved and passed into the supplied `routeHandler`.
 ///
-/// Supported format chars:
-/// %b -> bool
-/// %c -> char
-/// %s -> string
-/// %i -> int
-/// %d -> int64
-/// %f -> float/double
-/// %O -> Guid
+/// ** Supported format chars **
+///     - `%b`: `bool`
+///     - `%c`: `char`
+///     - `%s`: `string`
+///     - `%i`: `int`
+///     - `%d`: `int64`
+///     - `%f`: `float`/`double`
+///     - `%O`: `Guid`
+///
+/// ** Parameters **
+///     - `path`: A format string representing the expected request path.
+///     - `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
+///
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -85,25 +102,37 @@ let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler)
             | None      -> abort
             | Some args -> routeHandler args next ctx
 
+/// ** Description **
 /// Filters an incoming HTTP request based on the request path (case insensitive).
+/// ** Parameters **
+///     - `path`: Request path.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let routeCi (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if String.Equals(getPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
         then next ctx
         else abort
 
+/// ** Description **
 /// Filters an incoming HTTP request based on the request path (case insensitive).
-/// The arguments from the format string will be automatically resolved when the
-/// route matches and subsequently passed into the supplied routeHandler.
+/// If the route matches the incoming HTTP request then the arguments from the `PrintfFormat<...>` will be automatically resolved and passed into the supplied `routeHandler`.
 ///
-/// Supported format chars:
-/// %b -> bool
-/// %c -> char
-/// %s -> string
-/// %i -> int
-/// %d -> int64
-/// %f -> float/double
-/// %O -> Guid
+/// ** Supported format chars **
+///     - `%b`: `bool`
+///     - `%c`: `char`
+///     - `%s`: `string`
+///     - `%i`: `int`
+///     - `%d`: `int64`
+///     - `%f`: `float`/`double`
+///     - `%O`: `Guid`
+///
+/// ** Parameters **
+///     - `path`: A format string representing the expected request path.
+///     - `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
+///
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -112,10 +141,15 @@ let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandle
             | None      -> abort
             | Some args -> routeHandler args next ctx
 
+/// ** Description **
 /// Filters an incoming HTTP request based on the request path (case insensitive).
-/// The parameters from the string will be used to create an instance of 'T
-/// and subsequently passed into the supplied routeHandler.
-let routeBind<'T> (route: string) (routeHandler : 'T -> HttpHandler) : HttpHandler =
+/// If the route matches the incoming HTTP request then the parameters from the string will be used to create an instance of `'T` and subsequently passed into the supplied `routeHandler`.
+/// ** Parameters **
+///     - `route`: A string representing the expected request path. Use `{propertyName}` for reserved parameter names which should map to the properties of type `'T`. You can also use valid `Regex` within the `route` string.
+///     - `routeHandler`: A function which accepts a tuple `'T` of the parsed parameters and returns a `HttpHandler` function which will subsequently deal with the request.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+let routeBind<'T> (route : string) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let pattern = route.Replace("{", "(?<").Replace("}", ">[^/\n]+)") |> sprintf "%s$"
         let regex = Regex(pattern, RegexOptions.IgnoreCase)
@@ -134,28 +168,48 @@ let routeBind<'T> (route: string) (routeHandler : 'T -> HttpHandler) : HttpHandl
             routeHandler o next ctx
         | _ -> abort
 
+/// ** Description **
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
+/// ** Parameters **
+///     - `subPath`: The expected beginning of a request path.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let routeStartsWith (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (getPath ctx).StartsWith subPath
         then next ctx
         else abort
 
+/// ** Description **
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
+/// ** Parameters **
+///     - `subPath`: The expected beginning of a request path.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let routeStartsWithCi (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (getPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase)
         then next ctx
         else abort
 
+/// ** Description **
 /// Filters an incoming HTTP request based on a part of the request path (case sensitive).
-/// Subsequent route handlers inside the given handler function should omit the already validated path.
+/// Subsequent routing handlers inside the given `handler` function should omit the already validated path.
+/// ** Parameters **
+///     - `path`: A part of an expected request path.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let subRoute (path : string) (handler : HttpHandler) : HttpHandler =
     routeStartsWith path >=>
     handlerWithRootedPath path handler
 
+/// ** Description **
 /// Filters an incoming HTTP request based on a part of the request path (case insensitive).
-/// Subsequent route handlers inside the given handler function should omit the already validated path.
+/// Subsequent route handlers inside the given `handler` function should omit the already validated path.
+/// ** Parameters **
+///     - `path`: A part of an expected request path.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
     routeStartsWithCi path >=>
     handlerWithRootedPath path handler

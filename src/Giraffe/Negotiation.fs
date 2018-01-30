@@ -90,13 +90,6 @@ type HttpContext with
             else
                 negotiationRules.[mimeType.MediaType.Value] responseObj finish this
 
-    /// Same as negotiateWith except that it specifies a default set of negotiation rules
-    /// and a default unacceptableHandler.
-    ///
-    /// The default negotiation rules and the handler for unacceptable HTTP requests can
-    /// be modified by implementing an object of type `INegotiationConfig` and
-    /// registering in your startup class.
-
     /// ** Description **
     /// Sends a response back to the client based on the request's `Accept` header.
     /// The negotiation rules as well as a `HttpHandler` for unacceptable requests can be configured in the ASP.NET Core startup code by registering a custom class of type `INegotiationConfig`.
@@ -131,13 +124,6 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
                   : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.NegotiateWith negotiationRules unacceptableHandler responseObj
-
-/// Same as negotiateWith except that it specifies a default set of negotiation rules
-/// and a default unacceptableHandler.
-///
-/// The default negotiation rules and the handler for unacceptable HTTP requests can
-/// be modified by implementing an object of type `INegotiationConfig` and
-/// registering in your startup class.
 
 /// ** Description **
 /// Sends a response back to the client based on the request's `Accept` header.
