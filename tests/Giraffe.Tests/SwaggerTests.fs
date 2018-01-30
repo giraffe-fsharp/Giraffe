@@ -468,6 +468,7 @@ let ``Converting a route infos into route description`` () =
 let ``context merge with an empty one`` () =
   let c1 = 
      {ArgTypes = [];
+      MetaData = Map.empty
       Variables = Map [("path", unbox "/toto")];
       Routes = [{Verb = "GET";
                  Path = "/toto";
@@ -484,6 +485,7 @@ let ``context merge with an empty one`` () =
       Parameters = [];}
   let c2 = 
     { ArgTypes = [];
+      MetaData = Map.empty
       Variables = Map [];
       Routes = [];
       Responses = [];

@@ -60,34 +60,42 @@ let bonjour (firstName, lastName) =
 let httpFailWith message =
     setStatusCode 500 >=> text message
 
+let tcar = typeof<Car>
+
 let documentedApp =
     <@
         choose [
-            GET >=>
-               choose [
-                    route  "/"           >=> text "index" 
-                    route  "/ping"       >=> text "pong"
-                    route  "/error"      >=> (fun _ _ -> failwith "Something went wrong!")
-                    route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
-                    route  "/once"       >=> (time() |> text)
-                    route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
-                    // Swagger operation id can be defined like this or with DocumentationAddendums
-                    operationId "say_hello_in_french" ==> routef "/hello/%s/%s" bonjour
-               ]
-            route  "/test"       >=> text "test"
+//            GET >=>
+//               choose [
+//                    route  "/"           >=> text "index" 
+//                    route  "/ping"       >=> text "pong"
+//                    route  "/error"      >=> (fun _ _ -> failwith "Something went wrong!")
+//                    route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
+//                    route  "/once"       >=> (time() |> text)
+//                    route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
+//                    // Swagger operation id can be defined like this or with DocumentationAddendums
+//                    operationId "say_hello_in_french" ==> routef "/hello/%s/%s" bonjour
+//               ]
+//            route  "/test"       >=> text "test"
             POST >=>  
                 choose [
                         route "/car" >=> submitCar
-                        route "/hello" 
-                          >=>
-                            (fun next ctx ->
-                              let name = ctx.Request.Form.Item "name" |> Seq.head
-                              let nickname = ctx.Request.Form.Item "nickname" |> Seq.head
-                              let message = sprintf "hello %s" name
-                              if name <> "kevin"
-                              then text message next ctx
-                              else httpFailWith "your are blacklisted" next ctx
-                               )
+                        
+                        operationId "send_a_car" ==>
+                            consumes tcar ==>
+                                produces typeof<Car> ==>
+                                    route "/car2" >=> submitCar
+                        
+//                        route "/hello" 
+//                          >=>
+//                            (fun next ctx ->
+//                              let name = ctx.Request.Form.Item "name" |> Seq.head
+//                              let nickname = ctx.Request.Form.Item "nickname" |> Seq.head
+//                              let message = sprintf "hello %s" name
+//                              if name <> "kevin"
+//                              then text message next ctx
+//                              else httpFailWith "your are blacklisted" next ctx
+//                               )
                   ]
 
             RequestErrors.notFound (text "Not Found") ]

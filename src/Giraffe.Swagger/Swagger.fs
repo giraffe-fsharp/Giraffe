@@ -40,7 +40,16 @@ type HttpVerb =
 
 let (|IsHttpVerb|_|) (prop:PropertyInfo) =
   HttpVerb.TryParse prop.Name
-  
+
+let mergeMetaData (m1:Map<string,string>) (m2:Map<string,string>) =
+  m1
+  |> Map.fold (
+    fun state k v -> 
+      if state |> Map.containsKey k
+      then state
+      else state.Add(k,v)
+    ) m2
+
 type ParamDescriptor =
   { Name:string
     Type:Type option
@@ -65,8 +74,9 @@ and ParamContainer =
 // used to facilitate quotation expression analysis
 let (==>) = (>=>)
 
-let operationId (opId:string) next = 
-  next
+let operationId (opId:string) next = next
+let consumes (modelType:Type) next = next
+let produces (modelType:Type) next = next
 
 module Analyzer =
   
@@ -157,6 +167,7 @@ module Analyzer =
         Verb : string option
         CurrentRoute : RouteInfos option ref
         Parameters : ParamDescriptor list
+        MetaData:Map<string, string>
     }
     static member Empty
       with get () =
@@ -168,29 +179,34 @@ module Analyzer =
             Responses = List.empty
             CurrentRoute = ref None
             Parameters = List.empty
+            MetaData = Map.empty
         }
     member __.PushRoute () =
       match !__.CurrentRoute with
       | Some route -> 
+          let meta = mergeMetaData __.MetaData route.MetaData
           let r = 
             { route 
                 with 
                   Responses=(__.Responses @ route.Responses |> List.distinct)
-                  Parameters=(__.Parameters @ route.Parameters) 
+                  Parameters=(__.Parameters @ route.Parameters)
+                  MetaData=meta
             }
           __.CurrentRoute := None
-          { __ with Parameters=List.Empty; Responses=[]; ArgTypes=[]; Routes = r :: __.Routes }
-      | None -> 
+          { __ with Parameters=List.Empty; Responses=[]; ArgTypes=[]; Routes = r :: __.Routes; MetaData=Map.empty }
+      | None ->
           let routes = 
               match __.Routes with
-              | route :: s -> 
+              | route :: s ->
+                  let meta = mergeMetaData __.MetaData route.MetaData 
                   { route 
                       with 
                         Responses=(__.Responses @ route.Responses |> List.distinct)
-                        Parameters=(__.Parameters @ route.Parameters |> List.distinct) 
+                        Parameters=(__.Parameters @ route.Parameters |> List.distinct)
+                        MetaData=meta
                   } :: s
               | v -> v
-          { __ with ArgTypes=[]; Routes = (List.distinct routes) }
+          { __ with ArgTypes=[]; Routes = (List.distinct routes); }
     member __.AddResponse code contentType (modelType:Type) =
       let rs = { StatusCode=code; ContentType=contentType; ModelType=modelType }
       { __ with Responses = rs :: __.Responses }
@@ -234,6 +250,7 @@ module Analyzer =
                   Responses = (route1.Responses @ route2.Responses) |> List.distinct
               }
         | None, None -> None
+      let meta = mergeMetaData __.MetaData other.MetaData
       {
           ArgTypes = __.ArgTypes @ other.ArgTypes
           Variables = variables
@@ -242,6 +259,7 @@ module Analyzer =
           Responses = __.Responses @ other.Responses
           CurrentRoute = ref currentRoute
           Parameters = (__.Parameters @ other.Parameters) |> List.distinct
+          MetaData = meta
       }
   
   let mergeWith (a:AnalyzeContext) =
@@ -249,6 +267,14 @@ module Analyzer =
   
   let pushRoute (a:AnalyzeContext) =
     a.PushRoute()
+  
+  let handleSingleArgRule argName funcName ctx =
+    let arg =  
+      match ctx.Variables.Item argName with
+      | :? Type as typ -> typ.AssemblyQualifiedName
+      | v -> toString v
+    let m = ctx.MetaData.Add(funcName, arg)
+    { ctx with MetaData=m }
   
   type MethodCallId = 
     { ModuleName:string
@@ -316,22 +342,9 @@ module Analyzer =
           // HTTP PATCH method
           { ModuleName="HttpHandlers"; FunctionName="PATCH" }, (fun ctx -> { ctx with Verb = (Some "PATCH") })
           
-          { ModuleName="Swagger"; FunctionName="operationId" }, 
-              (fun ctx ->
-                let opId = ctx.Variables.Item "opId" |> toString
-                match !ctx.CurrentRoute with
-                | Some r ->
-                    let nr = r.MetaData.Add("operationId", opId)                    
-                    ctx.CurrentRoute := Some { r with MetaData=nr }
-                    ctx
-                | None -> 
-                    match ctx.Routes with
-                    | r :: t ->
-                      let nr = r.MetaData.Add("operationId", opId)                    
-                      let route = { r with MetaData=nr }
-                      { ctx with Routes= route :: t }
-                    | _ -> ctx
-                )
+          { ModuleName="Swagger"; FunctionName="operationId" }, (handleSingleArgRule "opId" "operationId")
+          
+          { ModuleName="Swagger"; FunctionName="consumes" }, (handleSingleArgRule "modelType" "consumes")
           
         ] |> Map
       { MethodCalls=methodCalls }
@@ -348,6 +361,8 @@ module Analyzer =
             Verb = ctx.Verb
             ArgTypes = ctx.ArgTypes
             Parameters = ctx.Parameters
+            MetaData = ctx.MetaData
+            Variables = ctx.Variables
             Routes = ctx.Routes }
   
       let analyzeAll exps c =
@@ -368,11 +383,17 @@ module Analyzer =
        
       | Let (id,op,t) -> 
           match op with
+          | Value (o,typ) when typ = typeof<Type> -> 
+              let v = unbox<Type> o
+              ctx.SetVariable id.Name v.AssemblyQualifiedName |> loop t
           | Value (o,_) -> 
               ctx.SetVariable id.Name (o.ToString()) |> loop t
+          | Call (None, method, args) when method.Name = "TypeOf" ->
+              let ty = method.GetGenericArguments() |> Seq.head
+              ctx.SetVariable id.Name (ty.AssemblyQualifiedName) |> loop t
           | o -> 
               analyzeAll [o;t] ctx
-          
+
       | NewUnionCase (_,exprs) ->
           let mustPush = 
             match exprs with
@@ -399,8 +420,7 @@ module Analyzer =
           c
           
       | Application (PropertyGet (instance, propertyInfo, pargs), Coerce (Var arg, o)) ->
-          ctx.AddArgType arg.Type |> 
-            rules.ApplyMethodCall propertyInfo.DeclaringType.Name propertyInfo.Name
+          ctx.AddArgType arg.Type |> rules.ApplyMethodCall propertyInfo.DeclaringType.Name propertyInfo.Name
           
       | Application (left, right) ->
           let c1 = loop right (newContext()) 
@@ -416,6 +436,36 @@ module Analyzer =
                 CurrentRoute = ctx.CurrentRoute
           }
       
+      | Call (None, method, args) ->
+          let parameters = method.GetParameters()
+          let variables =
+            parameters
+            |> Array.mapi (fun i p -> i,p)
+            |> Array.choose (
+                 fun (i,p) ->
+                    let arg = args.Item i
+                    match arg with
+                    | Call (None, m, []) -> 
+                        None
+                    | PropertyGet (None, prop, []) ->
+                        let value = prop.GetValue(null)
+                        Some (p.Name, p.ParameterType, value)
+                    | _ -> None
+               )         
+          if Array.isEmpty variables
+          then 
+            let c1 = analyzeAll args ctx
+            rules.ApplyMethodCall method.DeclaringType.Name method.Name c1
+          else
+            let vars = 
+              variables 
+              |> Array.fold (
+                  fun (state:Map<string,obj>) (name,_, value) ->
+                    state.Add(name, value))
+                ctx.Variables
+            let c3 = { ctx with Variables=vars }
+            let c4 = rules.ApplyMethodCall method.DeclaringType.Name method.Name c3
+            c4 |> pushRoute |> mergeWith ctx |> pushRoute
       | Call(instance, method, args) ->
           let c1 = analyzeAll args ctx
           rules.ApplyMethodCall method.DeclaringType.Name method.Name c1
@@ -619,15 +669,19 @@ module Generator =
                 else
                   let d = Ref(describe t')
                   Some (name, d)
-          let props =
-            t.GetProperties()
-            |> Seq.choose (
-                fun p ->
-                  match optionalType p.PropertyType with
-                  | Some t' -> descProp t' p.Name
-                  | None -> descProp p.PropertyType p.Name
-            ) |> Map
-          {Id=t.Name; Properties=props}
+          if isNull t
+          then
+            failwith ""
+          else
+            let props =
+              t.GetProperties()
+              |> Seq.choose (
+                  fun p ->
+                    match optionalType p.PropertyType with
+                    | Some t' -> descProp t' p.Name
+                    | None -> descProp p.PropertyType p.Name
+              ) |> Map
+            {Id=t.Name; Properties=props}
 
         describe this
       
@@ -810,26 +864,39 @@ module Generator =
 
   let convertRouteInfos (route:Analyzer.RouteInfos) (addendums:DocumentationAddendumProvider) : (string * HttpVerb * PathDefinition) =
     let verb = HttpVerb.Parse route.Verb
+    
+    let describeType (ty:Type) =
+      if ty.IsSwaggerPrimitive
+      then
+         match ty.FormatAndName with
+         | Some v -> Some(Primitive v)
+         | None -> None
+      else 
+        Some (Ref(ty.Describes()))
+    
+    let consumedTypes =
+      match route.MetaData |> Map.tryFind "consumes" with
+      | Some t -> 
+          let ty = t |> Type.GetType |> describeType
+          [{ Name = "body"
+             Type = ty
+             In = ParamContainer.Body.ToString()
+             Required=true }]
+      | None -> []
+        
     let parameters = 
       route.Parameters
-      |> List.map (
+       |> List.map (
            fun p ->
             let t = 
               match p.Type with 
               | None -> None 
-              | Some ty ->
-                  if ty.IsSwaggerPrimitive
-                  then
-                     match ty.FormatAndName with
-                     | Some v -> Some(Primitive v)
-                     | None -> None
-                  else 
-                    Some (Ref(ty.Describes()))
+              | Some ty -> describeType ty
             { Name = p.Name
               Type = t
               In = p.In.ToString()
-              Required=p.Required }
-          )
+              Required=p.Required })
+       |> List.append consumedTypes
     let responses =
       route.Responses
       |> List.map(
@@ -843,7 +910,6 @@ module Generator =
          )
       |> Map
     let operationId = if route.MetaData.ContainsKey "operationId" then route.MetaData.["operationId"] else ""
-    
     let consumes = 
       if parameters |> List.exists (fun p -> p.In = ParamContainer.FormData.ToString())
       then ["application/x-www-form-urlencoded"] else []
