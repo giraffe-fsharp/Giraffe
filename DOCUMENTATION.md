@@ -2,7 +2,7 @@
 
 ## Table of contents
 
-- [Basics](#basics)
+- [Fundamentals](#fundamentals)
     - [HttpHandler](#httphandler)
     - [Giraffe pipeline vs. ASP.NET Core pipeline](#giraffe-pipeline-vs-aspnet-core-pipeline)
     - [Combinators](#combinators)
@@ -10,9 +10,9 @@
         - [choose](#choose)
     - [Warbler](#warbler)
     - [Tasks](#tasks)
-- [Configuration](#configuration)
+- [Basics](#basics)
     - [Dependency Management](#dependency-management)
-    - [Environment Settings](#environment-settings)
+    - [Multiple Environments and Configuration](#multiple-environments-and-configuration)
     - [Logging](#logging)
     - [Error Handling](#error-handling)
 - [Web Request Processing](#web-request-processing)
@@ -44,7 +44,7 @@
     - [Razor](#razor)
     - [DotLiquid](#dotliquid)
 
-## Basics
+## Fundamentals
 
 ### HttpHandler
 
@@ -174,3 +174,193 @@ let readFileAndDoSomething (filePath : string) =
 ```
 
 For more information please visit the official [Giraffe.Tasks](https://github.com/giraffe-fsharp/Giraffe.Tasks) GitHub repository.
+
+## Basics
+
+### Dependency Management
+
+ASP.NET Core has built in [dependency management](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection) which works out of the box with Giraffe.
+
+#### Registering Services
+
+[Registering services](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection#registering-services) is done the same way as it is done for any other ASP.NET Core web application:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // Add default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Add other dependencies
+    // ...
+
+[<EntryPoint>]
+let main _ =
+    WebHostBuilder()
+        .UseKestrel()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        // Calling ConfigureServices to set up dependencies
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+#### Retrieving Services
+
+Retrieving registered services from within a Giraffe `HttpHandler` function is done through the built in service locator (`RequestServices`) which comes with a `HttpContext` object:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let fooBar =
+            ctx.RequestServices.GetService(typeof<IFooBar>)
+            :?> IFooBar
+        // Do something with `fooBar`...
+        // Return a Task<HttpContext option>
+```
+
+Giraffe has an additional `HttpContext` extension method called `GetService<'T>` to make the code less cumbersome:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let fooBar = ctx.GetService<IFooBar>()
+        // Do something with `fooBar`...
+        // Return a Task<HttpContext option>
+```
+
+There's a handful more extension methods available to retrieve a few default dependencies like an `IHostingEnvironment` or `ILogger` object which are covered in the respective sections of this document.
+
+### Multiple Environments and Configuration
+
+ASP.NET Core has built in support for [working with multiple environments](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/environments) and [configuration management](https://docs.microsoft.com/en-gb/aspnet/core/fundamentals/configuration/?tabs=basicconfiguration), which both work out of the box with Giraffe.
+
+Additionally Giraffe exposes a `GetHostingEnvironment()` extension method which can be used to easier retrieve an `IHostingEnvironment` object from within a `HttpHandler` function:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let env = ctx.GetHostingEnvironment()
+        // Do something with `env`...
+        // Return a Task<HttpContext option>
+```
+
+Configuration options can be retrieved via the `GetService<'T>` extension method:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let settings = ctx.GetService<IOptions<MySettings>>()
+        // Do something with `settings`...
+        // Return a Task<HttpContext option>
+```
+
+### Logging
+
+ASP.NET Core has a built in [Logging API](https://docs.microsoft.com/en-gb/aspnet/core/fundamentals/logging/?tabs=aspnetcore2x) which works out of the box with Giraffe.
+
+#### Configuring logging providers
+
+One or more logging providers can be configured during application startup:
+
+```fsharp
+let configureLogging (builder : ILoggingBuilder) =
+    // Set a logging filter (optional)
+    let filter (l : LogLevel) = l.Equals LogLevel.Error
+
+    // Configure the logging factory
+    builder.AddFilter(filter) // Optional filter
+           .AddConsole()      // Set up the Console logger
+           .AddDebug()        // Set up the Debug logger
+
+           // Add additional loggers if wanted...
+    |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHostBuilder()
+        .UseKestrel()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        // Calling ConfigureLogging to set up logging providers
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+Just like dependency management the logging API is configured the same way as it is done for any other ASP.NET Core web application.
+
+#### Logging from within a HttpHandler function
+
+After one or more logging providers have been configured you can retrieve an `ILogger` object (which can be used for logging) through the `GetLogger<'T>()` or `GetLogger (categoryName : string)` extension methods:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        // Retrieve an ILogger through one of the extension methods
+        let loggerA = ctx.GetLogger<ModuleName>()
+        let loggerB = ctx.GetLogger("someHttpHandler")
+
+        // Log some data
+        loggerA.LogCritical("Something critical")
+        loggerB.LogInformation("Logging some random info")
+        // etc.
+
+        // Return a Task<HttpContext option>
+```
+
+### Error Handling
+
+Giraffe exposes a separate error handling middleware which can be used to configure a functional error handler, which can react to any unhandled exception of the entire ASP.NET Core web application.
+
+The Giraffe `ErrorHandler` function accepts an `Exception` object and a default `ILogger` and returns a `HttpHandler` function:
+
+```fsharp
+type ErrorHandler = exn -> ILogger -> HttpHandler
+```
+
+Because the Giraffe `ErrorHandler` returns a `HttpHandler` function it is possible to create anything from a simple error handling function to a complex error handling application.
+
+#### Simple ErrorHandler example
+
+This simple `errorHandler` function writes the entire `Exception` object to the logs, clears the response object and returns a HTTP 500 server error response:
+
+```fsharp
+let errorHandler (ex : Exception) (logger : ILogger) =
+    logger.LogError(EventId(), ex, "An unhandled exception has occurred while executing the request.")
+    clearResponse
+    >=> ServerErrors.INTERNAL_ERROR ex.Message
+```
+
+#### Registering the Giraffe ErrorHandler middleware
+
+In order to enable the error handler you have to configure the `GiraffeErrorHandlerMiddleware` in your application startup:
+
+```fsharp
+// Define the error handler function
+let errorHandler (ex : Exception) (logger : ILogger) =
+    logger.LogError(EventId(), ex, "An unhandled exception has occurred while executing the request.")
+    clearResponse
+    >=> ServerErrors.INTERNAL_ERROR ex.Message
+
+// Register all ASP.NET Core middleware
+let configureApp (app : IApplicationBuilder) =
+    // Register the error handler first, so that all exceptions from other middleware can bubble up and be caught by the ErrorHandler function:
+    app.UseGiraffeErrorHandler(errorHandler)
+       .UseGiraffe webApp
+```
+
+... or the equivalent by using a `Startup` class:
+
+```fsharp
+type Startup() =
+    member __.Configure (app : IApplicationBuilder)
+                        (env : IHostingEnvironment)
+                        (loggerFactory : ILoggerFactory) =
+        app.UseGiraffeErrorHandler errorHandler
+           .UseGiraffe webApp
+```
+
+It is recommended to set the error handler as the first middleware in the ASP.NET Core pipeline, so that any unhandled exception from other middleware can be caught and processed by the error handling function.

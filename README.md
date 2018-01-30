@@ -18,12 +18,6 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 - [About](#about)
 - [Installation](#installation)
-- [Basics](#basics)
-    - [HttpHandler](#httphandler)
-    - [Combinators](#combinators)
-        - [compose (>=>)](#compose-)
-        - [choose](#choose)
-    - [Tasks](#tasks)
 - [Default HttpHandlers](#default-httphandlers)
     - [GET, POST, PUT, PATCH, DELETE](#get-post-put-patch-delete)
     - [mustAccept](#mustaccept)
@@ -149,8 +143,6 @@ type Startup() =
 
         app.UseGiraffe webApp
 ```
-
-
 
 ## Default HttpHandlers
 
@@ -1720,38 +1712,6 @@ let main _ =
 ```
 
 In this example the `CustomNegotiationConfig` uses composition to re-use other settings from the `DefaultNegotiationConfig` without having to rely on inheritance.
-
-## Error Handling
-
-Similar to building a web application in Giraffe you can also set a global error handler, which can react to any unhandled exception of your web application.
-
-The `ErrorHandler` is a function which accepts an exception object and a default logger and returns a `HttpHandler` function which is the same as all other `HttpHandler` functions in Giraffe:
-
-```fsharp
-type ErrorHandler = exn -> ILogger -> HttpHandler
-```
-
-For example you could create an error handler which logs the unhandled exception and returns a HTTP 500 response with the error message as plain text:
-
-```fsharp
-let errorHandler (ex : Exception) (logger : ILogger) =
-    logger.LogError(EventId(), ex, "An unhandled exception has occurred while executing the request.")
-    clearResponse
-    >=> ServerErrors.INTERNAL_ERROR ex.Message
-```
-
-In order to enable the error handler you have to configure the error handler in your application startup:
-
-```fsharp
-type Startup() =
-    member __.Configure (app : IApplicationBuilder)
-                        (env : IHostingEnvironment)
-                        (loggerFactory : ILoggerFactory) =
-        app.UseGiraffeErrorHandler errorHandler
-        app.UseGiraffe webApp
-```
-
-It is recommended to set the error handler as the first middleware in the pipeline, so that any unhandled exception from a later middleware can be caught and processed by the error handling function.
 
 ## Sample applications
 
