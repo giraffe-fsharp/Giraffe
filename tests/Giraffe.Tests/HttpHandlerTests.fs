@@ -1,62 +1,14 @@
 module Giraffe.Tests.HttpHandlerTests
 
 open System
-open System.Collections.Generic
 open System.IO
-open System.Text
-open System.Threading.Tasks
+open System.Collections.Generic
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Primitives
 open Xunit
 open NSubstitute
-open Newtonsoft.Json
 open Giraffe
 open Giraffe.GiraffeViewEngine
-open Giraffe.Serialization
-open Giraffe.Tests.Asserts
-
-// ---------------------------------
-// Helper functions
-// ---------------------------------
-
-let getStatusCode (ctx : HttpContext) =
-    ctx.Response.StatusCode
-
-let getBody (ctx : HttpContext) =
-    ctx.Response.Body.Position <- 0L
-    use reader = new StreamReader(ctx.Response.Body, Encoding.UTF8)
-    reader.ReadToEnd()
-
-let getContentType (response : HttpResponse) =
-    response.Headers.["Content-Type"].[0]
-
-let assertFail msg = Assert.True(false, msg)
-
-let assertFailf format args =
-    let msg = sprintf format args
-    Assert.True(false, msg)
-
-let next : HttpFunc = Some >> Task.FromResult
-
-let mockJson (ctx : HttpContext) (settings : JsonSerializerSettings option) =
-    let jsonSettings =
-        defaultArg settings NewtonsoftJsonSerializer.DefaultSettings
-    ctx.RequestServices
-       .GetService(typeof<IJsonSerializer>)
-       .Returns(NewtonsoftJsonSerializer(jsonSettings))
-    |> ignore
-
-let mockXml (ctx : HttpContext) =
-    ctx.RequestServices
-       .GetService(typeof<IXmlSerializer>)
-       .Returns(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
-    |> ignore
-
-let mockNegotiation (ctx : HttpContext) =
-    ctx.RequestServices
-       .GetService(typeof<INegotiationConfig>)
-       .Returns(DefaultNegotiationConfig())
-    |> ignore
 
 // ---------------------------------
 // Test Types
@@ -1554,4 +1506,3 @@ let ``Test Parse Validation of %d as int`` () =
             setStatusCode 404 >=> text "Not found" ]
         |> ignore
     ) |> ignore
-

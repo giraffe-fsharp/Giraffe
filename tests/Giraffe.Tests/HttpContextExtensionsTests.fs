@@ -16,31 +16,7 @@ open Xunit
 open NSubstitute
 open Newtonsoft.Json
 open Giraffe
-open Giraffe.Serialization
 open Giraffe.GiraffeViewEngine
-
-let assertFailf format args =
-    let msg = sprintf format args
-    Assert.True(false, msg)
-
-let getBody (ctx : HttpContext) =
-    ctx.Response.Body.Position <- 0L
-    use reader = new StreamReader(ctx.Response.Body, Encoding.UTF8)
-    reader.ReadToEnd()
-
-let mockJson (ctx : HttpContext) (settings : JsonSerializerSettings option) =
-    let jsonSettings =
-        defaultArg settings NewtonsoftJsonSerializer.DefaultSettings
-    ctx.RequestServices
-       .GetService(typeof<IJsonSerializer>)
-       .Returns(NewtonsoftJsonSerializer(jsonSettings))
-    |> ignore
-
-let mockXml (ctx : HttpContext) =
-    ctx.RequestServices
-       .GetService(typeof<IXmlSerializer>)
-       .Returns(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
-    |> ignore
 
 [<CLIMutable>]
 type ModelWithOption =

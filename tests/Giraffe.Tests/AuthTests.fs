@@ -1,8 +1,6 @@
-module Giraffe.Tests.AuthHandlerTests
+module Giraffe.Tests.AuthTests
 
 open System.IO
-open System.Text
-open System.Threading.Tasks
 open System.Security.Claims
 open Microsoft.AspNetCore.Http
 open Xunit
@@ -10,24 +8,6 @@ open NSubstitute
 open FsCheck
 open FsCheck.Xunit
 open Giraffe
-
-// ---------------------------------
-// Helper functions
-// ---------------------------------
-
-let getStatusCode (ctx : HttpContext) =
-    ctx.Response.StatusCode
-
-let getBody (ctx : HttpContext) =
-    ctx.Response.Body.Position <- 0L
-    use reader = new StreamReader(ctx.Response.Body, Encoding.UTF8)
-    reader.ReadToEnd()
-
-let assertFailf format args =
-    let msg = sprintf format args
-    Assert.True(false, msg)
-
-let next : HttpFunc = Some >> Task.FromResult
 
 [<AutoOpen>]
 module TestApp =
@@ -56,11 +36,11 @@ module TestApp =
         with
             member x.AsClaimsPrincipal =
                 match x with
-                | Anonymous -> ClaimsPrincipal (ClaimsIdentity ())
+                | Anonymous       -> ClaimsPrincipal (ClaimsIdentity ())
                 | Authenticated c -> ClaimsPrincipal (ClaimsIdentity (c, "foo"))
 
     let private accessDenied = setStatusCode 401 >=> text Response.AccessDenied
-    let private ok content = setStatusCode 200 >=> text content
+    let private ok content   = setStatusCode 200 >=> text content
 
     let private mustBeLoggedIn = requiresAuthentication accessDenied
     let private mustBeAdmin = requiresRole "admin" accessDenied
@@ -204,8 +184,8 @@ let ``test authentication`` (givenUser: User) givenRoute expected =
     ctx.Response.Body <- new MemoryStream ()
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString (givenRoute)) |> ignore
-    // not injecting ClaimsPrincipal in generator with intention
-    // this is workaround to get nice pretty print in case test fails
+    // Not injecting ClaimsPrincipal in generator with intention.
+    // This is workaround to get nice pretty print in case test fails
     ctx.User <- givenUser.AsClaimsPrincipal
 
     let expectedStatusCode, expectedContent =
@@ -222,7 +202,7 @@ let ``test authentication`` (givenUser: User) givenRoute expected =
             Assert.Equal(expectedStatusCode, getStatusCode ctx)
             Assert.Equal(expectedContent, getBody ctx)
     }
-    // we have to execute test synchronously
+    // We have to execute test synchronously
     // https://github.com/fscheck/FsCheck/issues/167
     |> Async.AwaitTask
     |> Async.RunSynchronously

@@ -4,8 +4,6 @@ open System
 open Xunit
 open Giraffe.FormatExpressions
 
-let assertFail msg = Assert.True(false, msg)
-
 // ---------------------------------
 // Positive Tests
 // ---------------------------------

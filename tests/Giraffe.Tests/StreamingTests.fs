@@ -3,11 +3,7 @@ module Giraffe.Tests.StreamingTests
 open System
 open System.Net
 open System.Net.Http
-open System.IO
-open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.TestHost
 open Microsoft.Extensions.DependencyInjection
 open Xunit
 open Giraffe
@@ -48,19 +44,12 @@ open Microsoft.Extensions.Logging
 // ---------------------------------
 
 module Urls =
-
     let rangeProcessingEnabled  = "/range-processing-enabled"
     let rangeProcessingDisabled = "/range-processing-disabled"
 
 module WebApp =
-
     let streamHandler (enableRangeProcessing : bool) : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            let stream =
-                new FileStream(
-                    "TestFiles/streaming.txt",
-                    FileMode.Open, FileAccess.Read)
-            ctx.WriteStreamAsync enableRangeProcessing stream None None
+        streamFile enableRangeProcessing "TestFiles/streaming.txt" None None
 
     let webApp =
         choose [
@@ -73,104 +62,14 @@ module WebApp =
         printfn "StackTrace:%s %s" Environment.NewLine ex.StackTrace
         setStatusCode 500 >=> text ex.Message
 
-    let configureApp (app : IApplicationBuilder) =
+    let configureApp _ (app : IApplicationBuilder) =
         app.UseGiraffeErrorHandler(errorHandler)
            .UseGiraffe webApp
 
     let configureServices (services : IServiceCollection) =
         services.AddGiraffe() |> ignore
 
-// ---------------------------------
-// Test server/client setup
-// ---------------------------------
-
-let createHost() =
-    WebHostBuilder()
-        .UseContentRoot(Directory.GetCurrentDirectory())
-        .Configure(Action<IApplicationBuilder> WebApp.configureApp)
-        .ConfigureServices(Action<IServiceCollection> WebApp.configureServices)
-
-// ---------------------------------
-// Helper functions
-// ---------------------------------
-
-let runTask task =
-    task
-    |> Async.AwaitTask
-    |> Async.RunSynchronously
-
-// ---------------------------------
-// Compose web request functions
-// ---------------------------------
-
-let createRequest (method : HttpMethod) (path : string) =
-    let url = "http://127.0.0.1" + path
-    new HttpRequestMessage(method, url)
-
-let makeRequest (request : HttpRequestMessage) =
-    use server = new TestServer(createHost())
-    use client = server.CreateClient()
-    request
-    |> client.SendAsync
-    |> runTask
-
-let addHeader (key : string) (value : string) (request : HttpRequestMessage) =
-    request.Headers.Add(key, value)
-    request
-
-// ---------------------------------
-// Validate response functions
-// ---------------------------------
-
-let isStatus (code : HttpStatusCode) (response : HttpResponseMessage) =
-    Assert.Equal(code, response.StatusCode)
-    response
-
-let containsHeader (flag : bool) (name : string) (response : HttpResponseMessage) =
-    match flag with
-    | true  -> Assert.True(response.Headers.Contains name)
-    | false -> Assert.False(response.Headers.Contains name)
-    response
-
-let containsContentHeader (flag : bool) (name : string) (response : HttpResponseMessage) =
-    match flag with
-    | true  -> Assert.True(response.Content.Headers.Contains name)
-    | false -> Assert.False(response.Content.Headers.Contains name)
-    response
-
-let hasContentLength (length : int64) (response : HttpResponseMessage) =
-    Assert.True(response.Content.Headers.ContentLength.HasValue)
-    Assert.Equal(length, response.Content.Headers.ContentLength.Value)
-    response
-
-let hasAcceptRanges (value : string) (response : HttpResponseMessage) =
-    Assert.Equal(value, response.Headers.AcceptRanges.ToString())
-    response
-
-let hasContentRange (value : string) (response : HttpResponseMessage) =
-    Assert.Equal(value, response.Content.Headers.ContentRange.ToString())
-    response
-
-let readText (response : HttpResponseMessage) =
-    response.Content.ReadAsStringAsync()
-    |> runTask
-
-let readBytes (response : HttpResponseMessage) =
-    response.Content.ReadAsByteArrayAsync()
-    |> runTask
-
-let printBytes (bytes : byte[]) =
-    bytes |> Array.fold (
-        fun (s : string) (b : byte) ->
-            match s.Length with
-            | 0 -> sprintf "%i" b
-            | _ -> sprintf "%s,%i" s b) ""
-
-let shouldBeEmpty (bytes : byte[]) =
-    Assert.True(bytes.Length.Equals 0)
-
-let shouldEqual expected actual =
-    Assert.Equal(expected, actual)
+let makeRequest = makeRequest WebApp.configureApp WebApp.configureServices ()
 
 // ---------------------------------
 // Tests

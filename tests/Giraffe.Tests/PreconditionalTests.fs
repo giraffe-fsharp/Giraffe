@@ -3,10 +3,7 @@ module Giraffe.Tests.PreconditionsTests
 open System
 open System.Net
 open System.Net.Http
-open System.IO
 open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.TestHost
 open Microsoft.Extensions.DependencyInjection
 open Xunit
 open Giraffe
@@ -41,18 +38,15 @@ open Microsoft.Extensions.Logging
     // 79 ,80 ,81 ,82 ,83 ,84 ,85 ,86 ,87 ,88
     // 89 ,90
 
-
 // ---------------------------------
 // Streaming App
 // ---------------------------------
 
 module Urls =
-
     let rangeProcessingEnabled  = "/range-processing-enabled"
     let rangeProcessingDisabled = "/range-processing-disabled"
 
 module WebApp =
-
     let streamHandler (enableRangeProcessing : bool) args : HttpHandler =
         args
         ||> streamFile enableRangeProcessing "TestFiles/streaming2.txt"
@@ -75,117 +69,7 @@ module WebApp =
     let configureServices (services : IServiceCollection) =
         services.AddGiraffe() |> ignore
 
-// ---------------------------------
-// Test server/client setup
-// ---------------------------------
-
-let createHost args =
-    WebHostBuilder()
-        .UseContentRoot(Directory.GetCurrentDirectory())
-        .Configure(Action<IApplicationBuilder> (WebApp.configureApp args))
-        .ConfigureServices(Action<IServiceCollection> WebApp.configureServices)
-
-// ---------------------------------
-// Helper functions
-// ---------------------------------
-
-let waitForDebuggerToAttach() =
-    printfn "Waiting for debugger to attach."
-    printfn "Press enter when debugger is attached in order to continue test execution..."
-    Console.ReadLine() |> ignore
-
-let runTask task =
-    task
-    |> Async.AwaitTask
-    |> Async.RunSynchronously
-
-let createETag (eTag : string) =
-    Some (Microsoft.Net.Http.Headers.EntityTagHeaderValue.FromString false eTag)
-
-let createWeakETag (eTag : string) =
-    Some (Microsoft.Net.Http.Headers.EntityTagHeaderValue.FromString true eTag)
-
-// ---------------------------------
-// Compose web request functions
-// ---------------------------------
-
-let createRequest (method : HttpMethod) (path : string) =
-    let url = "http://127.0.0.1" + path
-    new HttpRequestMessage(method, url)
-
-let makeRequest eTag lastModified (request : HttpRequestMessage) =
-    use server = new TestServer(createHost (eTag, lastModified))
-    use client = server.CreateClient()
-    request
-    |> client.SendAsync
-    |> runTask
-
-let addHeader (key : string) (value : string) (request : HttpRequestMessage) =
-    request.Headers.Add(key, value)
-    request
-
-// ---------------------------------
-// Validate response functions
-// ---------------------------------
-
-let isStatus (code : HttpStatusCode) (response : HttpResponseMessage) =
-    Assert.Equal(code, response.StatusCode)
-    response
-
-let containsHeader (flag : bool) (name : string) (response : HttpResponseMessage) =
-    match flag with
-    | true  -> Assert.True(response.Headers.Contains name)
-    | false -> Assert.False(response.Headers.Contains name)
-    response
-
-let containsContentHeader (flag : bool) (name : string) (response : HttpResponseMessage) =
-    match flag with
-    | true  -> Assert.True(response.Content.Headers.Contains name)
-    | false -> Assert.False(response.Content.Headers.Contains name)
-    response
-
-let hasContentLength (length : int64) (response : HttpResponseMessage) =
-    Assert.True(response.Content.Headers.ContentLength.HasValue)
-    Assert.Equal(length, response.Content.Headers.ContentLength.Value)
-    response
-
-let hasAcceptRanges (value : string) (response : HttpResponseMessage) =
-    Assert.Equal(value, response.Headers.AcceptRanges.ToString())
-    response
-
-let hasContentRange (value : string) (response : HttpResponseMessage) =
-    Assert.Equal(value, response.Content.Headers.ContentRange.ToString())
-    response
-
-let hasETag (eTag : string) (response : HttpResponseMessage) =
-    Assert.Equal(eTag, (response.Headers.ETag.ToString()))
-    response
-
-let hasLastModified (lastModified : DateTimeOffset) (response : HttpResponseMessage) =
-    Assert.True(response.Content.Headers.LastModified.HasValue)
-    Assert.Equal(lastModified, response.Content.Headers.LastModified.Value)
-    response
-
-let readText (response : HttpResponseMessage) =
-    response.Content.ReadAsStringAsync()
-    |> runTask
-
-let readBytes (response : HttpResponseMessage) =
-    response.Content.ReadAsByteArrayAsync()
-    |> runTask
-
-let printBytes (bytes : byte[]) =
-    bytes |> Array.fold (
-        fun (s : string) (b : byte) ->
-            match s.Length with
-            | 0 -> sprintf "%i" b
-            | _ -> sprintf "%s,%i" s b) ""
-
-let shouldBeEmpty (bytes : byte[]) =
-    Assert.True(bytes.Length.Equals 0)
-
-let shouldEqual expected actual =
-    Assert.Equal(expected, actual)
+let makeRequest = makeRequest WebApp.configureApp WebApp.configureServices
 
 // ---------------------------------
 // Tests
@@ -195,7 +79,7 @@ let shouldEqual expected actual =
 let ``HTTP GET with If-Match and no ETag`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-Match" "\"111\", \"222\", \"333\""
-    |> makeRequest None None
+    |> makeRequest (None, None)
     |> isStatus HttpStatusCode.PreconditionFailed
     |> readBytes
     |> shouldBeEmpty
@@ -204,7 +88,7 @@ let ``HTTP GET with If-Match and no ETag`` () =
 let ``HTTP GET with If-Match and not matching ETag`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-Match" "\"111\", \"222\", \"333\""
-    |> makeRequest (createETag "000") None
+    |> makeRequest (createETag "000", None)
     |> isStatus HttpStatusCode.PreconditionFailed
     |> readBytes
     |> shouldBeEmpty
@@ -213,7 +97,7 @@ let ``HTTP GET with If-Match and not matching ETag`` () =
 let ``HTTP GET with If-Match and matching ETag`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-Match" "\"111\", \"222\", \"333\""
-    |> makeRequest (createETag "222") None
+    |> makeRequest (createETag "222", None)
     |> isStatus HttpStatusCode.OK
     |> hasContentLength 62L
     |> readBytes
@@ -224,7 +108,7 @@ let ``HTTP GET with If-Match and matching ETag`` () =
 let ``HTTP GET with If-Unmodified-Since and no lastModified`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-Unmodified-Since" (DateTimeOffset.UtcNow.ToHtmlString())
-    |> makeRequest None None
+    |> makeRequest (None, None)
     |> isStatus HttpStatusCode.OK
     |> hasContentLength 62L
     |> readBytes
@@ -235,7 +119,7 @@ let ``HTTP GET with If-Unmodified-Since and no lastModified`` () =
 let ``HTTP GET with If-Unmodified-Since in the future`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-Unmodified-Since" (DateTimeOffset.UtcNow.AddDays(1.0).ToHtmlString())
-    |> makeRequest None (Some DateTimeOffset.UtcNow)
+    |> makeRequest (None, Some DateTimeOffset.UtcNow)
     |> isStatus HttpStatusCode.OK
     |> hasContentLength 62L
     |> readBytes
@@ -246,7 +130,7 @@ let ``HTTP GET with If-Unmodified-Since in the future`` () =
 let ``HTTP GET with If-Unmodified-Since not in the future but greater than lastModified`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-Unmodified-Since" (DateTimeOffset.UtcNow.AddDays(-10.0).ToHtmlString())
-    |> makeRequest None (Some (DateTimeOffset.UtcNow.AddDays(-11.0)))
+    |> makeRequest (None, Some (DateTimeOffset.UtcNow.AddDays(-11.0)))
     |> isStatus HttpStatusCode.OK
     |> hasContentLength 62L
     |> readBytes
@@ -257,7 +141,7 @@ let ``HTTP GET with If-Unmodified-Since not in the future but greater than lastM
 let ``HTTP GET with If-Unmodified-Since and less than lastModified`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-Unmodified-Since" (DateTimeOffset.UtcNow.AddDays(-10.0).ToHtmlString())
-    |> makeRequest None (Some (DateTimeOffset.UtcNow.AddDays(-9.0)))
+    |> makeRequest (None, Some (DateTimeOffset.UtcNow.AddDays(-9.0)))
     |> isStatus HttpStatusCode.PreconditionFailed
     |> readBytes
     |> shouldBeEmpty
@@ -267,7 +151,7 @@ let ``HTTP GET with If-Unmodified-Since not in the future and equal to lastModif
     let lastModified = DateTimeOffset(DateTimeOffset.UtcNow.AddDays(-5.0).Date)
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-Unmodified-Since" (lastModified.ToHtmlString())
-    |> makeRequest None (Some lastModified)
+    |> makeRequest (None, Some lastModified)
     |> isStatus HttpStatusCode.OK
     |> hasContentLength 62L
     |> readBytes
@@ -278,7 +162,7 @@ let ``HTTP GET with If-Unmodified-Since not in the future and equal to lastModif
 let ``HTTP GET with If-None-Match without ETag`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-None-Match" "\"111\", \"222\", \"333\""
-    |> makeRequest None None
+    |> makeRequest (None, None)
     |> isStatus HttpStatusCode.OK
     |> hasContentLength 62L
     |> readBytes
@@ -289,7 +173,7 @@ let ``HTTP GET with If-None-Match without ETag`` () =
 let ``HTTP GET with If-None-Match with non-matching ETag`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-None-Match" "\"111\", \"222\", \"333\""
-    |> makeRequest (createETag "444") None
+    |> makeRequest (createETag "444", None)
     |> isStatus HttpStatusCode.OK
     |> hasContentLength 62L
     |> readBytes
@@ -300,7 +184,7 @@ let ``HTTP GET with If-None-Match with non-matching ETag`` () =
 let ``HTTP GET with If-None-Match with matching ETag`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-None-Match" "\"111\", \"222\", \"333\""
-    |> makeRequest (createETag "333") None
+    |> makeRequest (createETag "333", None)
     |> isStatus HttpStatusCode.NotModified
     |> readBytes
     |> shouldBeEmpty
@@ -309,7 +193,7 @@ let ``HTTP GET with If-None-Match with matching ETag`` () =
 let ``HTTP HEAD with If-None-Match with matching ETag`` () =
     createRequest HttpMethod.Head Urls.rangeProcessingDisabled
     |> addHeader "If-None-Match" "\"111\", \"222\", \"333\""
-    |> makeRequest (createETag "222") None
+    |> makeRequest (createETag "222", None)
     |> isStatus HttpStatusCode.NotModified
     |> readBytes
     |> shouldBeEmpty
@@ -318,7 +202,7 @@ let ``HTTP HEAD with If-None-Match with matching ETag`` () =
 let ``HTTP POST with If-None-Match with matching ETag`` () =
     createRequest HttpMethod.Post Urls.rangeProcessingDisabled
     |> addHeader "If-None-Match" "\"111\", \"222\", \"333\""
-    |> makeRequest (createETag "111") None
+    |> makeRequest (createETag "111", None)
     |> isStatus HttpStatusCode.PreconditionFailed
     |> readBytes
     |> shouldBeEmpty
@@ -327,7 +211,7 @@ let ``HTTP POST with If-None-Match with matching ETag`` () =
 let ``HTTP GET with If-Modified-Since witout lastModified`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-Modified-Since" (DateTimeOffset.UtcNow.AddDays(-4.0).ToHtmlString())
-    |> makeRequest None None
+    |> makeRequest (None, None)
     |> isStatus HttpStatusCode.OK
     |> hasContentLength 62L
     |> readBytes
@@ -338,7 +222,7 @@ let ``HTTP GET with If-Modified-Since witout lastModified`` () =
 let ``HTTP GET with If-Modified-Since in the future and with lastModified`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-Modified-Since" (DateTimeOffset.UtcNow.AddDays(10.0).ToHtmlString())
-    |> makeRequest None (Some (DateTimeOffset.UtcNow.AddDays(5.0)))
+    |> makeRequest (None, Some (DateTimeOffset.UtcNow.AddDays(5.0)))
     |> isStatus HttpStatusCode.NotModified
     |> readBytes
     |> shouldBeEmpty
@@ -347,7 +231,7 @@ let ``HTTP GET with If-Modified-Since in the future and with lastModified`` () =
 let ``HTTP GET with If-Modified-Since not in the future and with greater lastModified`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-Modified-Since" (DateTimeOffset.UtcNow.AddDays(-10.0).ToHtmlString())
-    |> makeRequest None (Some (DateTimeOffset.UtcNow.AddDays(-5.0)))
+    |> makeRequest (None, Some (DateTimeOffset.UtcNow.AddDays(-5.0)))
     |> isStatus HttpStatusCode.OK
     |> hasContentLength 62L
     |> readBytes
@@ -359,7 +243,7 @@ let ``HTTP GET with If-Modified-Since not in the future and with equal lastModif
     let lastModified = DateTimeOffset(DateTimeOffset.UtcNow.AddDays(-7.0).Date)
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-Modified-Since" (lastModified.ToHtmlString())
-    |> makeRequest None (Some lastModified)
+    |> makeRequest (None, Some lastModified)
     |> isStatus HttpStatusCode.NotModified
     |> readBytes
     |> shouldBeEmpty
@@ -368,7 +252,7 @@ let ``HTTP GET with If-Modified-Since not in the future and with equal lastModif
 let ``HTTP GET with If-Modified-Since not in the future and with smaller lastModified`` () =
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-Modified-Since" (DateTimeOffset.UtcNow.AddDays(-10.0).ToHtmlString())
-    |> makeRequest None (Some (DateTimeOffset.UtcNow.AddDays(-11.0)))
+    |> makeRequest (None, Some (DateTimeOffset.UtcNow.AddDays(-11.0)))
     |> isStatus HttpStatusCode.NotModified
     |> readBytes
     |> shouldBeEmpty
@@ -377,7 +261,7 @@ let ``HTTP GET with If-Modified-Since not in the future and with smaller lastMod
 let ``HTTP POST with If-Modified-Since not in the future and with smaller lastModified`` () =
     createRequest HttpMethod.Post Urls.rangeProcessingDisabled
     |> addHeader "If-Modified-Since" (DateTimeOffset.UtcNow.AddDays(-10.0).ToHtmlString())
-    |> makeRequest None (Some (DateTimeOffset.UtcNow.AddDays(-11.0)))
+    |> makeRequest (None, Some (DateTimeOffset.UtcNow.AddDays(-11.0)))
     |> isStatus HttpStatusCode.OK
     |> hasContentLength 62L
     |> readBytes
@@ -387,7 +271,7 @@ let ``HTTP POST with If-Modified-Since not in the future and with smaller lastMo
 [<Fact>]
 let ``Endpoint with eTag has ETag HTTP header set`` () =
     createRequest HttpMethod.Post Urls.rangeProcessingDisabled
-    |> makeRequest (createETag "abc") None
+    |> makeRequest (createETag "abc", None)
     |> isStatus HttpStatusCode.OK
     |> hasETag "\"abc\""
     |> hasContentLength 62L
@@ -398,7 +282,7 @@ let ``Endpoint with eTag has ETag HTTP header set`` () =
 [<Fact>]
 let ``Endpoint with weak eTag has ETag HTTP header set`` () =
     createRequest HttpMethod.Post Urls.rangeProcessingDisabled
-    |> makeRequest (createWeakETag "abc") None
+    |> makeRequest (createWeakETag "abc", None)
     |> isStatus HttpStatusCode.OK
     |> hasETag "W/\"abc\""
     |> hasContentLength 62L
@@ -410,7 +294,7 @@ let ``Endpoint with weak eTag has ETag HTTP header set`` () =
 let ``Endpoint with lastModified has Last-Modified HTTP header set`` () =
     let lastModified = DateTimeOffset(DateTimeOffset.UtcNow.AddDays(-7.0).Date)
     createRequest HttpMethod.Post Urls.rangeProcessingDisabled
-    |> makeRequest None (Some lastModified)
+    |> makeRequest (None, Some lastModified)
     |> isStatus HttpStatusCode.OK
     |> hasLastModified lastModified
     |> hasContentLength 62L
@@ -425,7 +309,7 @@ let ``HTTP GET with matching If-Match ignores non-matching If-Unmodified-Since``
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-Match" "\"abc\""
     |> addHeader "If-Unmodified-Since" ifUnmodifiedSince
-    |> makeRequest (createETag "abc") (Some lastModified)
+    |> makeRequest (createETag "abc", Some lastModified)
     |> isStatus HttpStatusCode.OK
     |> hasContentLength 62L
     |> readBytes
@@ -440,7 +324,7 @@ let ``HTTP GET with non-matching If-None-Match ignores not matching If-Modified-
     createRequest HttpMethod.Get Urls.rangeProcessingDisabled
     |> addHeader "If-None-Match" ifNoneMatch
     |> addHeader "If-Modified-Since" ifModifiedSince
-    |> makeRequest (createETag "abc") (Some lastModified)
+    |> makeRequest (createETag "abc", Some lastModified)
     |> isStatus HttpStatusCode.OK
     |> hasContentLength 62L
     |> readBytes

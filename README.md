@@ -150,106 +150,7 @@ type Startup() =
         app.UseGiraffe webApp
 ```
 
-## Basics
 
-### HttpHandler
-
-The main building block in Giraffe is a so called `HttpHandler`:
-
-```fsharp
-type HttpFuncResult = Task<HttpContext option>
-type HttpFunc = HttpContext -> HttpFuncResult
-type HttpHandler = HttpFunc -> HttpContext -> HttpFuncResult
-```
-
-A `HttpHandler` is a simple function which takes two curried arguments, a `HttpFunc` and a `HttpContext`, and returns a `HttpContext` (wrapped in an `option` and `Task` workflow) when finished.
-
-Given that a `HttpHandler` receives and returns an ASP.NET Core `HttpContext` there is literally nothing which cannot be done from within a Giraffe web application which couldn't be done from a regular ASP.NET Core (MVC) application either.
-
-Each `HttpHandler` can process an incoming `HttpRequest` before passing it further down the pipeline by invoking the next `HttpFunc` or short circuit the execution by returning an option of `Some HttpContext`.
-
-If a `HttpHandler` decides to not process an incoming `HttpRequest` at all, then it can return `None` instead. In this case another `HttpHandler` might pick up the incoming `HttpRequest` or the middleware will defer to the next `RequestDelegate` from the ASP.NET Core pipeline.
-
-The easiest way to get your head around a Giraffe `HttpHandler` is to think of it like a functional ASP.NET Core middleware. Each handler has the full `HttpContext` at its disposal and can decide whether it wants to return `Some HttpContext`, `None` or pass it on to the "next" `HttpFunc`.
-
-Please check out the [sample applications](#sample-applications) for a demo as well as a real world example.
-
-### Combinators
-
-#### compose (>=>)
-
-The `compose` combinator combines two `HttpHandler` functions into one:
-
-```fsharp
-let compose (handler1 : HttpHandler) (handler2 : HttpHandler) : HttpHandler =
-    fun (next : HttpFunc) ->
-        let func = next |> handler2 |> handler1
-        fun (ctx : HttpContext) ->
-            match ctx.Response.HasStarted with
-            | true  -> next ctx
-            | false -> func ctx
-```
-
-It is the main combinator as it allows composing many smaller `HttpHandler` functions into a bigger web application.
-
-If you would like to learn more about the `>=>` (fish) operator then please check out [Scott Wlaschin's blog post on Railway oriented programming](http://fsharpforfunandprofit.com/posts/recipe-part2/).
-
-##### Example:
-
-```fsharp
-let app = route "/" >=> Successful.OK "Hello World"
-```
-
-#### choose
-
-The `choose` combinator function iterates through a list of `HttpHandler` functions and invokes each individual handler until the first `HttpHandler` returns a result.
-
-##### Example:
-
-```fsharp
-let app =
-    choose [
-        route "/foo" >=> text "Foo"
-        route "/bar" >=> text "Bar"
-    ]
-```
-
-### Tasks
-
-Another important aspect to Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core only works with tasks out of the box).
-
-For this purpose Giraffe has it's own `task {}` workflow which comes with the `Giraffe.Tasks` NuGet package. Syntactically it works identical to F#'s async workflows:
-
-```fsharp
-open Giraffe.Tasks
-open Giraffe.HttpHandlers
-
-let personHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        task {
-            let! person = ctx.BindModelAsync<Person>()
-            return! json person next ctx
-        }
-```
-
-The `task {}` workflow is not strictly tied to Giraffe and can also be used from other places in an F# application:
-
-```fsharp
-open Giraffe.Tasks
-
-let readFileAndDoSomething (filePath : string) =
-    task {
-        use stream = new FileStream(filePath, FileMode.Open)
-        use reader = new StreamReader(stream)
-        let! contents = reader.ReadToEndAsync()
-
-        // do something with contents
-
-        return contents
-    }
-```
-
-For more information please visit the official [Giraffe.Tasks](https://github.com/giraffe-fsharp/Giraffe.Tasks) GitHub repository.
 
 ## Default HttpHandlers
 
@@ -591,7 +492,7 @@ let app =
                     route "/bar" >=> text "Bar 2" ]) ])
 ```
 
-**NOTE:** For both `subRoute` and `subRouteCi` if you wish to have a route that represents a default e.g. `/api/v1` (from the above example) then you need to specify the route as `route ""` not `route "/"` this will not match, as `api/v1/` is a fundamentally different route according to the HTTP specification.  
+**NOTE:** For both `subRoute` and `subRouteCi` if you wish to have a route that represents a default e.g. `/api/v1` (from the above example) then you need to specify the route as `route ""` not `route "/"` this will not match, as `api/v1/` is a fundamentally different route according to the HTTP specification.
 
 ### setStatusCode
 
@@ -874,34 +775,6 @@ let app = routePorts [
     (9002, app9002)
 ]
 
-```
-
-### warbler
-
-If your route is not returning a static response, then you should wrap your function with a warbler.
-
-#### Example
-```fsharp
-// unit -> string
-let time() =
-    System.DateTime.Now.ToString()
-
-let webApp =
-    choose [
-        GET >=>
-            choose [
-                route "/once"      >=> (time() |> text)
-                route "/everytime" >=> warbler (fun _ -> (time() |> text))
-            ]
-    ]
-```
-
-Functions in F# are eagerly evaluated and the `/once` route will only be evaluated the first time.
-A warbler will help to evaluate the function every time the route is hit.
-
-```fsharp
-// ('a -> 'a -> 'b) -> 'a -> 'b
-let warbler f a = f a a
 ```
 
 ## StatusCode HttpHandlers

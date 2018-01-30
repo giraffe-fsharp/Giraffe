@@ -1,11 +1,7 @@
 module Giraffe.Tests.GiraffeViewEngineTests
 
-open System
 open Xunit
 open Giraffe.GiraffeViewEngine
-
-let removeNewLines (html:string):string =
-    html.Replace(Environment.NewLine, String.Empty)
 
 [<Fact>]
 let ``Single html root should compile`` () =

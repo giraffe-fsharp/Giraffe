@@ -1,4 +1,4 @@
-module Giraffe.TokenRouterTests
+module Giraffe.Tests.TokenRouterTests
 
 open System
 open System.Collections.Generic
@@ -11,10 +11,10 @@ open Xunit
 open Xunit.Abstractions
 open NSubstitute
 open Newtonsoft.Json
+open Giraffe
 open Giraffe.Serialization
-open GiraffeViewEngine
+open Giraffe.GiraffeViewEngine
 open Giraffe.TokenRouter
-open Giraffe.Tests.Asserts
 
 // ---------------------------------
 // Helper functions
