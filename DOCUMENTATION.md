@@ -350,6 +350,18 @@ let configureApp (app : IApplicationBuilder) =
     // Register the error handler first, so that all exceptions from other middleware can bubble up and be caught by the ErrorHandler function:
     app.UseGiraffeErrorHandler(errorHandler)
        .UseGiraffe webApp
+
+[<EntryPoint>]
+let main _ =
+    WebHostBuilder()
+        .UseKestrel()
+        // Calling Configure to set up all middleware
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
 ```
 
 ... or the equivalent by using a `Startup` class:
@@ -361,6 +373,93 @@ type Startup() =
                         (loggerFactory : ILoggerFactory) =
         app.UseGiraffeErrorHandler errorHandler
            .UseGiraffe webApp
+
+[<EntryPoint>]
+let main _ =
+    WebHostBuilder()
+        .UseKestrel()
+        .UseStartup<Startup>()
+        .Build()
+        .Run()
+    0
 ```
 
 It is recommended to set the error handler as the first middleware in the ASP.NET Core pipeline, so that any unhandled exception from other middleware can be caught and processed by the error handling function.
+
+## Web Request Processing
+
+Giraffe comes with a large set of default `HttpContext` extension methods as well as default `HttpHandler` functions which can be used to build rich web applications.
+
+### HTTP Headers
+
+Working with HTTP headers in Giraffe is plain simple. The `TryGetRequestHeader (key : string)` extension method tries to retrieve the value of a given HTTP header and either returns `Some string` or `None`:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let someValue =
+            match ctx.TryGetRequestHeader "X-MyOwnHeader" with
+            | None -> "default value"
+            | Some headerValue -> headerValue
+
+        // Do something with `someValue`...
+        // Return a Task<HttpContext option>
+```
+
+This method is useful for retrieving optional HTTP headers in a web application.
+
+If a HTTP header is mandatory then the `GetRequestHeader (key : string)` extension method might be a better fit. Instead of returning an `Option<string>` it returns a `Result<string, string>` object:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        match ctx.GetRequestHeader "X-MyOwnHeader" with
+        | Error msg ->
+            // Mandatory header is missing.
+            // Log error message
+            // Return error response to the client.
+        | Ok headerValue ->
+            // Do something with `headerValue`...
+            // Return a Task<HttpContext option>
+```
+
+Setting a HTTP header in the response can be done via the `SetHttpHeader (key : string) (value : obj)` extension method:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        ctx.SetHttpHeader "X-CustomHeader" "some-value"
+        // Do other stuff...
+        // Return a Task<HttpContext option>
+```
+
+You can also set a HTTP header via the `setHttpHeader` handler:
+
+```fsharp
+let notFoundHandler : HttpHandler =
+    setHttpHeader "X-CustomHeader"
+    >=> RequestErrors.NOT_FOUND "Not Found"
+
+let webApp =
+    choose [
+        route "/foo" >=> text "Foo"
+        route "/bar" >=> text "Bar"
+        notFoundHandler
+    ]
+```
+
+Please note that these are additional Giraffe functions which complement already existing HTTP header functionality exposed through the core ASP.NET Core framework. ASP.NET Core offers higher level HTTP header functionality through the `ctx.Request.GetTypedHeaders()` method.
+
+### HTTP Verbs
+
+
+- [HTTP Status Codes](#http-status-codes)
+- [Routing](#routing)
+- [Authentication and Authorization](#authentication-and-authorization)
+- [Query Strings](#query-strings)
+- [Model Binding](#model-binding)
+- [Conditional Requests](#conditional-requests)
+- [Content Negotiation](#content-negotiation)
+- [Response Writing](#response-writing)
+- [Streaming](#streaming)
+- [Redirection](#redirection)
