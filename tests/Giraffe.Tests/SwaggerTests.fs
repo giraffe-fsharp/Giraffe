@@ -66,7 +66,7 @@ let ``webapp is a simple route with verb `GET` returning text`` () =
   let ctx = analyze webApp AppAnalyzeRules.Default
 
   let exp = 
-    { Verb="GET"
+    { Verb="get"
       Path="/home"
       MetaData=Map.empty
       Parameters=List.empty
@@ -231,7 +231,7 @@ let ``webapp is a simple routeCi with verb `GET` returning text`` () =
   let ctx = analyze webApp AppAnalyzeRules.Default
 
   let exp = 
-    { Verb="GET"
+    { Verb="get"
       Path="/home"
       MetaData=Map.empty
       Parameters=List.empty
@@ -254,7 +254,7 @@ let ``webapp is a simple routef with verb `GET` returning text and handler inner
     <@ GET >=> routef "/hello/%s" (fun name -> text "Home.") @>
   let ctx = analyze webApp AppAnalyzeRules.Default
   let exp = 
-    { Verb = "GET"
+    { Verb = "get"
       Path = "/hello/%s"
       MetaData=Map.empty
       Parameters = [ ParamDescriptor.InPath "arg0" typeof<string> ]
@@ -278,7 +278,7 @@ let ``routef with verb `GET` and args [int, string, float] returning text and ha
     <@ GET >=> routef "/hello/%d/%s/%f" (fun (age, name, price) -> text "Home.") @>
   let ctx = analyze webApp AppAnalyzeRules.Default
   let exp = 
-    { Verb = "GET"
+    { Verb = "get"
       Path = "/hello/%d/%s/%f"
       MetaData=Map.empty
       Parameters = [ ParamDescriptor.InPath "arg0" typeof<int> 
@@ -315,7 +315,7 @@ let ``app contains 1 route and 1 routef in GET`` () =
   let ctx = analyze webApp AppAnalyzeRules.Default
   let exp =
     [
-     { Verb = "GET"
+     { Verb = "get"
        Path = "/hello/%d/%s/%f"
        MetaData=Map.empty
        Parameters = [ ParamDescriptor.InPath "arg0" typeof<int> 
@@ -328,7 +328,7 @@ let ``app contains 1 route and 1 routef in GET`` () =
              ModelType = typeof<string> }
          ]
      }
-     { Verb="GET"
+     { Verb="get"
        Path="/home"
        MetaData=Map.empty
        Parameters=List.empty

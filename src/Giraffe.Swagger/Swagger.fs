@@ -14,7 +14,7 @@ open Microsoft.AspNetCore.Http
 let joinMaps (p:Map<'a,'b>) (q:Map<'a,'b>) = 
     Map(Seq.concat [ (Map.toSeq p) ; (Map.toSeq q) ])
 
-let getVerb = Option.defaultWith (fun _ -> "GET")
+let getVerb = Option.defaultWith (fun _ -> "get")
 
 let toString (o:obj) = o.ToString()
 
