@@ -77,10 +77,24 @@ let documentedApp =
                     route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
                     route  "/once"       >=> (time() |> text)
                     route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
+                    
                     // Swagger operation id can be defined like this or with DocumentationAddendums
-                    operationId "say_hello_in_french" ==> routef "/hello/%s/%s" bonjour
+                    operationId "say_hello_in_french" ==> 
+                        routef "/hello/%s/%s" bonjour
                ]
             route  "/test"       >=> text "test"
+            
+            subRouteCi "/api"
+                    (choose [
+                        subRouteCi "/v1"
+                            (choose [
+                                route "/foo" >=> text "Foo 1"
+                                route "/bar" >=> text "Bar 1" ])
+                        subRouteCi "/v2"
+                            (choose [
+                                route "/foo" >=> text "Foo 2"
+                                route "/bar" >=> text "Bar 2" ]) ])
+                                
             POST >=>  
                 choose [
                         route "/car" >=> submitCar

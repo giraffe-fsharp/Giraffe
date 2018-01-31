@@ -293,6 +293,12 @@ module Analyzer =
     QuotationEvaluator.Evaluate webapp
   
   let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
+  
+    let (|IsSubRoute|_|) (m:MethodInfo) =
+      if (m.Name = "subRouteCi" || m.Name = "subRoute") && m.DeclaringType.Name = "HttpHandlers"
+      then Some ()
+      else None
+  
     let rec loop exp (ctx:AnalyzeContext) : AnalyzeContext =
   
       let newContext() = 
@@ -366,6 +372,18 @@ module Analyzer =
           let c1 = loop right (newContext()) 
           let c2 = loop left (newContext())
           c1 |> mergeWith c2 |> pushRoute
+          
+      | Call(instance, IsSubRoute, args) ->
+          match args with
+          | Value (v, t) :: args when t = typeof<string> ->
+              let path = unbox<string> v
+              let ctx2 = analyzeAll args AnalyzeContext.Empty
+              let routes = 
+                ctx2.Routes
+                  |> List.map (
+                      fun route -> { route with Path = (path + route.Path) })
+              { ctx with Routes = (ctx.Routes @ routes) }
+          | _ -> ctx
           
       | Call(instance, method, args) when method.Name = "choose" && method.DeclaringType.Name = "HttpHandlers" ->
           let ctxs = args |> List.map(fun e -> loop e (newContext()))
