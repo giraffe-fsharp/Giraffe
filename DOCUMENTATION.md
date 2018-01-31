@@ -21,8 +21,8 @@
     - [HTTP Status Codes](#http-status-codes)
     - [Routing](#routing)
     - [Query Strings](#query-strings)
-    - [Authentication and Authorization](#authentication-and-authorization)
     - [Model Binding](#model-binding)
+    - [Authentication and Authorization](#authentication-and-authorization)
     - [Conditional Requests](#conditional-requests)
     - [Content Negotiation](#content-negotiation)
     - [Response Writing](#response-writing)
@@ -899,10 +899,394 @@ let webApp =
 
 ### Query Strings
 
+Working with query strings is very similar to working with HTTP headers in Giraffe. The `TryGetQueryStringValue (key : string)` extension method tries to retrieve the value of a given query string parameter and then returns either `Some string` or `None`:
 
-- [Authentication and Authorization](#authentication-and-authorization)
-- [Model Binding](#model-binding)
-- [Conditional Requests](#conditional-requests)
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let someValue =
+            match ctx.TryGetQueryStringValue "q" with
+            | None   -> "default value"
+            | Some q -> q
+
+        // Do something with `someValue`...
+        // Return a Task<HttpContext option>
+```
+
+This method is useful when trying to retrieve optional query string parameters from within a `HttpHandler`.
+
+If a query string parameter is mandatory then the `GetQueryStringValue (key : string)` extension method might be a better fit. Instead of returning an `Option<string>` object it will return a `Result<string, string>` type:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        match ctx.GetQueryStringValue "q" with
+        | Error msg ->
+            // Mandatory query string value is missing.
+            // Log error message
+            // Return error response to the client.
+        | Ok q ->
+            // Do something with `q`...
+            // Return a Task<HttpContext option>
+```
+
+You can also access the query string through the `ctx.Request.Query` object which returns an `IQueryCollection` object which allows you to perform more actions on it.
+
+Last but not least there is also a `HttpContext` extension method called `BindQueryString<'T>` which let's you bind an entire query string to an object of type `'T` (see [BindQueryString](#bindquerystring)).
+
+### Model Binding
+
+Giraffe offers out of the box a few default `HttpContext` extension methods which make it possible to bind the entire (or partial) HTTP payload to a custom object.
+
+#### BindJsonAsync
+
+The `BindJsonAsync<'T>()` extension method can be used to bind a JSON payload to an object of type `'T`:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let submitCar : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Binds a JSON payload to a Car object
+            let! car = ctx.BindJsonAsync<Car>()
+
+            // Sends the object back to the client
+            return! Successful.OK car next ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST >=> route "/car" >=> submitCar
+    ]
+```
+
+Please not that in order for the model binding to work the record type must be decorated with the `[<CLIMutable>]` attribute, which will make sure that the type will contain a parameterless constructor.
+
+The underlying JSON serializer can be configured as a dependency during application startup (see [JSON](#json)).
+
+#### BindXmlAsync
+
+The `BindXmlAsync<'T>()` extension method binds an XML payload to an object of type `'T`:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let submitCar : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Binds an XML payload to a Car object
+            let! car = ctx.BindXmlAsync<Car>()
+
+            // Sends the object back to the client
+            return! Successful.OK car next ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST >=> route "/car" >=> submitCar
+    ]
+```
+
+Like in the previous example the record type must be decorated with the `[<CLIMutable>]` attribute in order for the model binding to work.
+
+The underlying XML serializer can be configured as a dependency during application startup (see [XML](#xml)).
+
+#### BindFormAsync
+
+The `BindFormAsync<'T> (?cultureInfo : CultureInfo)` extension method binds form data to an object of type `'T`. You can optionally specify a `CultureInfo` object for parsing culture specific data such as `DateTime` objects or floating point numbers:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let submitCar : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Binds a form payload to a Car object
+            let! car = ctx.BindFormAsync<Car>()
+
+            // or with a CultureInfo:
+            let british = CultureInfo.CreateSpecificCulture("en-GB")
+            let! car2 = ctx.BindFormAsync<Car>(british)
+
+            // Sends the object back to the client
+            return! Successful.OK car next ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST >=> route "/car" >=> submitCar
+    ]
+```
+
+Just like in the previous examples the record type must be decorated with the `[<CLIMutable>]` attribute in order for the model binding to work.
+
+#### BindQueryString
+
+The `BindQueryString<'T> (?cultureInfo : CultureInfo)` extension method binds query string parameters to an object of type `'T`. An optional `CultureInfo` object can be set for parsing culture specific data such as `DateTime` objects and floating point numbers:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let submitCar : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Binds the query string to a Car object
+            let! car = ctx.BindQueryString<Car>()
+
+            // or with a CultureInfo:
+            let british = CultureInfo.CreateSpecificCulture("en-GB")
+            let! car2 = ctx.BindQueryString<Car>(british)
+
+            // Sends the object back to the client
+            return! Successful.OK car next ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+                route "/car" >=> submitCar
+            ]
+    ]
+```
+
+Just like in the previous examples the record type must be decorated with the `[<CLIMutable>]` attribute in order for the model binding to work.
+
+#### BindModelAsync
+
+The `BindModelAsync<'T> (?cultureInfo : CultureInfo)` method encapsulates all other model binding methods into one. It will attempt to pick the most appropriate model binding method based on the request's HTTP verb and `Content-Type` header. With the help of `BindModelAsync` it is possible to create a single endpoint which can bind JSON, XML, form and query string data:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let submitCar : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Binds a Car object
+            let! car = ctx.BindModelAsync<Car>()
+
+            // or with a CultureInfo:
+            let british = CultureInfo.CreateSpecificCulture("en-GB")
+            let! car2 = ctx.BindModelAsync<Car>(british)
+
+            // Sends the object back to the client
+            return! Successful.OK car next ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        route "/car" >=> submitCar
+    ]
+```
+
+### Authentication and Authorization
+
+ASP.NET Core has a wealth of [Authentication](https://docs.microsoft.com/en-us/aspnet/core/security/authentication/index) and [Authorization](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/index) options which work out of the box with Giraffe.
+
+Additionally Giraffe offers a few `HttpHandler` functions which make it easier to work with ASP.NET Core's authentication and authorization APIs in a functional way.
+
+#### requiresAuthentication
+
+The `requiresAuthentication (authFailedHandler : HttpHandler)` http handler validates if a user has been authenticated by one of ASP.NET Core's authentication middleware. If the identity of a user could not be established then the `authFailedHandler` will be executed:
+
+```fsharp
+let notLoggedIn =
+    RequestErrors.UNAUTHORIZED
+        "Basic"
+        "Some Realm"
+        "You must be logged in."
+
+let mustBeLoggedIn = requiresAuthentication notLoggedIn
+
+let webApp =
+    choose [
+        route "/"     >=> text "Hello World"
+        route "/user" >=>
+            mustBeLoggedIn >=>
+                choose [
+                    GET  >=> readUserHandler
+                    POST >=> submitUserHandler
+                ]
+    ]
+```
+
+#### requiresRole
+
+The `requiresRole (role : string) (authFailedHandler : HttpHandler)` http handler function checks if an authenticated user is part of a given `role`. If a user fails to be in a certain role then the `authFailedHandler` will be executed:
+
+```fsharp
+let notLoggedIn =
+    RequestErrors.UNAUTHORIZED
+        "Basic"
+        "Some Realm"
+        "You must be logged in."
+
+let notAdmin =
+    RequestErrors.FORBIDDEN
+        "Permission denied. You must be an admin."
+
+let mustBeLoggedIn = requiresAuthentication notLoggedIn
+
+let mustBeAdmin = requiresRole "Admin" notAdmin
+
+let webApp =
+    choose [
+        route "/"     >=> text "Hello World"
+        route "/user" >=>
+            mustBeLoggedIn >=> mustBeAdmin >=>
+                choose [
+                    routef "/user/%s/edit"   editUserHandler
+                    routef "/user/%s/delete" deleteUserHandler
+                ]
+    ]
+```
+
+#### requiresRoleOf
+
+The `requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler)` http handler function checks if an authenticated user is part of a list of given `roles`. If a user fails to be in at least one of the `roles` then the `authFailedHandler` will be executed:
+
+```fsharp
+let notLoggedIn =
+    RequestErrors.UNAUTHORIZED
+        "Basic"
+        "Some Realm"
+        "You must be logged in."
+
+let notProUserOrAdmin =
+    RequestErrors.FORBIDDEN
+        "Permission denied. You must be a pro user or admin."
+
+let mustBeLoggedIn = requiresAuthentication notLoggedIn
+
+let mustBeProUserOrAdmin =
+    requiresRoleOf [ "ProUser"; "Admin" ] notProUserOrAdmin
+
+let webApp =
+    choose [
+        route "/"     >=> text "Hello World"
+        route "/user" >=>
+            mustBeLoggedIn >=> mustBeProUserOrAdmin >=>
+                choose [
+                    routef "/user/%s/edit"   editUserHandler
+                    routef "/user/%s/delete" deleteUserHandler
+                ]
+    ]
+```
+
+#### challenge
+
+The `challenge (authScheme : string)` http handler function will challenge the client to authenticate with a specific `authScheme`. This function is often used in combination with the `requiresAuthentication` http handler:
+
+```fsharp
+let webApp =
+    choose [
+        route "/"     >=> text "Hello World"
+        route "/user" >=>
+            requiresAuthentication (challenge "Cookie") >=>
+                choose [
+                    GET  >=> readUserHandler
+                    POST >=> submitUserHandler
+                ]
+    ]
+```
+
+In this example the client will be challenged to authenticate with a scheme called "Cookie". The scheme name must match one of the registered authentication schemes from the configuration of the ASP.NET Core auth middleware.
+
+#### signOut
+
+The `signOut (authScheme : string)` http handler function will sign a user out from a given `authScheme`:
+
+```fsharp
+let logout = signOut "Cookie" >=> redirectTo false "/"
+
+let webApp =
+    choose [
+        route "/"     >=> text "Hello World"
+        route "/user" >=>
+            requiresAuthentication (challenge "Cookie") >=>
+                choose [
+                    GET  >=> readUserHandler
+                    POST >=> submitUserHandler
+                    route "/user/logout" >=> logout
+                ]
+    ]
+```
+
+### Conditional Requests
+
+A client might send conditional HTTP headers (e.g. `If-Match` or `If-Modified-Since`) which a web server endpoint might want to validate before sending a response.
+
+Giraffe exposes a `HttpContext` extension method called `ValidatePreconditions (eTag) (lastModified)` which can be used from within a `HttpHandler` function to validate any conditional HTTP headers. The `ValidatePreconditions` method takes two optional parameters - an `eTag` value and a `lastMofified` date time, which will be used to check against the conditional HTTP headers.
+
+The output of `ValidatePreconditions` returns a `Precondition` union type, which can have one of the following cases:
+
+| Case | Description |
+| ---- | ----------- |
+| `NoConditionsSpecified` | No validation has taken place, because the client didn't send any conditional HTTP headers. |
+| `ConditionFailed` | At least one condition couldn't be sastisfied. It is advised to return a `412` status code back to the client (you can use the `HttpContext.PreconditionFailedResponse()` method for that purpose). |
+| `ResourceNotModified` | The resource hasn't changed since the last visit. The server can skip processing this request and return a `304` status code back to the client (you can use the `HttpContext.NotModifiedResponse()` method for that purpose). |
+| `AllConditionsMet` | All pre-conditions can be satisfied. The server should continue processing the request as normal. |
+
+
+
 - [Content Negotiation](#content-negotiation)
 - [Response Writing](#response-writing)
 - [Streaming](#streaming)

@@ -23,10 +23,7 @@ type EntityTagHeaderValue with
     /// ** Output **
     /// Returns an object of `EntityTagHeaderValue`.
     static member FromString (isWeak : bool) (eTag : string) =
-        let eTagValue =
-            match isWeak with
-            | true  -> sprintf "\"%s\"" eTag
-            | false -> sprintf "\"%s\"" eTag
+        let eTagValue = sprintf "\"%s\"" eTag
         EntityTagHeaderValue(StringSegment(eTagValue), isWeak)
 
 type HttpContext with
