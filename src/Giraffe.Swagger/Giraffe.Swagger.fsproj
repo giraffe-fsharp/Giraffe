@@ -15,6 +15,9 @@
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common.fs" />
+    <Compile Include="Analyzer.fs" />
+    <Compile Include="Generator.fs" />
     <Compile Include="SwaggerUi.fs" />
     <Compile Include="Swagger.fs" />
   </ItemGroup>

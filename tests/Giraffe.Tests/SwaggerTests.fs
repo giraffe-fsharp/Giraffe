@@ -15,9 +15,12 @@ open TokenRouter
 open Giraffe.Tests.Asserts
 open Giraffe
 open Giraffe.XmlViewEngine
-open Swagger
-open Swagger.Analyzer
-open System
+open Giraffe.Swagger
+open Giraffe.Swagger.Common
+open Giraffe.Swagger.Analyzer
+open Giraffe.Swagger.Generator
+open Giraffe.Swagger.Dsl
+
 
 // ---------------------------------
 // Helper functions

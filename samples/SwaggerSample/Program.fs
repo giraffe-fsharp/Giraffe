@@ -16,7 +16,11 @@ open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
-open Swagger
+open Giraffe.Swagger
+open Giraffe.Swagger.Common
+open Giraffe.Swagger.Analyzer
+open Giraffe.Swagger.Generator
+open Giraffe.Swagger.Dsl
 open Analyzer
 open SwaggerUi
 open Giraffe.Swagger.Generator
