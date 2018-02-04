@@ -87,11 +87,11 @@ type Car =
         Built  : DateTime
     }
 
-let submitCar =
+let submitCar : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             let! car = ctx.BindModelAsync<Car>()
-            return! json car next ctx
+            return! ctx.WriteJsonAsync car
         }
 
 let webApp =

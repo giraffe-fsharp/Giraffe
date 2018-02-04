@@ -24,8 +24,8 @@
     - [Model Binding](#model-binding)
     - [Authentication and Authorization](#authentication-and-authorization)
     - [Conditional Requests](#conditional-requests)
-    - [Content Negotiation](#content-negotiation)
     - [Response Writing](#response-writing)
+    - [Content Negotiation](#content-negotiation)
     - [Streaming](#streaming)
     - [Redirection](#redirection)
 - [Giraffe View Engine](#giraffe-view-engine)
@@ -78,33 +78,35 @@ This architecture allows F# developers to build rich web applications through a 
 
 #### compose (>=>)
 
-The `compose` combinator combines two `HttpHandler` functions into one:
+The `compose` combinator combines two `HttpHandler` functions into one.
+
+It is the main combinator in Giraffe which allows composing many smaller `HttpHandler` functions into a bigger web application:
 
 ```fsharp
-let compose (handler1 : HttpHandler) (handler2 : HttpHandler) : HttpHandler =
-    fun (next : HttpFunc) ->
-        let func = next |> handler2 |> handler1
-        fun (ctx : HttpContext) ->
-            match ctx.Response.HasStarted with
-            | true  -> next ctx
-            | false -> func ctx
+let app = compose (route "/") (Successful.OK "Hello World")
 ```
 
-It is the main combinator as it allows composing many smaller `HttpHandler` functions into a bigger web application.
-
-If you would like to learn more about the `>=>` (fish) operator then please check out [Scott Wlaschin's blog post on Railway oriented programming](http://fsharpforfunandprofit.com/posts/recipe-part2/).
-
-##### Example:
+A slightly more convenient and more commonly used form of `compose` is the fish operator `>=>`:
 
 ```fsharp
 let app = route "/" >=> Successful.OK "Hello World"
 ```
 
+There is no limit to how many `HttpHandler` functions can be chained with `compose` or the fish operator:
+
+```fsharp
+let app =
+    route "/"
+    >=> setHttpHeader "X-Foo" "Bar"
+    >=> setStatusCode 200
+    >=> setBodyFromString "Hello World"
+```
+
+If you would like to learn more about the `>=>` (fish) operator then please check out [Scott Wlaschin's blog post on Railway oriented programming](http://fsharpforfunandprofit.com/posts/recipe-part2/).
+
 #### choose
 
-The `choose` combinator function iterates through a list of `HttpHandler` functions and invokes each individual handler until the first `HttpHandler` returns a positive result.
-
-##### Example:
+The `choose` combinator function iterates through a list of `HttpHandler` functions and invokes each individual handler until the first `HttpHandler` returns a positive result:
 
 ```fsharp
 let app =
@@ -124,9 +126,8 @@ let warbler f a = f a a
 ```
 
 Functions in F# are eagerly evaluated and a normal route will only be evaluated the first time.
-A warbler will ensure that a function will get evaluated every time the route is hit.
+A warbler will ensure that a function will get evaluated every time the route is hit:
 
-#### Example
 ```fsharp
 // unit -> string
 let time() = System.DateTime.Now.ToString()
@@ -433,7 +434,7 @@ let someHttpHandler : HttpHandler =
         // Return a Task<HttpContext option>
 ```
 
-You can also set a HTTP header via the `setHttpHeader` http handler function:
+You can also set a HTTP header via the `setHttpHeader` http handler:
 
 ```fsharp
 let notFoundHandler : HttpHandler =
@@ -577,7 +578,7 @@ The `negotiate` handler attempts to return an object back to the client based on
 
 The following sub modules and status code `HttpHandler` functions are available out of the box:
 
-*Please be aware that there is no module for `3xx` HTTP status codes available, instead it is recommended to use the `redirectTo` http handler function (see [Redirection](#redirection)).*
+*Please note that there is no module for `3xx` HTTP status codes available, instead it is recommended to use the `redirectTo` http handler for redirection functionality (see [Redirection](#redirection)).*
 
 #### Intermediate
 
@@ -650,7 +651,7 @@ Giraffe offers a variety of routing `HttpHandler` functions to accommodate the m
 
 #### route
 
-The simplest form of routing can be done with the `route` http handler function:
+The simplest form of routing can be done with the `route` http handler:
 
 ```fsharp
 let webApp =
@@ -1170,7 +1171,7 @@ let webApp =
 
 #### requiresRole
 
-The `requiresRole (role : string) (authFailedHandler : HttpHandler)` http handler function checks if an authenticated user is part of a given `role`. If a user fails to be in a certain role then the `authFailedHandler` will be executed:
+The `requiresRole (role : string) (authFailedHandler : HttpHandler)` http handler checks if an authenticated user is part of a given `role`. If a user fails to be in a certain role then the `authFailedHandler` will be executed:
 
 ```fsharp
 let notLoggedIn =
@@ -1201,7 +1202,7 @@ let webApp =
 
 #### requiresRoleOf
 
-The `requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler)` http handler function checks if an authenticated user is part of a list of given `roles`. If a user fails to be in at least one of the `roles` then the `authFailedHandler` will be executed:
+The `requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler)` http handler checks if an authenticated user is part of a list of given `roles`. If a user fails to be in at least one of the `roles` then the `authFailedHandler` will be executed:
 
 ```fsharp
 let notLoggedIn =
@@ -1233,7 +1234,7 @@ let webApp =
 
 #### challenge
 
-The `challenge (authScheme : string)` http handler function will challenge the client to authenticate with a specific `authScheme`. This function is often used in combination with the `requiresAuthentication` http handler:
+The `challenge (authScheme : string)` http handler will challenge the client to authenticate with a specific `authScheme`. This function is often used in combination with the `requiresAuthentication` http handler:
 
 ```fsharp
 let webApp =
@@ -1252,7 +1253,7 @@ In this example the client will be challenged to authenticate with a scheme call
 
 #### signOut
 
-The `signOut (authScheme : string)` http handler function will sign a user out from a given `authScheme`:
+The `signOut (authScheme : string)` http handler will sign a user out from a given `authScheme`:
 
 ```fsharp
 let logout = signOut "Cookie" >=> redirectTo false "/"
@@ -1298,9 +1299,7 @@ The output of `ValidatePreconditions` returns a `Precondition` union type, which
 
 Giraffe will make sure that all conditional HTTP headers will get correctly validated according to the HTTP spec, taking into account whether it was a `GET`, `HEAD` or other HTTP request and the correct precedence in which each HTTP header must be validated.
 
-It is up to the individual `HttpHandler` implementation to decide how to proceed after validation, but it is recommended to take the recommended action as listed above.
-
-##### Example:
+It is up to the individual `HttpHandler` implementation to decide how to proceed after validation, but it is recommended to take the recommended action as listed above:
 
 ```fsharp
 // Pass an optional eTag and lastModified timestamp into the handler, because generating an eTag might require to load the entire resource into memory and therefore this is not something which should be done on every request.
@@ -1322,7 +1321,407 @@ let webApp =
     ]
 ```
 
-- [Content Negotiation](#content-negotiation)
-- [Response Writing](#response-writing)
-- [Streaming](#streaming)
-- [Redirection](#redirection)
+### Response Writing
+
+Sending a response back to a client in Giraffe can be done through a small range of `HttpContext` extension methods and and their equivalent `HttpHandler` functions.
+
+#### Writing Bytes
+
+The `WriteBytesAsync (bytes : byte[])` extension method and the `setBody (bytes : byte array)` http handler both write a `byte array` to the response stream of the HTTP request:
+
+```fsharp
+let someHandler (bytes : byte array) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteBytesAsync bytes
+        }
+
+// or...
+
+let someHandler (bytes : byte array) : HttpHandler =
+    // Do stuff
+    setBody bytes
+```
+
+Both functions will also set the `Content-Length` HTTP header to the length of the `byte array`.
+
+#### Writing Strings
+
+The `WriteStringAsync (str : string)` extension method and the `setBodyFromString (str : string)` http handler are both small helper functions which `UTF8` decode the `string` into a `byte array` and subsequently write the `byte array` to the response stream of the HTTP request.
+
+Both functions will also set the `Content-Length` HTTP header to the correct length of the response:
+
+```fsharp
+let someHandler (str : string) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteStringAsync str
+        }
+
+// or...
+
+let someHandler (str : string) : HttpHandler =
+    // Do stuff
+    setBodyFromString str
+```
+
+The `setBody` and `setBodyFromString` http handlers (and their `HttpContext` extension method equivalents) are useful when you want to create your own response writing function for a specific media type which is not provided by Giraffe yet.
+
+For example Giraffe doesn't have any functionality for serializing and writing a YAML response back to a client. However, you can reference another third party library which can serialize an object into a YAML string and then create your own `yaml` http handler like this:
+
+```fsharp
+let yaml (x : obj) : HttpHandler =
+    setHttpHeader "Content-Type" "text/yaml"
+    >=> setBodyFromString (YamlSerializer.toYaml x)
+
+```
+
+#### Writing Text
+
+The `WriteTextAsync (str : string)` extension method and the `text (str : string)` http handler are the same as [writing strings](#writing-strings) except that they will also set the `Content-Type` HTTP header to `text/plain` in the response:
+
+```fsharp
+let someHandler (str : string) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteTextAsync str
+        }
+
+// or...
+
+let someHandler (str : string) : HttpHandler =
+    // Do stuff
+    text str
+```
+
+#### Writing JSON
+
+The `WriteJsonAsync (dataObj : obj)` extension method and the `json (dataObj : obj)` http handler will both serialize an object to a JSON string and write the output to the response stream of the HTTP request. They will also set the `Content-Length`HTTP header and the `Content-Type` header to `application/json` in the response:
+
+```fsharp
+let someHandler (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteJsonAsync dataObj
+        }
+
+// or...
+
+let someHandler (dataObj : obj) : HttpHandler =
+    // Do stuff
+    json dataObj
+```
+
+The underlying JSON serializer can be configured as a dependency during application startup (see [JSON](#json)).
+
+#### Writing XML
+
+The `WriteXmlAsync (dataObj : obj)` extension method and the `xml (dataObj : obj)` http handler will both serialize an object to an XML string and write the output to the response stream of the HTTP request. They will also set the `Content-Length`HTTP header and the `Content-Type` header to `application/xml` in the response:
+
+```fsharp
+let someHandler (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteXmlAsync dataObj
+        }
+
+// or...
+
+let someHandler (dataObj : obj) : HttpHandler =
+    // Do stuff
+    xml dataObj
+```
+
+The underlying XML serializer can be configured as a dependency during application startup (see [XML](#xml)).
+
+#### Writing HTML
+
+The `WriteHtmlFileAsync (filePath : string)` extension method and the `htmlFile (filePath : string)` http handler will both read a file from the local file system and write the content to the response stream of the HTTP request. They will also set the `Content-Length` HTTP header and the `Content-Type` header to `text/html`:
+
+```fsharp
+let someHandler (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteHtmlFileAsync "index.html"
+        }
+
+// or...
+
+let someHandler (dataObj : obj) : HttpHandler =
+    // Do stuff
+    htmlFile "index.html"
+```
+
+Both functions accept either a relative or an absolute path to the HTML file.
+
+#### Writing HTML Strings
+
+The `WriteHtmlStringAsync (html : string)` extension method and the `htmlString (html : string)` http handler are both equivalent to [writing strings](#writing-strings) except that they will also set the `Content-Type` header to `text/html`:
+
+```fsharp
+let someHandler (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteHtmlStringAsync "<html><head></head><body>Hello World</body></html>"
+        }
+
+// or...
+
+let someHandler (dataObj : obj) : HttpHandler =
+    // Do stuff
+    htmlString "<html><head></head><body>Hello World</body></html>"
+```
+
+#### Writing HTML Views
+
+Giraffe comes with its own extremely powerful view engine for functional developers (see [Giraffe View Engine](#giraffe-view-engine)). The `WriteHtmlViewAsync (htmlView : XmlNode)` extension method and the `htmlView (htmlView : XmlNode)` http handler will both compile a given html view into valid HTML code and write the output to the response stream of the HTTP request. Additionally they will both set the `Content-Length` HTTP header to the correct value and set the `Content-Type` header to `text/html`:
+
+```fsharp
+let indexView =
+    html [] [
+        head [] [
+            title [] [ rawText "Giraffe" ]
+        ]
+        body [] [
+            h1 [] [ rawText "Giraffe" ]
+            p [] [ rawText "Hello World." ]
+        ]
+    ]
+
+let someHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteHtmlViewAsync indexView
+        }
+
+// or...
+
+let someHandler : HttpHandler =
+    // Do stuff
+    htmlView indexView
+```
+
+### Content Negotiation
+
+Giraffe's default [response writers](#response-writing) will always send a response in a specific media type regardless of a client's own requirements. Content negotiation on the other hand allows a Giraffe web server to examine a web request's `Accept` HTTP header and decide an appropriate data representation on the fly.
+
+The `NegotiateAsync (responseObj : obj)` extension method and the `negotiate (responseObj : obj)` http handler will both pick the most appropriate data representation based on a request's `Accept` HTTP header and write a data object to the response stream of a HTTP request:
+
+```fsharp
+[<CLIMutable>]
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let johnDoe =
+    {
+        FirstName = "John"
+        LastName  = "Doe"
+    }
+
+let someHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.NegotiateAsync johnDoe
+        }
+
+// or...
+
+let someHandler : HttpHandler =
+    // Do stuff
+     negotiate johnDoe
+```
+
+Currently Giraffe only supports plain text, JSON and XML responses during content negotiation out of the box. If a client doesn't accept any of these media types then the default negotiation function will return a `406 Unacceptable` HTTP response.
+
+#### Configuring Content Negotiation
+
+The default negotiation behaviour can be customized by creating a new class which implements the `INegotiationConfig` interface and set up a new dependency of that type during application startup.
+
+The `INegotiationConfig` has two members which must be implemented:
+
+- `Rules` of type `IDictionary<string, obj -> HttpHandler>`
+- `UnacceptableHandler` of type `HttpHandler`
+
+
+The `Rules` property is of type `IDictionary<string, obj -> HttpHandler>` and represents a key/value dictionary, where the key denotes a supported `Content-Type` and the value represents a function which turns a given `obj` into a `HttpHandler`.
+
+For example the rules of the `DefaultNegotiationConfig` are as following:
+
+```fsharp
+dict [
+    "*/*"             , json
+    "application/json", json
+    "application/xml" , xml
+    "text/xml"        , xml
+    "text/plain"      , fun x -> x.ToString() |> text
+]
+```
+
+As you can see from the example above the default dictionary uses the `json` and `xml` http handlers to define the response handler for the respective media types. If a client requests a `text/plain` response then a new function had to be created which accepts an `obj` and uses the `.ToString()` method in combination with the `text` http handler to return a plain text response.
+
+If a client has no particular preference (`*/*`) then the default response is `json`.
+
+The `UnacceptableHandler` is a http handler which will be invoked if none of the client's accepted media types are supported by the web server and therefore the request cannot be satisfied.
+
+#### Example: Adding BSON support to content negotiation
+
+Let's assume you have created your own `bson` http handler which can serialize an object into BSON and write the contents to the response stream of the request:
+
+```fsharp
+let bson (o : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        // Implement BSON handler here
+```
+
+In order for `negotiate` and `NegotiateAsync` to support the new `bson` http handler we need to create a new type which implements `INegotiationConfig`:
+
+```fsharp
+type CustomNegotiationConfig (baseConfig : INegotiationConfig) =
+    let plainText x = text (x.ToString())
+
+    interface INegotiationConfig with
+
+        member __.UnacceptableHandler =
+            baseConfig.UnacceptableHandler
+
+        member __.Rules =
+                dict [
+                    "*/*"             , json
+                    "application/json", json
+                    "application/xml" , xml
+                    "text/xml"        , xml
+                    "application/bson", bson
+                    "text/plain"      , plainText
+                ]
+```
+
+Then register an instance of the newly created class during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now register your custom INegotiationConfig
+    services.AddSingleton<INegotiationConfig>(
+        CustomNegotiationConfig(
+            DefaultNegotiationConfig())
+    ) |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+In this example the `CustomNegotiationConfig` uses composition to re-use the `UnacceptableHandler` from the `DefaultNegotiationConfig` without having to use inheritance.
+
+#### Configuring content negotiation through partial application
+
+Alternatively you can also use the `NegotiateWithAsync` extension method or the `negotiateWith` http handler to configure content negotiation through partial function application:
+
+```fsharp
+let customNegotiationRules =
+    dict [
+        "*/*"             , json
+        "application/json", json
+        "application/xml" , xml
+        "text/xml"        , xml
+        "application/bson", bson
+        "text/plain"      , plainText
+    ]
+
+let customUnacceptableHandler =
+    setStatusCode 406
+    >=> text "Request cannot be satisfied by the web server."
+
+// Override the default negotiate handler with a new custom implementation
+let negotiate =
+    negotiateWith
+        customNegotiationRules
+        customUnacceptableHandler
+```
+
+### Streaming
+
+Sometimes a large file or block of data has to be send to a client and in order to avoid loading the entire data into memory a Giraffe web application can use streaming to send a response in a more efficient way.
+
+The `WriteStreamAsync` extension method and the `streamData` http handler can be used to stream an object of type `Stream` to a client.
+
+Both functions accept the following parameters:
+
+- `enableRangeProcessing`: If true a client can request a sub range of data to be streamed (useful when a client wants to continue streaming after a paused download, or when internet connection has been lost, etc.)
+- `stream`: The stream object to be returned to the client.
+- `eTag`: Entity header tag used for conditional requests (see [Conditional Requests](#conditional-requests)).
+- `lastModified`: Last modified timestamp used for conditional requests (see [Conditional Requests](#conditional-requests)).
+
+If the `eTag` or `lastModified` timestamp are set then both functions will also set the `ETag` and/or `Last-Modified` HTTP headers during the response:
+
+```fsharp
+let someStream : Stream = ...
+
+let someHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteStreamAsync
+                true // enableRangeProcessing
+                someStream
+                None // eTag
+                None // lastModified
+        }
+
+// or...
+
+let someHandler : HttpHandler =
+    // Do stuff
+    streamData
+        true // enableRangeProcessing
+        someStream
+        None // eTag
+        None // lastModified
+```
+
+In most cases a web application will want to stream a file directly from the local file system. In this case you can use the `WriteFileStreamAsync` extension method or the `streamFile` http handler, which are both the same as `WriteStreamAsync` and `streamData` except that they accept a relative or absolute `filePath` instead of a `Stream` object:
+
+```fsharp
+let someHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteFileStreamAsync
+                true // enableRangeProcessing
+                "large-file.zip"
+                None // eTag
+                None // lastModified
+        }
+
+// or...
+
+let someHandler : HttpHandler =
+    // Do stuff
+    streamFile
+        true // enableRangeProcessing
+        "large-file.zip"
+        None // eTag
+        None // lastModified
+```
+
+### Redirection

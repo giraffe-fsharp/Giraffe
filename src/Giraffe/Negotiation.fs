@@ -64,7 +64,7 @@ type HttpContext with
     ///
     /// ** Output **
     /// Task of `Some HttpContext` after writing to the body of the response.
-    member this.NegotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>)
+    member this.NegotiateWithAsync (negotiationRules    : IDictionary<string, obj -> HttpHandler>)
                               (unacceptableHandler : HttpHandler)
                               (responseObj         : obj) =
         let acceptedMimeTypes = (this.Request.GetTypedHeaders()).Accept
@@ -99,9 +99,9 @@ type HttpContext with
     ///
     /// ** Output **
     /// Task of `Some HttpContext` after writing to the body of the response.
-    member this.Negotiate (responseObj : obj) =
+    member this.NegotiateAsync (responseObj : obj) =
         let config = this.GetService<INegotiationConfig>()
-        this.NegotiateWith config.Rules config.UnacceptableHandler responseObj
+        this.NegotiateWithAsync config.Rules config.UnacceptableHandler responseObj
 
 // ---------------------------
 // HttpHandler functions
@@ -123,7 +123,7 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
                   (responseObj         : obj)
                   : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        ctx.NegotiateWith negotiationRules unacceptableHandler responseObj
+        ctx.NegotiateWithAsync negotiationRules unacceptableHandler responseObj
 
 /// ** Description **
 /// Sends a response back to the client based on the request's `Accept` header.
@@ -136,4 +136,4 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let negotiate (responseObj : obj) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        ctx.Negotiate responseObj
+        ctx.NegotiateAsync responseObj
