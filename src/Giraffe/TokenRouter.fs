@@ -269,7 +269,7 @@ let route (path:string) (fn:HttpHandler) (root:Node) =
     Node.ExtendPath root path (fn |> HandlerMap |> End)
 
 ///**Description**
-/// Matches and parses url values from a route using `printf` string formatting, results are passes to function as tuple.
+/// Matches and parses url values from a route using `printf` string formatting, results are passes to function as tuple. Doesn't validate format on the runtime.
 ///**Parameters**
 ///  * `path` : `PrintfFormat<_,_,_,_,'T>` - the route to match & parse using wildcard format of `printf`
 ///  * `fn` : `'T -> HttpHandler` - function that accepts the parsed tuple value and returns HttpHandler
@@ -277,8 +277,7 @@ let route (path:string) (fn:HttpHandler) (root:Node) =
 ///**Output Type**
 ///  * `parent` : `Node` - This parameter is applied by `router`, and is ommitted when building api such that function is partially applied fn
 ///  * `Node`
-let routef (path : PrintfFormat<_,_,_,_,'T>) (fn:'T -> HttpHandler) (root:Node) =
-    FormatExpressions.validateFormat path
+let routefUnsafe (path : PrintfFormat<_,_,_,_,'T>) (fn:'T -> HttpHandler) (root:Node) =
 
 // parsing route that iterates down nodes, parses, and then continues down further notes if needed
     let last = path.Value.Length - 1
@@ -317,6 +316,19 @@ let routef (path : PrintfFormat<_,_,_,_,'T>) (fn:'T -> HttpHandler) (root:Node) 
                 go (pl + 1) ts pcount node
 
     go 0 0 0 root
+
+///**Description**
+/// Matches and parses url values from a route using `printf` string formatting, results are passes to function as tuple.
+///**Parameters**
+///  * `path` : `PrintfFormat<_,_,_,_,'T>` - the route to match & parse using wildcard format of `printf`
+///  * `fn` : `'T -> HttpHandler` - function that accepts the parsed tuple value and returns HttpHandler
+///
+///**Output Type**
+///  * `parent` : `Node` - This parameter is applied by `router`, and is ommitted when building api such that function is partially applied fn
+///  * `Node`
+let routef (path : PrintfFormat<_,_,_,_,'T>) (fn:'T -> HttpHandler) (root:Node) =
+    FormatExpressions.validateFormat path
+    routefUnsafe path fn root
 
 // choose root will apply its root node to all route mapping functions to generate Trie at compile time, function produced will take routeState (path) and execute appropriate function
 
