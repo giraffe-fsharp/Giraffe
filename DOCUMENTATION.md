@@ -29,10 +29,13 @@
     - [Streaming](#streaming)
     - [Redirection](#redirection)
 - [Giraffe View Engine](#giraffe-view-engine)
-    - [HTML Elements](#html-elements)
-    - [HTML Attributes](#html-attributes)
-    - [Custom Elements](#custom-elements)
+    - [HTML Elements and Attributes](#html-elements-and-attributes)
+    - [Text Content](#text-content)
+    - [Naming Convention](#naming-convention)
+    - [View Engine Best Practices](#view-engine-best-practices)
+    - [Custom Elements and Attributes](#custom-elements-and-attributes)
     - [Rendering Views](#rendering-views)
+    - [Common View Engine Features](#common-view-engine-features)
 - [Serialization](#serialization)
     - [JSON](#json)
     - [XML](#xml)
@@ -1538,9 +1541,11 @@ let someHandler : HttpHandler =
 
 // or...
 
-let someHandler : HttpHandler =
-    // Do stuff
-     negotiate johnDoe
+let webApp =
+    choose [
+        route "/foo" >=> negotiate johnDoe
+        route "/bar" >=> someHandler
+    ]
 ```
 
 Currently Giraffe only supports plain text, JSON and XML responses during content negotiation out of the box. If a client doesn't accept any of these media types then the default negotiation function will return a `406 Unacceptable` HTTP response.
@@ -1724,4 +1729,361 @@ let someHandler : HttpHandler =
         None // lastModified
 ```
 
+All streaming functions in Giraffe will also validate conditional HTTP headers, including the `If-Range` HTTP header if `enableRangeProcessing` has been set to `true`.
+
 ### Redirection
+
+The `redirectTo (permanent : bool) (location : string)` http handler can be used to redirect a client to a different location when handling an incoming web request:
+
+```fsharp
+let webApp =
+    choose [
+        route "/new" >=> text "Hello World"
+        route "/old" >=> redirectTo true "https://myserver.com/new"
+    ]
+```
+
+Please note that if the `permanent` flag is set to `true` then the Giraffe web application will send a `301` HTTP status code to browsers which will tell them that the redirection is permanent. This often leads to browsers cache the information and not hit the deprecated URL a second time any more. If this is not desired then please set `permanent` to `false` in order to guarantee that browsers will continue hitting the old URL before redirecting to the (temporary) new one.
+
+## Giraffe View Engine
+
+Giraffe has its own functional view engine which can be used to build rich GUIs for web applications. The single biggest and best contrast to other view engines (e.g. Razor, Liquid, etc.) is that the Giraffe View Engine is entirely functional written in normal (and compiled) F# code.
+
+This means that the Giraffe View Engine is by definition one of the most feature rich view engines, requires no disk IO to load a view and views are automatically compiled at build time.
+
+The Giraffe View Engine uses traditional functions and F# record types to generate rich HTML/XML views.
+
+### HTML Elements and Attributes
+
+HTML elements and attributes are defined as F# objects:
+
+```fsharp
+let indexView =
+    html [] [
+        head [] [
+            title [] [ rawText "Giraffe Sample" ]
+        ]
+        body [] [
+            h1 [] [ encodedText "I |> F#" ]
+            p [ _class "some-css-class"; _id "someId" ] [
+                rawText "Hello World"
+            ]
+        ]
+    ]
+```
+
+A HTML element can either be a `ParentNode`, a `VoidElement` or `RawText`/`EncodedText`.
+
+For example the `<html>` or `<div>` tags are typical `ParentNode` elements. They can hold an `XmlAttribute list` and a second `XmlElement list` for their child elements:
+
+```fsharp
+let someHtml = div [] []
+```
+
+All `ParentNode` elements accept these two parameters:
+
+```fsharp
+let someHtml =
+    div [ _id "someId"; _class "css-class" ] [
+        a [ _href "https://example.org" ] [ rawText "Some text..." ]
+    ]
+```
+
+Most HTML tags are `ParentNode` elements, however there is a few HTML tags which cannot hold any child elements, such as `<br>`, `<hr>` or `<meta>` tags. These are represented as `VoidElement` objects and only accept the `XmlAttribute list` as single parameter:
+
+```fsharp
+let someHtml =
+    div [] [
+        br []
+        hr [ _class "css-class-for-hr" ]
+        p [] [ rawText "bla blah" ]
+    ]
+```
+
+Attributes are further classified into two different cases. First and most commonly there are `KeyValue` attributes:
+
+```fsharp
+a [
+    _href "http://url.com"
+    _target "_blank"
+    _class "class1" ] [ encodedText "Click here" ]
+```
+
+As the name suggests, they have a key, such as `class` and a value such as the name of a CSS class.
+
+The second category of attributes are `Boolean` flags. There are not many but some HTML attributes which do not require any value (e.g. `async` or `defer` in script tags). The presence of such an attribute means that the feature is turned on, otherwise it is turned off:
+
+```fsharp
+script [ _src "some.js"; _async ] []
+```
+
+### Text Content
+
+Naturally the most frequent content in any HTML document is pure text:
+
+```html
+<div>
+    <h1>This is text content</h1>
+    <p>This is even more text content!</p>
+</div>
+```
+
+The Giraffe View Engine lets one create pure text content as either `RawText` or `EncodedText`:
+
+```fsharp
+let someHtml =
+    div [] [
+        p [] [ rawText "<div>Hello World</div>" ]
+        p [] [ encodedText "<div>Hello World</div>" ]
+    ]
+```
+
+The `rawText` function will create an object of type `RawText` and the `encodedText` function will output an object of type `EncodedText`. The difference is that the latter will HTML encode the value when rendering the view.
+
+In this example the first `p` element will literally output the string as it is (`<div>Hello World</div>`) while the second `p` element will output the value as HTML encoded string `&lt;div&gt;Hello World&lt;/div&gt;`.
+
+Please be aware that the the usage of `rawText` is mainly designed for edge cases where someone would purposefully want to inject HTML (or JavaScript) code into a rendered view. If not used carefully this could potentially lead to serious security vulnerabilities and therefore should be used only when explicitly required.
+
+Most cases and particularly any user provided content should always be output via the `encodedText` function.
+
+### Naming Convention
+
+The Giraffe View Engine has a naming convention which lets you easily determine the correct function name without having to know anything about the view engine's implementation.
+
+All HTML tags are defined as `XmlNode` elements under the exact same name as they are named in HTML. For example the `<html>` tag would be `html [] []`, an `<a>` tag would be `a [] []` and a `<span>` or `<canvas>` would be the `span [] []` or `canvas [] []` function.
+
+HTML attributes follow the same naming convention except that attributes have an underscore prepended. For example the `class` attribute would be `_class` and the `src` attribute would be `_src` in Giraffe.
+
+The underscore does not only help to distinguish an attribute from an element, but also avoid a naming conflict between tags and attributes of the same name (e.g. `<form>` vs. `<input form="form1">`).
+
+If a HTML attribute has a hyphen in the name (e.g. `accept-charset`) then the equivalent Giraffe attribute would be written in camel case notion (e.g. `acceptCharset`).
+
+*Should you find a HTML tag or attribute missing in the Giraffe View Engine then you can either [create it yourself](#custom-elements-and-attributes) or send a [pull request on GitHub](https://github.com/giraffe-fsharp/Giraffe/pulls).*
+
+### View Engine Best Practices
+
+Due to the huge amount of available HTML tags and their fairly generic (and short) names (e.g. `<form>`, `<option>`, `<select>`, etc.) there is a significant danger of accidentally overriding a function of the same name in an application's codebase. For that reason the Giraffe View Engine becomes only available after opening the `GiraffeViewEngine` module.
+
+As a measure of good practice it is recommended to create all views in a separate module:
+
+```fsharp
+module MyWebApplication
+
+module Views =
+    open Giraffe.GiraffeViewEngine
+
+    let index =
+        html [] [
+            head [] [
+                title [] [ rawText "Giraffe Sample" ]
+            ]
+            body [] [
+                h1 [] [ encodedText "I |> F#" ]
+                p [ _class "some-css-class"; _id "someId" ] [
+                    rawText "Hello World"
+                ]
+            ]
+        ]
+
+    let other = //...
+```
+
+This ensures that the opening of the `GiraffeViewEngine` is only contained in a small context of an application's codebase and therefore less of a threat to accidental overrides. In the above example views can always be accessed through the `Views` sub module (e.g. `Views.index`).
+
+### Custom Elements and Attributes
+
+Adding new elements or attributes is normally as simple as a single line of code:
+
+```fsharp
+open Giraffe.GiraffeViewEngine
+
+// If there was a new <foo></foo> HTML element:
+let foo = tag "foo"
+
+// If <foo> is an element which cannot hold any content then create it as voidTag:
+let foo = voidTag "foo"
+
+// If <foo> has a new attribute called bar then create a new bar attribute:
+let _bar = attr "bar"
+
+// if the bar attribute is a boolean flag:
+let _bar = flag "bar"
+```
+
+Alternatively you can also create new elements and attributes from inside another element:
+
+```fsharp
+let someHtml =
+    div [] [
+        tag "foo" [ attr "bar" "blah" ] [
+            voidTag "otherFoo" [ flag "flag1" ]
+        ]
+    ]
+```
+
+### Rendering Views
+
+Rendering views in Giraffe is done through one of the following functions:
+
+- `renderHtmlDocument`
+- `renderHtmlNodes`
+- `renderHtmlNode`
+- `renderXmlNodes`
+- `renderXmlNode`
+
+The Giraffe View Engine cannot only be used to render HTML views, but also for any other XML based content such as `<svg>` images or other arbitrary XML based data.
+
+The `renderHtmlDocument` function takes a single `XmlNode` as input parameter and renders a HTML page with a `DOCTYPE` declaration. This function should be used for rendering a complete HTML document. The `WriteHtmlViewAsync` extension method and the `htmlView` http handler both use the `renderHtmlDocument` function under the covers.
+
+The `renderHtmlNodes` function takes an `XmlNode list` as input parameter and will output a single HTML string containing all the rendered HTML code. The `renderHtmlNode` function renders a single `XmlNode` element into a valid HTML string. Both, the `renderHtmlNodes` and `renderHtmlNode` function are useful for use cases where a HTML snippet needs to be created without a `DOCTYPE` declaration (e.g. templated emails, etc.).
+
+The `renderXmlNodes` and `renderXmlNode` function are identical to `renderHtmlNodes` and `renderHtmlNode`, except that they will render void elements differently:
+
+```fsharp
+let someTag = voidTag "foo"
+let someContent = someTag []
+
+// Void tag will be rendered to valid HTML: <foo>
+let output1 = renderHtmlNode someContent
+
+// Void tag will be rendered to valid XML: <foo />
+let output2 = renderXmlNode someContent
+```
+
+### Common View Engine Features
+
+The Giraffe View Engine doesn't have any specially built functions for commonly known features such as master pages or partial views, mainly because the nature of the view engine itself doesn't require it in most cases.
+
+#### Master Pages
+
+Creating a master page is a simple matter of piping two functions together:
+
+```fsharp
+module Views =
+    open Giraffe.GiraffeViewEngine
+
+    let master (pageTitle : string) (content: XmlNode list) =
+        html [] [
+            head [] [
+                title [] [ encodedText pageTitle ]
+            ]
+            body [] content
+        ]
+
+    let index =
+        let pageTitle = "Giraffe Sample"
+        [
+            h1 [] [ encodedText pageTitle ]
+            p [] [ encodedText "Hello world!" ]
+        ] |> master pageTitle
+```
+
+... or even have multiple nested master pages:
+
+```fsharp
+module Views =
+    open Giraffe.GiraffeViewEngine
+
+    let master1 (pageTitle : string) (content: XmlNode list) =
+        html [] [
+            head [] [
+                title [] [ encodedText pageTitle ]
+            ]
+            body [] content
+        ]
+
+    let master2 (content: XmlNode list) =
+        [
+            main [] content
+            footer [] [
+                p [] [
+                    encodedText "Copyright ..."
+                ]
+            ]
+        ]
+
+    let index =
+        let pageTitle = "Giraffe Sample"
+        [
+            h1 [] [ encodedText pageTitle ]
+            p [] [ encodedText "Hello world!" ]
+        ] |> master2 |> master1 pageTitle
+```
+
+#### Partial Views
+
+A partial view is nothing more than one function or object being called from within another function:
+
+```fsharp
+module Views =
+    open Giraffe.GiraffeViewEngine
+
+    let partial =
+        footer [] [
+            p [] [
+                encodedText "Copyright..."
+            ]
+        ]
+
+    let master (pageTitle : string) (content: XmlNode list) =
+        html [] [
+            head [] [
+                title [] [ encodedText pageTitle ]
+            ]
+            body [] content
+            partial
+        ]
+
+    let index =
+        let pageTitle = "Giraffe Sample"
+        [
+            h1 [] [ encodedText pageTitle ]
+            p [] [ encodedText "Hello world!" ]
+        ] |> master pageTitle
+```
+
+#### Working with Models
+
+A view which accepts a model is basically a function with an additional parameter:
+
+```fsharp
+module Views =
+    open Giraffe.GiraffeViewEngine
+
+    let partial =
+        footer [] [
+            p [] [
+                encodedText "Copyright..."
+            ]
+        ]
+
+    let master (pageTitle : string) (content: XmlNode list) =
+        html [] [
+            head [] [
+                title [] [ encodedText pageTitle ]
+            ]
+            body [] content
+            partial
+        ]
+
+    let index (model : IndexViewModel) =
+        [
+            h1 [] [ encodedText model.PageTitle ]
+            p [] [ encodedText model.WelcomeText ]
+        ] |> master model.PageTitle
+```
+
+#### If Statements, Loops, etc.
+
+Things like if statements, loops and other normal F# language constructs work just as expected:
+
+```fsharp
+let partial (books : Book list) =
+    ul [] [
+        yield!
+            books
+            |> List.map (fun b -> li [] [ encodedText book.Title ])
+    ]
+```
+
+Overall the Giraffe View Engine is extremely flexible and feature rich by nature based on the fact that it is generated via normal compiled F# code.
