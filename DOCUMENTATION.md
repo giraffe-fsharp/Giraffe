@@ -1,5 +1,7 @@
 # Giraffe Documentation
 
+An in depth functional reference to all of Giraffe's default features.
+
 ## Table of contents
 
 - [Fundamentals](#fundamentals)
@@ -43,6 +45,7 @@
     - [Common Helper Functions](#common-helper-functions)
     - [Computation Expressions](#computation-expressions)
 - [Additional Features](#additional-features)
+    - [Task CE](#task-ce)
     - [TokenRouter](#tokenrouter)
     - [Razor](#razor)
     - [DotLiquid](#dotliquid)
@@ -2087,3 +2090,273 @@ let partial (books : Book list) =
 ```
 
 Overall the Giraffe View Engine is extremely flexible and feature rich by nature based on the fact that it is generated via normal compiled F# code.
+
+## Serialization
+
+### JSON
+
+By default Giraffe uses [Newtonsoft JSON.NET](https://www.newtonsoft.com/json) for (de-)serializing JSON content. An application can modify the default serializer by registering a new dependency which implements the `IJsonSerializer` interface during application startup.
+
+Customizing Giraffe's JSON serialization can either happen via providing a custom object of `JsonSerializerSettings` when instantiating the default `NewtonsoftJsonSerializer` or swap in an entire different JSON library by creating a new class which implements the `IJsonSerializer` interface.
+
+#### Customizing JsonSerializerSettings
+
+You can change the default `JsonSerializerSettings` of the `NewtonsoftJsonSerializer` by registering a new instance of `NewtonsoftJsonSerializer` during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now customize only the IJsonSerializer by providing a custom
+    // object of JsonSerializerSettings
+    let customSettings = JsonSerializerSettings(
+        Culture = CultureInfo("de-DE"))
+
+    services.AddSingleton<IJsonSerializer>(
+        NewtonsoftJsonSerializer(customSettings)) |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+#### Using a different JSON serializer
+
+You can change the entire underlying JSON serializer by creating a new class which implements the `IJsonSerializer` interface:
+
+```fsharp
+type CustomJsonSerializer() =
+    interface IJsonSerializer with
+        // Use different JSON library ...
+        member __.Serialize (o : obj) = // ...
+        member __.Deserialize<'T> (json : string) = // ...
+        member __.Deserialize<'T> (stream : Stream) = // ...
+        member __.DeserializeAsync<'T> (stream : Stream) = // ...
+```
+
+Then register a new instance of the newly created type during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now register your custom IJsonSerializer
+    services.AddSingleton<IJsonSerializer, CustomJsonSerializer>() |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+#### Retrieving the JSON serializer from a custom HttpHandler
+
+If you need you retrieve the registered JSON serializer from a custom `HttpHandler` function then you can do this with the `GetJsonSerializer` extension method:
+
+```fsharp
+let customHandler (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let serializer = ctx.GetJsonSerializer()
+        let json = serializer.Serialize dataObj
+        // ... do more...
+```
+
+### XML
+
+By default Giraffe uses the `System.Xml.Serialization.XmlSerializer` for (de-)serializing XML content. An application can modify the serializer by registering a new dependency which implements the `IXmlSerializer` interface during application startup.
+
+Customizing Giraffe's XML serialization can either happen via providing a custom object of `XmlWriterSettings` when instantiating the default `DefaultXmlSerializer` or swap in an entire different XML library by creating a new class which implements the `IXmlSerializer` interface.
+
+#### Customizing XmlWriterSettings
+
+You can change the default `XmlWriterSettings` of the `DefaultXmlSerializer` by registering a new instance of `DefaultXmlSerializer` during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now customize the IXmlSerializer
+    let customSettings =
+        XmlWriterSettings(
+                Encoding           = Encoding.UTF8,
+                Indent             = false,
+                OmitXmlDeclaration = true
+            )
+
+    services.AddSingleton<IXmlSerializer>(
+        DefaultXmlSerializer(customSettings)) |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+####  Using a different XML serializer
+
+You can change the entire underlying XML serializer by creating a new class which implements the `IXmlSerializer` interface:
+
+```fsharp
+type CustomXmlSerializer() =
+    interface IXmlSerializer with
+        // Use different XML library ...
+        member __.Serialize (o : obj) = // ...
+        member __.Deserialize<'T> (xml : string) = // ...
+```
+
+Then register a new instance of the newly created type during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now register your custom IXmlSerializer
+    services.AddSingleton<IXmlSerializer, CustomXmlSerializer>() |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+#### Retrieving the XML serializer from a custom HttpHandler
+
+If you need you retrieve the registered XML serializer from a custom `HttpHandler` function then you can do this with the `GetXmlSerializer` extension method:
+
+```fsharp
+let customHandler (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let serializer = ctx.GetXmlSerializer()
+        let xml = serializer.Serialize dataObj
+        // ... do more...
+```
+
+## Miscellaneous
+
+On top of default HTTP related functions such as `HttpContext` extension methods and `HttpHandler` functions Giraffe also provides a few other helper functions which are commonly required in Giraffe web applications.
+
+### Common Helper Functions
+
+#### DateTime Extension methods
+
+Giraffe automatically adds the `ToHtmlString()` extension method to `DateTime` and `DateTimeOffset` objects which formats a given timestamp into an [RFC3339](https://www.ietf.org/rfc/rfc3339.txt) formatted string:
+
+```fsharp
+let now = DateTimeOffset.UtcNow
+let htmlFormattedTimestamp = now.ToHtmlString()
+```
+
+#### isNotNull
+
+The F# language provides an `isNull` function for checking `null` values when interoping with other .NET languages. Unfortunately there is no `isNotNull` function by default. Giraffe closes that gap by providing an additional `isNotNull` function:
+
+```fsharp
+if isNotNull someObj then
+    // ... do stuff here
+else
+    // ... do other stuff here
+```
+
+#### strOption
+
+An F# application often has to check if a `string` value is `null` when interoping with other .NET languages. Representing an optionally missing value with `null` is unnatural in F# and therefore Giraffe provides the `strOption` function which can convert a `string` into an `Option<string>` value for a more natural F# experience. If a string is `null` then the `strOptoin` function will return `None`, otherwise `Some string`:
+
+```fsharp
+let someDateTime =
+    match strOption someString with
+    | Some str -> DateTimeOffset.Parse str
+    | None     -> DateTimeOffset.UtcNow
+```
+
+#### readFileAsStringAsync
+
+Reading a file from the local file system is often a common use case in a web application. The `readFileAsStringAsync` function will asynchronously read the entire content of a given `filePath` from the local file system:
+
+```fsharp
+let someFunction =
+    task {
+        let! content = readFileAsStringAsync "myfile.txt"
+        // ... do stuff
+    }
+```
+
+### Computation Expressions
+
+Giraffe provides two additional computation expressions which can be used with `Option<'T>` and `Result<'T, 'TError>` objects.
+
+
+The `opt {}` computation expression can be used to bind options and the `res {}` computation expression can be used to bind result objects:
+
+```fsharp
+open Giraffe.ComputationExpressions
+
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let result =
+            res {
+                let! header1 = ctx.GetRequestHeader "X-Header-1"
+                let! header2 = ctx.GetRequestHeader "X-Header-2"
+                let! header3 = ctx.GetRequestHeader "X-Header-3"
+                return (header1, header2, header3)
+            }
+        match result with
+        | Ok (h1, h2, h3) ->
+            sprintf "%s, %s, %s" h1 h2 h3
+            |> ctx.WriteTextAsync
+        | Error msg -> RequestErrors.BAD_REQUEST msg next ctx
+```
+
+## Additional Features
+
+There's more features available for Giraffe web applications through additional NuGet packages:
+
+### Task CE
+
+The `Giraffe.Tasks` NuGet package is a standalone library which makes the `task {}` computation expression available to non Giraffe projects as well.
+
+You can learn more about `Giraffe.Tasks` library by visiting the official [Giraffe Tasks](https://github.com/giraffe-fsharp/Giraffe.Tasks) GitHub repository.
+
+### TokenRouter
+
+The `Giraffe.TokenRouter` NuGet package exposes an alternative routing `HttpHandler` which is based on top of a [Radix Tree](https://en.wikipedia.org/wiki/Radix_tree). Several routing handlers (e.g.: `routef` and `subRoute`) have been overridden in such a way that path matching and value parsing are significantly faster than using the basic `choose` function.
+
+This implementation assumes that additional memory and compilation time is not an issue. If speed and performance of parsing and path matching is required then the `Giraffe.TokenRouter` can be a much better fit.
+
+Please check the official [Giraffe TokenRouter](https://github.com/giraffe-fsharp/Giraffe.TokenRouter) GitHub repository for more information.
+
+### Razor
+
+The `Giraffe.Razor` NuGet package adds fully featured Razor support to Giraffe web applications.
+
+For more information please visit the official [Giraffe Razor](https://github.com/giraffe-fsharp/Giraffe.Razor) GitHub repository.
+
+### DotLiquid
+
+The `Giraffe.DotLiquid` NuGet package adds [DotLiquid](http://dotliquidmarkup.org/) support to Giraffe web applications.
+
+For more information please visit the official [Giraffe DotLiquid](https://github.com/giraffe-fsharp/Giraffe.DotLiquid) GitHub repository.

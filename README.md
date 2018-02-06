@@ -17,19 +17,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 ## Table of contents
 
 - [About](#about)
-- [Installation](#installation)
-- [Default HttpHandlers](#default-httphandlers)
-    - [mustAccept](#mustaccept)
-    - [clearResponse](#clearResponse)
-- [Additional HttpHandlers](#additional-httphandlers)
-    - [Giraffe.TokenRouter](#giraffetokenrouter)
-        - [router](#router)
-        - [routing functions](#routing-functions)
-    - [Additional NuGet packages](#additional-nuget-packages)
-- [Custom HttpHandlers](#custom-httphandlers)
-- [Customizing Giraffe](#customizing-giraffe)
-    - [Customize JSON serialization](#customize-json-serialization)
-    - [Customize XML serialization](#customize-xml-serialization)
+- [Getting Started](#getting-started)
 - [Sample applications](#sample-applications)
 - [Benchmarks](#benchmarks)
 - [Building and developing](#building-and-developing)
@@ -54,7 +42,7 @@ It is not designed to be a competing web product which can be run standalone lik
 
 You can think of [Giraffe](https://www.nuget.org/packages/Giraffe) as the functional counter part of the ASP.NET Core MVC framework.
 
-## Installation
+## Getting Started
 
 ### Using dotnet-new
 
@@ -94,342 +82,26 @@ type Startup() =
         app.UseGiraffe webApp
 ```
 
-## Default HttpHandlers
-
-### mustAccept
-
-`mustAccept` filters a request by the `Accept` HTTP header. You can use it to check if a client accepts a certain mime type before returning a response.
-
-#### Example:
-
-```fsharp
-let app =
-    mustAccept [ "text/plain"; "application/json" ] >=>
-        choose [
-            route "/foo" >=> text "Foo"
-            route "/bar" >=> json "Bar"
-        ]
-```
-
-### clearResponse
-
-`clearResponse` tries to clear the current response. This can be useful inside an error handler to reset the response before writing an error message to the body of the HTTP response object.
-
-#### Example:
-
-```fsharp
-let errorHandler (ex : Exception) (logger : ILogger) =
-    clearResponse
-    >=> ServerErrors.INTERNAL_ERROR ex.Message
-
-let webApp =
-    choose [
-        route "/foo" >=> text "Foo"
-        route "/bar" >=> text "Bar"
-    ]
-
-type Startup() =
-    member __.Configure (app : IApplicationBuilder)
-                        (env : IHostingEnvironment)
-                        (loggerFactory : ILoggerFactory) =
-        app.UseGiraffeErrorHandler errorHandler
-        app.UseGiraffe webApp
-```
-
-## Additional HttpHandlers
-
-
-### Giraffe.TokenRouter
-
-The `Giraffe.TokenRouter` module adds alternative `HttpHandler` functions to route incoming HTTP requests through a basic [Radix Tree](https://en.wikipedia.org/wiki/Radix_tree). Several routing handlers (e.g.: `routef` and `subRoute`) have been overridden in such a way that path matching and value parsing are significantly faster than using the basic `choose` function.
-
-This implementation assumes that additional memory and compilation time is not an issue. If speed and performance of parsing and path matching is required then the `Giraffe.TokenRouter` is the preferred option.
-
-#### router
-
-The base of all routing decisions is a `router` function instead of the default `choose` function when using the `Giraffe.TokenRouter` module.
-
-The `router` HttpHandler takes two arguments, a `HttpHandler` to execute when no route can be matched (typical 404 Not Found handler) and secondly a list of all routing functions.
-
-##### Example:
-
-Defining a basic router and routes
-
-```fsharp
-let notFound = RequestErrors.NOT_FOUND "Page not found"
-let app =
-    router notFound [
-        route "/"       (text "index")
-        route "/about"  (text "about")
-    ]
-```
-
-#### routing functions
-
-When using the `Giraffe.TokenRouter` module the main routing functions have been slightly overridden to match the alternative (speed improved) implementation.
-
-The `route` and `routef` handlers work the exact same way as before, except that the continuation handler needs to be enclosed in parentheses or captured by the `<|` or `=>` operators.
-
-The http handlers `GET`, `POST`, `PUT` and `DELETE` are functions which take a list of nested http handler functions similar to before.
-
-The `subRoute` handler has been altered in order to accept an additional parameter of child routing functions. All child routing functions will presume that the given sub path has been prepended.
-
-### Example:
-
-Defining a basic router and routes
-
-```fsharp
-let notFound = RequestErrors.NOT_FOUND "Page not found"
-let app =
-    router notFound [
-        route "/"       (text "index")
-        route "/about"  (text "about")
-        routef "parsing/%s/%i" (fun (s,i) -> text (sprintf "Received %s & %i" s i))
-        subRoute "/api" [
-            GET [
-                route "/"       (text "api index")
-                route "/about"  (text "api about")
-                subRoute "/v2" [
-                    route "/"       (text "api v2 index")
-                    route "/about"  (text "api v2 about")
-                ]
-            ]
-
-        ]
-    ]
-```
-
-### Additional NuGet packages
-
-There are more `HttpHandler` functions available through additional NuGet packages:
-
-- [Giraffe.Razor](https://github.com/giraffe-fsharp/Giraffe.Razor): Adds native Razor view functionality to Giraffe web applications.
-- [Giraffe.DotLiquid](https://github.com/giraffe-fsharp/Giraffe.DotLiquid): Adds native DotLiquid template functionality to Giraffe web applications.
-
-## Custom HttpHandlers
-
-Defining a new `HttpHandler` is fairly easy. All you need to do is to create a new function which matches the signature of `HttpFunc -> HttpContext -> Task<HttpContext option>`. Through currying your custom `HttpHandler` can extend the original signature as long as the partial application of your function will still return a function of `HttpFunc -> HttpContext -> Task<HttpContext option>` (`HttpFunc -> HttpFunc`).
-
-### Example:
-
-Defining a custom HTTP handler to partially filter a route:
-
-*(After creating this example I added the `routeStartsWith` HttpHandler to the list of default handlers as it turned out to be quite useful)*
-
-```fsharp
-let routeStartsWith (subPath : string) =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        if ctx.Request.Path.ToString().StartsWith subPath
-        then next ctx
-        else Task.FromResult None
-```
-
-Defining another custom HTTP handler to validate a mandatory HTTP header:
-
-```fsharp
-let requiresToken (expectedToken : string) (handler : HttpHandler) =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        let token    = ctx.Request.Headers.["X-Token"].ToString()
-        let response =
-            if token.Equals(expectedToken)
-            then handler
-            else setStatusCode 401 >=> text "Token wrong or missing"
-        response next ctx
-```
-
-Composing a web application from smaller HTTP handlers:
-
-```fsharp
-let app =
-    choose [
-        route "/"       >=> htmlFile "index.html"
-        route "/about"  >=> htmlFile "about.html"
-        routeStartsWith "/api/v1/" >=>
-            requiresToken "secretToken" (
-                choose [
-                    route "/api/v1/foo" >=> text "something"
-                    route "/api/v1/bar" >=> text "bar"
-                ]
-            )
-        RequestErrors.NOT_FOUND "Page not found"
-    ] : HttpHandler
-```
-
-## Customizing Giraffe
-
-Giraffe uses the [ASP.NET Core dependency injection](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection) framework to register and retrieve several services which can be used or overridden by applications.
-
-Currently you can modify the following functionality in Giraffe through dependency injection*:
-
-- [JSON serialization](#customize-json-serialization)
-- [XML serialization](#customize-xml-serialization)
-- [Content negotiation](#customize-content-negotiation)
-
-*) Note that in functional programming there is no direct equivalent to dependency injection as known in OOP and Giraffe uses the [service locator pattern](https://msdn.microsoft.com/en-us/library/ff648968.aspx) to work with ASP.NET's DI framework.
-
-### Customize JSON serialization
-
-By default Giraffe uses the [Newtonsoft's JSON.NET](https://www.newtonsoft.com/json) serializer for (de-)serializing JSON content. An application can modify the serializer by registering a new instance of the `IJsonSerializer` interface during application startup.
-
-#### Example: Customizing JsonSerializerSettings
-
-You can change the default `JsonSerializerSettings` of the `NewtonsoftJsonSerializer` by registering a new instance of `IJsonSerializer` in your application startup module:
-
-```fsharp
-let configureServices (services : IServiceCollection) =
-    // First register all default Giraffe dependencies
-    services.AddGiraffe() |> ignore
-
-    // Now customize only the IJsonSerializer by providing a custom
-    // object of JsonSerializerSettings
-    let customSettings = JsonSerializerSettings(
-        Culture = CultureInfo("de-DE"))
-    services.AddSingleton<IJsonSerializer>(
-        NewtonsoftJsonSerializer(customSettings)) |> ignore
-
-[<EntryPoint>]
-let main _ =
-    WebHost.CreateDefaultBuilder()
-        .Configure(Action<IApplicationBuilder> configureApp)
-        .ConfigureServices(configureServices)
-        .ConfigureLogging(configureLogging)
-        .Build()
-        .Run()
-    0
-```
-
-#### Example: Using a different JSON serializer
-
-You can change the underlying JSON serializer to a complete different serializer alltogether by creating a new class which implements the `IJsonSerializer` interface:
-
-```fsharp
-type CustomJsonSerializer() =
-    interface IJsonSerializer with
-        member __.Serialize (o : obj) = // ...
-        member __.Deserialize<'T> (json : string) = // ...
-        member __.Deserialize<'T> (stream : Stream) = // ...
-        member __.DeserializeAsync<'T> (stream : Stream) = // ...
-```
-
-Then register a new instance of the newly created type during application startup:
-
-```fsharp
-let configureServices (services : IServiceCollection) =
-    // First register all default Giraffe dependencies
-    services.AddGiraffe() |> ignore
-
-    // Now register your custom IJsonSerializer
-    services.AddSingleton<IJsonSerializer, CustomJsonSerializer>() |> ignore
-
-[<EntryPoint>]
-let main _ =
-    WebHost.CreateDefaultBuilder()
-        .Configure(Action<IApplicationBuilder> configureApp)
-        .ConfigureServices(configureServices)
-        .ConfigureLogging(configureLogging)
-        .Build()
-        .Run()
-    0
-```
-
-#### Example: Retrieving the JSON serializer from a custom HttpHandler
-
-If you need you retrieve the registered JSON serializer from a custom `HttpHandler` function then you can do this with the `GetJsonSerializer` extension method:
-
-```fsharp
-let customHandler (dataObj : obj) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        let serializer = ctx.GetJsonSerializer()
-        // ... do more...
-```
-
-### Customize XML serialization
-
-By default Giraffe uses the `System.Xml.Serialization.XmlSerializer` for (de-)serializing XML content. An application can modify the serializer by registering a new instance of the `IXmlSerializer` interface during application startup.
-
-#### Example: Customizing XmlWriterSettings
-
-You can change the default `XmlWriterSettings` of the `DefaultXmlSerializer` by registering a new instance of `IXmlSerializer` in your application startup module:
-
-```fsharp
-let configureServices (services : IServiceCollection) =
-    // First register all default Giraffe dependencies
-    services.AddGiraffe() |> ignore
-
-    // Now customize the IXmlSerializer
-    let customSettings =
-        XmlWriterSettings(
-                Encoding           = Encoding.UTF8,
-                Indent             = false,
-                OmitXmlDeclaration = true
-            )
-
-    services.AddSingleton<IXmlSerializer>(
-        DefaultXmlSerializer(customSettings)) |> ignore
-
-[<EntryPoint>]
-let main _ =
-    WebHost.CreateDefaultBuilder()
-        .Configure(Action<IApplicationBuilder> configureApp)
-        .ConfigureServices(configureServices)
-        .ConfigureLogging(configureLogging)
-        .Build()
-        .Run()
-    0
-```
-
-#### Example: Using a different XML serializer
-
-You can change the underlying XML serializer to a complete different serializer alltogether by creating a new class which implements the `IXmlSerializer` interface:
-
-```fsharp
-type CustomXmlSerializer() =
-    interface IXmlSerializer with
-        member __.Serialize (o : obj) = // ...
-        member __.Deserialize<'T> (xml : string) = // ...
-```
-
-Then register a new instance of the newly created type during application startup:
-
-```fsharp
-let configureServices (services : IServiceCollection) =
-    // First register all default Giraffe dependencies
-    services.AddGiraffe() |> ignore
-
-    // Now register your custom IXmlSerializer
-    services.AddSingleton<IXmlSerializer, CustomXmlSerializer>() |> ignore
-
-[<EntryPoint>]
-let main _ =
-    WebHost.CreateDefaultBuilder()
-        .Configure(Action<IApplicationBuilder> configureApp)
-        .ConfigureServices(configureServices)
-        .ConfigureLogging(configureLogging)
-        .Build()
-        .Run()
-    0
-```
-
-#### Example: Retrieving the XML serializer from a custom HttpHandler
-
-If you need you retrieve the registered XML serializer from a custom `HttpHandler` function then you can do this with the `GetXmlSerializer` extension method:
-
-```fsharp
-let customHandler (dataObj : obj) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        let serializer = ctx.GetXmlSerializer()
-        // ... do more...
-```
+For more information please check the official [Giraffe documentation](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md).
 
 ## Sample applications
 
 ### Demo apps
 
-There are three basic sample applications in the [`/samples`](https://github.com/giraffe-fsharp/Giraffe/tree/develop/samples) folder. The [IdentityApp](https://github.com/giraffe-fsharp/Giraffe/tree/develop/samples/IdentityApp) demonstrates how ASP.NET Core Identity can be used with Giraffe, the [JwtApp](https://github.com/giraffe-fsharp/Giraffe/tree/develop/samples/JwtApp) shows how to configure JWT tokens in Giraffe and the [SampleApp](https://github.com/giraffe-fsharp/Giraffe/tree/develop/samples/SampleApp) is a generic sample application covering multiple features.
+There is a few sample applications which can be found in the [`/samples`](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples) folder:
+
+| Sample | Description |
+| ------ | ----------- |
+| [GoogleAuthApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/GoogleAuthApp) | Demonstrates how Google Auth can be used with Giraffe. |
+| [IdentityApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/IdentityApp) | Demonstrates how ASP.NET Core Identity can be used with Giraffe. |
+| [JwtApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/JwtApp) | Demonstrates how JWT tokens can be used with Giraffe. |
+| [SampleApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/SampleApp) | Generic sample application showcasing multiple features such as file uploads, cookie auth, model binding, etc. |
 
 ### Live apps
 
-An example of a live website which uses Giraffe is [https://buildstats.info](https://buildstats.info). It uses the [GiraffeViewEngine](#renderhtml) to build dynamically rich SVG images and Docker to run the application in the Google Container Engine (see [GitHub repository](https://github.com/dustinmoris/CI-BuildStats)).
+#### Buildstats.info
+
+The web service [https://buildstats.info](https://buildstats.info) uses Giraffe to build rich SVG widgets for Git repositories. The application runs as a Docker container in the Google Container Engine (see [CI-BuiltStats on GitHub](https://github.com/dustinmoris/CI-BuildStats) for more information).
 
 More sample applications will be added in the future.
 
@@ -591,4 +263,4 @@ If you have blogged about Giraffe, demonstrating a useful topic or some other ti
 
 ## Contact and Slack Channel
 
-If you have any further questions feel free to reach out to me via any of the mentioned social media on [https://dusted.codes/about](https://dusted.codes/about) or join the `#giraffe` Slack channel in the [Functional Programming Slack Team](https://functionalprogramming.slack.com/). Please use [this link](https://fpchat-invite.herokuapp.com/) to request an invitation to the Functional Programming Slack Team.
+If you have any further questions feel free to reach out to me via any of the mentioned social media on [https://dusted.codes/about](https://dusted.codes/about) or join the `#giraffe` Slack channel in the [Functional Programming Slack Team](https://functionalprogramming.slack.com/). Please use [this link](https://fpchat-invite.herokuapp.com/) to request an invitation to the Functional Programming Slack Team if you don't have an account registered yet.
