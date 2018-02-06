@@ -1,40 +1,37 @@
 Release Notes
 =============
 
-## 0.1.0-beta-800
+## 1.0.0
 
-#### ToDo
+First RTM release of Giraffe.
 
-- router
-- cache
-
-#### Breaking changes
-
-- Removed serialization methods from `Giraffe.Common`
-    - Removed `serializeJson`, `deserializeJson<'T>`, `deserializeJsonFromStream<'T>`, `defaultJsonSerializerSettings`, `defaultSerializeJson`, `defaultDeserializeJson<'T>`, `serializeXml` and `deserializeXml<'T>`
-- Removed the overloards for `BindJsonAsync<'T>`, `BindModelAsync<'T>` and `WriteJsonAsync` which accepted an object of type `JsonSerializerSettings`
-- Removed the `customJson` http handler function
-- In order for Giraffe to be fully functional one has to register the default Giraffe dependencies by calling `services.AddGiraffe()` from your `RegisterServices` method in the startup code.
-- Renamed `ReturnHtmlFileAsync()` to `WriteHtmlFileAsync`
-- Renamed `RenderHtmlAsync()` to `WriteHtmlViewAsync`
-- Renamed `html` http handler to `htmlString`
-- Renamed `renderHtml` http handler to `htmlView`
-- Renamed `setBodyAsString` http handler to `setBodyFromString`
+This release has many minor breaking changes and a few bigger features. Please read the changelog carefully before updating your existing application.
 
 #### New features
 
-- Added `GetJsonSerializer()` and `GetXmlSerializer()` to  `Giraffe.HttpContextExtensions`
-- Added a new `INegotiationConfig` interface which can be used to configure the behaviour of the `negotiate` http handler
-- Added a new `IJsonSerializer` interface which can be used to configure JSON serialization in Giraffe
-- Added the `NewtonsoftJsonSerializer` class which implements `IJsonSerializer` and gets auto registered when adding the Giraffe dependencies via `services.AddGiraffe()` in your startup code.
-- Added a new `IXmlSerializer` interface which can be used to configure XML serialization in Giraffe
-- Added the `DefaultXmlSerializer` class which implements `IXmlSerializer` and gets auto registered when adding the Giraffe dependencies via `services.AddGiraffe()` in your startup code.
-- Added `PATCH` http handler to `Giraffe.TokenRouter`
+- JSON and XML serialization is now configurable through Dependency Injection (see [Serialization](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#serialization))
+- Added new features to validate conditional HTTP headers before processing a web request (see [Conditional Requests](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#conditional-requests))
+- Added streaming capabilities (see [Streaming](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#streaming))
 - Added `HEAD`, `OPTIONS`, `TRACE`, `CONNECT` http handlers
-- The renamed method `WriteHtmlFileAsync` checks now if the path is rooted or not and makes the right decision to find the file on disk
-- Added `WriteHtmlStringAsync` to `Giraffe.HttpContextExtensions`
-- Added `GetHostingEnvironment` to `Giraffe.HttpContextExtensions`
-- Added `SetContentType` to `Giraffe.HttpContextExtensions`
+- Added more `HttpContext` extension methods to create parity between response writing methods and `HttpHandler` functions (see [Response Writing](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#response-writing) and [Content Negotiation](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#content-negotiation))
+- Added detailed XML docs to all public facing functions for better Intellisense support
+- The `Giraffe.Common` module auto opens now
+
+#### Breaking changes
+
+- Giraffe comes with a default set of required dependencies which need to be registered via `services.AddGiraffe()` during application startup now
+- The `Giraffe.TokenRouter` library has been moved to a separate NuGet package under the same name
+- Removed redundant serialization methods
+    - Removed `serializeJson`, `deserializeJson<'T>`, `deserializeJsonFromStream<'T>`, `defaultJsonSerializerSettings`, `defaultSerializeJson`, `defaultDeserializeJson<'T>`, `serializeXml` and `deserializeXml<'T>`
+- Removed the `customJson` http handler
+- Renamed the `html` http handler to `htmlString`
+- Renamed the `renderHtml` http handler to `htmlView`
+- Renamed `setBodyAsString` http handler to `setBodyFromString`
+- Renamed `ReturnHtmlFileAsync()` to `WriteHtmlFileAsync()`
+    - The function can also accept relative and absolute file paths now
+- Renamed `RenderHtmlAsync()` to `WriteHtmlViewAsync()`
+- Removed the overloads for `BindJsonAsync<'T>`, `BindModelAsync<'T>` and `WriteJsonAsync` which accepted an object of type `JsonSerializerSettings`
+- Renamed the `signOff` http handler to `signOut` to be more consistent with existing ASP.NET Core naming conventions
 
 ## 0.1.0-beta-700
 
