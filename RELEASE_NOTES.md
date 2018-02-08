@@ -19,6 +19,7 @@ This release has many minor breaking changes and a few bigger features. Please r
 
 #### Breaking changes
 
+- Deprecated `Griaffe.Tasks`. Giraffe uses the original [TaskBuilder.fs](https://github.com/rspeele/TaskBuilder.fs) library now.
 - Giraffe comes with a default set of required dependencies which need to be registered via `services.AddGiraffe()` during application startup now
 - The `Giraffe.TokenRouter` library has been moved to a separate NuGet package under the same name
 - Removed redundant serialization methods

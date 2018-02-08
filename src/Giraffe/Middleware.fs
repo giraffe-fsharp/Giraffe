@@ -46,7 +46,7 @@ type GiraffeMiddleware (next          : RequestDelegate,
 
             if (result.IsNone) then
                 return! next.Invoke ctx
-        } :> Task
+        }
 
 // ---------------------------
 // Error Handling middleware
@@ -70,7 +70,7 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
                 with ex2 ->
                     logger.LogError(EventId(0), ex,  "An unhandled exception has occurred while executing the request.")
                     logger.LogError(EventId(0), ex2, "An exception was thrown attempting to handle the original exception.")
-        } :> Task
+        }
 
 // ---------------------------
 // Extension methods for convenience
