@@ -7,6 +7,7 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Authentication
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
+open FSharp.Control.Tasks.ContextInsensitive
 open Giraffe
 open Giraffe.GiraffeViewEngine
 open GoogleAuthApp.HttpsConfig

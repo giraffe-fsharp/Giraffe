@@ -10,7 +10,7 @@ module Json =
     open System.Threading.Tasks
     open Newtonsoft.Json
     open Newtonsoft.Json.Serialization
-    open Giraffe
+    open FSharp.Control.Tasks.ContextInsensitive
 
     /// ** Description **
     /// Interface defining JSON serialization methods. Use this interface to customize JSON serialization in Giraffe.

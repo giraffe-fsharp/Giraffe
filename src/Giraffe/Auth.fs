@@ -4,7 +4,7 @@ module Giraffe.Auth
 open System.Security.Claims
 open Microsoft.AspNetCore.Authentication
 open Microsoft.AspNetCore.Http
-// open FSharp.Control.Tasks
+open FSharp.Control.Tasks.ContextInsensitive
 
 /// ** Description **
 /// Challenges a client to authenticate via a specific `authScheme`.
