@@ -149,11 +149,10 @@ let webApp =
 
 Another important aspect of Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core only works with tasks out of the box).
 
-For this purpose Giraffe has it's own `task {}` workflow which comes with the `Giraffe.Tasks` NuGet package. Syntactically it works identical to F#'s async workflows:
+For this purpose Giraffe uses the `task {}` computation expression which comes with the [`TaskBuilder.fs` NuGet package](https://www.nuget.org/packages/TaskBuilder.fs/). Syntactically it works identical to F#'s async workflows:
 
 ```fsharp
-open Giraffe.Tasks
-open Giraffe.HttpHandlers
+open Giraffe
 
 let personHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -163,10 +162,10 @@ let personHandler =
         }
 ```
 
-The `task {}` workflow is not strictly tied to Giraffe and can also be used from other places in an F# application. All you have to do is add a reference to the `Giraffe.Tasks` NuGet package and open the module:
+The `task {}` CE is an independent project maintained by [Robert Peele](https://github.com/rspeele) and can be used from any other F# application as well. All you have to do is add a reference to the `TaskBuilder.fs` NuGet library and open the module:
 
 ```fsharp
-open Giraffe.Tasks
+open FSharp.Control.Tasks
 
 let readFileAndDoSomething (filePath : string) =
     task {
@@ -180,7 +179,7 @@ let readFileAndDoSomething (filePath : string) =
     }
 ```
 
-For more information please visit the official [Giraffe.Tasks](https://github.com/giraffe-fsharp/Giraffe.Tasks) GitHub repository.
+For more information please visit the official [TaskBuilder.fs](https://github.com/rspeele/TaskBuilder.fs) GitHub repository.
 
 ## Basics
 
@@ -2334,12 +2333,6 @@ let someHttpHandler : HttpHandler =
 ## Additional Features
 
 There's more features available for Giraffe web applications through additional NuGet packages:
-
-### Task CE
-
-The `Giraffe.Tasks` NuGet package is a standalone library which makes the `task {}` computation expression available to non Giraffe projects as well.
-
-You can learn more about `Giraffe.Tasks` library by visiting the official [Giraffe Tasks](https://github.com/giraffe-fsharp/Giraffe.Tasks) GitHub repository.
 
 ### TokenRouter
 
