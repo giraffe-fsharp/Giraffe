@@ -1,0 +1,2355 @@
+# Giraffe Documentation
+
+An in depth functional reference to all of Giraffe's default features.
+
+## Table of contents
+
+- [Fundamentals](#fundamentals)
+    - [HttpHandler](#httphandler)
+    - [Giraffe pipeline vs. ASP.NET Core pipeline](#giraffe-pipeline-vs-aspnet-core-pipeline)
+    - [Combinators](#combinators)
+        - [compose (>=>)](#compose-)
+        - [choose](#choose)
+    - [Warbler](#warbler)
+    - [Tasks](#tasks)
+- [Basics](#basics)
+    - [Dependency Management](#dependency-management)
+    - [Multiple Environments and Configuration](#multiple-environments-and-configuration)
+    - [Logging](#logging)
+    - [Error Handling](#error-handling)
+- [Web Request Processing](#web-request-processing)
+    - [HTTP Headers](#http-headers)
+    - [HTTP Verbs](#http-verbs)
+    - [HTTP Status Codes](#http-status-codes)
+    - [Routing](#routing)
+    - [Query Strings](#query-strings)
+    - [Model Binding](#model-binding)
+    - [Authentication and Authorization](#authentication-and-authorization)
+    - [Conditional Requests](#conditional-requests)
+    - [Response Writing](#response-writing)
+    - [Content Negotiation](#content-negotiation)
+    - [Streaming](#streaming)
+    - [Redirection](#redirection)
+- [Giraffe View Engine](#giraffe-view-engine)
+    - [HTML Elements and Attributes](#html-elements-and-attributes)
+    - [Text Content](#text-content)
+    - [Naming Convention](#naming-convention)
+    - [View Engine Best Practices](#view-engine-best-practices)
+    - [Custom Elements and Attributes](#custom-elements-and-attributes)
+    - [Rendering Views](#rendering-views)
+    - [Common View Engine Features](#common-view-engine-features)
+- [Serialization](#serialization)
+    - [JSON](#json)
+    - [XML](#xml)
+- [Miscellaneous](#miscellaneous)
+    - [Common Helper Functions](#common-helper-functions)
+    - [Computation Expressions](#computation-expressions)
+- [Additional Features](#additional-features)
+    - [Task CE](#task-ce)
+    - [TokenRouter](#tokenrouter)
+    - [Razor](#razor)
+    - [DotLiquid](#dotliquid)
+
+## Fundamentals
+
+### HttpHandler
+
+The main building block in Giraffe is a so called `HttpHandler`:
+
+```fsharp
+type HttpFuncResult = Task<HttpContext option>
+type HttpFunc = HttpContext -> HttpFuncResult
+type HttpHandler = HttpFunc -> HttpContext -> HttpFuncResult
+```
+
+A `HttpHandler` is a simple function which takes two curried arguments, a `HttpFunc` and a `HttpContext`, and returns a `HttpContext` (wrapped in an `option` and `Task` workflow) when finished.
+
+On a high level a `HttpHandler` function receives and returns an ASP.NET Core `HttpContext` object, which means every `HttpHandler` function has full control of the incoming `HttpRequest` and the resulting `HttpResponse`.
+
+Each `HttpHandler` can process an incoming `HttpRequest` before passing it further down the Giraffe pipeline by invoking the next `HttpFunc` or short circuit the execution by returning an option of `Some HttpContext`.
+
+If a `HttpHandler` doesn't want to process an incoming `HttpRequest` at all, then it can return `None` instead. In this case a surrounding `HttpHandler` might pick up the incoming `HttpRequest` or the Giraffe middleware will defer the request to the next `RequestDelegate` from the ASP.NET Core pipeline.
+
+The easiest way to get your head around a Giraffe `HttpHandler` is to think of it as a functional equivalent to the ASP.NET Core middleware. Each handler has the full `HttpContext` at its disposal and can decide whether it wants to return `Some HttpContext`, `None` or pass it on to the "next" `HttpFunc`.
+
+### Giraffe pipeline vs. ASP.NET Core pipeline
+
+The Giraffe pipeline is a (sort of) functional equivalent of the (object oriented) ASP.NET Core pipeline. The ASP.NET Core pipeline is defined by nested middleware and the Giraffe pipeline is defined by `HttpHandler` functions. The Giraffe pipeline is plugged into the wider ASP.NET Core pipeline through the `GiraffeMiddleware` itself and therefore an addition to it rather than a replacement.
+
+If the Giraffe pipeline didn't process an incoming `HttpRequest` (because the final result was `None` and not `Some HttpContext`) then other ASP.NET Core middleware can still process the request (e.g. static file middleware or another web framework plugged in after Giraffe).
+
+This architecture allows F# developers to build rich web applications through a functional composition of `HttpHandler` functions while at the same time benefiting from the wider ASP.NET Core eco system by making use of already existing ASP.NET Core middleware.
+
+### Combinators
+
+#### compose (>=>)
+
+The `compose` combinator combines two `HttpHandler` functions into one.
+
+It is the main combinator in Giraffe which allows composing many smaller `HttpHandler` functions into a bigger web application:
+
+```fsharp
+let app = compose (route "/") (Successful.OK "Hello World")
+```
+
+A slightly more convenient and more commonly used form of `compose` is the fish operator `>=>`:
+
+```fsharp
+let app = route "/" >=> Successful.OK "Hello World"
+```
+
+There is no limit to how many `HttpHandler` functions can be chained with `compose` or the fish operator:
+
+```fsharp
+let app =
+    route "/"
+    >=> setHttpHeader "X-Foo" "Bar"
+    >=> setStatusCode 200
+    >=> setBodyFromString "Hello World"
+```
+
+If you would like to learn more about the `>=>` (fish) operator then please check out [Scott Wlaschin's blog post on Railway oriented programming](http://fsharpforfunandprofit.com/posts/recipe-part2/).
+
+#### choose
+
+The `choose` combinator function iterates through a list of `HttpHandler` functions and invokes each individual handler until the first `HttpHandler` returns a positive result:
+
+```fsharp
+let app =
+    choose [
+        route "/foo" >=> text "Foo"
+        route "/bar" >=> text "Bar"
+    ]
+```
+
+### Warbler
+
+If your route is not returning a static response, then you should wrap your function with a `warbler`:
+
+```fsharp
+// ('a -> 'a -> 'b) -> 'a -> 'b
+let warbler f a = f a a
+```
+
+Functions in F# are eagerly evaluated and a normal route will only be evaluated the first time.
+A warbler will ensure that a function will get evaluated every time the route is hit:
+
+```fsharp
+// unit -> string
+let time() = System.DateTime.Now.ToString()
+
+let webApp =
+    choose [
+        route "/normal"  >=> text (time())
+        route "/warbler" >=> warbler (fun _ -> text (time()))
+    ]
+```
+
+### Tasks
+
+Another important aspect of Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core only works with tasks out of the box).
+
+For this purpose Giraffe uses the `task {}` computation expression which comes with the [`TaskBuilder.fs` NuGet package](https://www.nuget.org/packages/TaskBuilder.fs/). Syntactically it works identical to F#'s async workflows:
+
+```fsharp
+open Giraffe
+
+let personHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            let! person = ctx.BindModelAsync<Person>()
+            return! json person next ctx
+        }
+```
+
+The `task {}` CE is an independent project maintained by [Robert Peele](https://github.com/rspeele) and can be used from any other F# application as well. All you have to do is add a reference to the `TaskBuilder.fs` NuGet library and open the module:
+
+```fsharp
+open FSharp.Control.Tasks
+
+let readFileAndDoSomething (filePath : string) =
+    task {
+        use stream = new FileStream(filePath, FileMode.Open)
+        use reader = new StreamReader(stream)
+        let! contents = reader.ReadToEndAsync()
+
+        // do something with contents
+
+        return contents
+    }
+```
+
+For more information please visit the official [TaskBuilder.fs](https://github.com/rspeele/TaskBuilder.fs) GitHub repository.
+
+## Basics
+
+### Dependency Management
+
+ASP.NET Core has built in [dependency management](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection) which works out of the box with Giraffe.
+
+#### Registering Services
+
+[Registering services](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection#registering-services) is done the same way as it is done for any other ASP.NET Core web application:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // Add default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Add other dependencies
+    // ...
+
+[<EntryPoint>]
+let main _ =
+    WebHostBuilder()
+        .UseKestrel()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        // Calling ConfigureServices to set up dependencies
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+#### Retrieving Services
+
+Retrieving registered services from within a Giraffe `HttpHandler` function is done through the built in service locator (`RequestServices`) which comes with a `HttpContext` object:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let fooBar =
+            ctx.RequestServices.GetService(typeof<IFooBar>)
+            :?> IFooBar
+        // Do something with `fooBar`...
+        // Return a Task<HttpContext option>
+```
+
+Giraffe has an additional `HttpContext` extension method called `GetService<'T>` to make the code less cumbersome:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let fooBar = ctx.GetService<IFooBar>()
+        // Do something with `fooBar`...
+        // Return a Task<HttpContext option>
+```
+
+There's a handful more extension methods available to retrieve a few default dependencies like an `IHostingEnvironment` or `ILogger` object which are covered in the respective sections of this document.
+
+### Multiple Environments and Configuration
+
+ASP.NET Core has built in support for [working with multiple environments](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/environments) and [configuration management](https://docs.microsoft.com/en-gb/aspnet/core/fundamentals/configuration/?tabs=basicconfiguration), which both work out of the box with Giraffe.
+
+Additionally Giraffe exposes a `GetHostingEnvironment()` extension method which can be used to easier retrieve an `IHostingEnvironment` object from within a `HttpHandler` function:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let env = ctx.GetHostingEnvironment()
+        // Do something with `env`...
+        // Return a Task<HttpContext option>
+```
+
+Configuration options can be retrieved via the `GetService<'T>` extension method:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let settings = ctx.GetService<IOptions<MySettings>>()
+        // Do something with `settings`...
+        // Return a Task<HttpContext option>
+```
+
+### Logging
+
+ASP.NET Core has a built in [Logging API](https://docs.microsoft.com/en-gb/aspnet/core/fundamentals/logging/?tabs=aspnetcore2x) which works out of the box with Giraffe.
+
+#### Configuring logging providers
+
+One or more logging providers can be configured during application startup:
+
+```fsharp
+let configureLogging (builder : ILoggingBuilder) =
+    // Set a logging filter (optional)
+    let filter (l : LogLevel) = l.Equals LogLevel.Error
+
+    // Configure the logging factory
+    builder.AddFilter(filter) // Optional filter
+           .AddConsole()      // Set up the Console logger
+           .AddDebug()        // Set up the Debug logger
+
+           // Add additional loggers if wanted...
+    |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHostBuilder()
+        .UseKestrel()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        // Calling ConfigureLogging to set up logging providers
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+Just like dependency management the logging API is configured the same way as it is done for any other ASP.NET Core web application.
+
+#### Logging from within a HttpHandler function
+
+After one or more logging providers have been configured you can retrieve an `ILogger` object (which can be used for logging) through the `GetLogger<'T>()` or `GetLogger (categoryName : string)` extension methods:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        // Retrieve an ILogger through one of the extension methods
+        let loggerA = ctx.GetLogger<ModuleName>()
+        let loggerB = ctx.GetLogger("someHttpHandler")
+
+        // Log some data
+        loggerA.LogCritical("Something critical")
+        loggerB.LogInformation("Logging some random info")
+        // etc.
+
+        // Return a Task<HttpContext option>
+```
+
+### Error Handling
+
+Giraffe exposes a separate error handling middleware which can be used to configure a functional error handler, which can react to any unhandled exception of the entire ASP.NET Core web application.
+
+The Giraffe `ErrorHandler` function accepts an `Exception` object and a default `ILogger` and returns a `HttpHandler` function:
+
+```fsharp
+type ErrorHandler = exn -> ILogger -> HttpHandler
+```
+
+Because the Giraffe `ErrorHandler` returns a `HttpHandler` function it is possible to create anything from a simple error handling function to a complex error handling application.
+
+#### Simple ErrorHandler example
+
+This simple `errorHandler` function writes the entire `Exception` object to the logs, clears the response object and returns a HTTP 500 server error response:
+
+```fsharp
+let errorHandler (ex : Exception) (logger : ILogger) =
+    logger.LogError(EventId(), ex, "An unhandled exception has occurred while executing the request.")
+    clearResponse
+    >=> ServerErrors.INTERNAL_ERROR ex.Message
+```
+
+#### Registering the Giraffe ErrorHandler middleware
+
+In order to enable the error handler you have to configure the `GiraffeErrorHandlerMiddleware` in your application startup:
+
+```fsharp
+// Define the error handler function
+let errorHandler (ex : Exception) (logger : ILogger) =
+    logger.LogError(EventId(), ex, "An unhandled exception has occurred while executing the request.")
+    clearResponse
+    >=> ServerErrors.INTERNAL_ERROR ex.Message
+
+// Register all ASP.NET Core middleware
+let configureApp (app : IApplicationBuilder) =
+    // Register the error handler first, so that all exceptions from other middleware can bubble up and be caught by the ErrorHandler function:
+    app.UseGiraffeErrorHandler(errorHandler)
+       .UseGiraffe webApp
+
+[<EntryPoint>]
+let main _ =
+    WebHostBuilder()
+        .UseKestrel()
+        // Calling Configure to set up all middleware
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+... or the equivalent by using a `Startup` class:
+
+```fsharp
+type Startup() =
+    member __.Configure (app : IApplicationBuilder)
+                        (env : IHostingEnvironment)
+                        (loggerFactory : ILoggerFactory) =
+        app.UseGiraffeErrorHandler errorHandler
+           .UseGiraffe webApp
+
+[<EntryPoint>]
+let main _ =
+    WebHostBuilder()
+        .UseKestrel()
+        .UseStartup<Startup>()
+        .Build()
+        .Run()
+    0
+```
+
+It is recommended to set the error handler as the first middleware in the ASP.NET Core pipeline, so that any unhandled exception from other middleware can be caught and processed by the error handling function.
+
+## Web Request Processing
+
+Giraffe comes with a large set of default `HttpContext` extension methods as well as default `HttpHandler` functions which can be used to build rich web applications.
+
+### HTTP Headers
+
+Working with HTTP headers in Giraffe is plain simple. The `TryGetRequestHeader (key : string)` extension method tries to retrieve the value of a given HTTP header and then returns either `Some string` or `None`:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let someValue =
+            match ctx.TryGetRequestHeader "X-MyOwnHeader" with
+            | None -> "default value"
+            | Some headerValue -> headerValue
+
+        // Do something with `someValue`...
+        // Return a Task<HttpContext option>
+```
+
+This method is useful when trying to retrieve optional HTTP headers from within a `HttpHandler`.
+
+If a HTTP header is mandatory then the `GetRequestHeader (key : string)` extension method might be a better fit. Instead of returning an `Option<string>` object it will return a `Result<string, string>` type:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        match ctx.GetRequestHeader "X-MyOwnHeader" with
+        | Error msg ->
+            // Mandatory header is missing.
+            // Log error message
+            // Return error response to the client.
+        | Ok headerValue ->
+            // Do something with `headerValue`...
+            // Return a Task<HttpContext option>
+```
+
+Setting a HTTP header in the response can be done via the `SetHttpHeader (key : string) (value : obj)` extension method:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        ctx.SetHttpHeader "X-CustomHeader" "some-value"
+        // Do other stuff...
+        // Return a Task<HttpContext option>
+```
+
+You can also set a HTTP header via the `setHttpHeader` http handler:
+
+```fsharp
+let notFoundHandler : HttpHandler =
+    setHttpHeader "X-CustomHeader"
+    >=> RequestErrors.NOT_FOUND "Not Found"
+
+let webApp =
+    choose [
+        route "/foo" >=> text "Foo"
+        route "/bar" >=> text "Bar"
+        notFoundHandler
+    ]
+```
+
+Please note that these are additional Giraffe functions which complement already existing HTTP header functionality in the ASP.NET Core framework. ASP.NET Core offers higher level HTTP header functionality through the `ctx.Request.GetTypedHeaders()` method.
+
+### HTTP Verbs
+
+Giraffe exposes a set of `HttpHandler` functions which can filter a request based on the request's HTTP verb:
+
+- `GET`
+- `POST`
+- `PUT`
+- `PATCH`
+- `DELETE`
+- `HEAD`
+- `OPTIONS`
+- `TRACE`
+- `CONNECT`
+
+This can be useful when implementing a different `HttpHandler` function for the same route, but for different verbs:
+
+```fsharp
+let submitFooHandler : HttpHandler =
+    // Do something
+
+let submitBarHandler : HttpHandler =
+    // Do something
+
+let webApp =
+    choose [
+        // Filters for GET requests
+        GET  >=> choose [
+            route "/foo" >=> text "Foo"
+            route "/bar" >=> text "Bar"
+        ]
+        // Filters for POST requests
+        POST >=> choose [
+            route "/foo" >=> submitFooHandler
+            route "/bar" >=> submitBarHandler
+        ]
+        // If the HTTP verb or the route didn't match return a 404
+        RequestErrors.NOT_FOUND "Not Found"
+    ]
+```
+
+If you need to check the request's HTTP verb from within a `HttpHandler` function then you can use the default ASP.NET Core `HttpMethods` class:
+
+```fsharp
+open Microsoft.AspNetCore.Http
+
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        if HttpMethods.IsPut ctx.Request.Method then
+            // Do something
+        else
+            // Do something else
+        // Return a Task<HttpContext option>
+```
+
+### HTTP Status Codes
+
+Setting the HTTP status code of a response can be done either via the `SetStatusCode (httpStatusCode : int)` extension method or with the `setStatusCode (statusCode : int)` function:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        ctx.SetStatusCode 200
+        // Return a Task<HttpContext option>
+
+// or...
+
+let someHttpHandler : HttpHandler =
+    setStatusCode 200
+    >=> text "Hello World"
+```
+
+Giraffe also offers a default set of pre-defined `HttpHandler` functions, which can be used to return a response with a specific HTTP status code.
+
+These `HttpHandler` functions are categorised in four sub modules:
+
+- [Intermediate](#intermediate) (1xx status codes)
+- [Successful](#successful) (2xx status codes)
+- [RequestErrors](#requesterrors) (4xx status codes)
+- [ServerErrors](#servererrors) (5xx status codes)
+
+For the majority of status code `HttpHandler` functions (except the `Intermediate` module) there are two versions for each individual status code available - a lower case and an upper case function (e.g. `Successful.ok` and `Successful.OK`).
+
+The lower case version let's you combine the `HttpHandler` function with another `HttpHandler` function:
+
+```fsharp
+Successful.ok (text "Hello World")
+```
+
+This is basically a shorter (and more explicit) version of:
+
+```fsharp
+setStatusCode 200 >=> text "Hello World"
+```
+
+On the other hand the upper case version can be used to send an object directly to the client:
+
+
+```fsharp
+[<CLIMutable>]
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let johnDoe =
+    {
+        FirstName = "John"
+        LastName  = "Doe"
+    }
+
+let app = choose [
+    route `/`     >=> Successful.OK "Hello World"
+    route `/john` >=> Successful.OK johnDoe
+]
+```
+
+The upper case function is the equivalent and shorter version of:
+
+```fsharp
+setStatusCode 200 >=> negotiate johnDoe
+```
+
+The `negotiate` handler attempts to return an object back to the client based on the client's accepted mime types (see [Content Negotiation](#content-negotiation)).
+
+The following sub modules and status code `HttpHandler` functions are available out of the box:
+
+*Please note that there is no module for `3xx` HTTP status codes available, instead it is recommended to use the `redirectTo` http handler for redirection functionality (see [Redirection](#redirection)).*
+
+#### Intermediate
+
+| HTTP Status Code | Function name | Example |
+| ---------------- | ------------- | ------- |
+| 100 | CONTINUE | `route "/" >=> Intermediate.CONTINUE` |
+| 101 | SWITCHING_PROTO | `route "/" >=> Intermediate.SWITCHING_PROTO` |
+
+#### Successful
+
+| HTTP Status Code | Function name | Example |
+| ---------------- | ------------- | ------- |
+| 200 | ok | `route "/" >=> Successful.ok (text "Hello World")` |
+| 200 | OK | `route "/" >=> Successful.OK "Hello World"` |
+| 201 | created | `route "/" >=> Successful.created (json someObj)` |
+| 201 | CREATED | `route "/" >=> Successful.CREATED someObj` |
+| 202 | accepted | `route "/" >=> Successful.accepted (xml someObj)` |
+| 202 | ACCEPTED | `route "/" >=> Successful.ACCEPTED someObj` |
+
+#### RequestErrors
+
+| HTTP Status Code | Function name | Example |
+| ---------------- | ------------- | ------- |
+| 400 | badRequest | `route "/" >=> RequestErrors.badRequest (text "Don't like it")` |
+| 400 | BAD_REQUEST | `route "/" >=> RequestErrors.BAD_REQUEST "Don't like it"` |
+| 401 | unauthorized | `route "/" >=> RequestErrors.unauthorized "Basic" "MyApp" (text "Don't know who you are")` |
+| 401 | UNAUTHORIZED | `route "/" >=> RequestErrors.UNAUTHORIZED "Don't know who you are"` |
+| 403 | forbidden | `route "/" >=> RequestErrors.forbidden (text "Not enough permissions")` |
+| 403 | FORBIDDEN | `route "/" >=> RequestErrors.FORBIDDEN "Not enough permissions"` |
+| 404 | notFound | `route "/" >=> RequestErrors.notFound (text "Page not found")` |
+| 404 | NOT_FOUND | `route "/" >=> RequestErrors.NOT_FOUND "Page not found"` |
+| 405 | methodNotAllowed | `route "/" >=> RequestErrors.methodNotAllowed (text "Don't support this")` |
+| 405 | METHOD_NOT_ALLOWED | `route "/" >=> RequestErrors.METHOD_NOT_ALLOWED "Don't support this"` |
+| 406 | notAcceptable | `route "/" >=> RequestErrors.notAcceptable (text "Not having this")` |
+| 406 | NOT_ACCEPTABLE | `route "/" >=> RequestErrors.NOT_ACCEPTABLE "Not having this"` |
+| 409 | conflict | `route "/" >=> RequestErrors.conflict (text "some conflict")` |
+| 409 | CONFLICT | `route "/" >=> RequestErrors.CONFLICT "some conflict"` |
+| 410 | gone | `route "/" >=> RequestErrors.gone (text "Too late, not here anymore")` |
+| 410 | GONE | `route "/" >=> RequestErrors.GONE "Too late, not here anymore"` |
+| 415 | unsupportedMediaType | `route "/" >=> RequestErrors.unsupportedMediaType (text "Please send in different format")` |
+| 415 | UNSUPPORTED_MEDIA_TYPE | `route "/" >=> RequestErrors.UNSUPPORTED_MEDIA_TYPE "Please send in different format"` |
+| 422 | unprocessableEntity | `route "/" >=> RequestErrors.unprocessableEntity (text "Can't do anything with this")` |
+| 422 | UNPROCESSABLE_ENTITY | `route "/" >=> RequestErrors.UNPROCESSABLE_ENTITY "Can't do anything with this"` |
+| 428 | preconditionRequired | `route "/" >=> RequestErrors.preconditionRequired (test "Please do something else first")` |
+| 428 | PRECONDITION_REQUIRED | `route "/" >=> RequestErrors.PRECONDITION_REQUIRED "Please do something else first"` |
+| 429 | tooManyRequests | `route "/" >=> RequestErrors.tooManyRequests (text "Slow down champ")` |
+| 429 | TOO_MANY_REQUESTS | `route "/" >=> RequestErrors.TOO_MANY_REQUESTS "Slow down champ"` |
+
+Note that the `unauthorized` and `UNAUTHORIZED` functions require two additional parameters, an [authentication scheme](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication#Authentication_schemes) and a realm.
+
+#### ServerErrors
+
+| HTTP Status Code | Function name | Example |
+| ---------------- | ------------- | ------- |
+| 500 | internalError | `route "/" >=> ServerErrors.internalError (text "Ops, something went wrong")` |
+| 500 | INTERNAL_ERROR | `route "/" >=> ServerErrors.INTERNAL_ERROR "Not implemented"` |
+| 501 | notImplemented | `route "/" >=> ServerErrors.notImplemented (text "Not implemented")` |
+| 501 | NOT_IMPLEMENTED | `route "/" >=> ServerErrors.NOT_IMPLEMENTED "Ops, something went wrong"` |
+| 502 | badGateway | `route "/" >=> ServerErrors.badGateway (text "Bad gateway")` |
+| 502 | BAD_GATEWAY | `route "/" >=> ServerErrors.BAD_GATEWAY "Bad gateway"` |
+| 503 | serviceUnavailable | `route "/" >=> ServerErrors.serviceUnavailable (text "Service unavailable")` |
+| 503 | SERVICE_UNAVAILABLE | `route "/" >=> ServerErrors.SERVICE_UNAVAILABLE "Service unavailable"` |
+| 504 | gatewayTimeout | `route "/" >=> ServerErrors.gatewayTimeout (text "Gateway timeout")` |
+| 504 | GATEWAY_TIMEOUT | `route "/" >=> ServerErrors.GATEWAY_TIMEOUT "Gateway timeout"` |
+| 505 | invalidHttpVersion | `route "/" >=> ServerErrors.invalidHttpVersion (text "Invalid HTTP version")` |
+
+### Routing
+
+Giraffe offers a variety of routing `HttpHandler` functions to accommodate the majority of use cases.
+
+#### route
+
+The simplest form of routing can be done with the `route` http handler:
+
+```fsharp
+let webApp =
+    choose [
+        route "/foo" >=> text "Foo"
+        route "/bar" >=> text "Bar"
+
+        // If none of the routes matched then return a 404
+        RequestErrors.NOT_FOUND "Not Found"
+    ]
+```
+
+#### routeCi
+
+The `route` http handler expects an exact match. If the HTTP request was made to a slightly different route (e.g. `/Bar` or `/bAr`) then the `route "/bar"` handler will not serve the request.
+
+This can be avoided by using the case insensitive `routeCi` http handler:
+
+```fsharp
+let webApp =
+    choose [
+        routeCi "/foo" >=> text "Foo"
+        routeCi "/bar" >=> text "Bar"
+
+        // If none of the routes matched then return a 404
+        RequestErrors.NOT_FOUND "Not Found"
+    ]
+```
+
+#### routef
+
+If a route contains user defined parameters then the `routef` http handler can be handy:
+
+```fsharp
+let fooHandler (first : string)
+               (last  : string)
+               (age   : int)
+               : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        (sprintf "First: %s, Last: %s, Age: %i" first last age
+        |> text) next ctx
+
+let webApp =
+    choose [
+        routef "/foo/%s/%s/%i" fooHandler
+        routef "/bar/%O" (fun guid -> text (guid.ToString()))
+
+        // If none of the routes matched then return a 404
+        RequestErrors.NOT_FOUND "Not Found"
+    ]
+```
+
+The `routef` http handler takes two parameters - a format string and a `HttpHandler` function.
+
+The format string supports the following format chars:
+
+| Format Char | Type |
+| ----------- | ---- |
+| `%b` | `bool` |
+| `%c` | `char` |
+| `%s` | `string` |
+| `%i` | `int` |
+| `%d` | `int64` |
+| `%f` | `float`/`double` |
+| `%O` | `Guid` |
+
+#### routeCif
+
+The case insensitive version of `routef` is `routeCif`:
+
+```fsharp
+let webApp =
+    choose [
+        routeCif "/foo/%s/bar" (fun str -> text str)
+
+        // If none of the routes matched then return a 404
+        RequestErrors.NOT_FOUND "Not Found"
+    ]
+```
+
+#### routeBind
+
+If you need to bind route parameters directly to a type then you can use the `routeBind<'T>` http handler. Unlike `routef` or `routeCif` which work with a format string the `routeBind<'T>` http handler tries to match named parameters to the properties of a given type `'T`:
+
+```fsharp
+[<CLIMutable>]
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let personHandler (person : Person) : HttpHandler =
+    sprintf "Hello %s %s" person.FirstName person.LastName
+    |> Successful.OK
+
+let webApp =
+    choose [
+        routeBind<Person> "/p/{firstName}/{lastName}" personHandler
+    ]
+```
+
+The `routeBind<'T>` http handler can also contain valid `Regex` code to match a variety of different routes.
+
+For example by definition (according to the spec) a route with a trailing slash **is not** the same as the equivalent route without a trailing slash. Therefore it is perfectly valid if a web server doesn't serve (or serves a different response) for the following two routes:
+
+```
+/p/{firstName}/{lastName}
+/p/{firstName}/{lastName}/
+```
+
+However many web applications choose to treat both URLs as the same. The `routeBind<'T>` http handler can make use of `Regex` to enable such use cases:
+
+```fsharp
+[<CLIMutable>]
+type Blah =
+    {
+        Foo : string
+        Bar : string
+    }
+
+let blahHandler (blah : Blah) : HttpHandler =
+    sprintf "Hello %s %s" blah.Foo blah.Bar
+    |> Successful.OK
+
+let webApp =
+    choose [
+        routeBind<Blah> "/p/{foo}/{bar}(/?)" blahHandler
+    ]
+```
+
+By appending the `Regex` code `(/?)` to the end of the route we tell the `routeBind<'T>` handler to match any route which has either zero or one trailing slash.
+
+If any number of trailing slashes should be allowed then you can swap the `?` with a `*` in the `Regex`:
+
+```fsharp
+routeBind<Blah> "/p/{foo}/{bar}(/*)" blahHandler
+```
+
+For a complete list of valid `Regex` codes please visit the official [Regular Expression Language Reference](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference).
+
+#### routeStartsWtih
+
+Sometimes it can be useful to pre-filter a route in order to enable certain functionality which should only be applied to a specific collection of routes.
+
+The `routeStartsWith` http handler does just that:
+
+```fsharp
+let webApp =
+    routeStartsWith "/api/" >=>
+        // Pre-filter because only API calls require Auth
+        requiresAuthentication (challenge "Cookie") >=>
+            choose [
+                route "/api/v1/foo" >=> text "Foo"
+                route "/api/v1/bar" >=> text "Bar"
+            ]
+```
+
+#### routeStartsWithCi
+
+The case insensitive version of `routeStartsWith` is `routeStartsWithCi`:
+
+```fsharp
+let webApp =
+    routeStartsWithCi "/api/" >=>
+        // Pre-filter because only API calls require Auth
+        requiresAuthentication (challenge "Cookie") >=>
+            choose [
+                route "/api/v1/foo" >=> text "Foo"
+                route "/api/v1/bar" >=> text "Bar"
+            ]
+```
+
+Please note that the `routeStartsWith` and `routeStartsWithCi` http handlers do not change how subsequent routing functions are matched. The final URL to get a "Foo" response is still `http[s]://your-domain.com/api/v1/foo` (single `/api`) and not `http[s]://your-domain.com/api/api/v1/foo` (double `/api`).
+
+#### subRoute
+
+In contrast to `routeStartsWith` the `subRoute` http handler let's you categorise routes without having to repeat already pre-filtered parts of the route:
+
+```fsharp
+let webApp =
+    subRoute "/api"
+        (choose [
+            subRoute "/v1"
+                (choose [
+                    route "/foo" >=> text "Foo 1"
+                    route "/bar" >=> text "Bar 1" ])
+            subRoute "/v2"
+                (choose [
+                    route "/foo" >=> text "Foo 2"
+                    route "/bar" >=> text "Bar 2" ]) ])
+```
+
+In this example the final URL to retrieve "Bar 2" would be `http[s]://your-domain.com/api/v2/bar`.
+
+#### subRouteCi
+
+As you might expect the `subRouteCi` http handler is the case insensitive version of `subRoute`:
+
+```fsharp
+let webApp =
+    subRouteCi "/api"
+        (choose [
+            subRouteCi "/v1"
+                (choose [
+                    route ""     >=> text "Default"
+                    route "/foo" >=> text "Foo 1"
+                    route "/bar" >=> text "Bar 1" ])
+            subRouteCi "/v2"
+                (choose [
+                    route "/foo" >=> text "Foo 2"
+                    route "/bar" >=> text "Bar 2" ]) ])
+```
+
+**Note:** For both `subRoute` and `subRouteCi` if you wish to have a route that represents a default e.g. `/api/v1` (from the above example) then you need to specify the route as `route ""` not `route "/"` this will not match, as `api/v1/` is a fundamentally different route according to the HTTP specification.
+
+#### routePorts
+
+If your web server is listening to multiple ports through `WebHost.UseUrls` then you can use the `routePorts` http handler to filter incoming requests based on their port:
+
+```fsharp
+let guiApp =
+    choose [
+        route   "/"    >=> text "Hello World"
+        routeCi "/foo" >=> text "Bar"
+    ]
+
+let apiApp =
+    subRoute "/api"
+        (choose [
+            subRoute "/v1"
+                (choose [
+                    route "/foo" >=> text "Foo 1"
+                    route "/bar" >=> text "Bar 1" ])
+            subRoute "/v2"
+                (choose [
+                    route "/foo" >=> text "Foo 2"
+                    route "/bar" >=> text "Bar 2" ]) ])
+
+let webApp =
+    routePorts [
+        (9001, guiApp)
+        (9002, apiApp)
+    ]
+```
+
+### Query Strings
+
+Working with query strings is very similar to working with HTTP headers in Giraffe. The `TryGetQueryStringValue (key : string)` extension method tries to retrieve the value of a given query string parameter and then returns either `Some string` or `None`:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let someValue =
+            match ctx.TryGetQueryStringValue "q" with
+            | None   -> "default value"
+            | Some q -> q
+
+        // Do something with `someValue`...
+        // Return a Task<HttpContext option>
+```
+
+This method is useful when trying to retrieve optional query string parameters from within a `HttpHandler`.
+
+If a query string parameter is mandatory then the `GetQueryStringValue (key : string)` extension method might be a better fit. Instead of returning an `Option<string>` object it will return a `Result<string, string>` type:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        match ctx.GetQueryStringValue "q" with
+        | Error msg ->
+            // Mandatory query string value is missing.
+            // Log error message
+            // Return error response to the client.
+        | Ok q ->
+            // Do something with `q`...
+            // Return a Task<HttpContext option>
+```
+
+You can also access the query string through the `ctx.Request.Query` object which returns an `IQueryCollection` object which allows you to perform more actions on it.
+
+Last but not least there is also a `HttpContext` extension method called `BindQueryString<'T>` which let's you bind an entire query string to an object of type `'T` (see [BindQueryString](#bindquerystring)).
+
+### Model Binding
+
+Giraffe offers out of the box a few default `HttpContext` extension methods which make it possible to bind the entire (or partial) HTTP payload to a custom object.
+
+#### BindJsonAsync
+
+The `BindJsonAsync<'T>()` extension method can be used to bind a JSON payload to an object of type `'T`:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let submitCar : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Binds a JSON payload to a Car object
+            let! car = ctx.BindJsonAsync<Car>()
+
+            // Sends the object back to the client
+            return! Successful.OK car next ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST >=> route "/car" >=> submitCar
+    ]
+```
+
+Please not that in order for the model binding to work the record type must be decorated with the `[<CLIMutable>]` attribute, which will make sure that the type will contain a parameterless constructor.
+
+The underlying JSON serializer can be configured as a dependency during application startup (see [JSON](#json)).
+
+#### BindXmlAsync
+
+The `BindXmlAsync<'T>()` extension method binds an XML payload to an object of type `'T`:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let submitCar : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Binds an XML payload to a Car object
+            let! car = ctx.BindXmlAsync<Car>()
+
+            // Sends the object back to the client
+            return! Successful.OK car next ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST >=> route "/car" >=> submitCar
+    ]
+```
+
+Like in the previous example the record type must be decorated with the `[<CLIMutable>]` attribute in order for the model binding to work.
+
+The underlying XML serializer can be configured as a dependency during application startup (see [XML](#xml)).
+
+#### BindFormAsync
+
+The `BindFormAsync<'T> (?cultureInfo : CultureInfo)` extension method binds form data to an object of type `'T`. You can optionally specify a `CultureInfo` object for parsing culture specific data such as `DateTime` objects or floating point numbers:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let submitCar : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Binds a form payload to a Car object
+            let! car = ctx.BindFormAsync<Car>()
+
+            // or with a CultureInfo:
+            let british = CultureInfo.CreateSpecificCulture("en-GB")
+            let! car2 = ctx.BindFormAsync<Car>(british)
+
+            // Sends the object back to the client
+            return! Successful.OK car next ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST >=> route "/car" >=> submitCar
+    ]
+```
+
+Just like in the previous examples the record type must be decorated with the `[<CLIMutable>]` attribute in order for the model binding to work.
+
+#### BindQueryString
+
+The `BindQueryString<'T> (?cultureInfo : CultureInfo)` extension method binds query string parameters to an object of type `'T`. An optional `CultureInfo` object can be set for parsing culture specific data such as `DateTime` objects and floating point numbers:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let submitCar : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Binds the query string to a Car object
+            let! car = ctx.BindQueryString<Car>()
+
+            // or with a CultureInfo:
+            let british = CultureInfo.CreateSpecificCulture("en-GB")
+            let! car2 = ctx.BindQueryString<Car>(british)
+
+            // Sends the object back to the client
+            return! Successful.OK car next ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+                route "/car" >=> submitCar
+            ]
+    ]
+```
+
+Just like in the previous examples the record type must be decorated with the `[<CLIMutable>]` attribute in order for the model binding to work.
+
+#### BindModelAsync
+
+The `BindModelAsync<'T> (?cultureInfo : CultureInfo)` method encapsulates all other model binding methods into one. It will attempt to pick the most appropriate model binding method based on the request's HTTP verb and `Content-Type` header. With the help of `BindModelAsync` it is possible to create a single endpoint which can bind JSON, XML, form and query string data:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let submitCar : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Binds a Car object
+            let! car = ctx.BindModelAsync<Car>()
+
+            // or with a CultureInfo:
+            let british = CultureInfo.CreateSpecificCulture("en-GB")
+            let! car2 = ctx.BindModelAsync<Car>(british)
+
+            // Sends the object back to the client
+            return! Successful.OK car next ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        route "/car" >=> submitCar
+    ]
+```
+
+### Authentication and Authorization
+
+ASP.NET Core has a wealth of [Authentication](https://docs.microsoft.com/en-us/aspnet/core/security/authentication/index) and [Authorization](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/index) options which work out of the box with Giraffe.
+
+Additionally Giraffe offers a few `HttpHandler` functions which make it easier to work with ASP.NET Core's authentication and authorization APIs in a functional way.
+
+#### requiresAuthentication
+
+The `requiresAuthentication (authFailedHandler : HttpHandler)` http handler validates if a user has been authenticated by one of ASP.NET Core's authentication middleware. If the identity of a user could not be established then the `authFailedHandler` will be executed:
+
+```fsharp
+let notLoggedIn =
+    RequestErrors.UNAUTHORIZED
+        "Basic"
+        "Some Realm"
+        "You must be logged in."
+
+let mustBeLoggedIn = requiresAuthentication notLoggedIn
+
+let webApp =
+    choose [
+        route "/"     >=> text "Hello World"
+        route "/user" >=>
+            mustBeLoggedIn >=>
+                choose [
+                    GET  >=> readUserHandler
+                    POST >=> submitUserHandler
+                ]
+    ]
+```
+
+#### requiresRole
+
+The `requiresRole (role : string) (authFailedHandler : HttpHandler)` http handler checks if an authenticated user is part of a given `role`. If a user fails to be in a certain role then the `authFailedHandler` will be executed:
+
+```fsharp
+let notLoggedIn =
+    RequestErrors.UNAUTHORIZED
+        "Basic"
+        "Some Realm"
+        "You must be logged in."
+
+let notAdmin =
+    RequestErrors.FORBIDDEN
+        "Permission denied. You must be an admin."
+
+let mustBeLoggedIn = requiresAuthentication notLoggedIn
+
+let mustBeAdmin = requiresRole "Admin" notAdmin
+
+let webApp =
+    choose [
+        route "/"     >=> text "Hello World"
+        route "/user" >=>
+            mustBeLoggedIn >=> mustBeAdmin >=>
+                choose [
+                    routef "/user/%s/edit"   editUserHandler
+                    routef "/user/%s/delete" deleteUserHandler
+                ]
+    ]
+```
+
+#### requiresRoleOf
+
+The `requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler)` http handler checks if an authenticated user is part of a list of given `roles`. If a user fails to be in at least one of the `roles` then the `authFailedHandler` will be executed:
+
+```fsharp
+let notLoggedIn =
+    RequestErrors.UNAUTHORIZED
+        "Basic"
+        "Some Realm"
+        "You must be logged in."
+
+let notProUserOrAdmin =
+    RequestErrors.FORBIDDEN
+        "Permission denied. You must be a pro user or admin."
+
+let mustBeLoggedIn = requiresAuthentication notLoggedIn
+
+let mustBeProUserOrAdmin =
+    requiresRoleOf [ "ProUser"; "Admin" ] notProUserOrAdmin
+
+let webApp =
+    choose [
+        route "/"     >=> text "Hello World"
+        route "/user" >=>
+            mustBeLoggedIn >=> mustBeProUserOrAdmin >=>
+                choose [
+                    routef "/user/%s/edit"   editUserHandler
+                    routef "/user/%s/delete" deleteUserHandler
+                ]
+    ]
+```
+
+#### challenge
+
+The `challenge (authScheme : string)` http handler will challenge the client to authenticate with a specific `authScheme`. This function is often used in combination with the `requiresAuthentication` http handler:
+
+```fsharp
+let webApp =
+    choose [
+        route "/"     >=> text "Hello World"
+        route "/user" >=>
+            requiresAuthentication (challenge "Cookie") >=>
+                choose [
+                    GET  >=> readUserHandler
+                    POST >=> submitUserHandler
+                ]
+    ]
+```
+
+In this example the client will be challenged to authenticate with a scheme called "Cookie". The scheme name must match one of the registered authentication schemes from the configuration of the ASP.NET Core auth middleware.
+
+#### signOut
+
+The `signOut (authScheme : string)` http handler will sign a user out from a given `authScheme`:
+
+```fsharp
+let logout = signOut "Cookie" >=> redirectTo false "/"
+
+let webApp =
+    choose [
+        route "/"     >=> text "Hello World"
+        route "/user" >=>
+            requiresAuthentication (challenge "Cookie") >=>
+                choose [
+                    GET  >=> readUserHandler
+                    POST >=> submitUserHandler
+                    route "/user/logout" >=> logout
+                ]
+    ]
+```
+
+### Conditional Requests
+
+Conditional HTTP headers (e.g. `If-Match`, `If-Modified-Since`) are a common way to improve performance (through web caching), avoid the [lost update problem](https://www.w3.org/1999/04/Editing/) or for [optimistic concurrency control](https://en.wikipedia.org/wiki/Optimistic_concurrency_control) when sending or requesting a resource from a web server.
+
+Giraffe exposes a `HttpContext` extension method called `ValidatePreconditions (eTag) (lastModified)` which can be used from within a `HttpHandler` function to validate conditional HTTP headers. The `ValidatePreconditions` method takes two optional parameters - an `eTag` value and a `lastMofified` date time, which will be used to check against the conditional HTTP headers.
+
+The [ETag (Entity Tag)](https://tools.ietf.org/html/rfc7232#section-2.3) value is an opaque identifier assigned by a web server to a specific version of a resource found at a URL. The [Last-Modified](https://tools.ietf.org/html/rfc7232#section-2.2) value provides a timestamp indicating the date and time at which the origin server believes the selected representation was last modified.
+
+Giraffe's `ValidatePreconditions` method will validate the following conditional HTTP headers:
+
+- `If-Match`
+- `If-None-Match`
+- `If-Modified-Since`
+- `If-Unmodified-Since`
+
+The `If-Range` HTTP header will not be validated as part of `ValidatePreconditions`. It will be separately validated during Giraffe's streaming functions and only if range processing is enabled (see [Streaming](#streaming)).
+
+The output of `ValidatePreconditions` returns a `Precondition` union type, which can have one of the following cases:
+
+| Case | Description and Recommended Action |
+| ---- | ---------------------------------- |
+| `NoConditionsSpecified` | No validation has taken place, because the client didn't send any conditional HTTP headers. Proceed with web request as normal. |
+| `ConditionFailed` | At least one condition couldn't be sastisfied. It is advised to return a `412` status code back to the client (you can use the `HttpContext.PreconditionFailedResponse()` method for that purpose). |
+| `ResourceNotModified` | The resource hasn't changed since the last visit. The server can skip processing this request and return a `304` status code back to the client (you can use the `HttpContext.NotModifiedResponse()` method for that purpose). |
+| `AllConditionsMet` | All pre-conditions were satisfied. The server should continue processing the request as normal. |
+
+Giraffe will make sure that all conditional HTTP headers will get correctly validated according to the HTTP spec, taking into account whether it was a `GET`, `HEAD` or other HTTP request and the correct precedence in which each HTTP header must be validated.
+
+It is up to the individual `HttpHandler` implementation to decide how to proceed after validation, but it is recommended to take the recommended action as listed above:
+
+```fsharp
+// Pass an optional eTag and lastModified timestamp into the handler, because generating an eTag might require to load the entire resource into memory and therefore this is not something which should be done on every request.
+let someHttpHandler eTag lastModified : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            match ctx.ValidatePreconditions eTag lastModified with
+            | ConditionFailed     -> return ctx.PreconditionFailedResponse()
+            | ResourceNotModified -> return ctx.NotModifiedResponse()
+            | AllConditionsMet | NoConditionsSpecified ->
+                // Continue as normal
+                // Do stuff
+        }
+
+let webApp =
+    choose [
+        route "/"    >=> text "Hello World"
+        route "/foo" >=> someHttpHandler
+    ]
+```
+
+### Response Writing
+
+Sending a response back to a client in Giraffe can be done through a small range of `HttpContext` extension methods and and their equivalent `HttpHandler` functions.
+
+#### Writing Bytes
+
+The `WriteBytesAsync (bytes : byte[])` extension method and the `setBody (bytes : byte array)` http handler both write a `byte array` to the response stream of the HTTP request:
+
+```fsharp
+let someHandler (bytes : byte array) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteBytesAsync bytes
+        }
+
+// or...
+
+let someHandler (bytes : byte array) : HttpHandler =
+    // Do stuff
+    setBody bytes
+```
+
+Both functions will also set the `Content-Length` HTTP header to the length of the `byte array`.
+
+#### Writing Strings
+
+The `WriteStringAsync (str : string)` extension method and the `setBodyFromString (str : string)` http handler are both small helper functions which `UTF8` decode the `string` into a `byte array` and subsequently write the `byte array` to the response stream of the HTTP request.
+
+Both functions will also set the `Content-Length` HTTP header to the correct length of the response:
+
+```fsharp
+let someHandler (str : string) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteStringAsync str
+        }
+
+// or...
+
+let someHandler (str : string) : HttpHandler =
+    // Do stuff
+    setBodyFromString str
+```
+
+The `setBody` and `setBodyFromString` http handlers (and their `HttpContext` extension method equivalents) are useful when you want to create your own response writing function for a specific media type which is not provided by Giraffe yet.
+
+For example Giraffe doesn't have any functionality for serializing and writing a YAML response back to a client. However, you can reference another third party library which can serialize an object into a YAML string and then create your own `yaml` http handler like this:
+
+```fsharp
+let yaml (x : obj) : HttpHandler =
+    setHttpHeader "Content-Type" "text/yaml"
+    >=> setBodyFromString (YamlSerializer.toYaml x)
+
+```
+
+#### Writing Text
+
+The `WriteTextAsync (str : string)` extension method and the `text (str : string)` http handler are the same as [writing strings](#writing-strings) except that they will also set the `Content-Type` HTTP header to `text/plain` in the response:
+
+```fsharp
+let someHandler (str : string) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteTextAsync str
+        }
+
+// or...
+
+let someHandler (str : string) : HttpHandler =
+    // Do stuff
+    text str
+```
+
+#### Writing JSON
+
+The `WriteJsonAsync (dataObj : obj)` extension method and the `json (dataObj : obj)` http handler will both serialize an object to a JSON string and write the output to the response stream of the HTTP request. They will also set the `Content-Length`HTTP header and the `Content-Type` header to `application/json` in the response:
+
+```fsharp
+let someHandler (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteJsonAsync dataObj
+        }
+
+// or...
+
+let someHandler (dataObj : obj) : HttpHandler =
+    // Do stuff
+    json dataObj
+```
+
+The underlying JSON serializer can be configured as a dependency during application startup (see [JSON](#json)).
+
+#### Writing XML
+
+The `WriteXmlAsync (dataObj : obj)` extension method and the `xml (dataObj : obj)` http handler will both serialize an object to an XML string and write the output to the response stream of the HTTP request. They will also set the `Content-Length`HTTP header and the `Content-Type` header to `application/xml` in the response:
+
+```fsharp
+let someHandler (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteXmlAsync dataObj
+        }
+
+// or...
+
+let someHandler (dataObj : obj) : HttpHandler =
+    // Do stuff
+    xml dataObj
+```
+
+The underlying XML serializer can be configured as a dependency during application startup (see [XML](#xml)).
+
+#### Writing HTML
+
+The `WriteHtmlFileAsync (filePath : string)` extension method and the `htmlFile (filePath : string)` http handler will both read a file from the local file system and write the content to the response stream of the HTTP request. They will also set the `Content-Length` HTTP header and the `Content-Type` header to `text/html`:
+
+```fsharp
+let someHandler (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteHtmlFileAsync "index.html"
+        }
+
+// or...
+
+let someHandler (dataObj : obj) : HttpHandler =
+    // Do stuff
+    htmlFile "index.html"
+```
+
+Both functions accept either a relative or an absolute path to the HTML file.
+
+#### Writing HTML Strings
+
+The `WriteHtmlStringAsync (html : string)` extension method and the `htmlString (html : string)` http handler are both equivalent to [writing strings](#writing-strings) except that they will also set the `Content-Type` header to `text/html`:
+
+```fsharp
+let someHandler (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteHtmlStringAsync "<html><head></head><body>Hello World</body></html>"
+        }
+
+// or...
+
+let someHandler (dataObj : obj) : HttpHandler =
+    // Do stuff
+    htmlString "<html><head></head><body>Hello World</body></html>"
+```
+
+#### Writing HTML Views
+
+Giraffe comes with its own extremely powerful view engine for functional developers (see [Giraffe View Engine](#giraffe-view-engine)). The `WriteHtmlViewAsync (htmlView : XmlNode)` extension method and the `htmlView (htmlView : XmlNode)` http handler will both compile a given html view into valid HTML code and write the output to the response stream of the HTTP request. Additionally they will both set the `Content-Length` HTTP header to the correct value and set the `Content-Type` header to `text/html`:
+
+```fsharp
+let indexView =
+    html [] [
+        head [] [
+            title [] [ rawText "Giraffe" ]
+        ]
+        body [] [
+            h1 [] [ rawText "Giraffe" ]
+            p [] [ rawText "Hello World." ]
+        ]
+    ]
+
+let someHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteHtmlViewAsync indexView
+        }
+
+// or...
+
+let someHandler : HttpHandler =
+    // Do stuff
+    htmlView indexView
+```
+
+### Content Negotiation
+
+Giraffe's default [response writers](#response-writing) will always send a response in a specific media type regardless of a client's own requirements. Content negotiation on the other hand allows a Giraffe web server to examine a web request's `Accept` HTTP header and decide an appropriate data representation on the fly.
+
+The `NegotiateAsync (responseObj : obj)` extension method and the `negotiate (responseObj : obj)` http handler will both pick the most appropriate data representation based on a request's `Accept` HTTP header and write a data object to the response stream of a HTTP request:
+
+```fsharp
+[<CLIMutable>]
+type Person =
+    {
+        FirstName : string
+        LastName  : string
+    }
+
+let johnDoe =
+    {
+        FirstName = "John"
+        LastName  = "Doe"
+    }
+
+let someHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.NegotiateAsync johnDoe
+        }
+
+// or...
+
+let webApp =
+    choose [
+        route "/foo" >=> negotiate johnDoe
+        route "/bar" >=> someHandler
+    ]
+```
+
+Currently Giraffe only supports plain text, JSON and XML responses during content negotiation out of the box. If a client doesn't accept any of these media types then the default negotiation function will return a `406 Unacceptable` HTTP response.
+
+#### Configuring Content Negotiation
+
+The default negotiation behaviour can be customized by creating a new class which implements the `INegotiationConfig` interface and set up a new dependency of that type during application startup.
+
+The `INegotiationConfig` has two members which must be implemented:
+
+- `Rules` of type `IDictionary<string, obj -> HttpHandler>`
+- `UnacceptableHandler` of type `HttpHandler`
+
+
+The `Rules` property is of type `IDictionary<string, obj -> HttpHandler>` and represents a key/value dictionary, where the key denotes a supported `Content-Type` and the value represents a function which turns a given `obj` into a `HttpHandler`.
+
+For example the rules of the `DefaultNegotiationConfig` are as following:
+
+```fsharp
+dict [
+    "*/*"             , json
+    "application/json", json
+    "application/xml" , xml
+    "text/xml"        , xml
+    "text/plain"      , fun x -> x.ToString() |> text
+]
+```
+
+As you can see from the example above the default dictionary uses the `json` and `xml` http handlers to define the response handler for the respective media types. If a client requests a `text/plain` response then a new function had to be created which accepts an `obj` and uses the `.ToString()` method in combination with the `text` http handler to return a plain text response.
+
+If a client has no particular preference (`*/*`) then the default response is `json`.
+
+The `UnacceptableHandler` is a http handler which will be invoked if none of the client's accepted media types are supported by the web server and therefore the request cannot be satisfied.
+
+#### Example: Adding BSON support to content negotiation
+
+Let's assume you have created your own `bson` http handler which can serialize an object into BSON and write the contents to the response stream of the request:
+
+```fsharp
+let bson (o : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        // Implement BSON handler here
+```
+
+In order for `negotiate` and `NegotiateAsync` to support the new `bson` http handler we need to create a new type which implements `INegotiationConfig`:
+
+```fsharp
+type CustomNegotiationConfig (baseConfig : INegotiationConfig) =
+    let plainText x = text (x.ToString())
+
+    interface INegotiationConfig with
+
+        member __.UnacceptableHandler =
+            baseConfig.UnacceptableHandler
+
+        member __.Rules =
+                dict [
+                    "*/*"             , json
+                    "application/json", json
+                    "application/xml" , xml
+                    "text/xml"        , xml
+                    "application/bson", bson
+                    "text/plain"      , plainText
+                ]
+```
+
+Then register an instance of the newly created class during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now register your custom INegotiationConfig
+    services.AddSingleton<INegotiationConfig>(
+        CustomNegotiationConfig(
+            DefaultNegotiationConfig())
+    ) |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+In this example the `CustomNegotiationConfig` uses composition to re-use the `UnacceptableHandler` from the `DefaultNegotiationConfig` without having to use inheritance.
+
+#### Configuring content negotiation through partial application
+
+Alternatively you can also use the `NegotiateWithAsync` extension method or the `negotiateWith` http handler to configure content negotiation through partial function application:
+
+```fsharp
+let customNegotiationRules =
+    dict [
+        "*/*"             , json
+        "application/json", json
+        "application/xml" , xml
+        "text/xml"        , xml
+        "application/bson", bson
+        "text/plain"      , plainText
+    ]
+
+let customUnacceptableHandler =
+    setStatusCode 406
+    >=> text "Request cannot be satisfied by the web server."
+
+// Override the default negotiate handler with a new custom implementation
+let negotiate =
+    negotiateWith
+        customNegotiationRules
+        customUnacceptableHandler
+```
+
+### Streaming
+
+Sometimes a large file or block of data has to be send to a client and in order to avoid loading the entire data into memory a Giraffe web application can use streaming to send a response in a more efficient way.
+
+The `WriteStreamAsync` extension method and the `streamData` http handler can be used to stream an object of type `Stream` to a client.
+
+Both functions accept the following parameters:
+
+- `enableRangeProcessing`: If true a client can request a sub range of data to be streamed (useful when a client wants to continue streaming after a paused download, or when internet connection has been lost, etc.)
+- `stream`: The stream object to be returned to the client.
+- `eTag`: Entity header tag used for conditional requests (see [Conditional Requests](#conditional-requests)).
+- `lastModified`: Last modified timestamp used for conditional requests (see [Conditional Requests](#conditional-requests)).
+
+If the `eTag` or `lastModified` timestamp are set then both functions will also set the `ETag` and/or `Last-Modified` HTTP headers during the response:
+
+```fsharp
+let someStream : Stream = ...
+
+let someHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteStreamAsync
+                true // enableRangeProcessing
+                someStream
+                None // eTag
+                None // lastModified
+        }
+
+// or...
+
+let someHandler : HttpHandler =
+    // Do stuff
+    streamData
+        true // enableRangeProcessing
+        someStream
+        None // eTag
+        None // lastModified
+```
+
+In most cases a web application will want to stream a file directly from the local file system. In this case you can use the `WriteFileStreamAsync` extension method or the `streamFile` http handler, which are both the same as `WriteStreamAsync` and `streamData` except that they accept a relative or absolute `filePath` instead of a `Stream` object:
+
+```fsharp
+let someHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteFileStreamAsync
+                true // enableRangeProcessing
+                "large-file.zip"
+                None // eTag
+                None // lastModified
+        }
+
+// or...
+
+let someHandler : HttpHandler =
+    // Do stuff
+    streamFile
+        true // enableRangeProcessing
+        "large-file.zip"
+        None // eTag
+        None // lastModified
+```
+
+All streaming functions in Giraffe will also validate conditional HTTP headers, including the `If-Range` HTTP header if `enableRangeProcessing` has been set to `true`.
+
+### Redirection
+
+The `redirectTo (permanent : bool) (location : string)` http handler can be used to redirect a client to a different location when handling an incoming web request:
+
+```fsharp
+let webApp =
+    choose [
+        route "/new" >=> text "Hello World"
+        route "/old" >=> redirectTo true "https://myserver.com/new"
+    ]
+```
+
+Please note that if the `permanent` flag is set to `true` then the Giraffe web application will send a `301` HTTP status code to browsers which will tell them that the redirection is permanent. This often leads to browsers cache the information and not hit the deprecated URL a second time any more. If this is not desired then please set `permanent` to `false` in order to guarantee that browsers will continue hitting the old URL before redirecting to the (temporary) new one.
+
+## Giraffe View Engine
+
+Giraffe has its own functional view engine which can be used to build rich GUIs for web applications. The single biggest and best contrast to other view engines (e.g. Razor, Liquid, etc.) is that the Giraffe View Engine is entirely functional written in normal (and compiled) F# code.
+
+This means that the Giraffe View Engine is by definition one of the most feature rich view engines, requires no disk IO to load a view and views are automatically compiled at build time.
+
+The Giraffe View Engine uses traditional functions and F# record types to generate rich HTML/XML views.
+
+### HTML Elements and Attributes
+
+HTML elements and attributes are defined as F# objects:
+
+```fsharp
+let indexView =
+    html [] [
+        head [] [
+            title [] [ rawText "Giraffe Sample" ]
+        ]
+        body [] [
+            h1 [] [ encodedText "I |> F#" ]
+            p [ _class "some-css-class"; _id "someId" ] [
+                rawText "Hello World"
+            ]
+        ]
+    ]
+```
+
+A HTML element can either be a `ParentNode`, a `VoidElement` or `RawText`/`EncodedText`.
+
+For example the `<html>` or `<div>` tags are typical `ParentNode` elements. They can hold an `XmlAttribute list` and a second `XmlElement list` for their child elements:
+
+```fsharp
+let someHtml = div [] []
+```
+
+All `ParentNode` elements accept these two parameters:
+
+```fsharp
+let someHtml =
+    div [ _id "someId"; _class "css-class" ] [
+        a [ _href "https://example.org" ] [ rawText "Some text..." ]
+    ]
+```
+
+Most HTML tags are `ParentNode` elements, however there is a few HTML tags which cannot hold any child elements, such as `<br>`, `<hr>` or `<meta>` tags. These are represented as `VoidElement` objects and only accept the `XmlAttribute list` as single parameter:
+
+```fsharp
+let someHtml =
+    div [] [
+        br []
+        hr [ _class "css-class-for-hr" ]
+        p [] [ rawText "bla blah" ]
+    ]
+```
+
+Attributes are further classified into two different cases. First and most commonly there are `KeyValue` attributes:
+
+```fsharp
+a [
+    _href "http://url.com"
+    _target "_blank"
+    _class "class1" ] [ encodedText "Click here" ]
+```
+
+As the name suggests, they have a key, such as `class` and a value such as the name of a CSS class.
+
+The second category of attributes are `Boolean` flags. There are not many but some HTML attributes which do not require any value (e.g. `async` or `defer` in script tags). The presence of such an attribute means that the feature is turned on, otherwise it is turned off:
+
+```fsharp
+script [ _src "some.js"; _async ] []
+```
+
+### Text Content
+
+Naturally the most frequent content in any HTML document is pure text:
+
+```html
+<div>
+    <h1>This is text content</h1>
+    <p>This is even more text content!</p>
+</div>
+```
+
+The Giraffe View Engine lets one create pure text content as either `RawText` or `EncodedText`:
+
+```fsharp
+let someHtml =
+    div [] [
+        p [] [ rawText "<div>Hello World</div>" ]
+        p [] [ encodedText "<div>Hello World</div>" ]
+    ]
+```
+
+The `rawText` function will create an object of type `RawText` and the `encodedText` function will output an object of type `EncodedText`. The difference is that the latter will HTML encode the value when rendering the view.
+
+In this example the first `p` element will literally output the string as it is (`<div>Hello World</div>`) while the second `p` element will output the value as HTML encoded string `&lt;div&gt;Hello World&lt;/div&gt;`.
+
+Please be aware that the the usage of `rawText` is mainly designed for edge cases where someone would purposefully want to inject HTML (or JavaScript) code into a rendered view. If not used carefully this could potentially lead to serious security vulnerabilities and therefore should be used only when explicitly required.
+
+Most cases and particularly any user provided content should always be output via the `encodedText` function.
+
+### Naming Convention
+
+The Giraffe View Engine has a naming convention which lets you easily determine the correct function name without having to know anything about the view engine's implementation.
+
+All HTML tags are defined as `XmlNode` elements under the exact same name as they are named in HTML. For example the `<html>` tag would be `html [] []`, an `<a>` tag would be `a [] []` and a `<span>` or `<canvas>` would be the `span [] []` or `canvas [] []` function.
+
+HTML attributes follow the same naming convention except that attributes have an underscore prepended. For example the `class` attribute would be `_class` and the `src` attribute would be `_src` in Giraffe.
+
+The underscore does not only help to distinguish an attribute from an element, but also avoid a naming conflict between tags and attributes of the same name (e.g. `<form>` vs. `<input form="form1">`).
+
+If a HTML attribute has a hyphen in the name (e.g. `accept-charset`) then the equivalent Giraffe attribute would be written in camel case notion (e.g. `acceptCharset`).
+
+*Should you find a HTML tag or attribute missing in the Giraffe View Engine then you can either [create it yourself](#custom-elements-and-attributes) or send a [pull request on GitHub](https://github.com/giraffe-fsharp/Giraffe/pulls).*
+
+### View Engine Best Practices
+
+Due to the huge amount of available HTML tags and their fairly generic (and short) names (e.g. `<form>`, `<option>`, `<select>`, etc.) there is a significant danger of accidentally overriding a function of the same name in an application's codebase. For that reason the Giraffe View Engine becomes only available after opening the `GiraffeViewEngine` module.
+
+As a measure of good practice it is recommended to create all views in a separate module:
+
+```fsharp
+module MyWebApplication
+
+module Views =
+    open Giraffe.GiraffeViewEngine
+
+    let index =
+        html [] [
+            head [] [
+                title [] [ rawText "Giraffe Sample" ]
+            ]
+            body [] [
+                h1 [] [ encodedText "I |> F#" ]
+                p [ _class "some-css-class"; _id "someId" ] [
+                    rawText "Hello World"
+                ]
+            ]
+        ]
+
+    let other = //...
+```
+
+This ensures that the opening of the `GiraffeViewEngine` is only contained in a small context of an application's codebase and therefore less of a threat to accidental overrides. In the above example views can always be accessed through the `Views` sub module (e.g. `Views.index`).
+
+### Custom Elements and Attributes
+
+Adding new elements or attributes is normally as simple as a single line of code:
+
+```fsharp
+open Giraffe.GiraffeViewEngine
+
+// If there was a new <foo></foo> HTML element:
+let foo = tag "foo"
+
+// If <foo> is an element which cannot hold any content then create it as voidTag:
+let foo = voidTag "foo"
+
+// If <foo> has a new attribute called bar then create a new bar attribute:
+let _bar = attr "bar"
+
+// if the bar attribute is a boolean flag:
+let _bar = flag "bar"
+```
+
+Alternatively you can also create new elements and attributes from inside another element:
+
+```fsharp
+let someHtml =
+    div [] [
+        tag "foo" [ attr "bar" "blah" ] [
+            voidTag "otherFoo" [ flag "flag1" ]
+        ]
+    ]
+```
+
+### Rendering Views
+
+Rendering views in Giraffe is done through one of the following functions:
+
+- `renderHtmlDocument`
+- `renderHtmlNodes`
+- `renderHtmlNode`
+- `renderXmlNodes`
+- `renderXmlNode`
+
+The Giraffe View Engine cannot only be used to render HTML views, but also for any other XML based content such as `<svg>` images or other arbitrary XML based data.
+
+The `renderHtmlDocument` function takes a single `XmlNode` as input parameter and renders a HTML page with a `DOCTYPE` declaration. This function should be used for rendering a complete HTML document. The `WriteHtmlViewAsync` extension method and the `htmlView` http handler both use the `renderHtmlDocument` function under the covers.
+
+The `renderHtmlNodes` function takes an `XmlNode list` as input parameter and will output a single HTML string containing all the rendered HTML code. The `renderHtmlNode` function renders a single `XmlNode` element into a valid HTML string. Both, the `renderHtmlNodes` and `renderHtmlNode` function are useful for use cases where a HTML snippet needs to be created without a `DOCTYPE` declaration (e.g. templated emails, etc.).
+
+The `renderXmlNodes` and `renderXmlNode` function are identical to `renderHtmlNodes` and `renderHtmlNode`, except that they will render void elements differently:
+
+```fsharp
+let someTag = voidTag "foo"
+let someContent = someTag []
+
+// Void tag will be rendered to valid HTML: <foo>
+let output1 = renderHtmlNode someContent
+
+// Void tag will be rendered to valid XML: <foo />
+let output2 = renderXmlNode someContent
+```
+
+### Common View Engine Features
+
+The Giraffe View Engine doesn't have any specially built functions for commonly known features such as master pages or partial views, mainly because the nature of the view engine itself doesn't require it in most cases.
+
+#### Master Pages
+
+Creating a master page is a simple matter of piping two functions together:
+
+```fsharp
+module Views =
+    open Giraffe.GiraffeViewEngine
+
+    let master (pageTitle : string) (content: XmlNode list) =
+        html [] [
+            head [] [
+                title [] [ encodedText pageTitle ]
+            ]
+            body [] content
+        ]
+
+    let index =
+        let pageTitle = "Giraffe Sample"
+        [
+            h1 [] [ encodedText pageTitle ]
+            p [] [ encodedText "Hello world!" ]
+        ] |> master pageTitle
+```
+
+... or even have multiple nested master pages:
+
+```fsharp
+module Views =
+    open Giraffe.GiraffeViewEngine
+
+    let master1 (pageTitle : string) (content: XmlNode list) =
+        html [] [
+            head [] [
+                title [] [ encodedText pageTitle ]
+            ]
+            body [] content
+        ]
+
+    let master2 (content: XmlNode list) =
+        [
+            main [] content
+            footer [] [
+                p [] [
+                    encodedText "Copyright ..."
+                ]
+            ]
+        ]
+
+    let index =
+        let pageTitle = "Giraffe Sample"
+        [
+            h1 [] [ encodedText pageTitle ]
+            p [] [ encodedText "Hello world!" ]
+        ] |> master2 |> master1 pageTitle
+```
+
+#### Partial Views
+
+A partial view is nothing more than one function or object being called from within another function:
+
+```fsharp
+module Views =
+    open Giraffe.GiraffeViewEngine
+
+    let partial =
+        footer [] [
+            p [] [
+                encodedText "Copyright..."
+            ]
+        ]
+
+    let master (pageTitle : string) (content: XmlNode list) =
+        html [] [
+            head [] [
+                title [] [ encodedText pageTitle ]
+            ]
+            body [] content
+            partial
+        ]
+
+    let index =
+        let pageTitle = "Giraffe Sample"
+        [
+            h1 [] [ encodedText pageTitle ]
+            p [] [ encodedText "Hello world!" ]
+        ] |> master pageTitle
+```
+
+#### Working with Models
+
+A view which accepts a model is basically a function with an additional parameter:
+
+```fsharp
+module Views =
+    open Giraffe.GiraffeViewEngine
+
+    let partial =
+        footer [] [
+            p [] [
+                encodedText "Copyright..."
+            ]
+        ]
+
+    let master (pageTitle : string) (content: XmlNode list) =
+        html [] [
+            head [] [
+                title [] [ encodedText pageTitle ]
+            ]
+            body [] content
+            partial
+        ]
+
+    let index (model : IndexViewModel) =
+        [
+            h1 [] [ encodedText model.PageTitle ]
+            p [] [ encodedText model.WelcomeText ]
+        ] |> master model.PageTitle
+```
+
+#### If Statements, Loops, etc.
+
+Things like if statements, loops and other normal F# language constructs work just as expected:
+
+```fsharp
+let partial (books : Book list) =
+    ul [] [
+        yield!
+            books
+            |> List.map (fun b -> li [] [ encodedText book.Title ])
+    ]
+```
+
+Overall the Giraffe View Engine is extremely flexible and feature rich by nature based on the fact that it is generated via normal compiled F# code.
+
+## Serialization
+
+### JSON
+
+By default Giraffe uses [Newtonsoft JSON.NET](https://www.newtonsoft.com/json) for (de-)serializing JSON content. An application can modify the default serializer by registering a new dependency which implements the `IJsonSerializer` interface during application startup.
+
+Customizing Giraffe's JSON serialization can either happen via providing a custom object of `JsonSerializerSettings` when instantiating the default `NewtonsoftJsonSerializer` or swap in an entire different JSON library by creating a new class which implements the `IJsonSerializer` interface.
+
+#### Customizing JsonSerializerSettings
+
+You can change the default `JsonSerializerSettings` of the `NewtonsoftJsonSerializer` by registering a new instance of `NewtonsoftJsonSerializer` during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now customize only the IJsonSerializer by providing a custom
+    // object of JsonSerializerSettings
+    let customSettings = JsonSerializerSettings(
+        Culture = CultureInfo("de-DE"))
+
+    services.AddSingleton<IJsonSerializer>(
+        NewtonsoftJsonSerializer(customSettings)) |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+#### Using a different JSON serializer
+
+You can change the entire underlying JSON serializer by creating a new class which implements the `IJsonSerializer` interface:
+
+```fsharp
+type CustomJsonSerializer() =
+    interface IJsonSerializer with
+        // Use different JSON library ...
+        member __.Serialize (o : obj) = // ...
+        member __.Deserialize<'T> (json : string) = // ...
+        member __.Deserialize<'T> (stream : Stream) = // ...
+        member __.DeserializeAsync<'T> (stream : Stream) = // ...
+```
+
+Then register a new instance of the newly created type during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now register your custom IJsonSerializer
+    services.AddSingleton<IJsonSerializer, CustomJsonSerializer>() |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+#### Retrieving the JSON serializer from a custom HttpHandler
+
+If you need you retrieve the registered JSON serializer from a custom `HttpHandler` function then you can do this with the `GetJsonSerializer` extension method:
+
+```fsharp
+let customHandler (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let serializer = ctx.GetJsonSerializer()
+        let json = serializer.Serialize dataObj
+        // ... do more...
+```
+
+### XML
+
+By default Giraffe uses the `System.Xml.Serialization.XmlSerializer` for (de-)serializing XML content. An application can modify the serializer by registering a new dependency which implements the `IXmlSerializer` interface during application startup.
+
+Customizing Giraffe's XML serialization can either happen via providing a custom object of `XmlWriterSettings` when instantiating the default `DefaultXmlSerializer` or swap in an entire different XML library by creating a new class which implements the `IXmlSerializer` interface.
+
+#### Customizing XmlWriterSettings
+
+You can change the default `XmlWriterSettings` of the `DefaultXmlSerializer` by registering a new instance of `DefaultXmlSerializer` during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now customize the IXmlSerializer
+    let customSettings =
+        XmlWriterSettings(
+                Encoding           = Encoding.UTF8,
+                Indent             = false,
+                OmitXmlDeclaration = true
+            )
+
+    services.AddSingleton<IXmlSerializer>(
+        DefaultXmlSerializer(customSettings)) |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+####  Using a different XML serializer
+
+You can change the entire underlying XML serializer by creating a new class which implements the `IXmlSerializer` interface:
+
+```fsharp
+type CustomXmlSerializer() =
+    interface IXmlSerializer with
+        // Use different XML library ...
+        member __.Serialize (o : obj) = // ...
+        member __.Deserialize<'T> (xml : string) = // ...
+```
+
+Then register a new instance of the newly created type during application startup:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now register your custom IXmlSerializer
+    services.AddSingleton<IXmlSerializer, CustomXmlSerializer>() |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHost.CreateDefaultBuilder()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
+    0
+```
+
+#### Retrieving the XML serializer from a custom HttpHandler
+
+If you need you retrieve the registered XML serializer from a custom `HttpHandler` function then you can do this with the `GetXmlSerializer` extension method:
+
+```fsharp
+let customHandler (dataObj : obj) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let serializer = ctx.GetXmlSerializer()
+        let xml = serializer.Serialize dataObj
+        // ... do more...
+```
+
+## Miscellaneous
+
+On top of default HTTP related functions such as `HttpContext` extension methods and `HttpHandler` functions Giraffe also provides a few other helper functions which are commonly required in Giraffe web applications.
+
+### Common Helper Functions
+
+#### DateTime Extension methods
+
+Giraffe automatically adds the `ToHtmlString()` extension method to `DateTime` and `DateTimeOffset` objects which formats a given timestamp into an [RFC3339](https://www.ietf.org/rfc/rfc3339.txt) formatted string:
+
+```fsharp
+let now = DateTimeOffset.UtcNow
+let htmlFormattedTimestamp = now.ToHtmlString()
+```
+
+#### isNotNull
+
+The F# language provides an `isNull` function for checking `null` values when interoping with other .NET languages. Unfortunately there is no `isNotNull` function by default. Giraffe closes that gap by providing an additional `isNotNull` function:
+
+```fsharp
+if isNotNull someObj then
+    // ... do stuff here
+else
+    // ... do other stuff here
+```
+
+#### strOption
+
+An F# application often has to check if a `string` value is `null` when interoping with other .NET languages. Representing an optionally missing value with `null` is unnatural in F# and therefore Giraffe provides the `strOption` function which can convert a `string` into an `Option<string>` value for a more natural F# experience. If a string is `null` then the `strOptoin` function will return `None`, otherwise `Some string`:
+
+```fsharp
+let someDateTime =
+    match strOption someString with
+    | Some str -> DateTimeOffset.Parse str
+    | None     -> DateTimeOffset.UtcNow
+```
+
+#### readFileAsStringAsync
+
+Reading a file from the local file system is often a common use case in a web application. The `readFileAsStringAsync` function will asynchronously read the entire content of a given `filePath` from the local file system:
+
+```fsharp
+let someFunction =
+    task {
+        let! content = readFileAsStringAsync "myfile.txt"
+        // ... do stuff
+    }
+```
+
+### Computation Expressions
+
+Giraffe provides two additional computation expressions which can be used with `Option<'T>` and `Result<'T, 'TError>` objects.
+
+
+The `opt {}` computation expression can be used to bind options and the `res {}` computation expression can be used to bind result objects:
+
+```fsharp
+open Giraffe.ComputationExpressions
+
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let result =
+            res {
+                let! header1 = ctx.GetRequestHeader "X-Header-1"
+                let! header2 = ctx.GetRequestHeader "X-Header-2"
+                let! header3 = ctx.GetRequestHeader "X-Header-3"
+                return (header1, header2, header3)
+            }
+        match result with
+        | Ok (h1, h2, h3) ->
+            sprintf "%s, %s, %s" h1 h2 h3
+            |> ctx.WriteTextAsync
+        | Error msg -> RequestErrors.BAD_REQUEST msg next ctx
+```
+
+## Additional Features
+
+There's more features available for Giraffe web applications through additional NuGet packages:
+
+### TokenRouter
+
+The `Giraffe.TokenRouter` NuGet package exposes an alternative routing `HttpHandler` which is based on top of a [Radix Tree](https://en.wikipedia.org/wiki/Radix_tree). Several routing handlers (e.g.: `routef` and `subRoute`) have been overridden in such a way that path matching and value parsing are significantly faster than using the basic `choose` function.
+
+This implementation assumes that additional memory and compilation time is not an issue. If speed and performance of parsing and path matching is required then the `Giraffe.TokenRouter` can be a much better fit.
+
+Please check the official [Giraffe TokenRouter](https://github.com/giraffe-fsharp/Giraffe.TokenRouter) GitHub repository for more information.
+
+### Razor
+
+The `Giraffe.Razor` NuGet package adds fully featured Razor support to Giraffe web applications.
+
+For more information please visit the official [Giraffe Razor](https://github.com/giraffe-fsharp/Giraffe.Razor) GitHub repository.
+
+### DotLiquid
+
+The `Giraffe.DotLiquid` NuGet package adds [DotLiquid](http://dotliquidmarkup.org/) support to Giraffe web applications.
+
+For more information please visit the official [Giraffe DotLiquid](https://github.com/giraffe-fsharp/Giraffe.DotLiquid) GitHub repository.

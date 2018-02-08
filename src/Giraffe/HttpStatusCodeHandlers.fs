@@ -1,12 +1,14 @@
 [<AutoOpen>]
 module Giraffe.HttpStatusCodeHandlers
 
-// 1xx
+/// ** Description **
+/// A collection of `HttpHandler` functions to return HTTP status code `1xx` responses.
 module Intermediate =
     let CONTINUE        : HttpHandler = setStatusCode 100 >=> setBody [||]
     let SWITCHING_PROTO : HttpHandler = setStatusCode 101 >=> setBody [||]
 
-// 2xx
+/// ** Description **
+/// A collection of `HttpHandler` functions to return HTTP status code `2xx` responses.
 module Successful =
     let ok x        = setStatusCode 200 >=> x
     let OK x        = ok (negotiate x)
@@ -17,20 +19,23 @@ module Successful =
     let accepted x  = setStatusCode 202 >=> x
     let ACCEPTED x  = accepted (negotiate x)
 
-// 4xx
+/// ** Description **
+/// A collection of `HttpHandler` functions to return HTTP status code `4xx` responses.
 module RequestErrors =
     let badRequest x  = setStatusCode 400 >=> x
     let BAD_REQUEST x = badRequest (negotiate x)
 
-    /// 401 Unauthorized
-    /// This status code is used when a user is not authenticated or has authenticated in the wrong way.
-    /// It is basically the server telling the client that it needs to know who this is.
-    /// Part of the response the server must tell the client which scheme to use to successfully authenticate.
+    /// ** Description **
+    /// Sends a `401 Unauthorized` HTTP status code response back to the client.
     ///
-    /// See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/WWW-Authenticate
-    /// List of valid schemes: https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication#Authentication_schemes
+    /// Use the `unauthorized` status code handler when a user could not be authenticated by the server (either missing or wrong authentication data). By returnign a `401 Unauthorized` HTTP response the server tells the client that it must know **who** is making the request before it can return a successful response. As such the server must also include which authentiation scheme the client must use in order to successfully authenticate.
     ///
-    /// Also read: http://stackoverflow.com/questions/3297048/403-forbidden-vs-401-unauthorized-http-responses/12675357
+    /// ** More information **
+    ///     - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/WWW-Authenticate
+    ///     - http://stackoverflow.com/questions/3297048/403-forbidden-vs-401-unauthorized-http-responses/12675357
+    ///
+    /// ** List of authentication schemes **
+    ///     - https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication#Authentication_schemes
     let unauthorized scheme realm x =
         setStatusCode 401
         >=> setHttpHeader "WWW-Authenticate" (sprintf "%s realm=\"%s\"" scheme realm)
@@ -67,7 +72,9 @@ module RequestErrors =
     let tooManyRequests x           = setStatusCode 429 >=> x
     let TOO_MANY_REQUESTS x         = tooManyRequests (negotiate x)
 
-// 5xx
+
+/// ** Description **
+/// A collection of `HttpHandler` functions to return HTTP status code `5xx` responses.
 module ServerErrors =
     let internalError x         = setStatusCode 500 >=> x
     let INTERNAL_ERROR x        = internalError (negotiate x)
