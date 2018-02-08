@@ -69,7 +69,7 @@ module WebApp =
     let configureServices (services : IServiceCollection) =
         services.AddGiraffe() |> ignore
 
-let makeRequest = makeRequest WebApp.configureApp WebApp.configureServices
+let makeRequest req = makeRequest WebApp.configureApp WebApp.configureServices req
 
 // ---------------------------------
 // Tests

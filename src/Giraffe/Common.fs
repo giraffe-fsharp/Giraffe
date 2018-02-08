@@ -3,6 +3,15 @@ module Giraffe.Common
 
 open System
 open System.IO
+// open FSharp.Control.Tasks
+
+// ---------------------------
+// Override the default task CE
+// ---------------------------
+
+/// Context insensitive Task CE
+/// All tasks are configured with `ConfigurAwait(false)`.
+// let task = ContextInsensitive.task
 
 // ---------------------------
 // Useful extension methods

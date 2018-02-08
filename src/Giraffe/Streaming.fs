@@ -9,6 +9,7 @@ open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Extensions
 open Microsoft.Extensions.Primitives
 open Microsoft.Net.Http.Headers
+// open FSharp.Control.Tasks
 
 // ---------------------------
 // HTTP Range parsing

@@ -4,7 +4,7 @@
     <AssemblyName>Giraffe</AssemblyName>
     <Version>1.0.0</Version>
     <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
-    <Copyright>Copyright 2017 Dustin Moris Gorski</Copyright>
+    <Copyright>Copyright 2018 Dustin Moris Gorski</Copyright>
     <NeutralLanguage>en-GB</NeutralLanguage>
     <Authors>Dustin Moris Gorski and contributors</Authors>
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
@@ -32,7 +32,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.0.*" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.*" />
-    <PackageReference Include="Giraffe.Tasks" Version="0.1.0-beta-0*" />
+    <PackageReference Include="Giraffe.Tasks" Version="0.1.0-*" />
+    <!-- <PackageReference Include="TaskBuilder.fs" Version="1.0.0" /> -->
   </ItemGroup>
 
   <ItemGroup>
@@ -50,8 +51,6 @@
     <Compile Include="Streaming.fs" />
     <Compile Include="Negotiation.fs" />
     <Compile Include="HttpStatusCodeHandlers.fs" />
-    <Compile Include="TokenParsers.fs" />
-    <Compile Include="TokenRouter.fs" />
     <Compile Include="Middleware.fs" />
   </ItemGroup>
 
