@@ -18,6 +18,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 - [About](#about)
 - [Getting Started](#getting-started)
+- [Documentation](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md)
 - [Sample applications](#sample-applications)
 - [Benchmarks](#benchmarks)
 - [Building and developing](#building-and-developing)
@@ -243,12 +244,21 @@ If you add this source to your NuGet CLI or project settings then you can pull u
 
 ## Blog posts
 
-- [Functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) (by Dustin M. Gorski)
-- [Functional ASP.NET Core part 2 - Hello world from Giraffe](https://dusted.codes/functional-aspnet-core-part-2-hello-world-from-giraffe) (by Dustin M. Gorski)
+### Blog posts by author
+
+- [Functional ASP.NET Core](https://dusted.codes/functional-aspnet-core)
+- [Functional ASP.NET Core part 2 - Hello world from Giraffe](https://dusted.codes/functional-aspnet-core-part-2-hello-world-from-giraffe)
+- [Evolving my open source project from a one man repository to an OSS organisation](https://dusted.codes/evolving-my-open-source-project-from-a-one-man-repository-to-a-proper-organisation)
+- [Extending the Giraffe template with different view engine options](https://dusted.codes/extending-the-giraffe-template-with-different-view-engine-options)
+- [Announcing Giraffe 1.0.0](https://dusted.codes/announcing-giraffe-100)
+
+### Community blog posts
+
 - [Carry On! … Continuation over binding pipelines for functional web](https://medium.com/@gerardtoconnor/carry-on-continuation-over-binding-pipelines-for-functional-web-58bd7e6ea009) (by Gerard)
 - [A Functional Web with ASP.NET Core and F#'s Giraffe](https://www.hanselman.com/blog/AFunctionalWebWithASPNETCoreAndFsGiraffe.aspx) (by Scott Hanselman)
 - [Build a web service with F# and .NET Core 2.0](https://blogs.msdn.microsoft.com/dotnet/2017/09/26/build-a-web-service-with-f-and-net-core-2-0/) (by Phillip Carter)
 - [Giraffe brings F# functional programming to ASP.Net Core](https://www.infoworld.com/article/3229005/web-development/f-and-functional-programming-come-to-asp-net-core.html) (by Paul Krill from InfoWorld)
+
 
 If you have blogged about Giraffe, demonstrating a useful topic or some other tips or tricks then please feel free to submit a pull request and add your article to this list as a reference for other Giraffe users. Thank you!
 

@@ -2353,3 +2353,11 @@ For more information please visit the official [Giraffe Razor](https://github.co
 The `Giraffe.DotLiquid` NuGet package adds [DotLiquid](http://dotliquidmarkup.org/) support to Giraffe web applications.
 
 For more information please visit the official [Giraffe DotLiquid](https://github.com/giraffe-fsharp/Giraffe.DotLiquid) GitHub repository.
+
+## Special mentions
+
+### Saturn
+
+[Saturn](https://github.com/SaturnFramework/Saturn) is an opinionated, web development framework built on top of Giraffe which implements the server-side, functional MVC pattern for F#.
+
+Saturn is not directly part of Giraffe but builds a [Phoenix](http://phoenixframework.org/) inspired MVC pattern on top of Giraffe. It is being developed and maintained by the author of the [Ionide project](https://github.com/ionide/ionide-vscode-fsharp).
