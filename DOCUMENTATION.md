@@ -45,10 +45,10 @@ An in depth functional reference to all of Giraffe's default features.
     - [Common Helper Functions](#common-helper-functions)
     - [Computation Expressions](#computation-expressions)
 - [Additional Features](#additional-features)
-    - [Task CE](#task-ce)
     - [TokenRouter](#tokenrouter)
     - [Razor](#razor)
     - [DotLiquid](#dotliquid)
+- [Special Mentions](#special-mentions)
 
 ## Fundamentals
 
@@ -2354,7 +2354,7 @@ The `Giraffe.DotLiquid` NuGet package adds [DotLiquid](http://dotliquidmarkup.or
 
 For more information please visit the official [Giraffe DotLiquid](https://github.com/giraffe-fsharp/Giraffe.DotLiquid) GitHub repository.
 
-## Special mentions
+## Special Mentions
 
 ### Saturn
 
