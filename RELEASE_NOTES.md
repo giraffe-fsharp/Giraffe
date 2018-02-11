@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## Development
+
+#### New features
+
+- Added `subRoutef` http handler (see [subRoutef](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#subroutef))
+
 ## 1.0.0
 
 First RTM release of Giraffe.

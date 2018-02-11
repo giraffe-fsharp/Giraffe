@@ -34,6 +34,7 @@
     <Compile Include="Helpers.fs" />
     <Compile Include="FormatExpressionTests.fs" />
     <Compile Include="HttpHandlerTests.fs" />
+    <Compile Include="RoutingTests.fs" />
     <Compile Include="AuthTests.fs" />
     <Compile Include="GiraffeViewEngineTests.fs" />
     <Compile Include="HttpContextExtensionsTests.fs" />

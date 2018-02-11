@@ -871,7 +871,37 @@ let webApp =
                     route "/bar" >=> text "Bar 2" ]) ])
 ```
 
-**Note:** For both `subRoute` and `subRouteCi` if you wish to have a route that represents a default e.g. `/api/v1` (from the above example) then you need to specify the route as `route ""` not `route "/"` this will not match, as `api/v1/` is a fundamentally different route according to the HTTP specification.
+Please note that only the path specified for `subRouteCi` is case insensitive. Nested routes after `subRouteCi` will be evaluated as per definition of each individual route.
+
+**Note:** If you wish to have a default route for any `subRoute` handler (e.g. `/api/v1` from the above example) then you need to specify the route as `route ""` and not as `route "/"`, because `/api/v1/` is a fundamentally different than `/api/v1` according to the HTTP specification.
+
+#### subRoutef
+
+The `subRoutef` http handler is a combination of the `routef` and the `subRoute` http handler:
+
+```fsharp
+let app =
+    GET >=> choose [
+        route "/"    >=> text "index"
+        route "/foo" >=> text "bar"
+
+        subRoutef "/%s/api" (fun lang ->
+            requiresAuthentication (challenge "Cookie") >=>
+                choose [
+                    route  "/blah" >=> text "blah"
+                    routef "/%s" (fun n -> text (sprintf "Hello %s! Lang: %s" n lang))
+                ])
+        setStatusCode 404 >=> text "Not found" ]
+```
+
+This can be useful when an application has dynamic parameters at the beginning of each route (e.g. language parameter):
+
+```
+https://example.org/en/users/John
+https://example.org/de/users/Ryan
+https://example.org/fr/users/Nicky
+...
+```
 
 #### routePorts
 
