@@ -6,6 +6,7 @@ Release Notes
 #### New features
 
 - Added `subRoutef` http handler (see [subRoutef](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#subroutef))
+- Added `routex` and `routeCix` http handler (see [routex](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#routex))
 
 #### Bug fixes
 

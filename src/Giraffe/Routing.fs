@@ -76,6 +76,48 @@ let route (path : string) : HttpHandler =
         else abort
 
 /// ** Description **
+/// Filters an incoming HTTP request based on the request path (case insensitive).
+/// ** Parameters **
+///     - `path`: Request path.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+let routeCi (path : string) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        if String.Equals(getPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
+        then next ctx
+        else abort
+
+/// ** Description **
+/// Filters an incoming HTTP request based on the request path using Regex (case sensitive).
+/// ** Parameters **
+///     - `path`: Regex path.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+let routex (path : string) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let pattern = sprintf "^%s$" path
+        let regex   = Regex(pattern, RegexOptions.Compiled)
+        let result  = regex.Match (getPath ctx)
+        match result.Success with
+        | true -> next ctx
+        | false -> abort
+
+/// ** Description **
+/// Filters an incoming HTTP request based on the request path using Regex (case insensitive).
+/// ** Parameters **
+///     - `path`: Regex path.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+let routeCix (path : string) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let pattern = sprintf "^%s$" path
+        let regex   = Regex(pattern, RegexOptions.IgnoreCase ||| RegexOptions.Compiled)
+        let result  = regex.Match (getPath ctx)
+        match result.Success with
+        | true -> next ctx
+        | false -> abort
+
+/// ** Description **
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 /// If the route matches the incoming HTTP request then the arguments from the `PrintfFormat<...>` will be automatically resolved and passed into the supplied `routeHandler`.
 ///
@@ -101,18 +143,6 @@ let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler)
         |> function
             | None      -> abort
             | Some args -> routeHandler args next ctx
-
-/// ** Description **
-/// Filters an incoming HTTP request based on the request path (case insensitive).
-/// ** Parameters **
-///     - `path`: Request path.
-/// ** Output **
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-let routeCi (path : string) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        if String.Equals(getPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
-        then next ctx
-        else abort
 
 /// ** Description **
 /// Filters an incoming HTTP request based on the request path (case insensitive).

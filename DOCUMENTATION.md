@@ -678,13 +678,102 @@ This can be avoided by using the case insensitive `routeCi` http handler:
 ```fsharp
 let webApp =
     choose [
-        routeCi "/foo" >=> text "Foo"
-        routeCi "/bar" >=> text "Bar"
+        route   "/foo" >=> text "Foo"
+        routeCi "/foo" >=> text "Bar"
 
         // If none of the routes matched then return a 404
         RequestErrors.NOT_FOUND "Not Found"
     ]
 ```
+
+In the example above a request made to `https://example.org/FOO` would return `Bar` in the response.
+
+#### routex
+
+According to the HTTP specification a route with a trailing slash is not equivalent to the same route without a trailing slash:
+
+```
+https://example.org/foo
+https://example.org/foo/
+```
+
+A web server might (rightfully) want to serve a different response for each route:
+
+```fsharp
+let webApp =
+    choose [
+        route "/foo"  >=> text "Foo"
+        route "/foo/" >=> text "Bar"
+
+        // If none of the routes matched then return a 404
+        RequestErrors.NOT_FOUND "Not Found"
+    ]
+```
+
+However many web applications choose to treat both routes as the same. If you would like to achieve this behaviour by using a single route in Giraffe then you can use the `routex` http handler which accepts a `Regex` string for matching routes:
+
+```fsharp
+let webApp =
+    choose [
+        routex "/foo(/?)" >=> text "Bar"
+
+        // If none of the routes matched then return a 404
+        RequestErrors.NOT_FOUND "Not Found"
+    ]
+```
+
+The `(/?)` regex pattern specifies that a `/` can occur zero or one time at the end of the route, which means it would successfully match the following two routes:
+
+```
+https://example.org/foo
+https://example.org/foo/
+```
+
+However, this example wouldn't match a request made to `https://example.org/foo///`. If you want to match any number of trailing slashes then you must use `(/*)` instead:
+
+```fsharp
+let webApp =
+    choose [
+        routex "/foo(/*)" >=> text "Bar"
+
+        // If none of the routes matched then return a 404
+        RequestErrors.NOT_FOUND "Not Found"
+    ]
+```
+
+Please be aware that such a `routex` can create a conflict and unexpected behaviour if you have a similar matching `routef` (see [routef](#routef)):
+
+```fsharp
+let webApp =
+    choose [
+        routex "/foo(/*)" >=> text "Bar"
+        routef "/foo/%s/%s/%s" (fun s1, s2, s3 -> text (sprintf "%s%s%s" s1 s2 s3))
+
+        // If none of the routes matched then return a 404
+        RequestErrors.NOT_FOUND "Not Found"
+    ]
+```
+
+In the above scenario it is not clear which one of the two http handlers a user want to be invoked when a request is made to `https://example.org/foo///`.
+
+If you want to learn more about `Regex` please check the [Regular Expression Language Reference](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference).
+
+#### routeCix
+
+The `routeCix` http handler is the case insensitive version of `routex`:
+
+```fsharp
+let webApp =
+    choose [
+        routex   "/foo(/?)" >=> text "Foo"
+        routeCix "/foo(/?)" >=> text "Bar"
+
+        // If none of the routes matched then return a 404
+        RequestErrors.NOT_FOUND "Not Found"
+    ]
+```
+
+In the example above a request made to `https://example.org/FOO/` would return `Bar` in the response.
 
 #### routef
 
