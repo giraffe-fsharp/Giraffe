@@ -258,7 +258,8 @@ If you add this source to your NuGet CLI or project settings then you can pull u
 - [A Functional Web with ASP.NET Core and F#'s Giraffe](https://www.hanselman.com/blog/AFunctionalWebWithASPNETCoreAndFsGiraffe.aspx) (by Scott Hanselman)
 - [Build a web service with F# and .NET Core 2.0](https://blogs.msdn.microsoft.com/dotnet/2017/09/26/build-a-web-service-with-f-and-net-core-2-0/) (by Phillip Carter)
 - [Giraffe brings F# functional programming to ASP.Net Core](https://www.infoworld.com/article/3229005/web-development/f-and-functional-programming-come-to-asp-net-core.html) (by Paul Krill from InfoWorld)
-
+- [JSON Web Token with Giraffe and F#](https://medium.com/@dsincl12/json-web-token-with-giraffe-and-f-4cebe1c3ef3b) (by David Sinclair)
+- [WebSockets with Giraffe and F#](https://medium.com/@dsincl12/websockets-with-f-and-giraffe-772be829e121) (by David Sinclair)
 
 If you have blogged about Giraffe, demonstrating a useful topic or some other tips or tricks then please feel free to submit a pull request and add your article to this list as a reference for other Giraffe users. Thank you!
 
