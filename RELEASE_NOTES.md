@@ -7,6 +7,10 @@ Release Notes
 
 - Added `subRoutef` http handler (see [subRoutef](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#subroutef))
 
+#### Bug fixes
+
+- `routeBind` works when nested in a `subRoute` handler now
+
 ## 1.0.0
 
 First RTM release of Giraffe.

@@ -151,9 +151,9 @@ let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandle
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let routeBind<'T> (route : string) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        let pattern = route.Replace("{", "(?<").Replace("}", ">[^/\n]+)") |> sprintf "%s$"
+        let pattern = route.Replace("{", "(?<").Replace("}", ">[^/\n]+)") |> sprintf "^%s$"
         let regex = Regex(pattern, RegexOptions.IgnoreCase)
-        let mtch = regex.Match ctx.Request.Path.Value
+        let mtch = regex.Match (getPath ctx)
         match mtch.Success with
         | true ->
             let groups = mtch.Groups
