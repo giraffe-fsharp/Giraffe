@@ -97,7 +97,7 @@ type ConnectionManager(?messageSize) =
                 |> Task.WhenAll
             
             for key in toRemove do
-                connections.TryRemove kv.Key |> ignore
+                connections.TryRemove key |> ignore
 
             return ()
         }
