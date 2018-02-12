@@ -6,24 +6,20 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.TestHost
 open Xunit
-open Giraffe.Tasks
+open FSharp.Control.Tasks.ContextInsensitive
 open Giraffe.WebSocket
 open System.Threading.Tasks
 open System.Threading
 open RequestErrors
-open Giraffe.TokenRouter
 
 let webApp (connectionManager:ConnectionManager) cancellationToken =
     let notfound = NOT_FOUND "Page not found"
    
-    router notfound [
-       GET [
-           route "/echo" (
-               connectionManager.CreateSocket(
-                    (fun _ref -> task { return () }),
-                    (fun ref msg -> ref.SendTextAsync(msg,cancellationToken)),
-                    cancellationToken=cancellationToken)) 
-       ]
+    choose [
+       route "/echo" >=> (connectionManager.CreateSocket(
+                            (fun _ref -> task { return () }),
+                            (fun ref msg -> ref.SendTextAsync(msg,cancellationToken)),
+                            cancellationToken=cancellationToken)) 
     ]
 
 let configure (app : IApplicationBuilder,cm,cancellationToken) =

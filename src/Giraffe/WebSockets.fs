@@ -4,8 +4,7 @@ open System
 open System.Net.WebSockets
 open System.Threading
 open System.Threading.Tasks
-open Giraffe.Tasks
-open Giraffe
+open FSharp.Control.Tasks.ContextInsensitive
 
 /// WebSocket subprotocol type. For negotiation of subprotocols.
 type WebSocketSubprotocol = {

@@ -1,41 +1,14 @@
-module Giraffe.HttpHandlerTests
+module Giraffe.Tests.HttpHandlerTests
 
 open System
-open System.Collections.Generic
 open System.IO
-open System.Text
-open System.Threading.Tasks
+open System.Collections.Generic
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Primitives
 open Xunit
 open NSubstitute
-open Newtonsoft.Json
-open GiraffeViewEngine
-open Giraffe.Tests.Asserts
-open System
-
-// ---------------------------------
-// Helper functions
-// ---------------------------------
-
-let getStatusCode (ctx : HttpContext) =
-    ctx.Response.StatusCode
-
-let getBody (ctx : HttpContext) =
-    ctx.Response.Body.Position <- 0L
-    use reader = new StreamReader(ctx.Response.Body, Encoding.UTF8)
-    reader.ReadToEnd()
-
-let getContentType (response : HttpResponse) =
-    response.Headers.["Content-Type"].[0]
-
-let assertFail msg = Assert.True(false, msg)
-
-let assertFailf format args =
-    let msg = sprintf format args
-    Assert.True(false, msg)
-
-let next : HttpFunc = Some >> Task.FromResult
+open Giraffe
+open Giraffe.GiraffeViewEngine
 
 // ---------------------------------
 // Test Types
@@ -142,6 +115,7 @@ let ``GET "/FOO" returns 404 "Not found"`` () =
 [<Fact>]
 let ``GET "/json" returns json object`` () =
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -163,17 +137,15 @@ let ``GET "/json" returns json object`` () =
     }
 
 [<Fact>]
-let ``GET "/json" with a custom json handler returns json object`` () =
-    let customJson (dataObj : obj) : HttpHandler =
-        let settings = JsonSerializerSettings()
-        customJson settings dataObj
-
+let ``GET "/json" with custom json settings returns json object`` () =
+    let settings = Newtonsoft.Json.JsonSerializerSettings()
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx (Some settings)
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
             route "/foo"  >=> text "bar"
-            route "/json" >=> customJson { Foo = "john"; Bar = "doe"; Age = 30 }
+            route "/json" >=> json { Foo = "john"; Bar = "doe"; Age = 30 }
             setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -271,7 +243,7 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
     }
 
 [<Fact>]
-let ``POST "/text" with supported Accept header returns "good"`` () =
+let ``POST "/text" with supported Accept header returns "text"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
         choose [
@@ -306,6 +278,7 @@ let ``POST "/text" with supported Accept header returns "good"`` () =
 [<Fact>]
 let ``POST "/json" with supported Accept header returns "json"`` () =
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
     let app =
         choose [
             GET >=> choose [
@@ -405,6 +378,7 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
 [<Fact>]
 let ``GET "/JSON" returns "BaR"`` () =
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
     let app =
         GET >=> choose [
             route   "/"       >=> text "Hello World"
@@ -477,12 +451,13 @@ let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
 [<Fact>]
 let ``POST "/POsT/1" returns "1"`` () =
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
     let app =
         choose [
             GET >=> choose [
                 route "/" >=> text "Hello World" ]
             POST >=> choose [
-                route    "/post/1" >=> text "1"
+                route    "/post/1" >=> text "2"
                 routeCif "/post/%i" json ]
             setStatusCode 404 >=> text "Not found" ]
 
@@ -502,6 +477,7 @@ let ``POST "/POsT/1" returns "1"`` () =
 [<Fact>]
 let ``POST "/POsT/523" returns "523"`` () =
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
     let app =
         choose [
             GET >=> choose [
@@ -801,7 +777,7 @@ let ``GET "/person" returns rendered HTML view`` () =
         choose [
             GET >=> choose [
                 route "/"          >=> text "Hello World"
-                route "/person"    >=> (personView johnDoe |> renderHtml) ]
+                route "/person"    >=> (personView johnDoe |> htmlView) ]
             POST >=> choose [
                 route "/post/1"    >=> text "1" ]
             setStatusCode 404      >=> text "Not found" ]
@@ -834,6 +810,8 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -874,6 +852,8 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -914,6 +894,8 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockXml ctx
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -964,6 +946,8 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockXml ctx
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1014,6 +998,8 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1054,6 +1040,8 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockXml ctx
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1104,6 +1092,8 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockXml ctx
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1154,6 +1144,7 @@ let ``Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1198,6 +1189,7 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1239,6 +1231,8 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1512,4 +1506,3 @@ let ``Test Parse Validation of %d as int`` () =
             setStatusCode 404 >=> text "Not found" ]
         |> ignore
     ) |> ignore
-

@@ -253,3 +253,4 @@ paket-files/
 
 # macOS
 .DS_Store
+*.orig
