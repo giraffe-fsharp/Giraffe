@@ -1,56 +1,74 @@
+[<AutoOpen>]
 module Giraffe.Common
 
 open System
 open System.IO
-open System.Text
-open System.Xml
-open System.Xml.Serialization
-open Newtonsoft.Json
-open Newtonsoft.Json.Serialization
 
-/// ---------------------------
-/// Helper functions
-/// ---------------------------
+// ---------------------------
+// Override the default task CE
+// ---------------------------
 
-let inline isNotNull x = isNull x |> not
+/// Context insensitive Task CE
+/// All tasks are configured with `ConfigurAwait(false)`.
+let task = FSharp.Control.Tasks.ContextInsensitive.task
 
+// ---------------------------
+// Useful extension methods
+// ---------------------------
+
+type DateTime with
+    /// ** Description **
+    /// Converts a `DateTime` object into an RFC3339 formatted `string`.
+    /// ** Specification **
+    /// https://www.ietf.org/rfc/rfc3339.txt
+    /// ** Output **
+    /// Formatted string value.
+    member this.ToHtmlString() = this.ToString("r")
+
+type DateTimeOffset with
+    /// ** Description **
+    /// Converts a `DateTimeOffset` object into an RFC3339 formatted `string`.
+    /// ** Specification **
+    /// https://www.ietf.org/rfc/rfc3339.txt
+    /// ** Output **
+    /// Formatted string value.
+    member this.ToHtmlString() = this.ToString("r")
+
+// ---------------------------
+// Common helper functions
+// ---------------------------
+
+/// ** Description **
+/// Checks if an object is not null.
+///
+/// ** Parameters **
+///     - `x`: The object to validate against `null`.
+///
+/// ** Output **
+/// Returns `true` if the object is not `null` otherwise `false`.
+let inline isNotNull x = not (isNull x)
+
+/// ** Description **
+/// Converts a `string` into a `string option` where `null` or an empty string will be converted to `None` and everything else to `Some string`.
+///
+/// ** Parameters **
+///     - `str`: The string value to be converted into an option of string.
+///
+/// ** Output **
+/// Returns `None` if the string was `null` or empty otherwise `Some string`.
 let inline strOption (str : string) =
     if String.IsNullOrEmpty str then None else Some str
 
+/// ** Description **
+/// Reads a file asynchronously from the file system.
+///
+/// ** Parameters **
+///     - `filePath`: The absolute path of the file.
+///
+/// ** Output **
+/// Returns the string contents of the file wrapped in a Task.
 let readFileAsStringAsync (filePath : string) =
     task {
-        use stream = new FileStream(filePath, FileMode.Open)
-        use reader = new StreamReader(stream)
+        use reader = new StreamReader(filePath)
         return! reader.ReadToEndAsync()
     }
-
-/// ---------------------------
-/// Serializers
-/// ---------------------------
-
-let inline serializeJson       (settings : JsonSerializerSettings) x   = JsonConvert.SerializeObject(x, settings)
-let inline deserializeJson<'T> (settings : JsonSerializerSettings) str = JsonConvert.DeserializeObject<'T>(str, settings)
-
-let inline deserializeJsonFromStream<'T> (settings : JsonSerializerSettings) (stream : Stream) =
-    use sr = new StreamReader(stream, true)
-    use jr = new JsonTextReader(sr)
-    let serializer = JsonSerializer.Create settings
-    serializer.Deserialize<'T>(jr)
-
-let defaultJsonSerializerSettings = JsonSerializerSettings(ContractResolver = CamelCasePropertyNamesContractResolver())
-
-let inline defaultSerializeJson x = serializeJson defaultJsonSerializerSettings x
-let inline defaultDeserializeJson<'T> str = deserializeJson<'T> defaultJsonSerializerSettings str
-
-let serializeXml x =
-    use stream = new MemoryStream()
-    let settings = XmlWriterSettings(Encoding = Encoding.UTF8, Indent = true, OmitXmlDeclaration = false)
-    use writer = XmlWriter.Create(stream, settings)
-    let serializer = XmlSerializer(x.GetType())
-    serializer.Serialize(writer, x)
-    stream.ToArray()
-
-let deserializeXml<'T> str =
-    let serializer = XmlSerializer(typeof<'T>)
-    use reader = new StringReader(str)
-    serializer.Deserialize reader :?> 'T

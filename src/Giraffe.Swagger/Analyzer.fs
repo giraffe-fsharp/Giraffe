@@ -232,13 +232,13 @@ module Analyzer =
       let methodCalls = 
         [ 
           // simple route
-          { ModuleName="HttpHandlers"; FunctionName="route" }, 
+          { ModuleName="Routing"; FunctionName="route" }, 
               (fun ctx -> ctx.Variables.Item "path" |> toString |> ctx.AddRoute (ctx.GetVerb()) List.empty)
-          { ModuleName="HttpHandlers"; FunctionName="routeCi" }, 
+          { ModuleName="Routing"; FunctionName="routeCi" }, 
               (fun ctx -> ctx.Variables.Item "path" |> toString |> ctx.AddRoute (ctx.GetVerb()) List.empty)
           
           // route format
-          { ModuleName="HttpHandlers"; FunctionName="routef" }, 
+          { ModuleName="Routing"; FunctionName="routef" }, 
               (fun ctx -> 
                 let path = ctx.Variables.Item "pathFormat" :?> PathFormat
                 let parameters = 
@@ -251,18 +251,18 @@ module Analyzer =
               )
           
           // used to return raw text content
-          { ModuleName="HttpHandlers"; FunctionName="setStatusCode" }, 
+          { ModuleName="Core"; FunctionName="setStatusCode" }, 
               (fun ctx -> 
                 let code = ctx.Variables.Item "statusCode" |> toString |> Int32.Parse
                 ctx.AddResponse code "text/plain" (typeof<string>)
               )
 
           // used to return raw text content
-          { ModuleName="HttpHandlers"; FunctionName="text" }, 
+          { ModuleName="ResponseWriters"; FunctionName="text" }, 
               (fun ctx -> ctx.AddResponse 200 "text/plain" (typeof<string>))
               
           // used to return json content
-          { ModuleName="HttpHandlers"; FunctionName="json" }, 
+          { ModuleName="ResponseWriters"; FunctionName="json" }, 
               (fun ctx ->
                   let modelType = 
                     match ctx.ArgTypes |> List.tryHead with
@@ -272,15 +272,15 @@ module Analyzer =
               )
   
           // HTTP GET method
-          { ModuleName="HttpHandlers"; FunctionName="GET" }, (fun ctx -> { ctx with Verb = (Some "GET") })
+          { ModuleName="Core"; FunctionName="GET" }, (fun ctx -> { ctx with Verb = (Some "GET") })
           // HTTP POST method
-          { ModuleName="HttpHandlers"; FunctionName="POST" }, (fun ctx -> { ctx with Verb = (Some "POST") })
+          { ModuleName="Core"; FunctionName="POST" }, (fun ctx -> { ctx with Verb = (Some "POST") })
           // HTTP PUT method
-          { ModuleName="HttpHandlers"; FunctionName="PUT" }, (fun ctx -> { ctx with Verb = (Some "PUT") })
+          { ModuleName="Core"; FunctionName="PUT" }, (fun ctx -> { ctx with Verb = (Some "PUT") })
           // HTTP DELETE method
-          { ModuleName="HttpHandlers"; FunctionName="DELETE" }, (fun ctx -> { ctx with Verb = (Some "DELETE") })
+          { ModuleName="Core"; FunctionName="DELETE" }, (fun ctx -> { ctx with Verb = (Some "DELETE") })
           // HTTP PATCH method
-          { ModuleName="HttpHandlers"; FunctionName="PATCH" }, (fun ctx -> { ctx with Verb = (Some "PATCH") })
+          { ModuleName="Core"; FunctionName="PATCH" }, (fun ctx -> { ctx with Verb = (Some "PATCH") })
           
           { ModuleName="Dsl"; FunctionName="operationId" }, (handleSingleArgRule "opId" "operationId")
           { ModuleName="Dsl"; FunctionName="consumes" }, (handleSingleArgRule "modelType" "consumes")
@@ -288,14 +288,11 @@ module Analyzer =
           
         ] |> Map
       { MethodCalls=methodCalls }
-  
-  let buildApp (webapp:Expr<HttpFunc -> HttpContext -> HttpFuncResult>) : HttpFunc -> HttpContext -> HttpFuncResult =
-    QuotationEvaluator.Evaluate webapp
-  
+
   let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
   
     let (|IsSubRoute|_|) (m:MethodInfo) =
-      if (m.Name = "subRouteCi" || m.Name = "subRoute") && m.DeclaringType.Name = "HttpHandlers"
+      if (m.Name = "subRouteCi" || m.Name = "subRoute") && m.DeclaringType.Name = "Routing"
       then Some ()
       else None
   
@@ -318,7 +315,7 @@ module Analyzer =
       | Value (o,_) -> 
           ctx.AddArgType (o.GetType())
       
-      | Let (v, NewUnionCase (_,handlers), Lambda (next, Call (None, m, _))) when v.Name = "handlers" && m.Name = "choose" && m.DeclaringType.Name = "HttpHandlers" ->
+      | Let (v, NewUnionCase (_,handlers), Lambda (next, Call (None, m, _))) when v.Name = "handlers" && m.Name = "choose" && m.DeclaringType.Name = "Core" ->
           let ctxs = handlers |> List.map(fun e -> loop e ctx)
           { ctx 
               with 
@@ -385,7 +382,7 @@ module Analyzer =
               { ctx with Routes = (ctx.Routes @ routes) }
           | _ -> ctx
           
-      | Call(instance, method, args) when method.Name = "choose" && method.DeclaringType.Name = "HttpHandlers" ->
+      | Call(instance, method, args) when method.Name = "choose" && method.DeclaringType.Name = "Core" ->
           let ctxs = args |> List.map(fun e -> loop e (newContext()))
           { ctx 
               with 

@@ -29,7 +29,7 @@ module Dsl =
   let swaggerDoc docCtx addendums (description:ApiDescription -> ApiDescription) schemes host basePath =
     let rawJson (str : string) : HttpHandler =
         setHttpHeader "Content-Type" "application/json"
-        >=> setBodyAsString str
+          >=> fun (next : HttpFunc) (ctx : HttpContext) -> ctx.WriteStringAsync str
   
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
@@ -70,16 +70,24 @@ module Dsl =
             SwaggerUrl="/swagger.json"
             SwaggerUiUrl="/swaggerui/"}
   
-  let documents webapp (configuration:DocumentationConfig->DocumentationConfig) =
-    let config = configuration DocumentationConfig.Default
-    let rules = { AppAnalyzeRules.Default with MethodCalls=(config.MethodCallRules AppAnalyzeRules.Default.MethodCalls) }
-    let docCtx = analyze webapp rules
-    let webPart = swaggerDoc docCtx config.DocumentationAddendums config.Description config.Schemes config.Host config.BasePath
-    let swaggerJson = route config.SwaggerUrl >=> webPart
-    choose [ 
-            swaggerJson
-            Giraffe.SwaggerUi.swaggerUiHandler config.SwaggerUiUrl config.SwaggerUrl
-            buildApp webapp
-        ]
-  
+  type swaggerOf ([<ReflectedDefinition(true)>] webappWithVal:Expr<HttpFunc -> HttpContext -> HttpFuncResult>) =
+    member __.Documents (configuration:DocumentationConfig->DocumentationConfig) =
+      match webappWithVal with 
+      | WithValue(v, ty, webapp) -> 
+          let app = unbox<HttpHandler> v
+          let config = configuration DocumentationConfig.Default
+          let rules = { AppAnalyzeRules.Default with MethodCalls=(config.MethodCallRules AppAnalyzeRules.Default.MethodCalls) }
+          let docCtx = analyze webapp rules
+          let webPart = swaggerDoc docCtx config.DocumentationAddendums config.Description config.Schemes config.Host config.BasePath
+          let swaggerJson = route config.SwaggerUrl >=> webPart
+          choose [ 
+                  swaggerJson
+                  Giraffe.SwaggerUi.swaggerUiHandler config.SwaggerUiUrl config.SwaggerUrl
+                  app
+            ]
+      | other ->
+          failwith "Invalid arg"
+
+  let withConfig configuration (s:swaggerOf) =
+    s.Documents configuration
          

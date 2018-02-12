@@ -5,6 +5,7 @@
     <DebugType>portable</DebugType>
     <AssemblyName>SwaggerSample</AssemblyName>
     <OutputType>Exe</OutputType>
+	<Optimize>False</Optimize>
     <PackageId>SwaggerSample</PackageId>
     <RuntimeFrameworkVersion>2.0.0</RuntimeFrameworkVersion>
     <EnableDefaultContentItems>false</EnableDefaultContentItems>
