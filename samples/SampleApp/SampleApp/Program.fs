@@ -15,6 +15,7 @@ open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
+open FSharp.Control.Tasks.ContextInsensitive
 open Giraffe
 open SampleApp.Models
 open SampleApp.HtmlViews
@@ -87,11 +88,11 @@ type Car =
         Built  : DateTime
     }
 
-let submitCar =
+let submitCar : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             let! car = ctx.BindModelAsync<Car>()
-            return! json car next ctx
+            return! ctx.WriteJsonAsync car
         }
 
 let webApp =
@@ -102,11 +103,11 @@ let webApp =
                 route  "/ping"       >=> text "pong"
                 route  "/error"      >=> (fun _ _ -> failwith "Something went wrong!")
                 route  "/login"      >=> loginHandler
-                route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
+                route  "/logout"     >=> signOut authScheme >=> text "Successfully logged out."
                 route  "/user"       >=> mustBeUser >=> userHandler
                 route  "/john-only"  >=> mustBeJohn >=> userHandler
                 routef "/user/%i"    showUserHandler
-                route  "/person"     >=> (personView { Name = "Html Node" } |> renderHtml)
+                route  "/person"     >=> (personView { Name = "Html Node" } |> htmlView)
                 route  "/once"       >=> (time() |> text)
                 route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
                 route  "/configured" >=> configuredHandler
@@ -133,6 +134,7 @@ let configureApp (app : IApplicationBuilder) =
 
 let configureServices (services : IServiceCollection) =
     services
+        .AddGiraffe()
         .AddAuthentication(authScheme)
         .AddCookie(cookieAuth)   |> ignore
     services.AddDataProtection() |> ignore
@@ -144,10 +146,7 @@ let configureLogging (loggerBuilder : ILoggingBuilder) =
 
 [<EntryPoint>]
 let main _ =
-    let contentRoot = Directory.GetCurrentDirectory()
-    let webRoot     = Path.Combine(contentRoot, "WebRoot")
     WebHost.CreateDefaultBuilder()
-        .UseWebRoot(webRoot)
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(configureServices)
         .ConfigureLogging(configureLogging)

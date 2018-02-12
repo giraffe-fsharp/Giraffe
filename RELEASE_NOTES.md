@@ -1,6 +1,93 @@
 Release Notes
 =============
 
+## Development
+
+#### New features
+
+- Added `subRoutef` http handler (see [subRoutef](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#subroutef))
+- Added `routex` and `routeCix` http handler (see [routex](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#routex))
+
+#### Bug fixes
+
+- `routeBind` works when nested in a `subRoute` handler now
+
+## 1.0.0
+
+First RTM release of Giraffe.
+
+This release has many minor breaking changes and a few bigger features. Please read the changelog carefully before updating your existing application.
+
+#### New features
+
+- JSON and XML serialization is now configurable through Dependency Injection (see [Serialization](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#serialization))
+- Added new features to validate conditional HTTP headers before processing a web request (see [Conditional Requests](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#conditional-requests))
+- Added streaming capabilities (see [Streaming](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#streaming))
+- Added `HEAD`, `OPTIONS`, `TRACE`, `CONNECT` http handlers
+- Added more `HttpContext` extension methods to create parity between response writing methods and `HttpHandler` functions (see [Response Writing](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#response-writing) and [Content Negotiation](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#content-negotiation))
+- Added detailed XML docs to all public facing functions for better Intellisense support
+- The `Giraffe.Common` module auto opens now
+
+#### Breaking changes
+
+- Deprecated `Griaffe.Tasks`. Giraffe uses the original [TaskBuilder.fs](https://github.com/rspeele/TaskBuilder.fs) library now.
+- Giraffe comes with a default set of required dependencies which need to be registered via `services.AddGiraffe()` during application startup now
+- The `Giraffe.TokenRouter` library has been moved to a separate NuGet package under the same name
+- Removed redundant serialization methods
+    - Removed `serializeJson`, `deserializeJson<'T>`, `deserializeJsonFromStream<'T>`, `defaultJsonSerializerSettings`, `defaultSerializeJson`, `defaultDeserializeJson<'T>`, `serializeXml` and `deserializeXml<'T>`
+- Removed the `customJson` http handler
+- Renamed the `html` http handler to `htmlString`
+- Renamed the `renderHtml` http handler to `htmlView`
+- Renamed `setBodyAsString` http handler to `setBodyFromString`
+- Renamed `ReturnHtmlFileAsync()` to `WriteHtmlFileAsync()`
+    - The function can also accept relative and absolute file paths now
+- Renamed `RenderHtmlAsync()` to `WriteHtmlViewAsync()`
+- Removed the overloads for `BindJsonAsync<'T>`, `BindModelAsync<'T>` and `WriteJsonAsync` which accepted an object of type `JsonSerializerSettings`
+- Renamed the `signOff` http handler to `signOut` to be more consistent with existing ASP.NET Core naming conventions
+
+## 0.1.0-beta-700
+
+#### Breaking changes
+
+- Renamed `portRoute` to `routePorts` to be more consistent with other routing functions (`route`, `routef`, `routeStartsWith`, etc.)
+
+#### New features
+
+- `routef` and `routeCif` both support `%O` for matching `System.Guid` values now
+- Added HTML attributes helper functions to the `GiraffeViewEngine`.
+
+Example:
+
+```fsharp
+let html = p [ _class "someCssClass"; _id "greetingsText" ] [ encodedText "Hello World" ]
+```
+
+## 0.1.0-beta-600
+
+#### Breaking changes
+
+- Renamed `Giraffe.XmlViewEngine` to `Giraffe.GiraffeViewEngine` as it represented more than just an XML view engine.
+
+#### New features
+
+- Added automatic validation of the format string inside `routef` and `routeCif` to notify users of the notorious `%d` vs `%i` error during startup.
+
+## 0.1.0-beta-511
+
+#### Bug fixes
+
+- Fixed `ReadBodyFromRequestAsync` where the stream has been disposed before read could complete.
+
+## 0.1.0-beta-510
+
+#### Improvements
+
+- Explicitly set the encoding to UTF-8 when reading the HTTP body during `ReadBodyFromRequestAsync`
+
+#### New features
+
+- Added the `html` http handler which can be used to return a `text/html` response by passing in the html content as a string variable
+
 ## 0.1.0-beta-500
 
 #### New features

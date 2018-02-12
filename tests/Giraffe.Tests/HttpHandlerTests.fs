@@ -1,40 +1,14 @@
-module Giraffe.HttpHandlerTests
+module Giraffe.Tests.HttpHandlerTests
 
 open System
-open System.Collections.Generic
 open System.IO
-open System.Text
-open System.Threading.Tasks
+open System.Collections.Generic
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Primitives
 open Xunit
 open NSubstitute
-open Newtonsoft.Json
-open XmlViewEngine
-open Giraffe.Tests.Asserts
-
-// ---------------------------------
-// Helper functions
-// ---------------------------------
-
-let getStatusCode (ctx : HttpContext) =
-    ctx.Response.StatusCode
-
-let getBody (ctx : HttpContext) =
-    ctx.Response.Body.Position <- 0L
-    use reader = new StreamReader(ctx.Response.Body, Encoding.UTF8)
-    reader.ReadToEnd()
-
-let getContentType (response : HttpResponse) =
-    response.Headers.["Content-Type"].[0]
-
-let assertFail msg = Assert.True(false, msg)
-
-let assertFailf format args =
-    let msg = sprintf format args
-    Assert.True(false, msg)
-
-let next : HttpFunc = Some >> Task.FromResult
+open Giraffe
+open Giraffe.GiraffeViewEngine
 
 // ---------------------------------
 // Test Types
@@ -70,77 +44,9 @@ type Person =
 // ---------------------------------
 
 [<Fact>]
-let ``GET "/" returns "Hello World"`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let app =
-        GET >=> choose [
-            route "/"    >=> text "Hello World"
-            route "/foo" >=> text "bar"
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "Hello World"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``GET "/foo" returns "bar"`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let app =
-        GET >=> choose [
-            route "/"    >=> text "Hello World"
-            route "/foo" >=> text "bar"
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "bar"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``GET "/FOO" returns 404 "Not found"`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let app =
-        GET >=> choose [
-            route "/"    >=> text "Hello World"
-            route "/foo" >=> text "bar"
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/FOO")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "Not found"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal(expected, body)
-            Assert.Equal(404, ctx.Response.StatusCode)
-    }
-
-[<Fact>]
 let ``GET "/json" returns json object`` () =
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -162,17 +68,15 @@ let ``GET "/json" returns json object`` () =
     }
 
 [<Fact>]
-let ``GET "/json" with a custom json handler returns json object`` () =
-    let customJson (dataObj : obj) : HttpHandler =
-        let settings = JsonSerializerSettings()
-        customJson settings dataObj
-
+let ``GET "/json" with custom json settings returns json object`` () =
+    let settings = Newtonsoft.Json.JsonSerializerSettings()
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx (Some settings)
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
             route "/foo"  >=> text "bar"
-            route "/json" >=> customJson { Foo = "john"; Bar = "doe"; Age = 30 }
+            route "/json" >=> json { Foo = "john"; Bar = "doe"; Age = 30 }
             setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -270,7 +174,7 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
     }
 
 [<Fact>]
-let ``POST "/text" with supported Accept header returns "good"`` () =
+let ``POST "/text" with supported Accept header returns "text"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
         choose [
@@ -305,6 +209,7 @@ let ``POST "/text" with supported Accept header returns "good"`` () =
 [<Fact>]
 let ``POST "/json" with supported Accept header returns "json"`` () =
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
     let app =
         choose [
             GET >=> choose [
@@ -402,386 +307,6 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
     }
 
 [<Fact>]
-let ``GET "/JSON" returns "BaR"`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let app =
-        GET >=> choose [
-            route   "/"       >=> text "Hello World"
-            route   "/foo"    >=> text "bar"
-            route   "/json"   >=> json { Foo = "john"; Bar = "doe"; Age = 30 }
-            routeCi "/json"   >=> text "BaR"
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/JSON")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "BaR"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``GET "/foo/blah blah/bar" returns "blah blah"`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let app =
-        GET >=> choose [
-            route   "/"       >=> text "Hello World"
-            route   "/foo"    >=> text "bar"
-            routef "/foo/%s/bar" text
-            routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/blah blah/bar")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "blah blah"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let app =
-        GET >=> choose [
-            route   "/"       >=> text "Hello World"
-            route   "/foo"    >=> text "bar"
-            routef "/foo/%s/bar" text
-            routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/johndoe/59")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "Name: johndoe, Age: 59"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``POST "/POsT/1" returns "1"`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let app =
-        choose [
-            GET >=> choose [
-                route "/" >=> text "Hello World" ]
-            POST >=> choose [
-                route    "/post/1" >=> text "1"
-                routeCif "/post/%i" json ]
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/POsT/1")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "1"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``POST "/POsT/523" returns "523"`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let app =
-        choose [
-            GET >=> choose [
-                route "/" >=> text "Hello World" ]
-            POST >=> choose [
-                route    "/post/1" >=> text "1"
-                routeCif "/post/%i" json ]
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/POsT/523")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "523"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``GET "/foo/b%2Fc/bar" returns "b/c"`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let app =
-        GET >=> choose [
-            route   "/"       >=> text "Hello World"
-            route   "/foo"    >=> text "bar"
-            routef "/foo/%s/bar" text
-            routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/b%2Fc/bar")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "b/c"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``Sub route with empty route`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let app =
-        GET >=> choose [
-            route "/"    >=> text "Hello World"
-            route "/foo" >=> text "bar"
-            subRoute "/api" (
-                choose [
-                    route ""       >=> text "api root"
-                    route "/admin" >=> text "admin"
-                    route "/users" >=> text "users" ] )
-            route "/api/test" >=> text "test"
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "api root"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``Sub route with non empty route`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let app =
-        GET >=> choose [
-            route "/"    >=> text "Hello World"
-            route "/foo" >=> text "bar"
-            subRoute "/api" (
-                choose [
-                    route ""       >=> text "api root"
-                    route "/admin" >=> text "admin"
-                    route "/users" >=> text "users" ] )
-            route "/api/test" >=> text "test"
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/users")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "users"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``Route after sub route with same beginning of path`` () =
-
-    task {
-        let ctx = Substitute.For<HttpContext>()
-
-        let app =
-            GET >=> choose [
-                route "/"    >=> text "Hello World"
-                route "/foo" >=> text "bar"
-                subRoute "/api" (
-                    choose [
-                        route ""       >=> text "api root"
-                        route "/admin" >=> text "admin"
-                        route "/users" >=> text "users" ] )
-                route "/api/test" >=> text "test"
-                setStatusCode 404 >=> text "Not found" ]
-
-        ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
-        ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-        ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/test")) |> ignore
-        ctx.Response.Body <- new MemoryStream()
-        let expected = "test"
-
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``Nested sub routes`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let app =
-        GET >=> choose [
-            route "/"    >=> text "Hello World"
-            route "/foo" >=> text "bar"
-            subRoute "/api" (
-                choose [
-                    route ""       >=> text "api root"
-                    route "/admin" >=> text "admin"
-                    route "/users" >=> text "users"
-                    subRoute "/v2" (
-                        choose [
-                            route ""       >=> text "api root v2"
-                            route "/admin" >=> text "admin v2"
-                            route "/users" >=> text "users v2"
-                        ]
-                    )
-                ]
-            )
-            route "/api/test" >=> text "test"
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/v2/users")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "users v2"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``Route after nested sub routes with same beginning of path`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let app =
-        GET >=> choose [
-            route "/"    >=> text "Hello World"
-            route "/foo" >=> text "bar"
-            subRoute "/api" (
-                choose [
-                    route ""       >=> text "api root"
-                    route "/admin" >=> text "admin"
-                    route "/users" >=> text "users"
-                    subRoute "/v2" (
-                        choose [
-                            route ""       >=> text "api root v2"
-                            route "/admin" >=> text "admin v2"
-                            route "/users" >=> text "users v2"
-                        ]
-                    )
-                    route "/yada" >=> text "yada"
-                ]
-            )
-            route "/api/test"   >=> text "test"
-            route "/api/v2/else" >=> text "else"
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/v2/else")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "else"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``Multiple nested sub routes`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let app =
-        GET >=> choose [
-            route "/"    >=> text "Hello World"
-            route "/foo" >=> text "bar"
-            subRoute "/api" (
-                choose [
-                    route "/users" >=> text "users"
-                    subRoute "/v2" (
-                        choose [
-                            route "/admin" >=> text "admin v2"
-                            route "/users" >=> text "users v2"
-                        ]
-                    )
-                    subRoute "/v2" (
-                        route "/admin2" >=> text "correct admin2"
-                    )
-                ]
-            )
-            route "/api/test"   >=> text "test"
-            route "/api/v2/else" >=> text "else"
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/v2/admin2")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "correct admin2"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``GET "/api/foo/bar/yadayada" returns "yadayada"`` () =
-    let ctx = Substitute.For<HttpContext>()
-    let app =
-        GET >=> choose [
-            route "/"    >=> text "Hello World"
-            route "/foo" >=> text "bar"
-            subRoute "/api" (
-                choose [
-                    route  "" >=> text "api root"
-                    routef "/foo/bar/%s" text ] )
-            route "/api/test" >=> text "test"
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/foo/bar/yadayada")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "yadayada"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
 let ``GET "/person" returns rendered HTML view`` () =
     let ctx = Substitute.For<HttpContext>()
     let personView model =
@@ -800,7 +325,7 @@ let ``GET "/person" returns rendered HTML view`` () =
         choose [
             GET >=> choose [
                 route "/"          >=> text "Hello World"
-                route "/person"    >=> (personView johnDoe |> renderHtml) ]
+                route "/person"    >=> (personView johnDoe |> htmlView) ]
             POST >=> choose [
                 route "/post/1"    >=> text "1" ]
             setStatusCode 404      >=> text "Not found" ]
@@ -833,6 +358,8 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -873,6 +400,8 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -913,6 +442,8 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockXml ctx
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -963,6 +494,8 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockXml ctx
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1013,6 +546,8 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1053,6 +588,8 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockXml ctx
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1103,6 +640,8 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockXml ctx
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1153,6 +692,7 @@ let ``Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1197,6 +737,7 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1238,6 +779,8 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
         }
 
     let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
+    mockNegotiation ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -1343,160 +886,4 @@ let ``POST "/redirect" redirect to "/" `` () =
         match result with
         | None     -> assertFail "It was expected that the request would be redirected"
         | Some ctx -> ctx.Response.Received().Redirect("/", true)
-    }
-
-type RouteBind = { Foo : string; Bar : int; Id : Guid }
-
-[<Fact>]
-let ``GET "/{foo}/{bar}/{id}" returns Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
-    let ctx = Substitute.For<HttpContext>()
-    let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFail "It was expected that the result would be Hello 1"
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal("Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
-    }
-
-[<Fact>]
-let ``GET "/{foo}/{bar}/{id}/" returns Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
-    let ctx = Substitute.For<HttpContext>()
-    let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}/" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d/")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFail "It was expected that the result would be Hello 1f40580b1-d55b-4fe2-b6fb-ca4f90749a9d"
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal("Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
-    }
-
-[<Fact>]
-let ``GET "/{foo}/{bar}/{id}///" returns Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
-    let ctx = Substitute.For<HttpContext>()
-    let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}(/*)" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d///")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFail "It was expected that the result would be Hello 1f40580b1-d55b-4fe2-b6fb-ca4f90749a9d"
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal("Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
-    }
-
-[<Fact>]
-let ``GET "/{foo}/{bar}/{id}" returns Hello 2 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
-    let ctx = Substitute.For<HttpContext>()
-    let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}(/*)" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/2/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d///")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFail "It was expected that the result would be Hello 1f40580b1-d55b-4fe2-b6fb-ca4f90749a9d"
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal("Hello 2 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
-    }
-
-[<Fact>]
-let ``GET "/{foo}/{bar}/{id}/" returns Hello 3 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
-    let ctx = Substitute.For<HttpContext>()
-    let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}(/?)" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/3/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d/")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFail "It was expected that the result would be Hello 3 1f40580b1-d55b-4fe2-b6fb-ca4f90749a9d"
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal("Hello 3 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
-    }
-
-[<Fact>]
-let ``GET "/{foo}/{bar}/{id}" returns Hello 4 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
-    let ctx = Substitute.For<HttpContext>()
-    let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}(/?)" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/4/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFail "It was expected that the result would be Hello 4 1f40580b1-d55b-4fe2-b6fb-ca4f90749a9d"
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal("Hello 4 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
-    }
-
-[<Fact>]
-let ``GET "/api/{foo}/{bar}/{id}" returns Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
-    let ctx = Substitute.For<HttpContext>()
-    let app = GET >=> routeBind<RouteBind> "/api/{foo}/{bar}/{id}" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFail "It was expected that the result would be Hello 1"
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal("Hello 1 f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
-    }
-
-type RouteBindId = { Id : Guid }
-[<Fact>]
-let ``GET "/api/{id}" returns f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
-    let ctx = Substitute.For<HttpContext>()
-    let app = GET >=> routeBind<RouteBindId> "/api/{id}" (fun m -> sprintf "%O" m.Id |> text)
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFail "It was expected that the result would be f40580b1-d55b-4fe2-b6fb-ca4f90749a9d"
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal("f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
-    }
-
-[<Fact>]
-let ``GET "/api/{id}/" returns f40580b1-d55b-4fe2-b6fb-ca4f90749a9d``() =
-    let ctx = Substitute.For<HttpContext>()
-    let app = GET >=> routeBind<RouteBindId> "/api/{id}(/?)" (fun m -> sprintf "%O" m.Id |> text)
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d/")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFail "It was expected that the result would be f40580b1-d55b-4fe2-b6fb-ca4f90749a9d"
-        | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal("f40580b1-d55b-4fe2-b6fb-ca4f90749a9d", body)
     }

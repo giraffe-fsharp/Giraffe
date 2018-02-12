@@ -1,30 +1,30 @@
-/// ---------------------------
-/// Attribution to original authors of this code
-/// ---------------------------
-/// This code has been originally ported from Suave with small modifications afterwards.
-///
-/// The original code has been authored by
-/// * Henrik Feldt (https://github.com/haf)
-/// * Ademar Gonzalez (https://github.com/ademar)
-///
-/// You can find the original implementation here:
-/// https://github.com/SuaveIO/suave/blob/master/src/Experimental/Html.fs
-///
-/// Thanks to Suave (https://github.com/SuaveIO/suave) for letting us borrow their code
-/// and thanks to Florian Verdonck (https://github.com/nojaf) for porting it to Giraffe.
+// ---------------------------
+// Attribution to original authors of this code
+// ---------------------------
+// This code has been originally ported from Suave with small modifications afterwards.
+//
+// The original code has been authored by
+// * Henrik Feldt (https://github.com/haf)
+// * Ademar Gonzalez (https://github.com/ademar)
+//
+// You can find the original implementation here:
+// https://github.com/SuaveIO/suave/blob/master/src/Experimental/Html.fs
+//
+// Thanks to Suave (https://github.com/SuaveIO/suave) for letting us borrow their code
+// and thanks to Florian Verdonck (https://github.com/nojaf) for porting it to Giraffe.
 
-module Giraffe.XmlViewEngine
+module Giraffe.GiraffeViewEngine
 
 open System
 open System.Net
 
-/// ---------------------------
-/// Definition of different HTML content
-///
-/// For more info check:
-/// - https://developer.mozilla.org/en-US/docs/Web/HTML/Element
-/// - https://www.w3.org/TR/html5/syntax.html#void-elements
-/// ---------------------------
+// ---------------------------
+// Definition of different HTML content
+//
+// For more info check:
+// - https://developer.mozilla.org/en-US/docs/Web/HTML/Element
+// - https://www.w3.org/TR/html5/syntax.html#void-elements
+// ---------------------------
 
 type XmlAttribute =
     | KeyValue of string * string
@@ -38,9 +38,9 @@ type XmlNode =
     | EncodedText of string                    // XML encoded text content
     | RawText     of string                    // Raw text content
 
-/// ---------------------------
-/// Building blocks
-/// ---------------------------
+// ---------------------------
+// Building blocks
+// ---------------------------
 
 let attr (key : string) (value : string) = KeyValue (key, value)
 let flag (key : string) = Boolean key
@@ -59,14 +59,14 @@ let rawText     (content : string) = RawText content
 let emptyText                      = rawText ""
 let comment     (content : string) = rawText (sprintf "<!-- %s -->" content)
 
-/// ---------------------------
-/// Default HTML elements
-/// ---------------------------
+// ---------------------------
+// Default HTML elements
+// ---------------------------
 
-/// Main root
+// Main root
 let html       = tag "html"
 
-/// Document metadata
+// Document metadata
 let ``base``   = voidTag "base"
 let head       = tag "head"
 let link attr  = voidTag "link" attr
@@ -74,7 +74,7 @@ let meta attr  = voidTag "meta" attr
 let style      = tag "style"
 let title      = tag "title"
 
-/// Content sectioning
+// Content sectioning
 let body       = tag "body"
 let address    = tag "address"
 let article    = tag "article"
@@ -91,7 +91,7 @@ let header     = tag "header"
 let nav        = tag "nav"
 let section    = tag "section"
 
-/// Text content
+// Text content
 let dd         = tag "dd"
 let div        = tag "div"
 let dl         = tag "dl"
@@ -106,7 +106,7 @@ let p          = tag "p"
 let pre        = tag "pre"
 let ul         = tag "ul"
 
-/// Inline text semantics
+// Inline text semantics
 let a          = tag "a"
 let abbr       = tag "abbr"
 let b          = tag "b"
@@ -138,7 +138,7 @@ let u          = tag "u"
 let var        = tag "var"
 let wbr        = voidTag "wbr"
 
-/// Image and multimedia
+// Image and multimedia
 let area       = voidTag "area"
 let audio      = tag "audio"
 let img        = voidTag "img"
@@ -146,22 +146,22 @@ let map        = tag "map"
 let track      = voidTag "track"
 let video      = tag "video"
 
-/// Embedded content
+// Embedded content
 let embed      = voidTag "embed"
 let object     = tag "object"
 let param      = voidTag "param"
 let source     = voidTag "source"
 
-/// Scripting
+// Scripting
 let canvas     = tag "canvas"
 let noscript   = tag "noscript"
 let script     = tag "script"
 
-/// Demarcating edits
+// Demarcating edits
 let del        = tag "del"
 let ins        = tag "ins"
 
-/// Table content
+// Table content
 let caption    = tag "caption"
 let col        = voidTag "col"
 let colgroup   = tag "colgroup"
@@ -173,7 +173,7 @@ let th         = tag "th"
 let thead      = tag "thead"
 let tr         = tag "tr"
 
-/// Forms
+// Forms
 let button     = tag "button"
 let datalist   = tag "datalist"
 let fieldset   = tag "fieldset"
@@ -189,16 +189,127 @@ let progress   = tag "progress"
 let select     = tag "select"
 let textarea   = tag "textarea"
 
-/// Interactive elements
+// Interactive elements
 let details    = tag "details"
 let dialog     = tag "dialog"
 let menu       = tag "menu"
 let menuitem   = voidTag "menuitem"
 let summary    = tag "summary"
 
-/// ---------------------------
-/// Render XML string
-/// ---------------------------
+// ---------------------------
+// Default HTML attributes
+// ---------------------------
+
+[<AutoOpen>]
+module Attributes =
+    // https://www.w3.org/TR/html5/index.html#attributes-1
+    let _abbr               = attr "abbr"
+    let _accept             = attr "accept"
+    let _acceptCharset      = attr "accept-charset"
+    let _accesskey          = attr "accesskey"
+    let _action             = attr "action"
+    let _alt                = attr "alt"
+    let _autocomplete       = attr "autocomplete"
+    let _border             = attr "border"
+    let _challenge          = attr "challenge"
+    let _charset            = attr "charset"
+    let _cite               = attr "cite"
+    let _class              = attr "class"
+    let _cols               = attr "cols"
+    let _colspan            = attr "colspan"
+    let _content            = attr "content"
+    let _contenteditable    = attr "contenteditable"
+    let _coords             = attr "coords"
+    let _crossorigin        = attr "crossorigin"
+    let _data               = attr "data"
+    let _datetime           = attr "datetime"
+    let _dir                = attr "dir"
+    let _dirname            = attr "dirname"
+    let _download           = attr "download"
+    let _enctype            = attr "enctype"
+    let _for                = attr "for"
+    let _form               = attr "form"
+    let _formaction         = attr "formaction"
+    let _formenctype        = attr "formenctype"
+    let _formmethod         = attr "formmethod"
+    let _formtarget         = attr "formtarget"
+    let _headers            = attr "headers"
+    let _height             = attr "height"
+    let _high               = attr "high"
+    let _href               = attr "href"
+    let _hreflang           = attr "hreflang"
+    let _httpEquiv          = attr "http-equiv"
+    let _id                 = attr "id"
+    let _keytype            = attr "keytype"
+    let _kind               = attr "kind"
+    let _label              = attr "label"
+    let _lang               = attr "lang"
+    let _list               = attr "list"
+    let _low                = attr "low"
+    let _manifest           = attr "manifest"
+    let _max                = attr "max"
+    let _maxlength          = attr "maxlength"
+    let _media              = attr "media"
+    let _mediagroup         = attr "mediagroup"
+    let _method             = attr "method"
+    let _min                = attr "min"
+    let _minlength          = attr "minlength"
+    let _name               = attr "name"
+    let _optimum            = attr "optimum"
+    let _pattern            = attr "pattern"
+    let _placeholder        = attr "placeholder"
+    let _poster             = attr "poster"
+    let _preload            = attr "preload"
+    let _rel                = attr "rel"
+    let _rows               = attr "rows"
+    let _rowspan            = attr "rowspan"
+    let _sandbox            = attr "sandbox"
+    let _spellcheck         = attr "spellcheck"
+    let _scope              = attr "scope"
+    let _shape              = attr "shape"
+    let _size               = attr "size"
+    let _sizes              = attr "sizes"
+    let _span               = attr "span"
+    let _src                = attr "src"
+    let _srcdoc             = attr "srcdoc"
+    let _srclang            = attr "srclang"
+    let _start              = attr "start"
+    let _step               = attr "step"
+    let _style              = attr "style"
+    let _tabindex           = attr "tabindex"
+    let _target             = attr "target"
+    let _title              = attr "title"
+    let _translate          = attr "translate"
+    let _type               = attr "type"
+    let _usemap             = attr "usemap"
+    let _value              = attr "value"
+    let _width              = attr "width"
+    let _wrap               = attr "wrap"
+
+    let _async              = flag "async"
+    let _autofocus          = flag "autofocus"
+    let _autoplay           = flag "autoplay"
+    let _checked            = flag "checked"
+    let _controls           = flag "controls"
+    let _default            = flag "default"
+    let _defer              = flag "defer"
+    let _disabled           = flag "disabled"
+    let _formnovalidate     = flag "formnovalidate"
+    let _hidden             = flag "hidden"
+    let _ismap              = flag "ismap"
+    let _loop               = flag "loop"
+    let _multiple           = flag "multiple"
+    let _muted              = flag "muted"
+    let _novalidate         = flag "novalidate"
+    let _readonly           = flag "readonly"
+    let _required           = flag "required"
+    let _reversed           = flag "reversed"
+    let _selected           = flag "selected"
+    let _typemustmatch      = flag "typemustmatch"
+
+// ---------------------------
+// Render XML string
+// ---------------------------
 
 let rec private nodeToString (htmlStyle : bool) (node : XmlNode) =
     let startElementToString selfClosing (elemName, attributes : XmlAttribute array) =

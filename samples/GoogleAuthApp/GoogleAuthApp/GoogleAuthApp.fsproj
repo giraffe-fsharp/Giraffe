@@ -3,45 +3,36 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <DebugType>portable</DebugType>
-    <AssemblyName>_AppName</AssemblyName>
+    <AssemblyName>JwtApp</AssemblyName>
     <OutputType>Exe</OutputType>
-    <PackageId>_AppName</PackageId>
+    <PackageId>JwtApp</PackageId>
     <RuntimeFrameworkVersion>2.0.0</RuntimeFrameworkVersion>
     <EnableDefaultContentItems>false</EnableDefaultContentItems>
+    <RunWorkingDirectory>$(MSBuildThisFileDirectory)</RunWorkingDirectory>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.0.*" />
     <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.0.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Server.IISIntegration" Version="2.0.*"/>
-    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel.Https" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.0.*" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.0.*" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="2.0.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.0.*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.0.*" />
-    <PackageReference Include="Giraffe" Version="0.1.0-beta-400" />
-    <PackageReference Include="Giraffe.Razor" Version="0.1.0-beta-110" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="2.0.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="2.0.*" />
   </ItemGroup>
 
   <ItemGroup>
-    <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="2.0.0" />
+    <ProjectReference Include="..\..\..\src\Giraffe\Giraffe.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Watch Include="**\*.cshtml" Exclude="bin\**\*" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="Models\*.fs" />
+    <Compile Include="HttpsConfig.fs" />
     <Compile Include="Program.fs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Views\*.cshtml;WebRoot\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
 </Project>
