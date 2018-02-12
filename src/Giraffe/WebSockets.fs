@@ -153,11 +153,6 @@ type ConnectionManager(?messageSize) =
 
         /// Creates a new WebSocket connection and negotiates the subprotocol.
         member this.CreateSocket(onConnected,onMessage,?webSocketID,?supportedProtocols:seq<WebSocketSubprotocol>,?cancellationToken) =
-            let negotiateSubProtocol(requestedSubProtocols,supportedProtocols:seq<WebSocketSubprotocol>) =
-                supportedProtocols
-                |> Seq.tryFind (fun (supported:WebSocketSubprotocol) ->
-                    requestedSubProtocols |> Seq.contains supported.Name)
-
             fun next (ctx : Microsoft.AspNetCore.Http.HttpContext) -> task {
                 let run(websocket) = task {
                     let webSocketID = webSocketID |> Option.defaultWith (fun _ -> Guid.NewGuid().ToString())
