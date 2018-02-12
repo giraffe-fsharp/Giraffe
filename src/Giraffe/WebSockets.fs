@@ -98,7 +98,7 @@ type ConnectionManager(?messageSize) =
             
             for key in toRemove do
                 connections.TryRemove kv.Key |> ignore
-                
+
             return ()
         }
 
@@ -139,7 +139,7 @@ type ConnectionManager(?messageSize) =
         }
 
         member private this.RegisterClient<'Msg>(reference:WebSocketReference,connectedF: WebSocketReference -> Task<unit>,messageF,cancellationToken:CancellationToken) = task {
-            connections.AddOrUpdate(reference.ID, reference, Func<_,_,_>(fun _ _ -> reference)) |> ignore
+            connections.AddOrUpdate(reference.ID, reference, fun _ _ -> reference) |> ignore
             do! connectedF reference
             let mutable running = true
             while running && not cancellationToken.IsCancellationRequested do
