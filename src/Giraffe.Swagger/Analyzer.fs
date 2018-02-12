@@ -288,10 +288,7 @@ module Analyzer =
           
         ] |> Map
       { MethodCalls=methodCalls }
-  
-  let buildApp (webapp:Expr<HttpFunc -> HttpContext -> HttpFuncResult>) : HttpFunc -> HttpContext -> HttpFuncResult =
-    QuotationEvaluator.Evaluate webapp
-  
+
   let analyze webapp (rules:AppAnalyzeRules) : AnalyzeContext =
   
     let (|IsSubRoute|_|) (m:MethodInfo) =
