@@ -4,7 +4,6 @@ open System
 open System.Collections.Generic
 open System.IO
 open System.IO.Compression
-open Giraffe.HttpHandlers
 open Microsoft.AspNetCore.Http
 
 let swaggerUiHandler (swaggerUiPath:string) swJsonPath =

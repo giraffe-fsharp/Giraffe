@@ -29,7 +29,7 @@ module Dsl =
   let swaggerDoc docCtx addendums (description:ApiDescription -> ApiDescription) schemes host basePath =
     let rawJson (str : string) : HttpHandler =
         setHttpHeader "Content-Type" "application/json"
-        >=> setBodyAsString str
+          >=> fun (next : HttpFunc) (ctx : HttpContext) -> ctx.WriteStringAsync str
   
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {

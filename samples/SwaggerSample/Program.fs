@@ -74,7 +74,7 @@ let documentedApp =
                     route  "/"           >=> text "index" 
                     route  "/ping"       >=> text "pong"
                     route  "/error"      >=> (fun _ _ -> failwith "Something went wrong!")
-                    route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."
+                    route  "/logout"     >=> signOut authScheme >=> text "Successfully logged out."
                     route  "/once"       >=> (time() |> text)
                     route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
                     
