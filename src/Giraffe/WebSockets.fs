@@ -80,7 +80,7 @@ type ConnectionManager(?messageSize) =
             let byteResponse = System.Text.Encoding.UTF8.GetBytes msg
             let segment = ArraySegment<byte>(byteResponse, 0, byteResponse.Length)
             let cancellationToken = cancellationToken |> Option.defaultValue CancellationToken.None
-
+            let toRemove = System.Collections.Generic.List<_>()
             let! _ =
                 connections
                 |> Seq.map (fun kv -> task {
@@ -91,10 +91,14 @@ type ConnectionManager(?messageSize) =
                                 do! webSocket.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken)
                             else
                                 if webSocket.State = WebSocketState.Closed then
-                                    connections.TryRemove kv.Key |> ignore
+                                    toRemove.Add kv.Key
                     with
                     | _ -> () })
                 |> Task.WhenAll
+            
+            for key in toRemove do
+                connections.TryRemove kv.Key |> ignore
+                
             return ()
         }
 
