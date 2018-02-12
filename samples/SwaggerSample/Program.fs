@@ -84,7 +84,8 @@ let docAddendums =
         
         | "/car", HttpVerb.Post,def ->
             let ndef = 
-                (def.AddConsume "model" "application/json" Body typeof<Car>)
+                (PathDefinition.Empty
+                    .AddConsume "model" "application/json" Body typeof<Car>)
                     .AddResponse 200 "application/json" "A car" typeof<Car>
             path, verb, ndef
         | _ -> path,verb,pathDef
@@ -187,6 +188,7 @@ let configureApp (app : IApplicationBuilder) =
 
 let configureServices (services : IServiceCollection) =
     services
+        .AddGiraffe()
         .AddAuthentication(authScheme)
         .AddCookie(cookieAuth)   |> ignore
     services.AddDataProtection() |> ignore

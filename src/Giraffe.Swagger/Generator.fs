@@ -191,6 +191,15 @@ module Generator =
       Tags:string list
       Parameters:ParamDefinition list
       Responses:Map<int, ResponseDoc> }
+    static member Empty =
+      { Summary=""
+        Description=""
+        OperationId=""
+        Consumes=[]
+        Produces=[]
+        Tags=[]
+        Parameters=[]
+        Responses=Map [] }
     member __.ShouldSerializeParameters() =
       __.Parameters.Length > 0
     member __.AddResponse code mimetype description (modelType:Type) =
