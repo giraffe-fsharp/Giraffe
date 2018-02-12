@@ -251,18 +251,18 @@ module Analyzer =
               )
           
           // used to return raw text content
-          { ModuleName="Routing"; FunctionName="setStatusCode" }, 
+          { ModuleName="Core"; FunctionName="setStatusCode" }, 
               (fun ctx -> 
                 let code = ctx.Variables.Item "statusCode" |> toString |> Int32.Parse
                 ctx.AddResponse code "text/plain" (typeof<string>)
               )
 
           // used to return raw text content
-          { ModuleName="Routing"; FunctionName="text" }, 
+          { ModuleName="ResponseWriters"; FunctionName="text" }, 
               (fun ctx -> ctx.AddResponse 200 "text/plain" (typeof<string>))
               
           // used to return json content
-          { ModuleName="Routing"; FunctionName="json" }, 
+          { ModuleName="ResponseWriters"; FunctionName="json" }, 
               (fun ctx ->
                   let modelType = 
                     match ctx.ArgTypes |> List.tryHead with
@@ -272,15 +272,15 @@ module Analyzer =
               )
   
           // HTTP GET method
-          { ModuleName="Routing"; FunctionName="GET" }, (fun ctx -> { ctx with Verb = (Some "GET") })
+          { ModuleName="Core"; FunctionName="GET" }, (fun ctx -> { ctx with Verb = (Some "GET") })
           // HTTP POST method
-          { ModuleName="Routing"; FunctionName="POST" }, (fun ctx -> { ctx with Verb = (Some "POST") })
+          { ModuleName="Core"; FunctionName="POST" }, (fun ctx -> { ctx with Verb = (Some "POST") })
           // HTTP PUT method
-          { ModuleName="Routing"; FunctionName="PUT" }, (fun ctx -> { ctx with Verb = (Some "PUT") })
+          { ModuleName="Core"; FunctionName="PUT" }, (fun ctx -> { ctx with Verb = (Some "PUT") })
           // HTTP DELETE method
-          { ModuleName="Routing"; FunctionName="DELETE" }, (fun ctx -> { ctx with Verb = (Some "DELETE") })
+          { ModuleName="Core"; FunctionName="DELETE" }, (fun ctx -> { ctx with Verb = (Some "DELETE") })
           // HTTP PATCH method
-          { ModuleName="Routing"; FunctionName="PATCH" }, (fun ctx -> { ctx with Verb = (Some "PATCH") })
+          { ModuleName="Core"; FunctionName="PATCH" }, (fun ctx -> { ctx with Verb = (Some "PATCH") })
           
           { ModuleName="Dsl"; FunctionName="operationId" }, (handleSingleArgRule "opId" "operationId")
           { ModuleName="Dsl"; FunctionName="consumes" }, (handleSingleArgRule "modelType" "consumes")
@@ -315,7 +315,7 @@ module Analyzer =
       | Value (o,_) -> 
           ctx.AddArgType (o.GetType())
       
-      | Let (v, NewUnionCase (_,handlers), Lambda (next, Call (None, m, _))) when v.Name = "handlers" && m.Name = "choose" && m.DeclaringType.Name = "Routing" ->
+      | Let (v, NewUnionCase (_,handlers), Lambda (next, Call (None, m, _))) when v.Name = "handlers" && m.Name = "choose" && m.DeclaringType.Name = "Core" ->
           let ctxs = handlers |> List.map(fun e -> loop e ctx)
           { ctx 
               with 
@@ -382,7 +382,7 @@ module Analyzer =
               { ctx with Routes = (ctx.Routes @ routes) }
           | _ -> ctx
           
-      | Call(instance, method, args) when method.Name = "choose" && method.DeclaringType.Name = "Routing" ->
+      | Call(instance, method, args) when method.Name = "choose" && method.DeclaringType.Name = "Core" ->
           let ctxs = args |> List.map(fun e -> loop e (newContext()))
           { ctx 
               with 
