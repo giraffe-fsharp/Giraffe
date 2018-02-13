@@ -5,7 +5,7 @@
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
     <DebugType>portable</DebugType>
     <WarningsAsErrors>1</WarningsAsErrors>
-    <Optimize>False</Optimize>
+    <Optimize>True</Optimize>
     <OutputType>Library</OutputType>
     <PackageId>Giraffe.Swagger</PackageId>
     <PackageTags>Giraffe;Swagger;ASP.NET Core;Lambda;FSharp;Functional;Http;Web;Framework;Micro;Service</PackageTags>
