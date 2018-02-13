@@ -61,6 +61,33 @@ type Model =
         Nicknames  : string list option
     }
 
+[<CLIMutable>]
+type QueryModel =
+    {
+        FirstName  : string
+        LastName   : string
+        Sex        : Sex
+        Nicknames  : string list option
+    }
+    override this.ToString() =
+        let formatNicknames() =
+            match this.Nicknames with
+            | None       -> "--"
+            | Some items ->
+                items
+                |> List.fold (
+                    fun state i ->
+                        if String.IsNullOrEmpty state
+                        then i
+                        else sprintf "%s, %s" state i
+                    ) ""
+
+        sprintf "Name: %s %s; Sex: %s; Nicknames: %s"
+            this.FirstName
+            this.LastName
+            (this.Sex.ToString())
+            (formatNicknames())
+
 // ---------------------------------
 // tryBindModel Tests
 // ---------------------------------
@@ -326,29 +353,112 @@ let ``bindModel with incomplete model data and wrong union case`` () =
 // TryBindQueryString Tests
 // ---------------------------------
 
+// ?firstName=John&lastName=Doe&sex=male&nicknames[]=Johnny&nicknames[]=JD&nicknames[]=Jay
+// Name: John Doe; Sex: Male; Nicknames: Johnny, JD, Jay
+
 [<Fact>]
-let ``TryBindQueryString test`` () =
+let ``tryBindQuery with complete data and list items with []`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let queryHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            let model = ctx.BindQueryString<Customer>()
-            text (model.ToString()) next ctx
+    let bindQuery = tryBindQuery<QueryModel> None
+    let app =
+        GET >=> choose [
+            route "/query" >=> bindQuery (fun m -> text(m.ToString()))
+            setStatusCode 404 >=> text "Not found"
+        ]
 
-    let app = GET >=> route "/query" >=> queryHandler
+    let expected = "Name: John Doe; Sex: Male; Nicknames: Johnny, JD, Jay"
+    let queryStr = "?firstName=John&lastName=Doe&sex=male&nicknames[]=Johnny&nicknames[]=JD&nicknames[]=Jay"
 
-    let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
     ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/query")) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``tryBindQuery with complete data and list items without []`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let bindQuery = tryBindQuery<QueryModel> None
+    let app =
+        GET >=> choose [
+            route "/query" >=> bindQuery (fun m -> text(m.ToString()))
+            setStatusCode 404 >=> text "Not found"
+        ]
+
+    let expected = "Name: John Doe; Sex: Male; Nicknames: Johnny, JD, Jay"
+    let queryStr = "?firstName=John&lastName=Doe&sex=male&nicknames=Johnny&nicknames=JD&nicknames=Jay"
+
+    let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/query")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
 
+[<Fact>]
+let ``tryBindQuery without optional data`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let bindQuery = tryBindQuery<QueryModel> None
+    let app =
+        GET >=> choose [
+            route "/query" >=> bindQuery (fun m -> text(m.ToString()))
+            setStatusCode 404 >=> text "Not found"
+        ]
+
+    let expected = "Name: John Doe; Sex: Male; Nicknames: --"
+    let queryStr = "?firstName=John&lastName=Doe&sex=male"
+
+    let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/query")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``tryBindQuery with incomplete data`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let bindQuery = tryBindQuery<QueryModel> None
+    let app =
+        GET >=> choose [
+            route "/query" >=> bindQuery (fun m -> text(m.ToString()))
+            setStatusCode 404 >=> text "Not found"
+        ]
+
+    let expected = "Not found"
+    let queryStr = "?lastName=Doe&sex=male"
+
+    let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/query")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
         match result with
         | None     -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)

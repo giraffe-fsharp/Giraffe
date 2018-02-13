@@ -96,10 +96,12 @@ let rec private parseValue (t : Type) (rawValues : StringValues) (culture : Cult
 let private parseModel<'T> (cultureInfo : CultureInfo option)
                            (data        : IDictionary<string, StringValues>)
                            (strict      : bool) =
-    // Convert all keys to lower case
+    // Normalize data
+    let normalizeKey (key : string) =
+        key.ToLowerInvariant().TrimEnd([| '['; ']' |])
     let data =
         data
-        |> Seq.map (fun i -> i.Key.ToLowerInvariant(), i.Value)
+        |> Seq.map (fun i -> normalizeKey i.Key, i.Value)
         |> dict
 
     // Create culture and model objects
@@ -223,7 +225,7 @@ type HttpContext with
     /// ** Parameters **
     ///     - `cultureInfo`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
     /// ** Output **
-    /// Returns a `Task<'T>`.
+    /// Returns an instance of type `'T`.
     member this.BindQueryString<'T> (?cultureInfo : CultureInfo) =
         this.Request.Query
         |> Seq.map (fun i -> i.Key, i.Value)
@@ -231,11 +233,11 @@ type HttpContext with
         |> bindModel<'T> cultureInfo
 
     /// ** Description **
-    /// Parses all parameters of a request's query string into an object of type `'T`.
+    /// Tries to parse all parameters of a request's query string into an object of type `'T`.
     /// ** Parameters **
     ///     - `cultureInfo`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
     /// ** Output **
-    /// Returns a `Task<'T>`.
+    /// Returns an `Option<'T>`.
     member this.TryBindQueryString<'T> (?cultureInfo : CultureInfo) =
         this.Request.Query
         |> Seq.map (fun i -> i.Key, i.Value)
@@ -265,3 +267,17 @@ type HttpContext with
                         | _ -> failwithf "Cannot bind model from Content-Type '%s'" original.Value
             else return this.BindQueryString<'T>(?cultureInfo = cultureInfo)
         }
+
+// ---------------------------
+// HttpHandler functions
+// ---------------------------
+
+let tryBindQuery<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let result =
+            match culture with
+            | Some c -> ctx.TryBindQueryString<'T> c
+            | None   -> ctx.TryBindQueryString<'T>()
+        match result with
+        | None       -> abort
+        | Some model -> f model next ctx
