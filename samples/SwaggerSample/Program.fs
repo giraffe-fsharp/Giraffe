@@ -84,7 +84,7 @@ let docAddendums =
         
         | "/car", HttpVerb.Post,def ->
             let ndef = 
-                (PathDefinition.Empty
+                (def
                     .AddConsume "model" "application/json" Body typeof<Car>)
                     .AddResponse 200 "application/json" "A car" typeof<Car>
             path, verb, ndef
