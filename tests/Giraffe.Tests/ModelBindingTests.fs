@@ -89,11 +89,11 @@ type QueryModel =
             (formatNicknames())
 
 // ---------------------------------
-// tryBindModel Tests
+// ModelParser.tryParse Tests
 // ---------------------------------
 
 [<Fact>]
-let ``tryBindModel with complete model data`` () =
+let ``ModelParser.tryParse with complete model data`` () =
     let id = Guid.NewGuid()
     let modelData =
         dict [
@@ -116,13 +116,13 @@ let ``tryBindModel with complete model data`` () =
             Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
         }
     let culture = None
-    let result = tryBindModel<Model> culture modelData
+    let result = ModelParser.tryParse<Model> culture modelData
     match result with
     | Some m -> Assert.Equal(expected, m)
     | None   -> assertFail "Model didn't bind successfully."
 
 [<Fact>]
-let ``tryBindModel with model data without optional parameters`` () =
+let ``ModelParser.tryParse with model data without optional parameters`` () =
     let id = Guid.NewGuid()
     let modelData =
         dict [
@@ -143,13 +143,13 @@ let ``tryBindModel with model data without optional parameters`` () =
             Nicknames  = None
         }
     let culture = None
-    let result = tryBindModel<Model> culture modelData
+    let result = ModelParser.tryParse<Model> culture modelData
     match result with
     | Some m -> Assert.Equal(expected, m)
     | None   -> assertFail "Model didn't bind successfully."
 
 [<Fact>]
-let ``tryBindModel with complete model data but mixed casing`` () =
+let ``ModelParser.tryParse with complete model data but mixed casing`` () =
     let id = Guid.NewGuid()
     let modelData =
         dict [
@@ -172,13 +172,13 @@ let ``tryBindModel with complete model data but mixed casing`` () =
             Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
         }
     let culture = None
-    let result = tryBindModel<Model> culture modelData
+    let result = ModelParser.tryParse<Model> culture modelData
     match result with
     | Some m -> Assert.Equal(expected, m)
     | None   -> assertFail "Model didn't bind successfully."
 
 [<Fact>]
-let ``tryBindModel with incomplete model data`` () =
+let ``ModelParser.tryParse with incomplete model data`` () =
     let modelData =
         dict [
             "FirstName" , StringValues "Susan"
@@ -188,13 +188,13 @@ let ``tryBindModel with incomplete model data`` () =
             "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
         ]
     let culture = None
-    let result = tryBindModel<Model> culture modelData
+    let result = ModelParser.tryParse<Model> culture modelData
     match result with
     | Some _ -> assertFail "Model had incomplete data and should have not bound successfully."
     | None   -> ()
 
 [<Fact>]
-let ``tryBindModel with complete model data but wrong union case`` () =
+let ``ModelParser.tryParse with complete model data but wrong union case`` () =
     let id = Guid.NewGuid()
     let modelData =
         dict [
@@ -207,17 +207,17 @@ let ``tryBindModel with complete model data but wrong union case`` () =
             "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
         ]
     let culture = None
-    let result = tryBindModel<Model> culture modelData
+    let result = ModelParser.tryParse<Model> culture modelData
     match result with
     | Some _ -> assertFail "Model had wrong data and should have not bound successfully."
     | None   -> ()
 
 // ---------------------------------
-// bindModel Tests
+// ModelParser.parse Tests
 // ---------------------------------
 
 [<Fact>]
-let ``bindModel with complete model data`` () =
+let ``ModelParser.parse with complete model data`` () =
     let id = Guid.NewGuid()
     let modelData =
         dict [
@@ -240,11 +240,11 @@ let ``bindModel with complete model data`` () =
             Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
         }
     let culture = None
-    let result = bindModel<Model> culture modelData
+    let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected, result)
 
 [<Fact>]
-let ``bindModel with model data without optional parameters`` () =
+let ``ModelParser.parse with model data without optional parameters`` () =
     let id = Guid.NewGuid()
     let modelData =
         dict [
@@ -265,11 +265,11 @@ let ``bindModel with model data without optional parameters`` () =
             Nicknames  = None
         }
     let culture = None
-    let result = bindModel<Model> culture modelData
+    let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected, result)
 
 [<Fact>]
-let ``bindModel with complete model data but mixed casing`` () =
+let ``ModelParser.parse with complete model data but mixed casing`` () =
     let id = Guid.NewGuid()
     let modelData =
         dict [
@@ -292,11 +292,11 @@ let ``bindModel with complete model data but mixed casing`` () =
             Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
         }
     let culture = None
-    let result = bindModel<Model> culture modelData
+    let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected, result)
 
 [<Fact>]
-let ``bindModel with incomplete model data`` () =
+let ``ModelParser.parse with incomplete model data`` () =
     let modelData =
         dict [
             "FirstName" , StringValues "Susan"
@@ -316,11 +316,11 @@ let ``bindModel with incomplete model data`` () =
             Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
         }
     let culture = None
-    let result = bindModel<Model> culture modelData
+    let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected, result)
 
 [<Fact>]
-let ``bindModel with incomplete model data and wrong union case`` () =
+let ``ModelParser.parse with incomplete model data and wrong union case`` () =
     let modelData =
         dict [
             "FirstName" , StringValues "Susan"
@@ -340,7 +340,7 @@ let ``bindModel with incomplete model data and wrong union case`` () =
             Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
         }
     let culture = None
-    let result = bindModel<Model> culture modelData
+    let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected.Id, result.Id)
     Assert.Equal(expected.FirstName, result.FirstName)
     Assert.Equal(expected.MiddleName, result.MiddleName)
@@ -473,14 +473,11 @@ let ``BindJsonAsync test`` () =
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx None
 
-    let jsonHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            task {
-                let! model = ctx.BindJsonAsync<Customer>()
-                return! text (model.ToString()) next ctx
-            }
-
-    let app = POST >=> route "/json" >=> jsonHandler
+    let outputCustomer (c : Customer) = text (c.ToString())
+    let app =
+        POST
+        >=> route "/json"
+        >=> bindJson<Customer> outputCustomer
 
     let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
     let stream = new MemoryStream()
@@ -513,14 +510,11 @@ let ``BindXmlAsync test`` () =
     let ctx = Substitute.For<HttpContext>()
     mockXml ctx
 
-    let xmlHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            task {
-                let! model = ctx.BindXmlAsync<Customer>()
-                return! text (model.ToString()) next ctx
-            }
-
-    let app = POST >=> route "/xml" >=> xmlHandler
+    let outputCustomer (c : Customer) = text (c.ToString())
+    let app =
+        POST
+        >=> route "/xml"
+        >=> bindXml<Customer> outputCustomer
 
     let postContent = "<Customer><Name>John Doe</Name><IsVip>true</IsVip><BirthDate>1990-04-20</BirthDate><Balance>150000.5</Balance><LoyaltyPoints>137</LoyaltyPoints></Customer>"
     let stream = new MemoryStream()
@@ -552,14 +546,11 @@ let ``BindXmlAsync test`` () =
 let ``BindFormAsync test`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let formHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            task {
-                let! model = ctx.BindFormAsync<Customer>()
-                return! text (model.ToString()) next ctx
-            }
-
-    let app = POST >=> route "/form" >=> formHandler
+    let outputCustomer (c : Customer) = text (c.ToString())
+    let app =
+        POST
+        >=> route "/form"
+        >=> bindForm<Customer> None outputCustomer
 
     let headers = HeaderDictionary()
     headers.Add("Content-Type", StringValues("application/x-www-form-urlencoded"))
@@ -705,14 +696,10 @@ let ``BindModelAsync with JSON content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx None
 
-    let autoHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            task {
-                let! model = ctx.BindModelAsync<Customer>()
-                return! text (model.ToString()) next ctx
-            }
-
-    let app = route "/auto" >=> autoHandler
+    let outputCustomer (c : Customer) = text (c.ToString())
+    let app =
+        route "/auto"
+        >=> bindModel<Customer> None outputCustomer
 
     let contentType = "application/json"
     let postContent = "{ \"name\": \"John Doe\", \"isVip\": true, \"birthDate\": \"1990-04-20\", \"balance\": 150000.5, \"loyaltyPoints\": 137 }"
@@ -747,14 +734,10 @@ let ``BindModelAsync with JSON content that uses custom serialization settings r
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx (Some (JsonSerializerSettings()))
 
-    let autoHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            task {
-                let! model = ctx.BindModelAsync<Customer>()
-                return! text (model.ToString()) next ctx
-            }
-
-    let app = route "/auto" >=> autoHandler
+    let outputCustomer (c : Customer) = text (c.ToString())
+    let app =
+        route "/auto"
+        >=> bindModel<Customer> None outputCustomer
 
     let contentType = "application/json"
     let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
@@ -789,14 +772,10 @@ let ``BindModelAsync with XML content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
     mockXml ctx
 
-    let autoHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            task {
-                let! model = ctx.BindModelAsync<Customer>()
-                return! text (model.ToString()) next ctx
-            }
-
-    let app = route "/auto" >=> autoHandler
+    let outputCustomer (c : Customer) = text (c.ToString())
+    let app =
+        route "/auto"
+        >=> bindModel<Customer> None outputCustomer
 
     let contentType = "application/xml"
     let postContent = "<Customer><Name>John Doe</Name><IsVip>true</IsVip><BirthDate>1990-04-20</BirthDate><Balance>150000.5</Balance><LoyaltyPoints>137</LoyaltyPoints></Customer>"
@@ -830,14 +809,10 @@ let ``BindModelAsync with XML content returns correct result`` () =
 let ``BindModelAsync with FORM content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let autoHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            task {
-                let! model = ctx.BindModelAsync<Customer>()
-                return! text (model.ToString()) next ctx
-            }
-
-    let app = route "/auto" >=> autoHandler
+    let outputCustomer (c : Customer) = text (c.ToString())
+    let app =
+        route "/auto"
+        >=> bindModel<Customer> None outputCustomer
 
     let contentType = "application/x-www-form-urlencoded"
     let headers = HeaderDictionary()
@@ -873,14 +848,11 @@ let ``BindModelAsync with FORM content returns correct result`` () =
 let ``BindModelAsync with culture aware form content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let autoHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            task {
-                let! model = ctx.BindModelAsync<Customer>(CultureInfo.CreateSpecificCulture("en-GB"))
-                return! text (model.ToString()) next ctx
-            }
-
-    let app = route "/auto" >=> autoHandler
+    let outputCustomer (c : Customer) = text (c.ToString())
+    let english = CultureInfo.CreateSpecificCulture("en-GB")
+    let app =
+        route "/auto"
+        >=> bindModel<Customer> (Some english) outputCustomer
 
     let contentType = "application/x-www-form-urlencoded"
     let headers = HeaderDictionary()
@@ -917,14 +889,10 @@ let ``BindModelAsync with JSON content and a specific charset returns correct re
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx None
 
-    let autoHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            task {
-                let! model = ctx.BindModelAsync<Customer>()
-                return! text (model.ToString()) next ctx
-            }
-
-    let app = route "/auto" >=> autoHandler
+    let outputCustomer (c : Customer) = text (c.ToString())
+    let app =
+        route "/auto"
+        >=> bindModel<Customer> None outputCustomer
 
     let contentType = "application/json; charset=utf-8"
     let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
@@ -958,14 +926,10 @@ let ``BindModelAsync with JSON content and a specific charset returns correct re
 let ``BindModelAsync during HTTP GET request with query string returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let autoHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            task {
-                let! model = ctx.BindModelAsync<Customer>()
-                return! text (model.ToString()) next ctx
-            }
-
-    let app = route "/auto" >=> autoHandler
+    let outputCustomer (c : Customer) = text (c.ToString())
+    let app =
+        route "/auto"
+        >=> bindModel<Customer> None outputCustomer
 
     let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
@@ -988,14 +952,11 @@ let ``BindModelAsync during HTTP GET request with query string returns correct r
 let ``BindModelAsync during HTTP GET request with culture aware query string returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let autoHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            task {
-                let! model = ctx.BindModelAsync<Customer>(CultureInfo.CreateSpecificCulture("en-GB"))
-                return! text (model.ToString()) next ctx
-            }
-
-    let app = route "/auto" >=> autoHandler
+    let outputCustomer (c : Customer) = text (c.ToString())
+    let english = CultureInfo.CreateSpecificCulture("en-GB")
+    let app =
+        route "/auto"
+        >=> bindModel<Customer> (Some english) outputCustomer
 
     let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=15/06/2013 06:00:00&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr

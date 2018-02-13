@@ -193,7 +193,7 @@ let routeBind<'T> (route : string) (routeHandler : 'T -> HttpHandler) : HttpHand
                 |> Array.skip 1
                 |> Array.map (fun n -> n, StringValues groups.[n].Value)
                 |> dict
-                |> tryBindModel None
+                |> ModelParser.tryParse None
             match result with
             | None   -> abort
             | Some t -> routeHandler t next ctx
