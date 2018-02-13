@@ -341,9 +341,18 @@ module Analyzer =
           let mustPush = 
             match exprs with
             | Let _ :: _ -> true
-            | _ -> false 
+            | NewUnionCase _ :: _ -> true
+            | _ ->
+              match exprs |> List.tryLast with
+              | None -> false
+              | Some l -> 
+                  match l with 
+                  | NewUnionCase _ -> true
+                  | _ -> false
           let r = analyzeAll exprs ctx
-          if mustPush then pushRoute r else r
+          if mustPush 
+          then pushRoute r 
+          else r
 
       | Application (Application (PropertyGet (None, op, _), PropertyGet (None, (IsHttpVerb verb), _)), exp) when op.Name = "op_GreaterEqualsGreater" ->
           let v = Some(verb.ToString())

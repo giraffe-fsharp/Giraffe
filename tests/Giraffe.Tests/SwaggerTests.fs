@@ -517,7 +517,6 @@ let ``app contains 2 choose in GET`` () =
       ] @>
     
   let ctx = analyze webApp AppAnalyzeRules.Default
-  printfn "ctx: %A" ctx
  
   let exp =
      [
