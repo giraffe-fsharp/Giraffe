@@ -7,6 +7,7 @@ open System.Text.RegularExpressions
 open Microsoft.AspNetCore.Http
 open Newtonsoft.Json.Linq
 open Giraffe.FormatExpressions
+open Microsoft.Extensions.Primitives
 
 // ---------------------------
 // Private sub route helper functions
@@ -182,20 +183,20 @@ let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandle
 let routeBind<'T> (route : string) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let pattern = route.Replace("{", "(?<").Replace("}", ">[^/\n]+)") |> sprintf "^%s$"
-        let regex = Regex(pattern, RegexOptions.IgnoreCase)
-        let mtch = regex.Match (getPath ctx)
-        match mtch.Success with
+        let regex   = Regex(pattern, RegexOptions.IgnoreCase)
+        let result  = regex.Match (getPath ctx)
+        match result.Success with
         | true ->
-            let groups = mtch.Groups
-            let o =
+            let groups = result.Groups
+            let result =
                 regex.GetGroupNames()
                 |> Array.skip 1
-                |> Array.map (fun x -> x, groups.[x].Value)
-                |> Array.filter (fun (_, x) -> x.Length > 0)
+                |> Array.map (fun n -> n, StringValues groups.[n].Value)
                 |> dict
-                |> JObject.FromObject
-                |> fun jo -> jo.ToObject<'T>()
-            routeHandler o next ctx
+                |> tryBindModel None
+            match result with
+            | None   -> abort
+            | Some t -> routeHandler t next ctx
         | _ -> abort
 
 /// ** Description **

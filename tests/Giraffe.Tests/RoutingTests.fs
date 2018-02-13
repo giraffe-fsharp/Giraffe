@@ -389,8 +389,58 @@ let ``POST "/POsT/523" returns "523"`` () =
 // routeBind Tests
 // ---------------------------------
 
+[<CLIMutable>]
 type RouteBind   = { Foo : string; Bar : int; Id : Guid }
+
+[<CLIMutable>]
 type RouteBindId = { Id : Guid }
+
+type PaymentMethod =
+    | Credit
+    | Debit
+
+[<CLIMutable>]
+type Purchase = { PaymentMethod : PaymentMethod }
+
+[<Fact>]
+let ``routeBind: Route has matching union type``() =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            routeBind<Purchase> "/{paymentMethod}"
+                (fun p -> sprintf "%s" (p.PaymentMethod.ToString()) |> text)
+            setStatusCode 404 >=> text "Not found" ]
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/credit")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "Credit"
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``routeBind: Route doesn't match union type``() =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            routeBind<Purchase> "/{paymentMethod}"
+                (fun p -> sprintf "%s" (p.PaymentMethod.ToString()) |> text)
+            setStatusCode 404 >=> text "Not found" ]
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/wrong")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "Not found"
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
 
 [<Fact>]
 let ``routeBind: Normal route``() =

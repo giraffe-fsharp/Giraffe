@@ -6,11 +6,169 @@ open System.IO
 open System.Text
 open System.Globalization
 open System.Reflection
+open System.Collections.Generic
 open System.ComponentModel
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Primitives
 open Microsoft.Net.Http.Headers
 open Microsoft.FSharp.Reflection
+
+// ---------------------------
+// Generic Model binding functions
+// ---------------------------
+
+type private FSharpOption<'T> = Microsoft.FSharp.Core.Option<'T>
+type private FSharpList<'T>   = Microsoft.FSharp.Collections.List<'T>
+
+let private getValueForMissingProperty (t : Type) =
+    let isGeneric = t.GetTypeInfo().IsGenericType
+    if not isGeneric
+    then None
+    else
+        let genericTypeDef = t.GetGenericTypeDefinition()
+        let isOption = if isGeneric then genericTypeDef = typedefof<FSharpOption<_>> else false
+        if not isOption
+        then None
+        else
+            let cases = FSharpType.GetUnionCases t
+            FSharpValue.MakeUnion(cases.[0], [||])
+            |> Some
+
+let rec private parseValue (t : Type) (rawValues : StringValues) (culture : CultureInfo) =
+    // First load up some more type information,
+    // whether the type is generic, a list or an option type.
+    let isGeneric = t.GetTypeInfo().IsGenericType
+    let isList, isOption, genArgType =
+        if not isGeneric then false, false, null
+        else
+            let genericTypeDef = t.GetGenericTypeDefinition()
+            genericTypeDef = typedefof<FSharpList<_>>,
+            genericTypeDef = typedefof<FSharpOption<_>>,
+            t.GetGenericArguments().[0]
+    if isList then
+        let cases = FSharpType.GetUnionCases t
+        let emptyList = FSharpValue.MakeUnion(cases.[0], [||])
+        if rawValues.Count = 0
+        then Some emptyList
+        else
+            let consCase = cases.[1]
+            Array.foldBack(
+                fun (str : string) (items : obj) ->
+                    let item = StringValues str
+                    match parseValue genArgType item culture with
+                    | None   -> items
+                    | Some v -> FSharpValue.MakeUnion(consCase, [| v; items |]))
+                (rawValues.ToArray())
+                emptyList
+            |> Some
+    else if isGeneric then
+        let value = parseValue genArgType rawValues culture
+        match value with
+        | None -> None
+        | Some value ->
+            if not isOption then Some value
+            else
+                let cases = FSharpType.GetUnionCases t
+                if isNull value
+                then FSharpValue.MakeUnion(cases.[0], [||])
+                else FSharpValue.MakeUnion(cases.[1], [| value |])
+                |> Some
+    else if FSharpType.IsUnion t then
+        let unionName = rawValues.ToString()
+        let cases = FSharpType.GetUnionCases t
+        if String.IsNullOrWhiteSpace unionName
+        then None
+        else
+            cases
+            |> Array.tryFind (fun c -> c.Name.Equals(unionName, StringComparison.OrdinalIgnoreCase))
+            |> function
+               | None   -> None
+               | Some c -> Some (FSharpValue.MakeUnion(c, [||]))
+    else
+        let converter =
+            if t.GetTypeInfo().IsValueType
+            then (typedefof<Nullable<_>>).MakeGenericType([| t |])
+            else t
+            |> TypeDescriptor.GetConverter
+        converter.ConvertFromString(null, culture, rawValues.ToString())
+        |> Some
+
+let private parseModel<'T> (cultureInfo : CultureInfo option)
+                           (data        : IDictionary<string, StringValues>)
+                           (strict      : bool) =
+    // Convert all keys to lower case
+    let data =
+        data
+        |> Seq.map (fun i -> i.Key.ToLowerInvariant(), i.Value)
+        |> dict
+
+    // Create culture and model objects
+    let culture = defaultArg cultureInfo CultureInfo.InvariantCulture
+    let model   = Activator.CreateInstance<'T>()
+
+    let success =
+        // Iterate through all properties of the model
+        model.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
+        |> Seq.fold(
+            fun success prop ->
+                // If model binding is set to strict and a previous property
+                // failed to parse then short circuit and return false.
+                if strict && not success then false
+                else
+                    let value =
+                        // Check the dictionary for an entry which matches the property name.
+                        // If the dictionary has no entry which matches the property name,
+                        // then try to generate a value for the property without any data (will only work for an option type).
+                        // If there was an entry then try to get the value by parsing the rawValue.
+                        match data.TryGetValue (prop.Name.ToLowerInvariant()) with
+                        | false, _        -> getValueForMissingProperty prop.PropertyType
+                        | true , rawValue -> parseValue prop.PropertyType rawValue culture
+
+                    // Check if a value was able to get successfully parsed.
+                    // If it couldn't be parsed, then return false to denote that the model
+                    // could not be successfully created when in strict mode, otherwise skip
+                    // setting a value, but return true in order to proceed to the next property.
+                    // If a value was successfully parsed, then set the property of the model
+                    // and return true.
+                    match strict, value with
+                    | true , None   -> false
+                    | false, None   -> true
+                    | _    , Some v ->
+                        prop.SetValue(model, v, null)
+                        true
+        ) true
+    // Only return the model if all properties were successfully
+    // parsed and set on the model, or when model binding is not strict.
+    // (strict means to return a model even when only partially parsed)
+    if not strict || success then Some model else None
+
+/// ** Description **
+/// Tries to create an instance of type `'T` from a given set of `data`.
+/// It will try to match each property of `'T` with a key from the `data` dictionary and parse the associated value to the value of `'T`'s property.
+/// ** Parameters **
+///     - `culture`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
+///     - `data`: A key-value dictionary of values for each property of type `'T`. Only optional properties can be omitted from the dictionary.
+/// ** Output **
+/// If all properties were able to successfully parse then `Some 'T` will be returned, otherwise `None`.
+let tryBindModel<'T> (culture : CultureInfo option)
+                     (data    : IDictionary<string, StringValues>) =
+    parseModel<'T> culture data true
+
+/// ** Description **
+/// Create an instance of type `'T` from a given set of `data`.
+/// It will try to match each property of `'T` with a key from the `data` dictionary and parse the associated value to the value of `'T`'s property. If a property is missing from the `data` set or cannot be parsed then it will be omitted and a default value will be set (either `null` for reference types or a default value for value types).
+/// ** Parameters **
+///     - `culture`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
+///     - `data`: A key-value dictionary of values for each property of type `'T`.
+/// ** Output **
+/// An instance of type `'T`. Not all properties might be set. Null checks are required for reference types.
+let bindModel<'T> (culture : CultureInfo option)
+                  (data    : IDictionary<string, StringValues>) =
+    (parseModel<'T> culture data false).Value
+
+// ---------------------------
+// HttpContext extensions
+// ---------------------------
 
 type HttpContext with
     /// ** Description **
@@ -52,19 +210,12 @@ type HttpContext with
     /// Returns a `Task<'T>`.
     member this.BindFormAsync<'T> (?cultureInfo : CultureInfo) =
         task {
-            let! form   = this.Request.ReadFormAsync()
-            let culture = defaultArg cultureInfo CultureInfo.InvariantCulture
-            let obj     = Activator.CreateInstance<'T>()
-            let props   = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
-            props
-            |> Seq.iter (fun p ->
-                let strValue = ref (StringValues())
-                if form.TryGetValue(p.Name, strValue)
-                then
-                    let converter = TypeDescriptor.GetConverter p.PropertyType
-                    let value = converter.ConvertFromString(null, culture, strValue.Value.ToString())
-                    p.SetValue(obj, value, null))
-            return obj
+            let! form = this.Request.ReadFormAsync()
+            return
+                form
+                |> Seq.map (fun i -> i.Key, i.Value)
+                |> dict
+                |> bindModel<'T> cultureInfo
         }
 
     /// ** Description **
@@ -74,50 +225,22 @@ type HttpContext with
     /// ** Output **
     /// Returns a `Task<'T>`.
     member this.BindQueryString<'T> (?cultureInfo : CultureInfo) =
-        let obj     = Activator.CreateInstance<'T>()
-        let culture = defaultArg cultureInfo CultureInfo.InvariantCulture
-        let props   = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
-        props
-        |> Seq.iter (fun p ->
-            match this.TryGetQueryStringValue p.Name with
-            | None            -> ()
-            | Some queryValue ->
+        this.Request.Query
+        |> Seq.map (fun i -> i.Key, i.Value)
+        |> dict
+        |> bindModel<'T> cultureInfo
 
-                let isOptionType, isNullableType =
-                    if p.PropertyType.GetTypeInfo().IsGenericType
-                    then
-                        let typeDef = p.PropertyType.GetGenericTypeDefinition()
-                        (typeDef = typedefof<Option<_>>,
-                         typeDef = typedefof<Nullable<_>>)
-                    else (false, false)
-
-                let propertyType =
-                    if isOptionType || isNullableType then
-                        p.PropertyType.GetGenericArguments().[0]
-                    else
-                        p.PropertyType
-
-                let propertyType =
-                    if propertyType.GetTypeInfo().IsValueType then
-                        (typedefof<Nullable<_>>).MakeGenericType([|propertyType|])
-                    else
-                        propertyType
-
-                let converter = TypeDescriptor.GetConverter propertyType
-
-                let value = converter.ConvertFromString(null, culture, queryValue)
-
-                if isOptionType then
-                    let cases = FSharpType.GetUnionCases(p.PropertyType)
-                    let value =
-                        if isNull value then
-                            FSharpValue.MakeUnion(cases.[0], [||])
-                        else
-                            FSharpValue.MakeUnion(cases.[1], [|value|])
-                    p.SetValue(obj, value, null)
-                else
-                    p.SetValue(obj, value, null))
-        obj
+    /// ** Description **
+    /// Parses all parameters of a request's query string into an object of type `'T`.
+    /// ** Parameters **
+    ///     - `cultureInfo`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
+    /// ** Output **
+    /// Returns a `Task<'T>`.
+    member this.TryBindQueryString<'T> (?cultureInfo : CultureInfo) =
+        this.Request.Query
+        |> Seq.map (fun i -> i.Key, i.Value)
+        |> dict
+        |> tryBindModel<'T> cultureInfo
 
     /// ** Description **
     /// Parses the request body into an object of type `'T` based on the request's `Content-Type` header.
