@@ -77,6 +77,29 @@ let configuredHandler =
         let configuration = ctx.GetService<IConfiguration>()
         text configuration.["HelloMessage"] next ctx
 
+let smallFileUploadHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            return!
+                (match ctx.Request.HasFormContentType with
+                | false -> RequestErrors.BAD_REQUEST "Bad request"
+                | true  ->
+                    ctx.Request.Form.Files
+                    |> Seq.fold (fun acc file -> sprintf "%s\n%s" acc file.FileName) ""
+                    |> text) next ctx
+        }
+
+let smallFileUploadHandler2 =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            let formFeature = ctx.Features.Get<IFormFeature>()
+            let! form = formFeature.ReadFormAsync CancellationToken.None
+            return!
+                (form.Files
+                |> Seq.fold (fun acc file -> sprintf "%s\n%s" acc file.FileName) ""
+                |> text) next ctx
+        }
+
 let time() = System.DateTime.Now.ToString()
 
 [<CLIMutable>]
@@ -111,6 +134,8 @@ let webApp =
                 route  "/once"       >=> (time() |> text)
                 route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
                 route  "/configured" >=> configuredHandler
+                route "/small-upload"  >=> smallFileUploadHandler
+                route "/small-upload2" >=> smallFileUploadHandler2
             ]
         route "/car" >=> submitCar
         RequestErrors.notFound (text "Not Found") ]

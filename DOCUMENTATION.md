@@ -25,6 +25,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [Routing](#routing)
     - [Query Strings](#query-strings)
     - [Model Binding](#model-binding)
+    - [File Uploads](#file-uploads)
     - [Authentication and Authorization](#authentication-and-authorization)
     - [Conditional Requests](#conditional-requests)
     - [Response Writing](#response-writing)
@@ -1342,6 +1343,51 @@ let webApp =
         route "/car" >=> submitCar
     ]
 ```
+
+### File Uploads
+
+ASP.NET Core makes it really easy to process uploaded files.
+
+The `HttpContext.Request.Form.Files` collection can be used to process one or many small files which have been sent by a client:
+
+```fsharp
+open Giraffe
+
+let smallFileUploadHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            return!
+                (match ctx.Request.HasFormContentType with
+                | false -> RequestErrors.BAD_REQUEST "Bad request"
+                | true  ->
+                    ctx.Request.Form.Files
+                    |> Seq.fold (fun acc file -> sprintf "%s\n%s" acc file.FileName) ""
+                    |> text) next ctx
+        }
+
+let webApp = route "/small-upload" >=> smallFileUploadHandler
+```
+
+You can also read uploaded files by utilizing the `IFormFeature` and the `ReadFormAsync` method:
+
+```fsharp
+let anotherFileUploadHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            let formFeature = ctx.Features.Get<IFormFeature>()
+            let! form = formFeature.ReadFormAsync CancellationToken.None
+            return!
+                (form.Files
+                |> Seq.fold (fun acc file -> sprintf "%s\n%s" acc file.FileName) ""
+                |> text) next ctx
+        }
+
+let webApp = route "/large-upload" >=> anotherFileUploadHandler
+```
+
+For large file uploads it is recommended to [stream the file](https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads#uploading-large-files-with-streaming) in order to prevent resource exhaustion.
+
+See also [large file uploads in ASP.NET Core](https://stackoverflow.com/questions/36437282/dealing-with-large-file-uploads-on-asp-net-core-1-0) on StackOverflow.
 
 ### Authentication and Authorization
 
