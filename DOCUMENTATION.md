@@ -181,6 +181,14 @@ let readFileAndDoSomething (filePath : string) =
 
 For more information please visit the official [TaskBuilder.fs](https://github.com/rspeele/TaskBuilder.fs) GitHub repository.
 
+**IMPORTANT NOTICE**
+
+If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks.ContextInsensitive` namespace to resolve any type inference issues:
+
+```fsharp
+open FSharp.Control.Tasks.ContextInsensitive
+```
+
 ## Basics
 
 ### Dependency Management
