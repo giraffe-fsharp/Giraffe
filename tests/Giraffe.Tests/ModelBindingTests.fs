@@ -212,6 +212,25 @@ let ``ModelParser.tryParse with complete model data but wrong union case`` () =
     | Some _ -> assertFail "Model had wrong data and should have not bound successfully."
     | None   -> ()
 
+[<Fact>]
+let ``ModelParser.tryParse with complete model data but wrong data`` () =
+    let id = Guid.NewGuid()
+    let modelData =
+        dict [
+            "Id"        , StringValues (id.ToString())
+            "FirstName" , StringValues "Susan"
+            "MiddleName", StringValues "Elisabeth"
+            "LastName"  , StringValues "Doe"
+            "Sex"       , StringValues "Female"
+            "BirthDate" , StringValues "wrong"
+            "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+        ]
+    let culture = None
+    let result = ModelParser.tryParse<Model> culture modelData
+    match result with
+    | Some _ -> assertFail "Model had wrong data and should have not bound successfully."
+    | None   -> ()
+
 // ---------------------------------
 // ModelParser.parse Tests
 // ---------------------------------
@@ -347,6 +366,36 @@ let ``ModelParser.parse with incomplete model data and wrong union case`` () =
     Assert.Null(result.LastName)
     Assert.Null(result.Sex)
     Assert.Equal(expected.BirthDate, result.BirthDate)
+    Assert.Equal(expected.Nicknames, result.Nicknames)
+
+[<Fact>]
+let ``ModelParser.parse with complete model data but wrong data`` () =
+    let modelData =
+        dict [
+            "FirstName" , StringValues "Susan"
+            "MiddleName", StringValues "Elisabeth"
+            "Sex"       , StringValues "wrong"
+            "BirthDate" , StringValues "wrong"
+            "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+        ]
+    let expected =
+        {
+            Id         = Guid.Empty
+            FirstName  = "Susan"
+            MiddleName = Some "Elisabeth"
+            LastName   = null
+            Sex        = Unchecked.defaultof<Sex>
+            BirthDate  = Unchecked.defaultof<DateTime>
+            Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
+        }
+    let culture = None
+    let result = ModelParser.parse<Model> culture modelData
+    Assert.Equal(expected.Id, result.Id)
+    Assert.Equal(expected.FirstName, result.FirstName)
+    Assert.Equal(expected.MiddleName, result.MiddleName)
+    Assert.Null(result.LastName)
+    Assert.Null(result.Sex)
+    Assert.Equal(expected.BirthDate, DateTime.MinValue)
     Assert.Equal(expected.Nicknames, result.Nicknames)
 
 // ---------------------------------
@@ -689,7 +738,6 @@ let ``BindQueryString with nullable property test`` () =
         let! _ = testRoute "?" { NullableInt = Nullable<_>(); NullableDateTime = Nullable<_>() }
         return!  testRoute "?NullableInt=&NullableDateTime=" { NullableInt = Nullable<_>(); NullableDateTime = Nullable<_>() }
     }
-
 
 [<Fact>]
 let ``BindModelAsync with JSON content returns correct result`` () =

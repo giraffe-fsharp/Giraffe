@@ -94,8 +94,11 @@ module ModelParser =
                 then (typedefof<Nullable<_>>).MakeGenericType([| t |])
                 else t
                 |> TypeDescriptor.GetConverter
-            converter.ConvertFromString(null, culture, rawValues.ToString())
-            |> Some
+            try
+                converter.ConvertFromString(null, culture, rawValues.ToString())
+                |> Some
+            with
+                | :? FormatException -> None
 
     let private parseModel<'T> (cultureInfo : CultureInfo option)
                                (data        : IDictionary<string, StringValues>)
