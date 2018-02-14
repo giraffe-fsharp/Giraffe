@@ -152,7 +152,7 @@ module ModelParser =
     /// Tries to create an instance of type `'T` from a given set of `data`.
     /// It will try to match each property of `'T` with a key from the `data` dictionary and parse the associated value to the value of `'T`'s property.
     /// ** Parameters **
-    ///     - `culture`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
+    ///     - `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
     ///     - `data`: A key-value dictionary of values for each property of type `'T`. Only optional properties can be omitted from the dictionary.
     /// ** Output **
     /// If all properties were able to successfully parse then `Some 'T` will be returned, otherwise `None`.
@@ -164,7 +164,7 @@ module ModelParser =
     /// Create an instance of type `'T` from a given set of `data`.
     /// It will try to match each property of `'T` with a key from the `data` dictionary and parse the associated value to the value of `'T`'s property. If a property is missing from the `data` set or cannot be parsed then it will be omitted and a default value will be set (either `null` for reference types or a default value for value types).
     /// ** Parameters **
-    ///     - `culture`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
+    ///     - `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
     ///     - `data`: A key-value dictionary of values for each property of type `'T`.
     /// ** Output **
     /// An instance of type `'T`. Not all properties might be set. Null checks are required for reference types.
@@ -211,7 +211,7 @@ type HttpContext with
     /// ** Description **
     /// Parses all input elements from an HTML form into an object of type `'T`.
     /// ** Parameters **
-    ///     - `cultureInfo`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
+    ///     - `cultureInfo`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
     /// ** Output **
     /// Returns a `Task<'T>`.
     member this.BindFormAsync<'T> (?cultureInfo : CultureInfo) =
@@ -227,7 +227,7 @@ type HttpContext with
     /// ** Description **
     /// Tries to parse all input elements from an HTML form into an object of type `'T`.
     /// ** Parameters **
-    ///     - `cultureInfo`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
+    ///     - `cultureInfo`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
     /// ** Output **
     /// Returns a `Task<'T option>`.
     member this.TryBindFormAsync<'T> (?cultureInfo : CultureInfo) =
@@ -243,7 +243,7 @@ type HttpContext with
     /// ** Description **
     /// Parses all parameters of a request's query string into an object of type `'T`.
     /// ** Parameters **
-    ///     - `cultureInfo`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
+    ///     - `cultureInfo`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
     /// ** Output **
     /// Returns an instance of type `'T`.
     member this.BindQueryString<'T> (?cultureInfo : CultureInfo) =
@@ -255,7 +255,7 @@ type HttpContext with
     /// ** Description **
     /// Tries to parse all parameters of a request's query string into an object of type `'T`.
     /// ** Parameters **
-    ///     - `cultureInfo`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
+    ///     - `cultureInfo`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
     /// ** Output **
     /// Returns an `Option<'T>`.
     member this.TryBindQueryString<'T> (?cultureInfo : CultureInfo) =
@@ -267,7 +267,7 @@ type HttpContext with
     /// ** Description **
     /// Parses the request body into an object of type `'T` based on the request's `Content-Type` header.
     /// ** Parameters **
-    ///     - `cultureInfo`: Optional culture information when parsing culture specific data such as `DateTime` objects for example.
+    ///     - `cultureInfo`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
     /// ** Output **
     /// Returns a `Task<'T>`.
     member this.BindModelAsync<'T> (?cultureInfo : CultureInfo) =
@@ -292,6 +292,12 @@ type HttpContext with
 // HttpHandler functions
 // ---------------------------
 
+/// ** Description **
+/// Parses a JSON payload into an instance of type `'T`.
+/// ** Parameters **
+///     - `f`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let bindJson<'T> (f : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
@@ -299,6 +305,12 @@ let bindJson<'T> (f : 'T -> HttpHandler) : HttpHandler =
             return! f model next ctx
         }
 
+/// ** Description **
+/// Parses an XML payload into an instance of type `'T`.
+/// ** Parameters **
+///     - `f`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let bindXml<'T> (f : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
@@ -306,6 +318,13 @@ let bindXml<'T> (f : 'T -> HttpHandler) : HttpHandler =
             return! f model next ctx
         }
 
+/// ** Description **
+/// Parses a HTTP form payload into an instance of type `'T`.
+/// ** Parameters **
+///     - `f`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
+///     - `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let bindForm<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
@@ -316,6 +335,33 @@ let bindForm<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHa
             return! f model next ctx
         }
 
+/// ** Description **
+/// Tries to parse a HTTP form payload into an instance of type `'T`.
+/// The payload must contain all non-optional properties of type `'T` (with correct data) in order to successfully parse the form data. If some data is missing or wrong then the `f` function will not be executed.
+/// ** Parameters **
+///     - `f`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
+///     - `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+let tryBindForm<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            let! result =
+                match culture with
+                | Some c -> ctx.TryBindFormAsync<'T> c
+                | None   -> ctx.TryBindFormAsync<'T>()
+            match result with
+            | None       -> return! abort
+            | Some model -> return! f model next ctx
+        }
+
+/// ** Description **
+/// Parses a HTTP query string into an instance of type `'T`.
+/// ** Parameters **
+///     - `f`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
+///     - `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let bindQuery<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let model =
@@ -324,6 +370,14 @@ let bindQuery<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpH
             | None   -> ctx.BindQueryString<'T>()
         f model next ctx
 
+/// ** Description **
+/// Tries to parse a query string into an instance of type `'T`.
+/// The query string must contain all non-optional properties of type `'T` (with correct data) in order to successfully parse the query string. If some data is missing or wrong then the `f` function will not be executed.
+/// ** Parameters **
+///     - `f`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
+///     - `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let tryBindQuery<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let result =
@@ -334,6 +388,14 @@ let tryBindQuery<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : Ht
         | None       -> abort
         | Some model -> f model next ctx
 
+/// ** Description **
+/// Parses a HTTP payload into an instance of type `'T`.
+/// The model can be sent via XML, JSON, form or query string.
+/// ** Parameters **
+///     - `f`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
+///     - `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let bindModel<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
