@@ -7,6 +7,17 @@ Release Notes
 
 - Added `subRoutef` http handler (see [subRoutef](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#subroutef))
 - Added `routex` and `routeCix` http handler (see [routex](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#routex))
+- Improved model binding
+    - Fixed issues: [#121](), #
+    - Added a `TryBindFormAsync` and a `TryBindQueryString` `HttpContext` extension methods
+    - Added new `HttpHandler` functions to offer a more functional API for model binding:
+        - `bindJson<'T>`
+        - `bindXml<'T>`
+        - `bindForm<'T>`
+        - `tryBindForm<'T>`
+        - `bindQuery<'T>`
+        - `tryBindQuery<'T>`
+        - `bindModel<'T>`
 
 #### Bug fixes
 
