@@ -76,11 +76,53 @@ let webApp =
         route "/"       >=> htmlFile "/pages/index.html" ]
 
 type Startup() =
+    member __.ConfigureServices (services : IServiceCollection) =
+        // Register default Giraffe dependencies
+        services.AddGiraffe() |> ignore
+
     member __.Configure (app : IApplicationBuilder)
                         (env : IHostingEnvironment)
                         (loggerFactory : ILoggerFactory) =
-
+        // Add Giraffe to the ASP.NET Core pipeline
         app.UseGiraffe webApp
+
+[<EntryPoint>]
+let main _ =
+    WebHostBuilder()
+        .UseKestrel()
+        .UseStartup<Startup>()
+        .Build()
+        .Run()
+    0
+```
+
+Instead of creating a `Startup` class you can also add Giraffe in a more functional way:
+
+```fsharp
+open Giraffe
+
+let webApp =
+    choose [
+        route "/ping"   >=> text "pong"
+        route "/"       >=> htmlFile "/pages/index.html" ]
+
+let configureApp (app : IApplicationBuilder) =
+    // Add Giraffe to the ASP.NET Core pipeline
+    app.UseGiraffe webApp
+
+let configureServices (services : IServiceCollection) =
+    // Add Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHostBuilder()
+        .UseKestrel()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .Build()
+        .Run()
+    0
 ```
 
 For more information please check the official [Giraffe documentation](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md).

@@ -13,6 +13,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [Warbler](#warbler)
     - [Tasks](#tasks)
 - [Basics](#basics)
+    - [Plugging Giraffe into ASP.NET Core](#plugging-giraffe-into-aspnet-core)
     - [Dependency Management](#dependency-management)
     - [Multiple Environments and Configuration](#multiple-environments-and-configuration)
     - [Logging](#logging)
@@ -190,6 +191,74 @@ open FSharp.Control.Tasks.ContextInsensitive
 ```
 
 ## Basics
+
+### Plugging Giraffe into ASP.NET Core
+
+Install the [Giraffe](https://www.nuget.org/packages/Giraffe) NuGet package:
+
+```
+PM> Install-Package Giraffe
+```
+
+Create a web application and plug it into the ASP.NET Core middleware:
+
+```fsharp
+open Giraffe
+
+let webApp =
+    choose [
+        route "/ping"   >=> text "pong"
+        route "/"       >=> htmlFile "/pages/index.html" ]
+
+type Startup() =
+    member __.ConfigureServices (services : IServiceCollection) =
+        // Register default Giraffe dependencies
+        services.AddGiraffe() |> ignore
+
+    member __.Configure (app : IApplicationBuilder)
+                        (env : IHostingEnvironment)
+                        (loggerFactory : ILoggerFactory) =
+        // Add Giraffe to the ASP.NET Core pipeline
+        app.UseGiraffe webApp
+
+[<EntryPoint>]
+let main _ =
+    WebHostBuilder()
+        .UseKestrel()
+        .UseStartup<Startup>()
+        .Build()
+        .Run()
+    0
+```
+
+Instead of creating a `Startup` class you can also add Giraffe in a more functional way:
+
+```fsharp
+open Giraffe
+
+let webApp =
+    choose [
+        route "/ping"   >=> text "pong"
+        route "/"       >=> htmlFile "/pages/index.html" ]
+
+let configureApp (app : IApplicationBuilder) =
+    // Add Giraffe to the ASP.NET Core pipeline
+    app.UseGiraffe webApp
+
+let configureServices (services : IServiceCollection) =
+    // Add Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHostBuilder()
+        .UseKestrel()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .Build()
+        .Run()
+    0
+```
 
 ### Dependency Management
 
@@ -382,6 +451,10 @@ let main _ =
 
 ```fsharp
 type Startup() =
+    member __.ConfigureServices (services : IServiceCollection) =
+        // Register default Giraffe dependencies
+        services.AddGiraffe() |> ignore
+
     member __.Configure (app : IApplicationBuilder)
                         (env : IHostingEnvironment)
                         (loggerFactory : ILoggerFactory) =
