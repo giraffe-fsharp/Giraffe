@@ -43,6 +43,7 @@
     <Compile Include="Core.fs" />
     <Compile Include="GiraffeViewEngine.fs" />
     <Compile Include="ModelBinding.fs" />
+    <Compile Include="ModelValidation.fs" />
     <Compile Include="Auth.fs" />
     <Compile Include="Routing.fs" />
     <Compile Include="ResponseWriters.fs" />

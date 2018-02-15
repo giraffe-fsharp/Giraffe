@@ -1,0 +1,47 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build GoogleAuthApp",
+            "command": "dotnet build samples/GoogleAuthApp/GoogleAuthApp/GoogleAuthApp.fsproj",
+            "type": "shell",
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build IdentityApp",
+            "command": "dotnet build samples/IdentityApp/IdentityApp/IdentityApp.fsproj",
+            "type": "shell",
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build JwtApp",
+            "command": "dotnet build samples/JwtApp/JwtApp/JwtApp.fsproj",
+            "type": "shell",
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build SampleApp",
+            "command": "dotnet build samples/SampleApp/SampleApp/SampleApp.fsproj",
+            "type": "shell",
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}
