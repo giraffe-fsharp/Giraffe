@@ -52,7 +52,7 @@ module WebApp =
     let webApp _ =
         choose [
             route Urls.person
-            >=> tryBindQuery<Adult> None (validateModel textHandler)
+            >=> tryBindQuery<Adult> (RequestErrors.badRequest (text "Parsing error"))None (validateModel textHandler)
         ]
 
     let errorHandler (ex : Exception) (_ : ILogger) : HttpHandler =

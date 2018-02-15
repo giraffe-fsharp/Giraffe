@@ -340,22 +340,26 @@ let bindForm<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHa
 
 /// ** Description **
 /// Tries to parse a HTTP form payload into an instance of type `'T`.
-/// The payload must contain all non-optional properties of type `'T` (with correct data) in order to successfully parse the form data. If some data is missing or wrong then the `f` function will not be executed.
+/// The payload must contain all non-optional properties of type `'T` (with correct data) in order to successfully parse the form data. If some data is missing or wrong then the `parsingErrorHandler` will be executed.
 /// ** Parameters **
-///     - `f`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
+///     - `parsingErrorHandler`: A `HttpHandler` function will get invoked when the model parsing fails.
 ///     - `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
+///     - `successhandler`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
 /// ** Output **
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-let tryBindForm<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHandler =
+let tryBindForm<'T> (parsingErrorHandler : HttpHandler)
+                    (culture             : CultureInfo option)
+                    (successhandler      : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             let! result =
                 match culture with
                 | Some c -> ctx.TryBindFormAsync<'T> c
                 | None   -> ctx.TryBindFormAsync<'T>()
-            match result with
-            | None       -> return! abort
-            | Some model -> return! f model next ctx
+            return!
+                (match result with
+                | None       -> parsingErrorHandler
+                | Some model -> successhandler model) next ctx
         }
 
 /// ** Description **
@@ -375,21 +379,24 @@ let bindQuery<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpH
 
 /// ** Description **
 /// Tries to parse a query string into an instance of type `'T`.
-/// The query string must contain all non-optional properties of type `'T` (with correct data) in order to successfully parse the query string. If some data is missing or wrong then the `f` function will not be executed.
+/// The query string must contain all non-optional properties of type `'T` (with correct data) in order to successfully parse the query string. If some data is missing or wrong then the `parsingErrorHandler` function will be executed.
 /// ** Parameters **
-///     - `f`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
+///     - `parsingErrorHandler`: A `HttpHandler` function will get invoked when the model parsing fails.
 ///     - `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
+///     - `successhandler`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
 /// ** Output **
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-let tryBindQuery<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHandler =
+let tryBindQuery<'T> (parsingErrorHandler : HttpHandler)
+                     (culture             : CultureInfo option)
+                     (successhandler      : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let result =
             match culture with
             | Some c -> ctx.TryBindQueryString<'T> c
             | None   -> ctx.TryBindQueryString<'T>()
-        match result with
-        | None       -> abort
-        | Some model -> f model next ctx
+        (match result with
+        | None       -> parsingErrorHandler
+        | Some model -> successhandler model) next ctx
 
 /// ** Description **
 /// Parses a HTTP payload into an instance of type `'T`.

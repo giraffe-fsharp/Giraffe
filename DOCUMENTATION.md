@@ -1393,7 +1393,7 @@ let webApp =
     ]
 ```
 
-The `tryBindForm<'T>` http handler is very similar, but instead of returning a `'T option` object it will short circuit the current handler if the model binding did not succeed, in which case the next route or handler will be invoked by the Giraffe pipeline:
+The `tryBindForm<'T>` http handler is very similar, but instead of returning a `'T option` object it will invoke an error handler function if the model binding does not succeed:
 
 ```fsharp
 [<CLIMutable>]
@@ -1406,6 +1406,7 @@ type Car =
     }
 
 let british = CultureInfo.CreateSpecificCulture("en-GB")
+let parsingError = RequestErrors.badRequest (text "The provided data is not complete or is badly formatted.")
 
 let webApp =
     choose [
@@ -1416,12 +1417,12 @@ let webApp =
             ]
         POST
         >=> route "/car"
-        >=> tryBindForm<Car> (Some british) (fun car -> Successful.OK car)
+        >=> tryBindForm<Car> parsingError (Some british) (fun car -> Successful.OK car)
         RequestErrors.NOT_FOUND "Not found"
     ]
 ```
 
-In the example above if a `Car` object could not be successfully created then the next handler will get invoked which will return a "Not found" response in this instance.
+In this example if a `Car` object could not be successfully created then the `parsingError` handler will get invoked which will return a `HTTP Bad Request` response.
 
 #### Binding Query Strings
 
@@ -1493,7 +1494,7 @@ The `BindQueryString<'T>` extension method and the `bindQuery<'T>` http handler 
 
 While this has its own advantages it is not very idiomatic to functional programming.
 
-For a more stricter (and more functional) model binding you can use the `TryBindQueryString<'T>` extension method or the `tryBindQuery<'T>` http handler function.
+For a more stricter (and more functional) model binding approach you can use the `TryBindQueryString<'T>` extension method or the `tryBindQuery<'T>` http handler function.
 
 They are both very similar to the previous binding methods, except that they will not create an instance of type `'T` if the submitted query string did not contain all mandatory fields (any field which is not an F# option type) or had badly formatted data.
 
@@ -1533,7 +1534,7 @@ let webApp =
     ]
 ```
 
-The `tryBindQuery<'T>` http handler is very similar, but instead of returning a `'T option` object it will short circuit the current handler if the model binding did not succeed, in which case the next route or handler will be invoked by the Giraffe pipeline:
+The `tryBindQuery<'T>` http handler is very similar, but instead of returning a `'T option` object it will invoke an error handler function if the model binding does not succeed:
 
 ```fsharp
 [<CLIMutable>]
@@ -1546,6 +1547,7 @@ type Car =
     }
 
 let british = CultureInfo.CreateSpecificCulture("en-GB")
+let parsingError = RequestErrors.badRequest (text "The provided data is not complete or is badly formatted.")
 
 let webApp =
     choose [
@@ -1556,12 +1558,12 @@ let webApp =
             ]
         POST
         >=> route "/car"
-        >=> tryBindQuery<Car> (Some british) (fun car -> Successful.OK car)
+        >=> tryBindQuery<Car> parsingError (Some british) (fun car -> Successful.OK car)
         RequestErrors.NOT_FOUND "Not found"
     ]
 ```
 
-In the example above if a `Car` object could not be successfully created then the next handler will get invoked which will return a "Not found" response in this instance.
+In this example if a `Car` object could not be successfully created then the `parsingError` handler will get invoked which will return a `HTTP Bad Request` response.
 
 **Special note**
 
@@ -1693,11 +1695,12 @@ type Adult =
 
 module WebApp =
     let textHandler (x : obj) = text (x.ToString())
+    let parsingError = RequestErrors.BAD_REQUEST "Could not parse an adult."
 
     let webApp _ =
         choose [
             route "/person"
-            >=> tryBindQuery<Adult> None textHandler
+            >=> tryBindQuery<Adult> parsingError None textHandler
             RequestErrors.NOT_FOUND "Not found"
         ]
 ```
@@ -1748,13 +1751,15 @@ In order to make use of that validation method from within a Giraffe `HttpHandle
 module WebApp =
     let adultHandler (adult : Adult) : HttpHandler =
         match adult.HasErrors() with
-        | Some msg -> RequestErrors.badRequest (text msg)
+        | Some msg -> RequestErrors.BAD_REQUEST msg
         | None     -> text (adult.ToString())
+
+    let parsingError = RequestErrors.BAD_REQUEST "Could not parse an adult."
 
     let webApp _ =
         choose [
             route "/person"
-            >=> tryBindQuery<Adult> None adultHandler
+            >=> tryBindQuery<Adult> parsingError None adultHandler
             RequestErrors.NOT_FOUND "Not found"
         ]
 ```
@@ -1795,10 +1800,12 @@ type Adult =
 module WebApp =
     let textHandler (x : obj) = text (x.ToString())
 
+    let parsingError = RequestErrors.BAD_REQUEST "Could not parse an adult."
+
     let webApp _ =
         choose [
             route Urls.person
-            >=> tryBindQuery<Adult> None (validateModel textHandler)
+            >=> tryBindQuery<Adult> parsingError None (validateModel textHandler)
         ]
 ```
 

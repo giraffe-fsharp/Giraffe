@@ -113,6 +113,8 @@ type Car =
             if this.Wheels > 1 && this.Wheels <= 6 then Ok this
             else Error (RequestErrors.BAD_REQUEST "Wheels must be a value between 2 and 6.")
 
+let parsingError = RequestErrors.BAD_REQUEST "Could not parse an adult."
+
 let webApp =
     choose [
         GET >=>
@@ -133,7 +135,7 @@ let webApp =
                 route  "/upload2"    >=> fileUploadHandler2
             ]
         route "/car"  >=> bindModel<Car> None json
-        route "/car2" >=> tryBindQuery<Car> None (validateModel xml)
+        route "/car2" >=> tryBindQuery<Car> parsingError None (validateModel xml)
         RequestErrors.notFound (text "Not Found") ]
 
 // ---------------------------------

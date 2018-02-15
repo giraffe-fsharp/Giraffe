@@ -402,14 +402,11 @@ let ``ModelParser.parse with complete model data but wrong data`` () =
 // TryBindQueryString Tests
 // ---------------------------------
 
-// ?firstName=John&lastName=Doe&sex=male&nicknames[]=Johnny&nicknames[]=JD&nicknames[]=Jay
-// Name: John Doe; Sex: Male; Nicknames: Johnny, JD, Jay
-
 [<Fact>]
 let ``tryBindQuery with complete data and list items with []`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let bindQuery = tryBindQuery<QueryModel> None
+    let bindQuery = tryBindQuery<QueryModel> (RequestErrors.badRequest (text "Parsing error")) None
     let app =
         GET >=> choose [
             route "/query" >=> bindQuery (fun m -> text(m.ToString()))
@@ -436,7 +433,7 @@ let ``tryBindQuery with complete data and list items with []`` () =
 let ``tryBindQuery with complete data and list items without []`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let bindQuery = tryBindQuery<QueryModel> None
+    let bindQuery = tryBindQuery<QueryModel> (RequestErrors.badRequest (text "Parsing error")) None
     let app =
         GET >=> choose [
             route "/query" >=> bindQuery (fun m -> text(m.ToString()))
@@ -463,7 +460,7 @@ let ``tryBindQuery with complete data and list items without []`` () =
 let ``tryBindQuery without optional data`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let bindQuery = tryBindQuery<QueryModel> None
+    let bindQuery = tryBindQuery<QueryModel> (RequestErrors.badRequest (text "Parsing error")) None
     let app =
         GET >=> choose [
             route "/query" >=> bindQuery (fun m -> text(m.ToString()))
@@ -490,14 +487,14 @@ let ``tryBindQuery without optional data`` () =
 let ``tryBindQuery with incomplete data`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let bindQuery = tryBindQuery<QueryModel> None
+    let bindQuery = tryBindQuery<QueryModel> (RequestErrors.badRequest (text "Parsing error")) None
     let app =
         GET >=> choose [
             route "/query" >=> bindQuery (fun m -> text(m.ToString()))
             setStatusCode 404 >=> text "Not found"
         ]
 
-    let expected = "Not found"
+    let expected = "Parsing error"
     let queryStr = "?lastName=Doe&sex=male"
 
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
