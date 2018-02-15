@@ -52,6 +52,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [Razor](#razor)
     - [DotLiquid](#dotliquid)
 - [Special Mentions](#special-mentions)
+- [Appendix](#appendix)
 
 ## Fundamentals
 
@@ -1422,7 +1423,7 @@ let webApp =
 
 In the example above if a `Car` object could not be successfully created then the next handler will get invoked which will return a "Not found" response in this instance.
 
-#### BindQueryString
+#### Binding Query Strings
 
 The `BindQueryString<'T> (?cultureInfo : CultureInfo)` extension method binds query string parameters to an object of type `'T`. An optional `CultureInfo` object can be specified for parsing culture specific data such as `DateTime` objects and floating point numbers:
 
@@ -1562,7 +1563,45 @@ let webApp =
 
 In the example above if a `Car` object could not be successfully created then the next handler will get invoked which will return a "Not found" response in this instance.
 
-#### BindModelAsync
+**Special note**
+
+[Aleksander Heintz](https://github.com/Alxandr) has created a [Gist](https://gist.github.com/Alxandr/50aef7fbe4806ceb4c2889f1cbde1438) which contains a re-usable query string API based on how Chiron works, which allows one doing something like the following:
+
+```fsharp
+type Report =
+  { author: string option
+    project: string option
+    week: int option
+    summary: string option
+    progress: string list
+    comments: string list
+    plan: string list }
+
+  static member FromQuery (_: Report) =
+        fun author project week summary progress comments plan ->
+          { author = author
+            project = project
+            week = week
+            summary = summary
+            progress = progress
+            comments = comments
+            plan = plan }
+    <!> Query.read "author"
+    <*> Query.read "project"
+    <*> Query.read "week"
+    <*> Query.read "summary"
+    <*> Query.read "progress"
+    <*> Query.read "comments"
+    <*> Query.read "plan"
+
+let reportRoute = route "/report" >=> Query.bind (fun (r: Report) -> text <| sprintf "%A" r)
+```
+
+Even though this API didn't quite fit with Giraffe's existing `tryBindQuery` and [model validation](#model-validation) function it is a nice example of how Giraffe can be extended to do similar things in different ways.
+
+If you prefer this API you can either copy paste [Aleksander](https://github.com/Alxandr)'s code from the [provided Gist](https://gist.github.com/Alxandr/50aef7fbe4806ceb4c2889f1cbde1438) or find the contents of the Gist in the [appendix](#aleksander-heintzs-query-string-binder-api) of this document (in case the Gist gets ever deleted).
+
+#### Binding Models (catch all)
 
 The `BindModelAsync<'T> (?cultureInfo : CultureInfo)` method is a generic model binding function which will try to pick the right model parsing function based on a request's HTTP verb and `Content-Type` header. With the help of `BindModelAsync<'T>` it is possible to create a single endpoint which can bind JSON, XML, form and query string data:
 
@@ -3032,3 +3071,500 @@ For more information please visit the official [Giraffe DotLiquid](https://githu
 [Saturn](https://github.com/SaturnFramework/Saturn) is an opinionated, web development framework built on top of Giraffe which implements the server-side, functional MVC pattern for F#.
 
 Saturn is not directly part of Giraffe but builds a [Phoenix](http://phoenixframework.org/) inspired MVC pattern on top of Giraffe. It is being developed and maintained by the author of the [Ionide project](https://github.com/ionide/ionide-vscode-fsharp).
+
+## Appendix
+
+### Aleksander Heintz's query string binder API
+
+```fsharp
+[<AutoOpen>]
+module Giraffe.Query
+
+open Aether
+open Microsoft.AspNetCore.Http
+
+module Helpers =
+  let konst v _ = v
+
+  [<RequireQualifiedAccess>]
+  module Option =
+    let inline ofBool b = if b then Some [] else None
+
+open Helpers
+
+[<AutoOpen>]
+module Values =
+  type QueryValue = string list option
+
+  [<RequireQualifiedAccess>]
+  module QueryValue =
+
+    let inline private (|Empty|NonEmpty|) xs =
+      match xs with
+      | [] -> Empty
+      | _  -> NonEmpty xs
+
+    (* Epimorphisms *)
+
+    let private Zero__ =
+      (function | None -> Some ()
+                | _    -> None), konst None
+
+    let private Bool__ =
+      (function | None       -> Some false
+                | Some Empty -> Some true
+                | _          -> None), Option.ofBool
+
+    let private String__ =
+      (function | Some [v] -> Some v
+                | _        -> None), List.singleton >> Some
+
+    let private List__ =
+      (function | None    -> Some []
+                | Some vs -> Some vs), Some
+
+    (* Prisms *)
+
+    let Zero_ =
+      Prism.ofEpimorphism Zero__
+
+    let Bool_ =
+      Prism.ofEpimorphism Bool__
+
+    let String_ =
+      Prism.ofEpimorphism String__
+
+    let List_ =
+      Prism.ofEpimorphism List__
+
+  (* Functional *)
+  [<AutoOpen>]
+  module Functional =
+    type QueryValueResult<'a> = Result<'a, string>
+    type QueryValue<'a> = QueryValue -> QueryValueResult<'a> * QueryValue
+
+    (* Functions *)
+
+    [<RequireQualifiedAccess>]
+    module QueryValue =
+      let inline unit (a: 'a) : QueryValue<_> =
+        fun value ->
+          Ok a, value
+
+      let zero = unit ()
+
+      let inline error (e: string) : QueryValue<_> =
+        fun value ->
+          Error e, value
+
+      let inline internal ofResult result =
+        fun value ->
+          result, value
+
+      let inline bind (m: QueryValue<'a>) (f: 'a -> QueryValue<'b>) : QueryValue<'b> =
+        fun value ->
+          match m value with
+          | Ok a, value    -> f a value
+          | Error e, value -> Error e, value
+
+      let inline apply (f: QueryValue<'a -> 'b>) (m: QueryValue<'a>) : QueryValue<'b> =
+        bind f (fun f' ->
+          bind m (f' >> unit))
+
+      let inline map (f: 'a -> 'b) (m: QueryValue<'a>) : QueryValue<'b> =
+        bind m (f >> unit)
+
+      let inline map2 (f: 'a -> 'b -> 'c) (m1: QueryValue<'a>) (m2: QueryValue<'b>) : QueryValue<'c> =
+        apply (apply (unit f) m1) m2
+
+    (* Operators *)
+
+    module Operators =
+      let inline (>>=) m f =
+        QueryValue.bind m f
+
+      let inline (=<<) f m =
+        QueryValue.bind m f
+
+      let inline (<*>) f m =
+        QueryValue.apply f m
+
+      let inline (<!>) f m =
+        QueryValue.map f m
+
+      let inline ( *>) m1 m2 =
+        QueryValue.map2 (konst id) m1 m2
+
+      let inline (<* ) m1 m2 =
+        QueryValue.map2 konst m1 m2
+
+      let inline (>=>) f g =
+        fun x -> f x >>= g
+
+      let inline (<=<) g f =
+        fun x -> f x >>= g
+
+  module Builder =
+    open Operators
+
+    type QueryValueBuilder () =
+      member inline __.Bind (m1, f) = m1 >>= f
+
+      member inline __.Combine (m1, m2) = m1 *> m2
+
+      member inline __.Delay f = QueryValue.zero >>= f
+
+      member inline __.Return x = QueryValue.unit x
+
+      member inline __.Zero () = QueryValue.zero
+
+  let queryValue = Builder.QueryValueBuilder ()
+
+  [<AutoOpen>]
+  module Optic =
+
+    [<RequireQualifiedAccess>]
+    module QueryValue =
+
+      [<RequireQualifiedAccess>]
+      module Optic =
+
+        type Get =
+          | Get with
+
+          static member (^.) (Get, l: Lens<QueryValue, 'b>) : QueryValue<_> =
+            fun value ->
+              Ok (Optic.get l value), value
+
+          static member (^.) (Get, p: Prism<QueryValue, 'b>) : QueryValue<_> =
+            fun value ->
+              match Optic.get p value with
+              | Some x -> Ok x, value
+              | None   -> Error (sprintf "Couldn't use Prism %A on query string value: '%A'" p value), value
+
+        let inline get o : QueryValue<_> =
+          (Get ^. o)
+
+        type TryGet =
+          | TryGet with
+
+          static member (^.) (TryGet, l: Lens<QueryValue, 'b>) : QueryValue<_> =
+            fun value ->
+              Ok (Some (Optic.get l value)), value
+
+          static member (^.) (TryGet, p: Prism<QueryValue, 'b>) : QueryValue<_> =
+            fun value ->
+              Ok (Optic.get p value), value
+
+        let inline tryGet o : QueryValue<_> =
+          (TryGet ^. o)
+
+        let inline set o v : QueryValue<_> =
+          fun query ->
+            Ok (), Optic.set o v query
+
+        let inline map o f : QueryValue<_> =
+          fun query ->
+            Ok (), Optic.map o f query
+
+  [<AutoOpen>]
+  module Mapping =
+    open Operators
+
+    (* From *)
+
+    (* Defaults *)
+
+    type FromQueryValueDefaults = FromQueryValueDefaults with
+
+      (* Basic Types *)
+
+      static member inline FromQueryValue (_: unit) =
+        QueryValue.Optic.get QueryValue.Zero_
+
+      static member inline FromQueryValue (_: bool) =
+        QueryValue.Optic.get QueryValue.Bool_
+
+      static member inline FromQueryValue (_: string) =
+        QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: QueryValue) =
+        QueryValue.Optic.get id_
+
+    (* Mapping Functions *)
+
+    let inline internal fromQueryValueDefaults (a: ^a, _: ^b) =
+      ((^a or ^b) : (static member FromQueryValue: ^a -> ^a QueryValue) a)
+
+    let inline internal fromQueryValue x =
+      fst (fromQueryValueDefaults (Unchecked.defaultof<'a>, FromQueryValueDefaults) x)
+
+    let inline internal fromQueryValueFold xs =
+      List.fold (fun r x ->
+        match r with
+        | Error e -> Error e
+        | Ok xs   ->
+          match fromQueryValue x with
+          | Ok x    -> Ok (x :: xs)
+          | Error e -> Error e) (Ok []) (xs |> List.map (List.singleton >> Some) |> List.rev)
+
+    let inline private tryParse name f =
+      fun value ->
+        match f value with
+        | true, v -> fun value -> Ok v, value
+        | _       -> fun value -> Error (sprintf "Failed to parse '%A' as %s" value name), value
+
+    (* Defaults *)
+
+    open System
+    type FromQueryValueDefaults with
+
+      (* Numbers *)
+
+      static member inline FromQueryValue (_: float) =
+            tryParse "float" Double.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: decimal) =
+            tryParse "decimal" Decimal.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: int) =
+            tryParse "int" Int32.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: int16) =
+            tryParse "int16" Int16.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: int64) =
+            tryParse "int64" Int64.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: float32) =
+            tryParse "float32" Single.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: uint16) =
+            tryParse "uint16" UInt16.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: uint32) =
+            tryParse "uint32" UInt32.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: uint64) =
+            tryParse "uint64" UInt64.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      (* Lists *)
+
+      static member inline FromQueryValue (_: 'a list) : QueryValue<'a list> =
+            fromQueryValueFold >> QueryValue.ofResult
+        =<< QueryValue.Optic.get QueryValue.List_
+
+      static member inline FromQueryValue (_: 'a array) : QueryValue<'a array> =
+            fromQueryValueFold >> Result.map Array.ofList >> QueryValue.ofResult
+        =<< QueryValue.Optic.get QueryValue.List_
+
+
+      (* Set *)
+
+      static member inline FromQueryValue (_: Set<'a>) : QueryValue<Set<'a>> =
+            fromQueryValueFold >> Result.map Set.ofList >> QueryValue.ofResult
+        =<< QueryValue.Optic.get QueryValue.List_
+
+
+      (* Options *)
+
+      static member inline FromQueryValue (_: 'a option) : QueryValue<'a option> =
+        fun value ->
+          match fromQueryValue value with
+          | Ok v    -> Ok (Some v), value
+          | _       -> Ok None, value
+
+type Query = Map<string, string list>
+
+module Convert =
+  open Microsoft.AspNetCore.WebUtilities
+
+  let toQuery (qs: QueryString) : Query =
+    QueryHelpers.ParseQuery qs.Value
+    |> Seq.map (fun kvp -> kvp.Key, kvp.Value |> List.ofSeq)
+    |> Map.ofSeq
+
+(* Functional *)
+
+[<AutoOpen>]
+module Functional =
+  type QueryResult<'a> = Result<'a, string>
+  type Query<'a> = Query -> QueryResult<'a> * Query
+
+  (* Functions *)
+
+  [<RequireQualifiedAccess>]
+  module Query =
+    let inline unit x : Query<_> =
+      fun query ->
+        Ok x, query
+
+    let zero = unit ()
+
+    let inline error e : Query<_> =
+      fun query ->
+        Error e, query
+
+    let inline internal ofResult result =
+      fun query ->
+        result, query
+
+    let inline bind (m: Query<'a>) (f: 'a -> Query<'b>) : Query<'b> =
+      fun query ->
+        match m query with
+        | Ok a, query    -> f a query
+        | Error e, query -> Error e, query
+
+    let inline apply f m =
+      bind f (fun f' ->
+        bind m (f' >> unit))
+
+    let inline map f m =
+      bind m (f >> unit)
+
+    let inline map2 f m1 m2 =
+      apply (apply (unit f) m1) m2
+
+(* Operators *)
+
+module Operators =
+  let inline (>>=) m f =
+    Query.bind m f
+
+  let inline (=<<) f m =
+    Query.bind m f
+
+  let inline (<*>) f m =
+    Query.apply f m
+
+  let inline (<!>) f m =
+    Query.map f m
+
+  let inline ( *>) m1 m2 =
+    Query.map2 (konst id) m1 m2
+
+  let inline (<* ) m1 m2 =
+    Query.map2 konst m1 m2
+
+  let inline (>=>) f g =
+    fun x -> f x >>= g
+
+  let inline (<=<) g f =
+    fun x -> f x >>= g
+
+(* Builder *)
+
+module Builder =
+  open Operators
+
+  type QueryBuilder () =
+    member inline __.Bind (m1, f) = m1 >>= f
+
+    member inline __.Combine (m1, m2) = m1 *> m2
+
+    member inline __.Delay f = Query.zero >>= f
+
+    member inline __.Return x = Query.unit x
+
+    member inline __.Zero () = Query.zero
+
+let query = Builder.QueryBuilder ()
+
+[<AutoOpen>]
+module Mapping =
+  open Operators
+
+  (* From *)
+
+  (* Defaults *)
+
+  type FromQueryDefaults = FromQueryDefaults with
+
+    static member inline FromQuery (_: Query) : Query<Query> =
+      fun query -> Ok query, query
+
+    static member inline FromQuery (_: Map<string, string>) : Query<Map<string, string>> =
+      fun query ->
+        let ret =
+          query
+          |> Map.filter (konst (function | [_] -> true | _ -> false))
+          |> Map.map (konst List.head)
+        Ok ret, query
+
+  (* Mapping Functions *)
+
+  let inline internal fromQueryDefaults (a: ^a, _: ^b) =
+    ((^a or ^b) : (static member FromQuery: ^a -> ^a Query) a)
+
+  let inline internal fromQuery x =
+    fst (fromQueryDefaults (Unchecked.defaultof<'a>, FromQueryDefaults) x)
+
+  (* Functions *)
+
+  [<RequireQualifiedAccess>]
+  module Query =
+
+    (* Read *)
+
+    let private readValue key =
+      fun query ->
+        Ok (Map.tryFind key query), query
+
+    let readMemberWith fromQueryValue key =
+         readValue key
+      >>= fun value ->
+         match fromQueryValue value with
+         | Ok v    -> Query.unit v
+         | Error e -> Query.error (sprintf "%s: %s" key e)
+
+    let inline readWith fromQueryValue key =
+      readMemberWith fromQueryValue key
+
+    let inline read key =
+      readWith fromQueryValue key
+
+    let inline parse qs =
+      fromQuery (Convert.toQuery qs)
+      |> function | Ok a         -> a
+                  | Error e      -> failwith e
+
+    let inline tryParse qs =
+      fromQuery (Convert.toQuery qs)
+      |> function | Ok a         -> Some a
+                  | Error _      -> None
+
+[<AutoOpen>]
+module HttpHandlers =
+  open Giraffe.HttpHandlers
+  open Giraffe.Tasks
+  open System.Threading.Tasks
+
+  module Query =
+
+    let inline bind (f: ^a -> HttpHandler) : HttpHandler =
+      fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+          match Query.tryParse ctx.Request.QueryString with
+          | None   -> return None
+          | Some a -> return! f a next ctx
+        }
+
+    let inline bindTask (f: ^a -> Task<HttpHandler>) : HttpHandler =
+      fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+          match Query.tryParse ctx.Request.QueryString with
+          | None   -> return None
+          | Some a ->
+            let! handler = f a
+            return! handler next ctx
+        }
+```
