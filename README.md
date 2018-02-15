@@ -138,7 +138,7 @@ There is a few sample applications which can be found in the [`/samples`](https:
 | [GoogleAuthApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/GoogleAuthApp) | Demonstrates how Google Auth can be used with Giraffe. |
 | [IdentityApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/IdentityApp) | Demonstrates how ASP.NET Core Identity can be used with Giraffe. |
 | [JwtApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/JwtApp) | Demonstrates how JWT tokens can be used with Giraffe. |
-| [SampleApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/SampleApp) | Generic sample application showcasing multiple features such as file uploads, cookie auth, model binding, etc. |
+| [SampleApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/SampleApp) | Generic sample application showcasing multiple features such as file uploads, cookie auth, model binding and validation, etc. |
 
 ### Live apps
 

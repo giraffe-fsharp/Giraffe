@@ -25,6 +25,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [Routing](#routing)
     - [Query Strings](#query-strings)
     - [Model Binding](#model-binding)
+    - [Model Validation](#model-validation)
     - [File Uploads](#file-uploads)
     - [Authentication and Authorization](#authentication-and-authorization)
     - [Conditional Requests](#conditional-requests)
@@ -1628,6 +1629,145 @@ let webApp =
 ```
 
 Again like before, the record type `'T` must be decorated with the `[<CLIMutable>]` attribute in order for the model binding to work.
+
+### Model Validation
+
+Giraffe exposes an `IModelValidation<'T>` interface and an accompanying `validateModel<'T>` http handler which can be used to validate a model in a more functional way.
+
+Let's take a look at the following example:
+
+```fsharp
+[<CLIMutable>]
+type Adult =
+    {
+        FirstName  : string
+        MiddleName : string option
+        LastName   : string
+        Age        : int
+    }
+    override this.ToString() =
+        sprintf "Name: %s%s %s, Age: %i"
+            this.FirstName
+            (if this.MiddleName.IsSome then " " + this.MiddleName.Value else "")
+            this.LastName
+            this.Age
+
+module WebApp =
+    let textHandler (x : obj) = text (x.ToString())
+
+    let webApp _ =
+        choose [
+            route "/person"
+            >=> tryBindQuery<Adult> None textHandler
+            RequestErrors.NOT_FOUND "Not found"
+        ]
+```
+
+The `Adult` type is a normal F# record type which defines four properties (one of them optional) and an override of the `ToString()` method.
+
+The `/person` route will try to bind a query string to an object of type `Adult` before invoking the `textHandler` which will eventually output the model by calling its `ToString()` method.
+
+The model has three mandatory properties (`FirstName`, `LastName` and `Age`) and only one optional property `MiddleName`, which means that a query string must contain at least the fields for the first- and last name, as well as the age for the model binding to succeed.
+
+However, what if someone wants to define additional validation logic before responding with a `HTTP 200` to a client?
+
+For example the `Adult` type could have an additional validation method called `HasErrors`:
+
+```fsharp
+[<CLIMutable>]
+type Adult =
+    {
+        FirstName  : string
+        MiddleName : string option
+        LastName   : string
+        Age        : int
+    }
+    override this.ToString() =
+        sprintf "Name: %s%s %s, Age: %i"
+            this.FirstName
+            (if this.MiddleName.IsSome then " " + this.MiddleName.Value else "")
+            this.LastName
+            this.Age
+
+    member this.HasErrors() =
+        if      this.FirstName.Length < 3  then Some "First name is too short."
+        else if this.FirstName.Length > 50 then Some "First name is too long."
+        else if this.LastName.Length  < 3  then Some "Last name is too short."
+        else if this.LastName.Length  > 50 then Some "Last name is too long."
+        else if this.Age < 18              then Some "Person must be an adult (age >= 18)."
+        else if this.Age > 150             then Some "Person must be a human being."
+        else None
+```
+
+The `HasError` method is checking business logic which is specific to the type `Adult`. For instance if `Age` is less than 18 then the person is not an adult and therefore `HasErrors` would return an F# option type with `Some "Person must be an adult (age >= 18)."`.
+
+It is a generic validation method which can be used from anywhere in an F# application to validate if a given `Adult` object has logically correct data.
+
+In order to make use of that validation method from within a Giraffe `HttpHandler` one could create a custom handler to invoke the method:
+
+```fsharp
+module WebApp =
+    let adultHandler (adult : Adult) : HttpHandler =
+        match adult.HasErrors() with
+        | Some msg -> RequestErrors.badRequest (text msg)
+        | None     -> text (adult.ToString())
+
+    let webApp _ =
+        choose [
+            route "/person"
+            >=> tryBindQuery<Adult> None adultHandler
+            RequestErrors.NOT_FOUND "Not found"
+        ]
+```
+
+If you have only one model to deal with this doesn't seems fairly straight forward. However, when you have an application with many models which require additional data validation like in the case of `Adult` then you will quickly end up writing a lot of boilerplate code which can be easily avoided by making use of `IModelValidation<'T>` and `validateModel<'T>`:
+
+```fsharp
+[<CLIMutable>]
+type Adult =
+    {
+        FirstName  : string
+        MiddleName : string option
+        LastName   : string
+        Age        : int
+    }
+    override this.ToString() =
+        sprintf "Name: %s%s %s, Age: %i"
+            this.FirstName
+            (if this.MiddleName.IsSome then " " + this.MiddleName.Value else "")
+            this.LastName
+            this.Age
+
+    member this.HasErrors() =
+        if      this.FirstName.Length < 3  then Some "First name is too short."
+        else if this.FirstName.Length > 50 then Some "First name is too long."
+        else if this.LastName.Length  < 3  then Some "Last name is too short."
+        else if this.LastName.Length  > 50 then Some "Last name is too long."
+        else if this.Age < 18              then Some "Person must be an adult (age >= 18)."
+        else if this.Age > 150             then Some "Person must be a human being."
+        else None
+
+    interface IModelValidation<Adult> with
+        member this.Validate() =
+            match this.HasErrors() with
+            | Some msg -> Error (RequestErrors.badRequest (text msg))
+            | None     -> Ok this
+
+module WebApp =
+    let textHandler (x : obj) = text (x.ToString())
+
+    let webApp _ =
+        choose [
+            route Urls.person
+            >=> tryBindQuery<Adult> None (validateModel textHandler)
+        ]
+```
+
+Now the `Adult` type has implemented the `IModelValidation<'T>` interface from where it was able to re-use the already existing `HasErrors` method to either return a validated object of type `Adult` or an error of type `HttpHandler`.
+
+The `validateModel` method has now been added between the `tryBindQuery<Adult>` and `textHandler` functions, which means it will validate the model using its `IModelValidation<Adult>.Validate()` method.
+
+On success the `textHandler` will be executed as normal and on error it will invoke the error handler returned from `Validate()`.
 
 ### File Uploads
 
