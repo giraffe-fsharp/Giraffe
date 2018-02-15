@@ -1143,9 +1143,9 @@ Last but not least there is also a `HttpContext` extension method called `BindQu
 
 ### Model Binding
 
-Giraffe offers out of the box a few default `HttpContext` extension methods which make it possible to bind the entire (or partial) HTTP payload to a custom object.
+Giraffe offers out of the box a few default `HttpContext` extension methods and equivalent `HttpHandler` functions which make it possible to bind the payload or query string of a HTTP request to a custom object.
 
-#### BindJsonAsync
+#### Binding JSON
 
 The `BindJsonAsync<'T>()` extension method can be used to bind a JSON payload to an object of type `'T`:
 
@@ -1180,11 +1180,38 @@ let webApp =
     ]
 ```
 
-Please not that in order for the model binding to work the record type must be decorated with the `[<CLIMutable>]` attribute, which will make sure that the type will contain a parameterless constructor.
+Alternatively you can also use the `bindJson<'T>` http handler:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST
+        >=> route "/car"
+        >=> bindJson<Car> (fun car -> Successful.OK car)
+    ]
+```
+
+Both, the `HttpContext` extension method as well as the `HttpHandler` function will try to create an instance of type `'T` regardless if the submitted payload contained a complete representation of `'T` or not. The parsed object might only contain partial data (where some properties might be `null`) and additional `null` checks might be required before further processing.
+
+Please note that in order for the model binding to work the record type must be decorated with the `[<CLIMutable>]` attribute, which will make sure that the type will have a parameterless constructor.
 
 The underlying JSON serializer can be configured as a dependency during application startup (see [JSON](#json)).
 
-#### BindXmlAsync
+#### Binding XML
 
 The `BindXmlAsync<'T>()` extension method binds an XML payload to an object of type `'T`:
 
@@ -1218,14 +1245,40 @@ let webApp =
         POST >=> route "/car" >=> submitCar
     ]
 ```
+Alternatively you can also use the `bindXml<'T>` http handler:
 
-Like in the previous example the record type must be decorated with the `[<CLIMutable>]` attribute in order for the model binding to work.
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST
+        >=> route "/car"
+        >=> bindXml<Car> (fun car -> Successful.OK car)
+    ]
+```
+
+Both, the `HttpContext` extension method as well as the `HttpHandler` function will try to create an instance of type `'T` regardless if the submitted payload contained a complete representation of `'T` or not. The parsed object might only contain partial data (where some properties might be `null`) and additional `null` checks might be required before further processing.
+
+Please note that in order for the model binding to work the record type must be decorated with the `[<CLIMutable>]` attribute, which will make sure that the type will have a parameterless constructor.
 
 The underlying XML serializer can be configured as a dependency during application startup (see [XML](#xml)).
 
-#### BindFormAsync
+#### Binding Forms
 
-The `BindFormAsync<'T> (?cultureInfo : CultureInfo)` extension method binds form data to an object of type `'T`. You can optionally specify a `CultureInfo` object for parsing culture specific data such as `DateTime` objects or floating point numbers:
+The `BindFormAsync<'T> (?cultureInfo : CultureInfo)` extension method binds form data to an object of type `'T`. You can also specify an optional `CultureInfo` object for parsing culture specific data such as `DateTime` objects or floating point numbers:
 
 ```fsharp
 [<CLIMutable>]
@@ -1262,11 +1315,44 @@ let webApp =
     ]
 ```
 
+Alternatively you can use the `bindFrom<'T>` http handler (which also accepts an additional parameter of type `CultureInfo option`):
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let british = CultureInfo.CreateSpecificCulture("en-GB")
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST
+        >=> route "/car"
+        >=> bindForm<Car> (Some british) (fun car -> Successful.OK car)
+    ]
+```
+
 Just like in the previous examples the record type must be decorated with the `[<CLIMutable>]` attribute in order for the model binding to work.
 
-#### BindQueryString
+The `BindFormAsync<'T>` extension method and the `bindForm<'T>` http handler are both very loose model binding functions, which means they will try to create an instance of type `'T` even if some data was missing or provided in the wrong format (in which case it will just skip parsing the field).
 
-The `BindQueryString<'T> (?cultureInfo : CultureInfo)` extension method binds query string parameters to an object of type `'T`. An optional `CultureInfo` object can be set for parsing culture specific data such as `DateTime` objects and floating point numbers:
+While this has its own advantages it is not very idiomatic to functional programming.
+
+For a more stricter (and more functional) model binding you can use the `TryBindFormAsync<'T>` extension method or the `tryBindForm<'T>` http handler function.
+
+They are both very similar to the previous binding methods, except that they will not create an instance of type `'T` if the submitted payload did not contain all mandatory fields (any field which is not an F# option type) or had badly formatted data.
+
+The `TryBindFormAsync<'T>` returns an object of type `'T option`:
 
 ```fsharp
 [<CLIMutable>]
@@ -1281,16 +1367,85 @@ type Car =
 let submitCar : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
-            // Binds the query string to a Car object
-            let! car = ctx.BindQueryString<Car>()
+            // Binds a form payload to a Car object
+            let! result = ctx.TryBindFormAsync<Car>()
 
             // or with a CultureInfo:
             let british = CultureInfo.CreateSpecificCulture("en-GB")
-            let! car2 = ctx.BindQueryString<Car>(british)
+            let! result2 = ctx.TryBindFormAsync<Car>(british)
 
-            // Sends the object back to the client
-            return! Successful.OK car next ctx
+            return!
+                (match result2 with
+                | Some car -> Successful.OK car
+                | None -> RequestErrors.BAD_REQUEST "Missing or wrong data.") next ctx
         }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST >=> route "/car" >=> submitCar
+    ]
+```
+
+The `tryBindForm<'T>` http handler is very similar, but instead of returning a `'T option` object it will short circuit the current handler if the model binding did not succeed, in which case the next route or handler will be invoked by the Giraffe pipeline:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let british = CultureInfo.CreateSpecificCulture("en-GB")
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST
+        >=> route "/car"
+        >=> tryBindForm<Car> (Some british) (fun car -> Successful.OK car)
+        RequestErrors.NOT_FOUND "Not found"
+    ]
+```
+
+In the example above if a `Car` object could not be successfully created then the next handler will get invoked which will return a "Not found" response in this instance.
+
+#### BindQueryString
+
+The `BindQueryString<'T> (?cultureInfo : CultureInfo)` extension method binds query string parameters to an object of type `'T`. An optional `CultureInfo` object can be specified for parsing culture specific data such as `DateTime` objects and floating point numbers:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let submitCar : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        // Binds the query string to a Car object
+        let car = ctx.BindQueryString<Car>()
+
+        // or with a CultureInfo:
+        let british = CultureInfo.CreateSpecificCulture("en-GB")
+        let car2 = ctx.BindQueryString<Car>(british)
+
+        // Sends the object back to the client
+        Successful.OK car next ctx
 
 let webApp =
     choose [
@@ -1303,11 +1458,112 @@ let webApp =
     ]
 ```
 
+Alternatively you can use the `bindQuery<'T>` http handler (which also accepts an additional parameter of type `CultureInfo option`):
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let british = CultureInfo.CreateSpecificCulture("en-GB")
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST
+        >=> route "/car"
+        >=> bindQuery<Car> (Some british) (fun car -> Successful.OK car)
+    ]
+```
+
 Just like in the previous examples the record type must be decorated with the `[<CLIMutable>]` attribute in order for the model binding to work.
+
+The `BindQueryString<'T>` extension method and the `bindQuery<'T>` http handler are both very loose model binding functions, which means they will try to create an instance of type `'T` even if some data was missing or provided in the wrong format (in which case it will just skip parsing the field).
+
+While this has its own advantages it is not very idiomatic to functional programming.
+
+For a more stricter (and more functional) model binding you can use the `TryBindQueryString<'T>` extension method or the `tryBindQuery<'T>` http handler function.
+
+They are both very similar to the previous binding methods, except that they will not create an instance of type `'T` if the submitted query string did not contain all mandatory fields (any field which is not an F# option type) or had badly formatted data.
+
+The `TryBindQueryString<'T>` returns an object of type `'T option`:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let submitCar : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        // Binds a form payload to a Car object
+        let result = ctx.TryBindQueryString<Car>()
+
+        // or with a CultureInfo:
+        let british = CultureInfo.CreateSpecificCulture("en-GB")
+        let result2 = ctx.TryBindQueryString<Car>(british)
+
+        (match result2 with
+        | Some car -> Successful.OK car
+        | None -> RequestErrors.BAD_REQUEST "Missing or wrong data.") next ctx
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST >=> route "/car" >=> submitCar
+    ]
+```
+
+The `tryBindQuery<'T>` http handler is very similar, but instead of returning a `'T option` object it will short circuit the current handler if the model binding did not succeed, in which case the next route or handler will be invoked by the Giraffe pipeline:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let british = CultureInfo.CreateSpecificCulture("en-GB")
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST
+        >=> route "/car"
+        >=> tryBindQuery<Car> (Some british) (fun car -> Successful.OK car)
+        RequestErrors.NOT_FOUND "Not found"
+    ]
+```
+
+In the example above if a `Car` object could not be successfully created then the next handler will get invoked which will return a "Not found" response in this instance.
 
 #### BindModelAsync
 
-The `BindModelAsync<'T> (?cultureInfo : CultureInfo)` method encapsulates all other model binding methods into one. It will attempt to pick the most appropriate model binding method based on the request's HTTP verb and `Content-Type` header. With the help of `BindModelAsync` it is possible to create a single endpoint which can bind JSON, XML, form and query string data:
+The `BindModelAsync<'T> (?cultureInfo : CultureInfo)` method is a generic model binding function which will try to pick the right model parsing function based on a request's HTTP verb and `Content-Type` header. With the help of `BindModelAsync<'T>` it is possible to create a single endpoint which can bind JSON, XML, form and query string data:
 
 ```fsharp
 [<CLIMutable>]
@@ -1344,6 +1600,35 @@ let webApp =
     ]
 ```
 
+Alternatively you can use the `bindModel<'T>` http handler:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let british = CultureInfo.CreateSpecificCulture("en-GB")
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST
+        >=> route "/car"
+        >=> bindModel<Car> (Some british) (fun car -> Successful.OK car)
+    ]
+```
+
+Again like before, the record type `'T` must be decorated with the `[<CLIMutable>]` attribute in order for the model binding to work.
+
 ### File Uploads
 
 ASP.NET Core makes it really easy to process uploaded files.
@@ -1353,7 +1638,7 @@ The `HttpContext.Request.Form.Files` collection can be used to process one or ma
 ```fsharp
 open Giraffe
 
-let smallFileUploadHandler =
+let fileUploadHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             return!
@@ -1365,13 +1650,13 @@ let smallFileUploadHandler =
                     |> text) next ctx
         }
 
-let webApp = route "/small-upload" >=> smallFileUploadHandler
+let webApp = route "/upload" >=> fileUploadHandler
 ```
 
 You can also read uploaded files by utilizing the `IFormFeature` and the `ReadFormAsync` method:
 
 ```fsharp
-let anotherFileUploadHandler =
+let fileUploadHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             let formFeature = ctx.Features.Get<IFormFeature>()
@@ -1382,7 +1667,7 @@ let anotherFileUploadHandler =
                 |> text) next ctx
         }
 
-let webApp = route "/large-upload" >=> anotherFileUploadHandler
+let webApp = route "/upload" >=> fileUploadHandler
 ```
 
 For large file uploads it is recommended to [stream the file](https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads#uploading-large-files-with-streaming) in order to prevent resource exhaustion.

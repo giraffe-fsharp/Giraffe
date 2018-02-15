@@ -1,9 +1,7 @@
 ﻿module SampleApp.App
 
 open System
-open System.IO
 open System.Security.Claims
-open System.Collections.Generic
 open System.Threading
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
@@ -77,7 +75,7 @@ let configuredHandler =
         let configuration = ctx.GetService<IConfiguration>()
         text configuration.["HelloMessage"] next ctx
 
-let smallFileUploadHandler =
+let fileUploadHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             return!
@@ -89,7 +87,7 @@ let smallFileUploadHandler =
                     |> text) next ctx
         }
 
-let smallFileUploadHandler2 =
+let fileUploadHandler2 =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             let formFeature = ctx.Features.Get<IFormFeature>()
@@ -111,13 +109,6 @@ type Car =
         Built  : DateTime
     }
 
-let submitCar : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        task {
-            let! car = ctx.BindModelAsync<Car>()
-            return! ctx.WriteJsonAsync car
-        }
-
 let webApp =
     choose [
         GET >=>
@@ -134,10 +125,10 @@ let webApp =
                 route  "/once"       >=> (time() |> text)
                 route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
                 route  "/configured" >=> configuredHandler
-                route "/small-upload"  >=> smallFileUploadHandler
-                route "/small-upload2" >=> smallFileUploadHandler2
+                route  "/upload"     >=> fileUploadHandler
+                route  "/upload2"    >=> fileUploadHandler2
             ]
-        route "/car" >=> submitCar
+        route "/car" >=> bindModel<Car> None json
         RequestErrors.notFound (text "Not Found") ]
 
 // ---------------------------------
