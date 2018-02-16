@@ -1354,7 +1354,7 @@ For a more stricter (and more functional) model binding you can use the `TryBind
 
 They are both very similar to the previous binding methods, except that they will not create an instance of type `'T` if the submitted payload did not contain all mandatory fields (any field which is not an F# option type) or had badly formatted data.
 
-The `TryBindFormAsync<'T>` returns an object of type `'T option`:
+The `TryBindFormAsync<'T>` method returns an object of type `Result<'T, string>`. If the model binding was successful then the result will contain an instance of type `'T`, otherwise a `string` value containing the parsing error message:
 
 ```fsharp
 [<CLIMutable>]
@@ -1378,8 +1378,8 @@ let submitCar : HttpHandler =
 
             return!
                 (match result2 with
-                | Some car -> Successful.OK car
-                | None -> RequestErrors.BAD_REQUEST "Missing or wrong data.") next ctx
+                | Ok car -> Successful.OK car
+                | Error err -> RequestErrors.BAD_REQUEST err) next ctx
         }
 
 let webApp =
@@ -1393,7 +1393,7 @@ let webApp =
     ]
 ```
 
-The `tryBindForm<'T>` http handler is very similar, but instead of returning a `'T option` object it will invoke an error handler function if the model binding does not succeed:
+The `tryBindForm<'T>` http handler is very similar, but instead of returning a `Result<'T, string>` object it will invoke an error handler function if the model binding does not succeed:
 
 ```fsharp
 [<CLIMutable>]
@@ -1406,7 +1406,7 @@ type Car =
     }
 
 let british = CultureInfo.CreateSpecificCulture("en-GB")
-let parsingError = RequestErrors.badRequest (text "The provided data is not complete or is badly formatted.")
+let parsingError (err : string) = RequestErrors.BAD_REQUEST err
 
 let webApp =
     choose [
@@ -1422,7 +1422,7 @@ let webApp =
     ]
 ```
 
-In this example if a `Car` object could not be successfully created then the `parsingError` handler will get invoked which will return a `HTTP Bad Request` response.
+In this example if a `Car` object could not be successfully created then the `parsingError` handler will get invoked which will return a `HTTP Bad Request` response with the parsing error message.
 
 #### Binding Query Strings
 
@@ -1498,7 +1498,7 @@ For a more stricter (and more functional) model binding approach you can use the
 
 They are both very similar to the previous binding methods, except that they will not create an instance of type `'T` if the submitted query string did not contain all mandatory fields (any field which is not an F# option type) or had badly formatted data.
 
-The `TryBindQueryString<'T>` returns an object of type `'T option`:
+The `TryBindQueryString<'T>` method returns an object of type `Result<'T, string>`. If the model binding was successful then the result will contain an instance of type `'T`, otherwise a `string` value containing the parsing error message:
 
 ```fsharp
 [<CLIMutable>]
@@ -1520,8 +1520,8 @@ let submitCar : HttpHandler =
         let result2 = ctx.TryBindQueryString<Car>(british)
 
         (match result2 with
-        | Some car -> Successful.OK car
-        | None -> RequestErrors.BAD_REQUEST "Missing or wrong data.") next ctx
+        | Ok car -> Successful.OK car
+        | Error err -> RequestErrors.BAD_REQUEST err) next ctx
 
 let webApp =
     choose [
@@ -1534,7 +1534,7 @@ let webApp =
     ]
 ```
 
-The `tryBindQuery<'T>` http handler is very similar, but instead of returning a `'T option` object it will invoke an error handler function if the model binding does not succeed:
+The `tryBindQuery<'T>` http handler is very similar, but instead of returning a `Result<'T, string>` object it will invoke an error handler function if the model binding does not succeed:
 
 ```fsharp
 [<CLIMutable>]
@@ -1547,7 +1547,7 @@ type Car =
     }
 
 let british = CultureInfo.CreateSpecificCulture("en-GB")
-let parsingError = RequestErrors.badRequest (text "The provided data is not complete or is badly formatted.")
+let parsingError (err : string) = RequestErrors.BAD_REQUEST err
 
 let webApp =
     choose [
@@ -1563,7 +1563,7 @@ let webApp =
     ]
 ```
 
-In this example if a `Car` object could not be successfully created then the `parsingError` handler will get invoked which will return a `HTTP Bad Request` response.
+In this example if a `Car` object could not be successfully created then the `parsingError` handler will get invoked which will return a `HTTP Bad Request` response containing the parsing error message.
 
 **Special note**
 
@@ -1695,7 +1695,7 @@ type Adult =
 
 module WebApp =
     let textHandler (x : obj) = text (x.ToString())
-    let parsingError = RequestErrors.BAD_REQUEST "Could not parse an adult."
+    let parsingError err = RequestErrors.BAD_REQUEST err
 
     let webApp _ =
         choose [
@@ -1754,7 +1754,7 @@ module WebApp =
         | Some msg -> RequestErrors.BAD_REQUEST msg
         | None     -> text (adult.ToString())
 
-    let parsingError = RequestErrors.BAD_REQUEST "Could not parse an adult."
+    let parsingError err = RequestErrors.BAD_REQUEST err
 
     let webApp _ =
         choose [
@@ -1764,7 +1764,7 @@ module WebApp =
         ]
 ```
 
-If you have only one model to deal with this doesn't seems fairly straight forward. However, when you have an application with many models which require additional data validation like in the case of `Adult` then you will quickly end up writing a lot of boilerplate code which can be easily avoided by making use of `IModelValidation<'T>` and `validateModel<'T>`:
+If an application has only one model to deal with then this is fairly straight forward, but if an application has more models which require additional data validation steps like in the case of `Adult` then you'll quickly end up writing a lot of boilerplate code. This can be avoided with the help of `IModelValidation<'T>` and `validateModel<'T>`:
 
 ```fsharp
 [<CLIMutable>]
@@ -1800,7 +1800,7 @@ type Adult =
 module WebApp =
     let textHandler (x : obj) = text (x.ToString())
 
-    let parsingError = RequestErrors.BAD_REQUEST "Could not parse an adult."
+    let parsingError err = RequestErrors.BAD_REQUEST err
 
     let webApp _ =
         choose [
