@@ -20,6 +20,8 @@ Release Notes
         - `bindModel<'T>`
 - Added new [Model Validation](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#model-validation) API
 
+To see an example of the new features you can check the official [Giraffe 1.1.0 release blog post](https://dusted.codes/giraffe-110-more-routing-handlers-better-model-binding-and-brand-new-model-validation-api).
+
 #### Bug fixes
 
 - `routeBind` works when nested in a `subRoute` handler now
@@ -57,6 +59,8 @@ This release has many minor breaking changes and a few bigger features. Please r
 - Renamed `RenderHtmlAsync()` to `WriteHtmlViewAsync()`
 - Removed the overloads for `BindJsonAsync<'T>`, `BindModelAsync<'T>` and `WriteJsonAsync` which accepted an object of type `JsonSerializerSettings`
 - Renamed the `signOff` http handler to `signOut` to be more consistent with existing ASP.NET Core naming conventions
+
+To get a summary of the new features and changes you can check the official [Giraffe 1.0.0 release blog post](https://dusted.codes/announcing-giraffe-100).
 
 ## 0.1.0-beta-700
 
