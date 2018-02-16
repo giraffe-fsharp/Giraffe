@@ -13,6 +13,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [Warbler](#warbler)
     - [Tasks](#tasks)
 - [Basics](#basics)
+    - [Plugging Giraffe into ASP.NET Core](#plugging-giraffe-into-aspnet-core)
     - [Dependency Management](#dependency-management)
     - [Multiple Environments and Configuration](#multiple-environments-and-configuration)
     - [Logging](#logging)
@@ -24,6 +25,8 @@ An in depth functional reference to all of Giraffe's default features.
     - [Routing](#routing)
     - [Query Strings](#query-strings)
     - [Model Binding](#model-binding)
+    - [Model Validation](#model-validation)
+    - [File Uploads](#file-uploads)
     - [Authentication and Authorization](#authentication-and-authorization)
     - [Conditional Requests](#conditional-requests)
     - [Response Writing](#response-writing)
@@ -49,6 +52,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [Razor](#razor)
     - [DotLiquid](#dotliquid)
 - [Special Mentions](#special-mentions)
+- [Appendix](#appendix)
 
 ## Fundamentals
 
@@ -181,7 +185,83 @@ let readFileAndDoSomething (filePath : string) =
 
 For more information please visit the official [TaskBuilder.fs](https://github.com/rspeele/TaskBuilder.fs) GitHub repository.
 
+**IMPORTANT NOTICE**
+
+If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks.ContextInsensitive` namespace to resolve any type inference issues:
+
+```fsharp
+open FSharp.Control.Tasks.ContextInsensitive
+```
+
 ## Basics
+
+### Plugging Giraffe into ASP.NET Core
+
+Install the [Giraffe](https://www.nuget.org/packages/Giraffe) NuGet package:
+
+```
+PM> Install-Package Giraffe
+```
+
+Create a web application and plug it into the ASP.NET Core middleware:
+
+```fsharp
+open Giraffe
+
+let webApp =
+    choose [
+        route "/ping"   >=> text "pong"
+        route "/"       >=> htmlFile "/pages/index.html" ]
+
+type Startup() =
+    member __.ConfigureServices (services : IServiceCollection) =
+        // Register default Giraffe dependencies
+        services.AddGiraffe() |> ignore
+
+    member __.Configure (app : IApplicationBuilder)
+                        (env : IHostingEnvironment)
+                        (loggerFactory : ILoggerFactory) =
+        // Add Giraffe to the ASP.NET Core pipeline
+        app.UseGiraffe webApp
+
+[<EntryPoint>]
+let main _ =
+    WebHostBuilder()
+        .UseKestrel()
+        .UseStartup<Startup>()
+        .Build()
+        .Run()
+    0
+```
+
+Instead of creating a `Startup` class you can also add Giraffe in a more functional way:
+
+```fsharp
+open Giraffe
+
+let webApp =
+    choose [
+        route "/ping"   >=> text "pong"
+        route "/"       >=> htmlFile "/pages/index.html" ]
+
+let configureApp (app : IApplicationBuilder) =
+    // Add Giraffe to the ASP.NET Core pipeline
+    app.UseGiraffe webApp
+
+let configureServices (services : IServiceCollection) =
+    // Add Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHostBuilder()
+        .UseKestrel()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .Build()
+        .Run()
+    0
+```
 
 ### Dependency Management
 
@@ -374,6 +454,10 @@ let main _ =
 
 ```fsharp
 type Startup() =
+    member __.ConfigureServices (services : IServiceCollection) =
+        // Register default Giraffe dependencies
+        services.AddGiraffe() |> ignore
+
     member __.Configure (app : IApplicationBuilder)
                         (env : IHostingEnvironment)
                         (loggerFactory : ILoggerFactory) =
@@ -610,7 +694,7 @@ The following sub modules and status code `HttpHandler` functions are available 
 | 400 | badRequest | `route "/" >=> RequestErrors.badRequest (text "Don't like it")` |
 | 400 | BAD_REQUEST | `route "/" >=> RequestErrors.BAD_REQUEST "Don't like it"` |
 | 401 | unauthorized | `route "/" >=> RequestErrors.unauthorized "Basic" "MyApp" (text "Don't know who you are")` |
-| 401 | UNAUTHORIZED | `route "/" >=> RequestErrors.UNAUTHORIZED "Don't know who you are"` |
+| 401 | UNAUTHORIZED | `route "/" >=> RequestErrors.UNAUTHORIZED "Basic" "MyApp" "Don't know who you are"` |
 | 403 | forbidden | `route "/" >=> RequestErrors.forbidden (text "Not enough permissions")` |
 | 403 | FORBIDDEN | `route "/" >=> RequestErrors.FORBIDDEN "Not enough permissions"` |
 | 404 | notFound | `route "/" >=> RequestErrors.notFound (text "Page not found")` |
@@ -678,13 +762,102 @@ This can be avoided by using the case insensitive `routeCi` http handler:
 ```fsharp
 let webApp =
     choose [
-        routeCi "/foo" >=> text "Foo"
-        routeCi "/bar" >=> text "Bar"
+        route   "/foo" >=> text "Foo"
+        routeCi "/foo" >=> text "Bar"
 
         // If none of the routes matched then return a 404
         RequestErrors.NOT_FOUND "Not Found"
     ]
 ```
+
+In the example above a request made to `https://example.org/FOO` would return `Bar` in the response.
+
+#### routex
+
+According to the HTTP specification a route with a trailing slash is not equivalent to the same route without a trailing slash:
+
+```
+https://example.org/foo
+https://example.org/foo/
+```
+
+A web server might (rightfully) want to serve a different response for each route:
+
+```fsharp
+let webApp =
+    choose [
+        route "/foo"  >=> text "Foo"
+        route "/foo/" >=> text "Bar"
+
+        // If none of the routes matched then return a 404
+        RequestErrors.NOT_FOUND "Not Found"
+    ]
+```
+
+However many web applications choose to treat both routes as the same. If you would like to achieve this behaviour by using a single route in Giraffe then you can use the `routex` http handler which accepts a `Regex` string for matching routes:
+
+```fsharp
+let webApp =
+    choose [
+        routex "/foo(/?)" >=> text "Bar"
+
+        // If none of the routes matched then return a 404
+        RequestErrors.NOT_FOUND "Not Found"
+    ]
+```
+
+The `(/?)` regex pattern specifies that a `/` can occur zero or one time at the end of the route, which means it would successfully match the following two routes:
+
+```
+https://example.org/foo
+https://example.org/foo/
+```
+
+However, this example wouldn't match a request made to `https://example.org/foo///`. If you want to match any number of trailing slashes then you must use `(/*)` instead:
+
+```fsharp
+let webApp =
+    choose [
+        routex "/foo(/*)" >=> text "Bar"
+
+        // If none of the routes matched then return a 404
+        RequestErrors.NOT_FOUND "Not Found"
+    ]
+```
+
+Please be aware that such a `routex` can create a conflict and unexpected behaviour if you have a similar matching `routef` (see [routef](#routef)):
+
+```fsharp
+let webApp =
+    choose [
+        routex "/foo(/*)" >=> text "Bar"
+        routef "/foo/%s/%s/%s" (fun s1, s2, s3 -> text (sprintf "%s%s%s" s1 s2 s3))
+
+        // If none of the routes matched then return a 404
+        RequestErrors.NOT_FOUND "Not Found"
+    ]
+```
+
+In the above scenario it is not clear which one of the two http handlers a user want to be invoked when a request is made to `https://example.org/foo///`.
+
+If you want to learn more about `Regex` please check the [Regular Expression Language Reference](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference).
+
+#### routeCix
+
+The `routeCix` http handler is the case insensitive version of `routex`:
+
+```fsharp
+let webApp =
+    choose [
+        routex   "/foo(/?)" >=> text "Foo"
+        routeCix "/foo(/?)" >=> text "Bar"
+
+        // If none of the routes matched then return a 404
+        RequestErrors.NOT_FOUND "Not Found"
+    ]
+```
+
+In the example above a request made to `https://example.org/FOO/` would return `Bar` in the response.
 
 #### routef
 
@@ -871,7 +1044,37 @@ let webApp =
                     route "/bar" >=> text "Bar 2" ]) ])
 ```
 
-**Note:** For both `subRoute` and `subRouteCi` if you wish to have a route that represents a default e.g. `/api/v1` (from the above example) then you need to specify the route as `route ""` not `route "/"` this will not match, as `api/v1/` is a fundamentally different route according to the HTTP specification.
+Please note that only the path specified for `subRouteCi` is case insensitive. Nested routes after `subRouteCi` will be evaluated as per definition of each individual route.
+
+**Note:** If you wish to have a default route for any `subRoute` handler (e.g. `/api/v1` from the above example) then you need to specify the route as `route ""` and not as `route "/"`, because `/api/v1/` is a fundamentally different than `/api/v1` according to the HTTP specification.
+
+#### subRoutef
+
+The `subRoutef` http handler is a combination of the `routef` and the `subRoute` http handler:
+
+```fsharp
+let app =
+    GET >=> choose [
+        route "/"    >=> text "index"
+        route "/foo" >=> text "bar"
+
+        subRoutef "/%s/api" (fun lang ->
+            requiresAuthentication (challenge "Cookie") >=>
+                choose [
+                    route  "/blah" >=> text "blah"
+                    routef "/%s" (fun n -> text (sprintf "Hello %s! Lang: %s" n lang))
+                ])
+        setStatusCode 404 >=> text "Not found" ]
+```
+
+This can be useful when an application has dynamic parameters at the beginning of each route (e.g. language parameter):
+
+```
+https://example.org/en/users/John
+https://example.org/de/users/Ryan
+https://example.org/fr/users/Nicky
+...
+```
 
 #### routePorts
 
@@ -942,9 +1145,9 @@ Last but not least there is also a `HttpContext` extension method called `BindQu
 
 ### Model Binding
 
-Giraffe offers out of the box a few default `HttpContext` extension methods which make it possible to bind the entire (or partial) HTTP payload to a custom object.
+Giraffe offers out of the box a few default `HttpContext` extension methods and equivalent `HttpHandler` functions which make it possible to bind the payload or query string of a HTTP request to a custom object.
 
-#### BindJsonAsync
+#### Binding JSON
 
 The `BindJsonAsync<'T>()` extension method can be used to bind a JSON payload to an object of type `'T`:
 
@@ -979,11 +1182,38 @@ let webApp =
     ]
 ```
 
-Please not that in order for the model binding to work the record type must be decorated with the `[<CLIMutable>]` attribute, which will make sure that the type will contain a parameterless constructor.
+Alternatively you can also use the `bindJson<'T>` http handler:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST
+        >=> route "/car"
+        >=> bindJson<Car> (fun car -> Successful.OK car)
+    ]
+```
+
+Both, the `HttpContext` extension method as well as the `HttpHandler` function will try to create an instance of type `'T` regardless if the submitted payload contained a complete representation of `'T` or not. The parsed object might only contain partial data (where some properties might be `null`) and additional `null` checks might be required before further processing.
+
+Please note that in order for the model binding to work the record type must be decorated with the `[<CLIMutable>]` attribute, which will make sure that the type will have a parameterless constructor.
 
 The underlying JSON serializer can be configured as a dependency during application startup (see [JSON](#json)).
 
-#### BindXmlAsync
+#### Binding XML
 
 The `BindXmlAsync<'T>()` extension method binds an XML payload to an object of type `'T`:
 
@@ -1017,14 +1247,40 @@ let webApp =
         POST >=> route "/car" >=> submitCar
     ]
 ```
+Alternatively you can also use the `bindXml<'T>` http handler:
 
-Like in the previous example the record type must be decorated with the `[<CLIMutable>]` attribute in order for the model binding to work.
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST
+        >=> route "/car"
+        >=> bindXml<Car> (fun car -> Successful.OK car)
+    ]
+```
+
+Both, the `HttpContext` extension method as well as the `HttpHandler` function will try to create an instance of type `'T` regardless if the submitted payload contained a complete representation of `'T` or not. The parsed object might only contain partial data (where some properties might be `null`) and additional `null` checks might be required before further processing.
+
+Please note that in order for the model binding to work the record type must be decorated with the `[<CLIMutable>]` attribute, which will make sure that the type will have a parameterless constructor.
 
 The underlying XML serializer can be configured as a dependency during application startup (see [XML](#xml)).
 
-#### BindFormAsync
+#### Binding Forms
 
-The `BindFormAsync<'T> (?cultureInfo : CultureInfo)` extension method binds form data to an object of type `'T`. You can optionally specify a `CultureInfo` object for parsing culture specific data such as `DateTime` objects or floating point numbers:
+The `BindFormAsync<'T> (?cultureInfo : CultureInfo)` extension method binds form data to an object of type `'T`. You can also specify an optional `CultureInfo` object for parsing culture specific data such as `DateTime` objects or floating point numbers:
 
 ```fsharp
 [<CLIMutable>]
@@ -1061,11 +1317,44 @@ let webApp =
     ]
 ```
 
+Alternatively you can use the `bindFrom<'T>` http handler (which also accepts an additional parameter of type `CultureInfo option`):
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let british = CultureInfo.CreateSpecificCulture("en-GB")
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST
+        >=> route "/car"
+        >=> bindForm<Car> (Some british) (fun car -> Successful.OK car)
+    ]
+```
+
 Just like in the previous examples the record type must be decorated with the `[<CLIMutable>]` attribute in order for the model binding to work.
 
-#### BindQueryString
+The `BindFormAsync<'T>` extension method and the `bindForm<'T>` http handler are both very loose model binding functions, which means they will try to create an instance of type `'T` even if some data was missing or provided in the wrong format (in which case it will just skip parsing the field).
 
-The `BindQueryString<'T> (?cultureInfo : CultureInfo)` extension method binds query string parameters to an object of type `'T`. An optional `CultureInfo` object can be set for parsing culture specific data such as `DateTime` objects and floating point numbers:
+While this has its own advantages it is not very idiomatic to functional programming.
+
+For a more stricter (and more functional) model binding you can use the `TryBindFormAsync<'T>` extension method or the `tryBindForm<'T>` http handler function.
+
+They are both very similar to the previous binding methods, except that they will not create an instance of type `'T` if the submitted payload did not contain all mandatory fields (any field which is not an F# option type) or had badly formatted data.
+
+The `TryBindFormAsync<'T>` method returns an object of type `Result<'T, string>`. If the model binding was successful then the result will contain an instance of type `'T`, otherwise a `string` value containing the parsing error message:
 
 ```fsharp
 [<CLIMutable>]
@@ -1080,16 +1369,86 @@ type Car =
 let submitCar : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
-            // Binds the query string to a Car object
-            let! car = ctx.BindQueryString<Car>()
+            // Binds a form payload to a Car object
+            let! result = ctx.TryBindFormAsync<Car>()
 
             // or with a CultureInfo:
             let british = CultureInfo.CreateSpecificCulture("en-GB")
-            let! car2 = ctx.BindQueryString<Car>(british)
+            let! result2 = ctx.TryBindFormAsync<Car>(british)
 
-            // Sends the object back to the client
-            return! Successful.OK car next ctx
+            return!
+                (match result2 with
+                | Ok car -> Successful.OK car
+                | Error err -> RequestErrors.BAD_REQUEST err) next ctx
         }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST >=> route "/car" >=> submitCar
+    ]
+```
+
+The `tryBindForm<'T>` http handler is very similar, but instead of returning a `Result<'T, string>` object it will invoke an error handler function if the model binding does not succeed:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let british = CultureInfo.CreateSpecificCulture("en-GB")
+let parsingError (err : string) = RequestErrors.BAD_REQUEST err
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST
+        >=> route "/car"
+        >=> tryBindForm<Car> parsingError (Some british) (fun car -> Successful.OK car)
+        RequestErrors.NOT_FOUND "Not found"
+    ]
+```
+
+In this example if a `Car` object could not be successfully created then the `parsingError` handler will get invoked which will return a `HTTP Bad Request` response with the parsing error message.
+
+#### Binding Query Strings
+
+The `BindQueryString<'T> (?cultureInfo : CultureInfo)` extension method binds query string parameters to an object of type `'T`. An optional `CultureInfo` object can be specified for parsing culture specific data such as `DateTime` objects and floating point numbers:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let submitCar : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        // Binds the query string to a Car object
+        let car = ctx.BindQueryString<Car>()
+
+        // or with a CultureInfo:
+        let british = CultureInfo.CreateSpecificCulture("en-GB")
+        let car2 = ctx.BindQueryString<Car>(british)
+
+        // Sends the object back to the client
+        Successful.OK car next ctx
 
 let webApp =
     choose [
@@ -1102,11 +1461,151 @@ let webApp =
     ]
 ```
 
+Alternatively you can use the `bindQuery<'T>` http handler (which also accepts an additional parameter of type `CultureInfo option`):
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let british = CultureInfo.CreateSpecificCulture("en-GB")
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST
+        >=> route "/car"
+        >=> bindQuery<Car> (Some british) (fun car -> Successful.OK car)
+    ]
+```
+
 Just like in the previous examples the record type must be decorated with the `[<CLIMutable>]` attribute in order for the model binding to work.
 
-#### BindModelAsync
+The `BindQueryString<'T>` extension method and the `bindQuery<'T>` http handler are both very loose model binding functions, which means they will try to create an instance of type `'T` even if some data was missing or provided in the wrong format (in which case it will just skip parsing the field).
 
-The `BindModelAsync<'T> (?cultureInfo : CultureInfo)` method encapsulates all other model binding methods into one. It will attempt to pick the most appropriate model binding method based on the request's HTTP verb and `Content-Type` header. With the help of `BindModelAsync` it is possible to create a single endpoint which can bind JSON, XML, form and query string data:
+While this has its own advantages it is not very idiomatic to functional programming.
+
+For a more stricter (and more functional) model binding approach you can use the `TryBindQueryString<'T>` extension method or the `tryBindQuery<'T>` http handler function.
+
+They are both very similar to the previous binding methods, except that they will not create an instance of type `'T` if the submitted query string did not contain all mandatory fields (any field which is not an F# option type) or had badly formatted data.
+
+The `TryBindQueryString<'T>` method returns an object of type `Result<'T, string>`. If the model binding was successful then the result will contain an instance of type `'T`, otherwise a `string` value containing the parsing error message:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let submitCar : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        // Binds a form payload to a Car object
+        let result = ctx.TryBindQueryString<Car>()
+
+        // or with a CultureInfo:
+        let british = CultureInfo.CreateSpecificCulture("en-GB")
+        let result2 = ctx.TryBindQueryString<Car>(british)
+
+        (match result2 with
+        | Ok car -> Successful.OK car
+        | Error err -> RequestErrors.BAD_REQUEST err) next ctx
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST >=> route "/car" >=> submitCar
+    ]
+```
+
+The `tryBindQuery<'T>` http handler is very similar, but instead of returning a `Result<'T, string>` object it will invoke an error handler function if the model binding does not succeed:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let british = CultureInfo.CreateSpecificCulture("en-GB")
+let parsingError (err : string) = RequestErrors.BAD_REQUEST err
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST
+        >=> route "/car"
+        >=> tryBindQuery<Car> parsingError (Some british) (fun car -> Successful.OK car)
+        RequestErrors.NOT_FOUND "Not found"
+    ]
+```
+
+In this example if a `Car` object could not be successfully created then the `parsingError` handler will get invoked which will return a `HTTP Bad Request` response containing the parsing error message.
+
+**Special note**
+
+[Aleksander Heintz](https://github.com/Alxandr) has created a [Gist](https://gist.github.com/Alxandr/50aef7fbe4806ceb4c2889f1cbde1438) which contains a re-usable query string API based on how Chiron works, which allows one doing something like the following:
+
+```fsharp
+type Report =
+  { author: string option
+    project: string option
+    week: int option
+    summary: string option
+    progress: string list
+    comments: string list
+    plan: string list }
+
+  static member FromQuery (_: Report) =
+        fun author project week summary progress comments plan ->
+          { author = author
+            project = project
+            week = week
+            summary = summary
+            progress = progress
+            comments = comments
+            plan = plan }
+    <!> Query.read "author"
+    <*> Query.read "project"
+    <*> Query.read "week"
+    <*> Query.read "summary"
+    <*> Query.read "progress"
+    <*> Query.read "comments"
+    <*> Query.read "plan"
+
+let reportRoute = route "/report" >=> Query.bind (fun (r: Report) -> text <| sprintf "%A" r)
+```
+
+Even though this API didn't quite fit with Giraffe's existing `tryBindQuery` and [model validation](#model-validation) function it is a nice example of how Giraffe can be extended to do similar things in different ways.
+
+If you prefer this API you can either copy paste [Aleksander](https://github.com/Alxandr)'s code from the [provided Gist](https://gist.github.com/Alxandr/50aef7fbe4806ceb4c2889f1cbde1438) or find the contents of the Gist in the [appendix](#aleksander-heintzs-query-string-binder-api) of this document (in case the Gist gets ever deleted).
+
+#### Binding Models (catch all)
+
+The `BindModelAsync<'T> (?cultureInfo : CultureInfo)` method is a generic model binding function which will try to pick the right model parsing function based on a request's HTTP verb and `Content-Type` header. With the help of `BindModelAsync<'T>` it is possible to create a single endpoint which can bind JSON, XML, form and query string data:
 
 ```fsharp
 [<CLIMutable>]
@@ -1142,6 +1641,224 @@ let webApp =
         route "/car" >=> submitCar
     ]
 ```
+
+Alternatively you can use the `bindModel<'T>` http handler:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let british = CultureInfo.CreateSpecificCulture("en-GB")
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "ping" >=> text "pong"
+            ]
+        POST
+        >=> route "/car"
+        >=> bindModel<Car> (Some british) (fun car -> Successful.OK car)
+    ]
+```
+
+Again like before, the record type `'T` must be decorated with the `[<CLIMutable>]` attribute in order for the model binding to work.
+
+### Model Validation
+
+Giraffe exposes an `IModelValidation<'T>` interface and an accompanying `validateModel<'T>` http handler which can be used to validate a model in a more functional way.
+
+Let's take a look at the following example:
+
+```fsharp
+[<CLIMutable>]
+type Adult =
+    {
+        FirstName  : string
+        MiddleName : string option
+        LastName   : string
+        Age        : int
+    }
+    override this.ToString() =
+        sprintf "Name: %s%s %s, Age: %i"
+            this.FirstName
+            (if this.MiddleName.IsSome then " " + this.MiddleName.Value else "")
+            this.LastName
+            this.Age
+
+module WebApp =
+    let textHandler (x : obj) = text (x.ToString())
+    let parsingError err = RequestErrors.BAD_REQUEST err
+
+    let webApp _ =
+        choose [
+            route "/person"
+            >=> tryBindQuery<Adult> parsingError None textHandler
+            RequestErrors.NOT_FOUND "Not found"
+        ]
+```
+
+The `Adult` type is a normal F# record type which defines four properties (one of them optional) and an override of the `ToString()` method.
+
+The `/person` route will try to bind a query string to an object of type `Adult` before invoking the `textHandler` which will eventually output the model by calling its `ToString()` method.
+
+The model has three mandatory properties (`FirstName`, `LastName` and `Age`) and only one optional property `MiddleName`, which means that a query string must contain at least the fields for the first- and last name, as well as the age for the model binding to succeed.
+
+However, what if someone wants to define additional validation logic before responding with a `HTTP 200` to a client?
+
+For example the `Adult` type could have an additional validation method called `HasErrors`:
+
+```fsharp
+[<CLIMutable>]
+type Adult =
+    {
+        FirstName  : string
+        MiddleName : string option
+        LastName   : string
+        Age        : int
+    }
+    override this.ToString() =
+        sprintf "Name: %s%s %s, Age: %i"
+            this.FirstName
+            (if this.MiddleName.IsSome then " " + this.MiddleName.Value else "")
+            this.LastName
+            this.Age
+
+    member this.HasErrors() =
+        if      this.FirstName.Length < 3  then Some "First name is too short."
+        else if this.FirstName.Length > 50 then Some "First name is too long."
+        else if this.LastName.Length  < 3  then Some "Last name is too short."
+        else if this.LastName.Length  > 50 then Some "Last name is too long."
+        else if this.Age < 18              then Some "Person must be an adult (age >= 18)."
+        else if this.Age > 150             then Some "Person must be a human being."
+        else None
+```
+
+The `HasError` method is checking business logic which is specific to the type `Adult`. For instance if `Age` is less than 18 then the person is not an adult and therefore `HasErrors` would return an F# option type with `Some "Person must be an adult (age >= 18)."`.
+
+It is a generic validation method which can be used from anywhere in an F# application to validate if a given `Adult` object has logically correct data.
+
+In order to make use of that validation method from within a Giraffe `HttpHandler` one could create a custom handler to invoke the method:
+
+```fsharp
+module WebApp =
+    let adultHandler (adult : Adult) : HttpHandler =
+        match adult.HasErrors() with
+        | Some msg -> RequestErrors.BAD_REQUEST msg
+        | None     -> text (adult.ToString())
+
+    let parsingError err = RequestErrors.BAD_REQUEST err
+
+    let webApp _ =
+        choose [
+            route "/person"
+            >=> tryBindQuery<Adult> parsingError None adultHandler
+            RequestErrors.NOT_FOUND "Not found"
+        ]
+```
+
+If an application has only one model to deal with then this is fairly straight forward, but if an application has more models which require additional data validation steps like in the case of `Adult` then you'll quickly end up writing a lot of boilerplate code. This can be avoided with the help of `IModelValidation<'T>` and `validateModel<'T>`:
+
+```fsharp
+[<CLIMutable>]
+type Adult =
+    {
+        FirstName  : string
+        MiddleName : string option
+        LastName   : string
+        Age        : int
+    }
+    override this.ToString() =
+        sprintf "Name: %s%s %s, Age: %i"
+            this.FirstName
+            (if this.MiddleName.IsSome then " " + this.MiddleName.Value else "")
+            this.LastName
+            this.Age
+
+    member this.HasErrors() =
+        if      this.FirstName.Length < 3  then Some "First name is too short."
+        else if this.FirstName.Length > 50 then Some "First name is too long."
+        else if this.LastName.Length  < 3  then Some "Last name is too short."
+        else if this.LastName.Length  > 50 then Some "Last name is too long."
+        else if this.Age < 18              then Some "Person must be an adult (age >= 18)."
+        else if this.Age > 150             then Some "Person must be a human being."
+        else None
+
+    interface IModelValidation<Adult> with
+        member this.Validate() =
+            match this.HasErrors() with
+            | Some msg -> Error (RequestErrors.badRequest (text msg))
+            | None     -> Ok this
+
+module WebApp =
+    let textHandler (x : obj) = text (x.ToString())
+
+    let parsingError err = RequestErrors.BAD_REQUEST err
+
+    let webApp _ =
+        choose [
+            route Urls.person
+            >=> tryBindQuery<Adult> parsingError None (validateModel textHandler)
+        ]
+```
+
+Now the `Adult` type has implemented the `IModelValidation<'T>` interface from where it was able to re-use the already existing `HasErrors` method to either return a validated object of type `Adult` or an error of type `HttpHandler`.
+
+The `validateModel` method has now been added between the `tryBindQuery<Adult>` and `textHandler` functions, which means it will validate the model using its `IModelValidation<Adult>.Validate()` method.
+
+On success the `textHandler` will be executed as normal and on error it will invoke the error handler returned from `Validate()`.
+
+### File Uploads
+
+ASP.NET Core makes it really easy to process uploaded files.
+
+The `HttpContext.Request.Form.Files` collection can be used to process one or many small files which have been sent by a client:
+
+```fsharp
+open Giraffe
+
+let fileUploadHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            return!
+                (match ctx.Request.HasFormContentType with
+                | false -> RequestErrors.BAD_REQUEST "Bad request"
+                | true  ->
+                    ctx.Request.Form.Files
+                    |> Seq.fold (fun acc file -> sprintf "%s\n%s" acc file.FileName) ""
+                    |> text) next ctx
+        }
+
+let webApp = route "/upload" >=> fileUploadHandler
+```
+
+You can also read uploaded files by utilizing the `IFormFeature` and the `ReadFormAsync` method:
+
+```fsharp
+let fileUploadHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            let formFeature = ctx.Features.Get<IFormFeature>()
+            let! form = formFeature.ReadFormAsync CancellationToken.None
+            return!
+                (form.Files
+                |> Seq.fold (fun acc file -> sprintf "%s\n%s" acc file.FileName) ""
+                |> text) next ctx
+        }
+
+let webApp = route "/upload" >=> fileUploadHandler
+```
+
+For large file uploads it is recommended to [stream the file](https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads#uploading-large-files-with-streaming) in order to prevent resource exhaustion.
+
+See also [large file uploads in ASP.NET Core](https://stackoverflow.com/questions/36437282/dealing-with-large-file-uploads-on-asp-net-core-1-0) on StackOverflow.
 
 ### Authentication and Authorization
 
@@ -2361,3 +3078,500 @@ For more information please visit the official [Giraffe DotLiquid](https://githu
 [Saturn](https://github.com/SaturnFramework/Saturn) is an opinionated, web development framework built on top of Giraffe which implements the server-side, functional MVC pattern for F#.
 
 Saturn is not directly part of Giraffe but builds a [Phoenix](http://phoenixframework.org/) inspired MVC pattern on top of Giraffe. It is being developed and maintained by the author of the [Ionide project](https://github.com/ionide/ionide-vscode-fsharp).
+
+## Appendix
+
+### Aleksander Heintz's query string binder API
+
+```fsharp
+[<AutoOpen>]
+module Giraffe.Query
+
+open Aether
+open Microsoft.AspNetCore.Http
+
+module Helpers =
+  let konst v _ = v
+
+  [<RequireQualifiedAccess>]
+  module Option =
+    let inline ofBool b = if b then Some [] else None
+
+open Helpers
+
+[<AutoOpen>]
+module Values =
+  type QueryValue = string list option
+
+  [<RequireQualifiedAccess>]
+  module QueryValue =
+
+    let inline private (|Empty|NonEmpty|) xs =
+      match xs with
+      | [] -> Empty
+      | _  -> NonEmpty xs
+
+    (* Epimorphisms *)
+
+    let private Zero__ =
+      (function | None -> Some ()
+                | _    -> None), konst None
+
+    let private Bool__ =
+      (function | None       -> Some false
+                | Some Empty -> Some true
+                | _          -> None), Option.ofBool
+
+    let private String__ =
+      (function | Some [v] -> Some v
+                | _        -> None), List.singleton >> Some
+
+    let private List__ =
+      (function | None    -> Some []
+                | Some vs -> Some vs), Some
+
+    (* Prisms *)
+
+    let Zero_ =
+      Prism.ofEpimorphism Zero__
+
+    let Bool_ =
+      Prism.ofEpimorphism Bool__
+
+    let String_ =
+      Prism.ofEpimorphism String__
+
+    let List_ =
+      Prism.ofEpimorphism List__
+
+  (* Functional *)
+  [<AutoOpen>]
+  module Functional =
+    type QueryValueResult<'a> = Result<'a, string>
+    type QueryValue<'a> = QueryValue -> QueryValueResult<'a> * QueryValue
+
+    (* Functions *)
+
+    [<RequireQualifiedAccess>]
+    module QueryValue =
+      let inline unit (a: 'a) : QueryValue<_> =
+        fun value ->
+          Ok a, value
+
+      let zero = unit ()
+
+      let inline error (e: string) : QueryValue<_> =
+        fun value ->
+          Error e, value
+
+      let inline internal ofResult result =
+        fun value ->
+          result, value
+
+      let inline bind (m: QueryValue<'a>) (f: 'a -> QueryValue<'b>) : QueryValue<'b> =
+        fun value ->
+          match m value with
+          | Ok a, value    -> f a value
+          | Error e, value -> Error e, value
+
+      let inline apply (f: QueryValue<'a -> 'b>) (m: QueryValue<'a>) : QueryValue<'b> =
+        bind f (fun f' ->
+          bind m (f' >> unit))
+
+      let inline map (f: 'a -> 'b) (m: QueryValue<'a>) : QueryValue<'b> =
+        bind m (f >> unit)
+
+      let inline map2 (f: 'a -> 'b -> 'c) (m1: QueryValue<'a>) (m2: QueryValue<'b>) : QueryValue<'c> =
+        apply (apply (unit f) m1) m2
+
+    (* Operators *)
+
+    module Operators =
+      let inline (>>=) m f =
+        QueryValue.bind m f
+
+      let inline (=<<) f m =
+        QueryValue.bind m f
+
+      let inline (<*>) f m =
+        QueryValue.apply f m
+
+      let inline (<!>) f m =
+        QueryValue.map f m
+
+      let inline ( *>) m1 m2 =
+        QueryValue.map2 (konst id) m1 m2
+
+      let inline (<* ) m1 m2 =
+        QueryValue.map2 konst m1 m2
+
+      let inline (>=>) f g =
+        fun x -> f x >>= g
+
+      let inline (<=<) g f =
+        fun x -> f x >>= g
+
+  module Builder =
+    open Operators
+
+    type QueryValueBuilder () =
+      member inline __.Bind (m1, f) = m1 >>= f
+
+      member inline __.Combine (m1, m2) = m1 *> m2
+
+      member inline __.Delay f = QueryValue.zero >>= f
+
+      member inline __.Return x = QueryValue.unit x
+
+      member inline __.Zero () = QueryValue.zero
+
+  let queryValue = Builder.QueryValueBuilder ()
+
+  [<AutoOpen>]
+  module Optic =
+
+    [<RequireQualifiedAccess>]
+    module QueryValue =
+
+      [<RequireQualifiedAccess>]
+      module Optic =
+
+        type Get =
+          | Get with
+
+          static member (^.) (Get, l: Lens<QueryValue, 'b>) : QueryValue<_> =
+            fun value ->
+              Ok (Optic.get l value), value
+
+          static member (^.) (Get, p: Prism<QueryValue, 'b>) : QueryValue<_> =
+            fun value ->
+              match Optic.get p value with
+              | Some x -> Ok x, value
+              | None   -> Error (sprintf "Couldn't use Prism %A on query string value: '%A'" p value), value
+
+        let inline get o : QueryValue<_> =
+          (Get ^. o)
+
+        type TryGet =
+          | TryGet with
+
+          static member (^.) (TryGet, l: Lens<QueryValue, 'b>) : QueryValue<_> =
+            fun value ->
+              Ok (Some (Optic.get l value)), value
+
+          static member (^.) (TryGet, p: Prism<QueryValue, 'b>) : QueryValue<_> =
+            fun value ->
+              Ok (Optic.get p value), value
+
+        let inline tryGet o : QueryValue<_> =
+          (TryGet ^. o)
+
+        let inline set o v : QueryValue<_> =
+          fun query ->
+            Ok (), Optic.set o v query
+
+        let inline map o f : QueryValue<_> =
+          fun query ->
+            Ok (), Optic.map o f query
+
+  [<AutoOpen>]
+  module Mapping =
+    open Operators
+
+    (* From *)
+
+    (* Defaults *)
+
+    type FromQueryValueDefaults = FromQueryValueDefaults with
+
+      (* Basic Types *)
+
+      static member inline FromQueryValue (_: unit) =
+        QueryValue.Optic.get QueryValue.Zero_
+
+      static member inline FromQueryValue (_: bool) =
+        QueryValue.Optic.get QueryValue.Bool_
+
+      static member inline FromQueryValue (_: string) =
+        QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: QueryValue) =
+        QueryValue.Optic.get id_
+
+    (* Mapping Functions *)
+
+    let inline internal fromQueryValueDefaults (a: ^a, _: ^b) =
+      ((^a or ^b) : (static member FromQueryValue: ^a -> ^a QueryValue) a)
+
+    let inline internal fromQueryValue x =
+      fst (fromQueryValueDefaults (Unchecked.defaultof<'a>, FromQueryValueDefaults) x)
+
+    let inline internal fromQueryValueFold xs =
+      List.fold (fun r x ->
+        match r with
+        | Error e -> Error e
+        | Ok xs   ->
+          match fromQueryValue x with
+          | Ok x    -> Ok (x :: xs)
+          | Error e -> Error e) (Ok []) (xs |> List.map (List.singleton >> Some) |> List.rev)
+
+    let inline private tryParse name f =
+      fun value ->
+        match f value with
+        | true, v -> fun value -> Ok v, value
+        | _       -> fun value -> Error (sprintf "Failed to parse '%A' as %s" value name), value
+
+    (* Defaults *)
+
+    open System
+    type FromQueryValueDefaults with
+
+      (* Numbers *)
+
+      static member inline FromQueryValue (_: float) =
+            tryParse "float" Double.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: decimal) =
+            tryParse "decimal" Decimal.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: int) =
+            tryParse "int" Int32.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: int16) =
+            tryParse "int16" Int16.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: int64) =
+            tryParse "int64" Int64.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: float32) =
+            tryParse "float32" Single.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: uint16) =
+            tryParse "uint16" UInt16.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: uint32) =
+            tryParse "uint32" UInt32.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      static member inline FromQueryValue (_: uint64) =
+            tryParse "uint64" UInt64.TryParse
+        =<< QueryValue.Optic.get QueryValue.String_
+
+      (* Lists *)
+
+      static member inline FromQueryValue (_: 'a list) : QueryValue<'a list> =
+            fromQueryValueFold >> QueryValue.ofResult
+        =<< QueryValue.Optic.get QueryValue.List_
+
+      static member inline FromQueryValue (_: 'a array) : QueryValue<'a array> =
+            fromQueryValueFold >> Result.map Array.ofList >> QueryValue.ofResult
+        =<< QueryValue.Optic.get QueryValue.List_
+
+
+      (* Set *)
+
+      static member inline FromQueryValue (_: Set<'a>) : QueryValue<Set<'a>> =
+            fromQueryValueFold >> Result.map Set.ofList >> QueryValue.ofResult
+        =<< QueryValue.Optic.get QueryValue.List_
+
+
+      (* Options *)
+
+      static member inline FromQueryValue (_: 'a option) : QueryValue<'a option> =
+        fun value ->
+          match fromQueryValue value with
+          | Ok v    -> Ok (Some v), value
+          | _       -> Ok None, value
+
+type Query = Map<string, string list>
+
+module Convert =
+  open Microsoft.AspNetCore.WebUtilities
+
+  let toQuery (qs: QueryString) : Query =
+    QueryHelpers.ParseQuery qs.Value
+    |> Seq.map (fun kvp -> kvp.Key, kvp.Value |> List.ofSeq)
+    |> Map.ofSeq
+
+(* Functional *)
+
+[<AutoOpen>]
+module Functional =
+  type QueryResult<'a> = Result<'a, string>
+  type Query<'a> = Query -> QueryResult<'a> * Query
+
+  (* Functions *)
+
+  [<RequireQualifiedAccess>]
+  module Query =
+    let inline unit x : Query<_> =
+      fun query ->
+        Ok x, query
+
+    let zero = unit ()
+
+    let inline error e : Query<_> =
+      fun query ->
+        Error e, query
+
+    let inline internal ofResult result =
+      fun query ->
+        result, query
+
+    let inline bind (m: Query<'a>) (f: 'a -> Query<'b>) : Query<'b> =
+      fun query ->
+        match m query with
+        | Ok a, query    -> f a query
+        | Error e, query -> Error e, query
+
+    let inline apply f m =
+      bind f (fun f' ->
+        bind m (f' >> unit))
+
+    let inline map f m =
+      bind m (f >> unit)
+
+    let inline map2 f m1 m2 =
+      apply (apply (unit f) m1) m2
+
+(* Operators *)
+
+module Operators =
+  let inline (>>=) m f =
+    Query.bind m f
+
+  let inline (=<<) f m =
+    Query.bind m f
+
+  let inline (<*>) f m =
+    Query.apply f m
+
+  let inline (<!>) f m =
+    Query.map f m
+
+  let inline ( *>) m1 m2 =
+    Query.map2 (konst id) m1 m2
+
+  let inline (<* ) m1 m2 =
+    Query.map2 konst m1 m2
+
+  let inline (>=>) f g =
+    fun x -> f x >>= g
+
+  let inline (<=<) g f =
+    fun x -> f x >>= g
+
+(* Builder *)
+
+module Builder =
+  open Operators
+
+  type QueryBuilder () =
+    member inline __.Bind (m1, f) = m1 >>= f
+
+    member inline __.Combine (m1, m2) = m1 *> m2
+
+    member inline __.Delay f = Query.zero >>= f
+
+    member inline __.Return x = Query.unit x
+
+    member inline __.Zero () = Query.zero
+
+let query = Builder.QueryBuilder ()
+
+[<AutoOpen>]
+module Mapping =
+  open Operators
+
+  (* From *)
+
+  (* Defaults *)
+
+  type FromQueryDefaults = FromQueryDefaults with
+
+    static member inline FromQuery (_: Query) : Query<Query> =
+      fun query -> Ok query, query
+
+    static member inline FromQuery (_: Map<string, string>) : Query<Map<string, string>> =
+      fun query ->
+        let ret =
+          query
+          |> Map.filter (konst (function | [_] -> true | _ -> false))
+          |> Map.map (konst List.head)
+        Ok ret, query
+
+  (* Mapping Functions *)
+
+  let inline internal fromQueryDefaults (a: ^a, _: ^b) =
+    ((^a or ^b) : (static member FromQuery: ^a -> ^a Query) a)
+
+  let inline internal fromQuery x =
+    fst (fromQueryDefaults (Unchecked.defaultof<'a>, FromQueryDefaults) x)
+
+  (* Functions *)
+
+  [<RequireQualifiedAccess>]
+  module Query =
+
+    (* Read *)
+
+    let private readValue key =
+      fun query ->
+        Ok (Map.tryFind key query), query
+
+    let readMemberWith fromQueryValue key =
+         readValue key
+      >>= fun value ->
+         match fromQueryValue value with
+         | Ok v    -> Query.unit v
+         | Error e -> Query.error (sprintf "%s: %s" key e)
+
+    let inline readWith fromQueryValue key =
+      readMemberWith fromQueryValue key
+
+    let inline read key =
+      readWith fromQueryValue key
+
+    let inline parse qs =
+      fromQuery (Convert.toQuery qs)
+      |> function | Ok a         -> a
+                  | Error e      -> failwith e
+
+    let inline tryParse qs =
+      fromQuery (Convert.toQuery qs)
+      |> function | Ok a         -> Some a
+                  | Error _      -> None
+
+[<AutoOpen>]
+module HttpHandlers =
+  open Giraffe.HttpHandlers
+  open Giraffe.Tasks
+  open System.Threading.Tasks
+
+  module Query =
+
+    let inline bind (f: ^a -> HttpHandler) : HttpHandler =
+      fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+          match Query.tryParse ctx.Request.QueryString with
+          | None   -> return None
+          | Some a -> return! f a next ctx
+        }
+
+    let inline bindTask (f: ^a -> Task<HttpHandler>) : HttpHandler =
+      fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+          match Query.tryParse ctx.Request.QueryString with
+          | None   -> return None
+          | Some a ->
+            let! handler = f a
+            return! handler next ctx
+        }
+```

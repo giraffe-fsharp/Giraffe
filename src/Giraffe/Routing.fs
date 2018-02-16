@@ -7,6 +7,7 @@ open System.Text.RegularExpressions
 open Microsoft.AspNetCore.Http
 open Newtonsoft.Json.Linq
 open Giraffe.FormatExpressions
+open Microsoft.Extensions.Primitives
 
 // ---------------------------
 // Private sub route helper functions
@@ -76,6 +77,48 @@ let route (path : string) : HttpHandler =
         else abort
 
 /// ** Description **
+/// Filters an incoming HTTP request based on the request path (case insensitive).
+/// ** Parameters **
+///     - `path`: Request path.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+let routeCi (path : string) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        if String.Equals(getPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
+        then next ctx
+        else abort
+
+/// ** Description **
+/// Filters an incoming HTTP request based on the request path using Regex (case sensitive).
+/// ** Parameters **
+///     - `path`: Regex path.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+let routex (path : string) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let pattern = sprintf "^%s$" path
+        let regex   = Regex(pattern, RegexOptions.Compiled)
+        let result  = regex.Match (getPath ctx)
+        match result.Success with
+        | true -> next ctx
+        | false -> abort
+
+/// ** Description **
+/// Filters an incoming HTTP request based on the request path using Regex (case insensitive).
+/// ** Parameters **
+///     - `path`: Regex path.
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+let routeCix (path : string) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let pattern = sprintf "^%s$" path
+        let regex   = Regex(pattern, RegexOptions.IgnoreCase ||| RegexOptions.Compiled)
+        let result  = regex.Match (getPath ctx)
+        match result.Success with
+        | true -> next ctx
+        | false -> abort
+
+/// ** Description **
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 /// If the route matches the incoming HTTP request then the arguments from the `PrintfFormat<...>` will be automatically resolved and passed into the supplied `routeHandler`.
 ///
@@ -101,18 +144,6 @@ let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler)
         |> function
             | None      -> abort
             | Some args -> routeHandler args next ctx
-
-/// ** Description **
-/// Filters an incoming HTTP request based on the request path (case insensitive).
-/// ** Parameters **
-///     - `path`: Request path.
-/// ** Output **
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-let routeCi (path : string) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        if String.Equals(getPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
-        then next ctx
-        else abort
 
 /// ** Description **
 /// Filters an incoming HTTP request based on the request path (case insensitive).
@@ -151,21 +182,21 @@ let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandle
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let routeBind<'T> (route : string) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        let pattern = route.Replace("{", "(?<").Replace("}", ">[^/\n]+)") |> sprintf "%s$"
-        let regex = Regex(pattern, RegexOptions.IgnoreCase)
-        let mtch = regex.Match ctx.Request.Path.Value
-        match mtch.Success with
+        let pattern = route.Replace("{", "(?<").Replace("}", ">[^/\n]+)") |> sprintf "^%s$"
+        let regex   = Regex(pattern, RegexOptions.IgnoreCase)
+        let result  = regex.Match (getPath ctx)
+        match result.Success with
         | true ->
-            let groups = mtch.Groups
-            let o =
+            let groups = result.Groups
+            let result =
                 regex.GetGroupNames()
                 |> Array.skip 1
-                |> Array.map (fun x -> x, groups.[x].Value)
-                |> Array.filter (fun (_, x) -> x.Length > 0)
+                |> Array.map (fun n -> n, StringValues groups.[n].Value)
                 |> dict
-                |> JObject.FromObject
-                |> fun jo -> jo.ToObject<'T>()
-            routeHandler o next ctx
+                |> ModelParser.tryParse None
+            match result with
+            | Error _  -> abort
+            | Ok model -> routeHandler model next ctx
         | _ -> abort
 
 /// ** Description **
@@ -213,3 +244,43 @@ let subRoute (path : string) (handler : HttpHandler) : HttpHandler =
 let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
     routeStartsWithCi path >=>
     handlerWithRootedPath path handler
+
+/// ** Description **
+/// Filters an incoming HTTP request based on a part of the request path (case sensitive).
+/// If the sub route matches the incoming HTTP request then the arguments from the `PrintfFormat<...>` will be automatically resolved and passed into the supplied `routeHandler`.
+///
+/// ** Supported format chars **
+///     - `%b`: `bool`
+///     - `%c`: `char`
+///     - `%s`: `string`
+///     - `%i`: `int`
+///     - `%d`: `int64`
+///     - `%f`: `float`/`double`
+///     - `%O`: `Guid`
+///
+/// Subsequent routing handlers inside the given `handler` function should omit the already validated path.
+///
+/// ** Parameters **
+///     - `path`: A format string representing the expected request sub path.
+///     - `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
+///
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+let subRoutef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
+        validateFormat path
+        fun (next : HttpFunc) (ctx : HttpContext) ->
+            let paramCount   = (path.Value.Split '/').Length
+            let subPathParts = (getPath ctx).Split '/'
+            if paramCount > subPathParts.Length then abort
+            else
+                let subPath =
+                    subPathParts
+                    |> Array.take paramCount
+                    |> Array.fold (fun state elem ->
+                        if String.IsNullOrEmpty elem
+                        then state
+                        else sprintf "%s/%s" state elem) ""
+                tryMatchInput path subPath false
+                |> function
+                    | None      -> abort
+                    | Some args -> handlerWithRootedPath subPath (routeHandler args) next ctx

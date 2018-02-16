@@ -76,11 +76,53 @@ let webApp =
         route "/"       >=> htmlFile "/pages/index.html" ]
 
 type Startup() =
+    member __.ConfigureServices (services : IServiceCollection) =
+        // Register default Giraffe dependencies
+        services.AddGiraffe() |> ignore
+
     member __.Configure (app : IApplicationBuilder)
                         (env : IHostingEnvironment)
                         (loggerFactory : ILoggerFactory) =
-
+        // Add Giraffe to the ASP.NET Core pipeline
         app.UseGiraffe webApp
+
+[<EntryPoint>]
+let main _ =
+    WebHostBuilder()
+        .UseKestrel()
+        .UseStartup<Startup>()
+        .Build()
+        .Run()
+    0
+```
+
+Instead of creating a `Startup` class you can also add Giraffe in a more functional way:
+
+```fsharp
+open Giraffe
+
+let webApp =
+    choose [
+        route "/ping"   >=> text "pong"
+        route "/"       >=> htmlFile "/pages/index.html" ]
+
+let configureApp (app : IApplicationBuilder) =
+    // Add Giraffe to the ASP.NET Core pipeline
+    app.UseGiraffe webApp
+
+let configureServices (services : IServiceCollection) =
+    // Add Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+[<EntryPoint>]
+let main _ =
+    WebHostBuilder()
+        .UseKestrel()
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .Build()
+        .Run()
+    0
 ```
 
 For more information please check the official [Giraffe documentation](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md).
@@ -96,7 +138,7 @@ There is a few sample applications which can be found in the [`/samples`](https:
 | [GoogleAuthApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/GoogleAuthApp) | Demonstrates how Google Auth can be used with Giraffe. |
 | [IdentityApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/IdentityApp) | Demonstrates how ASP.NET Core Identity can be used with Giraffe. |
 | [JwtApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/JwtApp) | Demonstrates how JWT tokens can be used with Giraffe. |
-| [SampleApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/SampleApp) | Generic sample application showcasing multiple features such as file uploads, cookie auth, model binding, etc. |
+| [SampleApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/SampleApp) | Generic sample application showcasing multiple features such as file uploads, cookie auth, model binding and validation, etc. |
 
 ### Live apps
 
@@ -258,7 +300,8 @@ If you add this source to your NuGet CLI or project settings then you can pull u
 - [A Functional Web with ASP.NET Core and F#'s Giraffe](https://www.hanselman.com/blog/AFunctionalWebWithASPNETCoreAndFsGiraffe.aspx) (by Scott Hanselman)
 - [Build a web service with F# and .NET Core 2.0](https://blogs.msdn.microsoft.com/dotnet/2017/09/26/build-a-web-service-with-f-and-net-core-2-0/) (by Phillip Carter)
 - [Giraffe brings F# functional programming to ASP.Net Core](https://www.infoworld.com/article/3229005/web-development/f-and-functional-programming-come-to-asp-net-core.html) (by Paul Krill from InfoWorld)
-
+- [JSON Web Token with Giraffe and F#](https://medium.com/@dsincl12/json-web-token-with-giraffe-and-f-4cebe1c3ef3b) (by David Sinclair)
+- [WebSockets with Giraffe and F#](https://medium.com/@dsincl12/websockets-with-f-and-giraffe-772be829e121) (by David Sinclair)
 
 If you have blogged about Giraffe, demonstrating a useful topic or some other tips or tricks then please feel free to submit a pull request and add your article to this list as a reference for other Giraffe users. Thank you!
 

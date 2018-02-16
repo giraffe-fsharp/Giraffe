@@ -1,6 +1,30 @@
 Release Notes
 =============
 
+## 1.1.0
+
+#### New features
+
+- Added `subRoutef` http handler (see [subRoutef](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#subroutef))
+- Added `routex` and `routeCix` http handler (see [routex](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#routex))
+- Improved model binding (see [Model Binding](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#model-binding))
+    - Fixed issues: [#121](https://github.com/giraffe-fsharp/Giraffe/issues/121), [#206](https://github.com/giraffe-fsharp/Giraffe/issues/206)
+    - Added a `TryBindFormAsync` and a `TryBindQueryString` `HttpContext` extension methods
+    - Added new `HttpHandler` functions to offer a more functional API for model binding:
+        - `bindJson<'T>`
+        - `bindXml<'T>`
+        - `bindForm<'T>`
+        - `tryBindForm<'T>`
+        - `bindQuery<'T>`
+        - `tryBindQuery<'T>`
+        - `bindModel<'T>`
+- Added new [Model Validation](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#model-validation) API
+
+#### Bug fixes
+
+- `routeBind` works when nested in a `subRoute` handler now
+- `routeBind` doesn't crate a model object any more if the route arguments do not match the provided model
+
 ## 1.0.0
 
 First RTM release of Giraffe.

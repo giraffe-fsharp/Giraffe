@@ -34,8 +34,11 @@
     <Compile Include="Helpers.fs" />
     <Compile Include="FormatExpressionTests.fs" />
     <Compile Include="HttpHandlerTests.fs" />
+    <Compile Include="RoutingTests.fs" />
     <Compile Include="AuthTests.fs" />
     <Compile Include="GiraffeViewEngineTests.fs" />
+    <Compile Include="ModelBindingTests.fs" />
+    <Compile Include="ModelValidationTests.fs" />
     <Compile Include="HttpContextExtensionsTests.fs" />
     <Compile Include="StreamingTests.fs" />
     <Compile Include="PreconditionalTests.fs" />

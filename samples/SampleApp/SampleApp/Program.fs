@@ -1,9 +1,7 @@
 ﻿module SampleApp.App
 
 open System
-open System.IO
 open System.Security.Claims
-open System.Collections.Generic
 open System.Threading
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
@@ -77,6 +75,29 @@ let configuredHandler =
         let configuration = ctx.GetService<IConfiguration>()
         text configuration.["HelloMessage"] next ctx
 
+let fileUploadHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            return!
+                (match ctx.Request.HasFormContentType with
+                | false -> RequestErrors.BAD_REQUEST "Bad request"
+                | true  ->
+                    ctx.Request.Form.Files
+                    |> Seq.fold (fun acc file -> sprintf "%s\n%s" acc file.FileName) ""
+                    |> text) next ctx
+        }
+
+let fileUploadHandler2 =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            let formFeature = ctx.Features.Get<IFormFeature>()
+            let! form = formFeature.ReadFormAsync CancellationToken.None
+            return!
+                (form.Files
+                |> Seq.fold (fun acc file -> sprintf "%s\n%s" acc file.FileName) ""
+                |> text) next ctx
+        }
+
 let time() = System.DateTime.Now.ToString()
 
 [<CLIMutable>]
@@ -87,13 +108,12 @@ type Car =
         Wheels : int
         Built  : DateTime
     }
+    interface IModelValidation<Car> with
+        member this.Validate() =
+            if this.Wheels > 1 && this.Wheels <= 6 then Ok this
+            else Error (RequestErrors.BAD_REQUEST "Wheels must be a value between 2 and 6.")
 
-let submitCar : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        task {
-            let! car = ctx.BindModelAsync<Car>()
-            return! ctx.WriteJsonAsync car
-        }
+let parsingErrorHandler err = RequestErrors.BAD_REQUEST err
 
 let webApp =
     choose [
@@ -111,8 +131,11 @@ let webApp =
                 route  "/once"       >=> (time() |> text)
                 route  "/everytime"  >=> warbler (fun _ -> (time() |> text))
                 route  "/configured" >=> configuredHandler
+                route  "/upload"     >=> fileUploadHandler
+                route  "/upload2"    >=> fileUploadHandler2
             ]
-        route "/car" >=> submitCar
+        route "/car"  >=> bindModel<Car> None json
+        route "/car2" >=> tryBindQuery<Car> parsingErrorHandler None (validateModel xml)
         RequestErrors.notFound (text "Not Found") ]
 
 // ---------------------------------

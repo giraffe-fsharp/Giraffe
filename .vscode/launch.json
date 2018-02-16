@@ -5,6 +5,58 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": ".NET Core Launch GoogleAuthApp (console)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build GoogleAuthApp",
+            "program": "${workspaceFolder}/samples/GoogleAuthApp/GoogleAuthApp/bin/Debug/netcoreapp2.0/GoogleAuthApp.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart",
+            "stopAtEntry": false,
+            "justMyCode": false
+        },
+        {
+            "name": ".NET Core Launch IdentityApp (console)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build IdentityApp",
+            "program": "${workspaceFolder}/samples/IdentityApp/IdentityApp/bin/Debug/netcoreapp2.0/IdentityApp.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart",
+            "stopAtEntry": false,
+            "justMyCode": false
+        },
+        {
+            "name": ".NET Core Launch JwtApp (console)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build JwtApp",
+            "program": "${workspaceFolder}/samples/JwtApp/JwtApp/bin/Debug/netcoreapp2.0/JwtApp.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart",
+            "stopAtEntry": false,
+            "justMyCode": false
+        },
+        {
+            "name": ".NET Core Launch SampleApp (console)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build SampleApp",
+            "program": "${workspaceFolder}/samples/SampleApp/SampleApp/bin/Debug/netcoreapp2.0/SampleApp.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart",
+            "stopAtEntry": false,
+            "justMyCode": false
+        },
+        {
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach",

@@ -90,18 +90,8 @@ module Views =
 
 module Handlers =
 
-    let signOut (scheme : string) : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            task {
-                do! ctx.SignOutAsync(scheme)
-                return! next ctx
-            }
-
-    let index : HttpHandler =
-        Views.index |> htmlView
-
-    let login : HttpHandler =
-        Views.login |> htmlView
+    let index : HttpHandler = Views.index |> htmlView
+    let login : HttpHandler = Views.login |> htmlView
 
     let user : HttpHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -132,7 +122,7 @@ module Handlers =
         setStatusCode 404 >=>
         (Views.notFound |> htmlView)
 
-    let webApp =
+    let webApp : HttpHandler =
         choose [
             GET >=>
                 choose [
