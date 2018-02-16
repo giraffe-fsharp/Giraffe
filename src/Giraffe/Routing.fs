@@ -195,8 +195,8 @@ let routeBind<'T> (route : string) (routeHandler : 'T -> HttpHandler) : HttpHand
                 |> dict
                 |> ModelParser.tryParse None
             match result with
-            | None   -> abort
-            | Some t -> routeHandler t next ctx
+            | Error _  -> abort
+            | Ok model -> routeHandler model next ctx
         | _ -> abort
 
 /// ** Description **

@@ -48,11 +48,14 @@ module Urls =
 
 module WebApp =
     let textHandler (x : obj) = text (x.ToString())
+    let parsingErrorHandler err = RequestErrors.badRequest (text err)
+    let culture = None
+    let tryBindQueryToAdult = tryBindQuery<Adult> parsingErrorHandler culture
 
     let webApp _ =
         choose [
             route Urls.person
-            >=> tryBindQuery<Adult> (RequestErrors.badRequest (text "Parsing error"))None (validateModel textHandler)
+            >=> tryBindQueryToAdult (validateModel textHandler)
         ]
 
     let errorHandler (ex : Exception) (_ : ILogger) : HttpHandler =

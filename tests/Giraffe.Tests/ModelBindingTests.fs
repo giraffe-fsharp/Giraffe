@@ -67,22 +67,22 @@ type QueryModel =
         FirstName  : string
         LastName   : string
         Sex        : Sex
-        Nicknames  : string list option
+        Numbers    : int list option
     }
     override this.ToString() =
         let formatNicknames() =
-            match this.Nicknames with
+            match this.Numbers with
             | None       -> "--"
             | Some items ->
                 items
                 |> List.fold (
                     fun state i ->
                         if String.IsNullOrEmpty state
-                        then i
-                        else sprintf "%s, %s" state i
+                        then i.ToString()
+                        else sprintf "%s, %i" state i
                     ) ""
 
-        sprintf "Name: %s %s; Sex: %s; Nicknames: %s"
+        sprintf "Name: %s %s; Sex: %s; Numbers: %s"
             this.FirstName
             this.LastName
             (this.Sex.ToString())
@@ -118,8 +118,8 @@ let ``ModelParser.tryParse with complete model data`` () =
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
     match result with
-    | Some m -> Assert.Equal(expected, m)
-    | None   -> assertFail "Model didn't bind successfully."
+    | Ok model  -> Assert.Equal(expected, model)
+    | Error err -> assertFailf "Model didn't bind successfully: %s." err
 
 [<Fact>]
 let ``ModelParser.tryParse with model data without optional parameters`` () =
@@ -145,8 +145,8 @@ let ``ModelParser.tryParse with model data without optional parameters`` () =
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
     match result with
-    | Some m -> Assert.Equal(expected, m)
-    | None   -> assertFail "Model didn't bind successfully."
+    | Ok model  -> Assert.Equal(expected, model)
+    | Error err -> assertFailf "Model didn't bind successfully: %s." err
 
 [<Fact>]
 let ``ModelParser.tryParse with complete model data but mixed casing`` () =
@@ -174,8 +174,8 @@ let ``ModelParser.tryParse with complete model data but mixed casing`` () =
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
     match result with
-    | Some m -> Assert.Equal(expected, m)
-    | None   -> assertFail "Model didn't bind successfully."
+    | Ok model  -> Assert.Equal(expected, model)
+    | Error err -> assertFailf "Model didn't bind successfully: %s." err
 
 [<Fact>]
 let ``ModelParser.tryParse with incomplete model data`` () =
@@ -190,8 +190,8 @@ let ``ModelParser.tryParse with incomplete model data`` () =
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
     match result with
-    | Some _ -> assertFail "Model had incomplete data and should have not bound successfully."
-    | None   -> ()
+    | Ok _      -> assertFail "Model had incomplete data and should have not bound successfully."
+    | Error err -> Assert.Equal("Missing value for required property Id.", err)
 
 [<Fact>]
 let ``ModelParser.tryParse with complete model data but wrong union case`` () =
@@ -209,8 +209,8 @@ let ``ModelParser.tryParse with complete model data but wrong union case`` () =
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
     match result with
-    | Some _ -> assertFail "Model had wrong data and should have not bound successfully."
-    | None   -> ()
+    | Ok _      -> assertFail "Model had incomplete data and should have not bound successfully."
+    | Error err -> Assert.Equal("The value 'wrong' is not a valid case for type Giraffe.Tests.ModelBindingTests+Sex.", err)
 
 [<Fact>]
 let ``ModelParser.tryParse with complete model data but wrong data`` () =
@@ -228,8 +228,8 @@ let ``ModelParser.tryParse with complete model data but wrong data`` () =
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
     match result with
-    | Some _ -> assertFail "Model had wrong data and should have not bound successfully."
-    | None   -> ()
+    | Ok _      -> assertFail "Model had incomplete data and should have not bound successfully."
+    | Error err -> Assert.Equal("Could not parse value 'wrong' to type System.DateTime.", err)
 
 // ---------------------------------
 // ModelParser.parse Tests
@@ -406,15 +406,16 @@ let ``ModelParser.parse with complete model data but wrong data`` () =
 let ``tryBindQuery with complete data and list items with []`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let bindQuery = tryBindQuery<QueryModel> (RequestErrors.badRequest (text "Parsing error")) None
+    let parsingErrorHandler err = RequestErrors.badRequest (text err)
+    let bindQuery = tryBindQuery<QueryModel> parsingErrorHandler None
     let app =
         GET >=> choose [
             route "/query" >=> bindQuery (fun m -> text(m.ToString()))
             setStatusCode 404 >=> text "Not found"
         ]
 
-    let expected = "Name: John Doe; Sex: Male; Nicknames: Johnny, JD, Jay"
-    let queryStr = "?firstName=John&lastName=Doe&sex=male&nicknames[]=Johnny&nicknames[]=JD&nicknames[]=Jay"
+    let expected = "Name: John Doe; Sex: Male; Numbers: 5, 3, 2"
+    let queryStr = "?firstName=John&lastName=Doe&sex=male&numbers[]=5&numbers[]=3&numbers[]=2"
 
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
     ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
@@ -433,15 +434,16 @@ let ``tryBindQuery with complete data and list items with []`` () =
 let ``tryBindQuery with complete data and list items without []`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let bindQuery = tryBindQuery<QueryModel> (RequestErrors.badRequest (text "Parsing error")) None
+    let parsingErrorHandler err = RequestErrors.badRequest (text err)
+    let bindQuery = tryBindQuery<QueryModel> parsingErrorHandler None
     let app =
         GET >=> choose [
             route "/query" >=> bindQuery (fun m -> text(m.ToString()))
             setStatusCode 404 >=> text "Not found"
         ]
 
-    let expected = "Name: John Doe; Sex: Male; Nicknames: Johnny, JD, Jay"
-    let queryStr = "?firstName=John&lastName=Doe&sex=male&nicknames=Johnny&nicknames=JD&nicknames=Jay"
+    let expected = "Name: John Doe; Sex: Male; Numbers: 7, 9, 0"
+    let queryStr = "?firstName=John&lastName=Doe&sex=male&numbers=7&numbers=9&numbers=0"
 
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
     ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
@@ -460,14 +462,15 @@ let ``tryBindQuery with complete data and list items without []`` () =
 let ``tryBindQuery without optional data`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let bindQuery = tryBindQuery<QueryModel> (RequestErrors.badRequest (text "Parsing error")) None
+    let parsingErrorHandler err = RequestErrors.badRequest (text err)
+    let bindQuery = tryBindQuery<QueryModel> parsingErrorHandler None
     let app =
         GET >=> choose [
             route "/query" >=> bindQuery (fun m -> text(m.ToString()))
             setStatusCode 404 >=> text "Not found"
         ]
 
-    let expected = "Name: John Doe; Sex: Male; Nicknames: --"
+    let expected = "Name: John Doe; Sex: Male; Numbers: --"
     let queryStr = "?firstName=John&lastName=Doe&sex=male"
 
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
@@ -487,15 +490,44 @@ let ``tryBindQuery without optional data`` () =
 let ``tryBindQuery with incomplete data`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let bindQuery = tryBindQuery<QueryModel> (RequestErrors.badRequest (text "Parsing error")) None
+    let parsingErrorHandler err = RequestErrors.badRequest (text err)
+    let bindQuery = tryBindQuery<QueryModel> parsingErrorHandler None
     let app =
         GET >=> choose [
             route "/query" >=> bindQuery (fun m -> text(m.ToString()))
             setStatusCode 404 >=> text "Not found"
         ]
 
-    let expected = "Parsing error"
+    let expected = "Missing value for required property FirstName."
     let queryStr = "?lastName=Doe&sex=male"
+
+    let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/query")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``tryBindQuery with complete data but baldy formated list items`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let parsingErrorHandler err = RequestErrors.badRequest (text err)
+    let bindQuery = tryBindQuery<QueryModel> parsingErrorHandler None
+    let app =
+        GET >=> choose [
+            route "/query" >=> bindQuery (fun m -> text(m.ToString()))
+            setStatusCode 404 >=> text "Not found"
+        ]
+
+    let expected = "Could not parse value 'wrong' to type System.Int32."
+    let queryStr = "?firstName=John&lastName=Doe&sex=male&numbers[]=7&numbers[]=wrong&numbers[]=0"
 
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
     ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
