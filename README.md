@@ -293,6 +293,7 @@ If you add this source to your NuGet CLI or project settings then you can pull u
 - [Evolving my open source project from a one man repository to an OSS organisation](https://dusted.codes/evolving-my-open-source-project-from-a-one-man-repository-to-a-proper-organisation)
 - [Extending the Giraffe template with different view engine options](https://dusted.codes/extending-the-giraffe-template-with-different-view-engine-options)
 - [Announcing Giraffe 1.0.0](https://dusted.codes/announcing-giraffe-100)
+- [Giraffe 1.1.0 - More routing handlers, better model binding and brand new model validation API](https://dusted.codes/giraffe-110-more-routing-handlers-better-model-binding-and-brand-new-model-validation-api)
 
 ### Community blog posts
 
