@@ -3,6 +3,7 @@ module Giraffe.Auth
 
 open System.Security.Claims
 open Microsoft.AspNetCore.Authentication
+open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Http
 open FSharp.Control.Tasks.ContextInsensitive
 
@@ -36,6 +37,28 @@ let signOut (authScheme : string) : HttpHandler =
             return! next ctx
         }
 
+/// ** Description **
+/// Validates if the user satisfies a certain policy. If the requirement is satisfied then it will continue with the `next` function otherwise it will shortcircuit to the `authFailedHandler`.
+///
+/// ** Parameters **
+///     - `policy`: A `string` containing the desired policy to validate
+///     - `authFailedHandler`: A `HttpHandler` function which will be executed when the policy is not satisfied.
+///
+/// ** Output **
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+let requiresPolicy (policy : string) (authFailedHandler : HttpHandler) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->                
+        match ctx.GetService<IAuthorizationService>() with
+        |null ->                     
+            authFailedHandler finish ctx
+        |authService -> task {            
+            let! authResult = authService.AuthorizeAsync (ctx.User, policy)
+            if authResult.Succeeded then
+                return! next ctx
+            else
+                return! authFailedHandler finish ctx
+            }
+        
 /// ** Description **
 /// Validates if a `ClaimsPrincipal` satisfies a certain condition. If the `policy` returns `true` then it will continue with the `next` function otherwise it will shortcircuit to the `authFailedHandler`.
 ///
