@@ -47,18 +47,16 @@ let signOut (authScheme : string) : HttpHandler =
 /// ** Output **
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let requiresPolicy (policy : string) (authFailedHandler : HttpHandler) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->                
-        match ctx.GetService<IAuthorizationService>() with
-        |null ->                     
-            authFailedHandler finish ctx
-        |authService -> task {            
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let authService = ctx.GetService<IAuthorizationService>()
+        task {
             let! authResult = authService.AuthorizeAsync (ctx.User, policy)
             if authResult.Succeeded then
                 return! next ctx
             else
                 return! authFailedHandler finish ctx
             }
-        
+
 /// ** Description **
 /// Validates if a `ClaimsPrincipal` satisfies a certain condition. If the `policy` returns `true` then it will continue with the `next` function otherwise it will shortcircuit to the `authFailedHandler`.
 ///

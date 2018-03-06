@@ -24,7 +24,10 @@ type HttpContext with
     /// ** Output **
     /// Returns an instance of `'T`.
     member this.GetService<'T>() =
-        this.RequestServices.GetService(typeof<'T>) :?> 'T
+        let t = typeof<'T>
+        match this.RequestServices.GetService(t) with
+        | null -> raise (this.MissingServiceError t.Name)
+        | service -> service :?> 'T
 
     /// ** Description **
     /// Gets an instance of `ILogger<'T>` from the request's service container.
@@ -56,18 +59,14 @@ type HttpContext with
     /// ** Output **
     /// Returns an instance of `Giraffe.Serialization.Json.IJsonSerializer`.
     member this.GetJsonSerializer() : IJsonSerializer =
-        let serializer = this.GetService<IJsonSerializer>()
-        if isNull serializer then raise (this.MissingServiceError "IJsonSerializer")
-        serializer
+        this.GetService<IJsonSerializer>()
 
     /// ** Description **
     /// Gets an instance of `IXmlSerializer` from the request's service container.
     /// ** Output **
     /// Returns an instance of `Giraffe.Serialization.Xml.IXmlSerializer`.
     member this.GetXmlSerializer() : IXmlSerializer  =
-        let serializer = this.GetService<IXmlSerializer>()
-        if isNull serializer then raise (this.MissingServiceError "IXmlSerializer")
-        serializer
+        this.GetService<IXmlSerializer>()
 
     /// ** Description **
     /// Sets the HTTP status code of the response.
