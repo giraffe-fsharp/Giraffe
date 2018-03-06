@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <DebugType>portable</DebugType>
-    <AssemblyName>JwtApp</AssemblyName>
+    <AssemblyName>GoogleAuthApp</AssemblyName>
     <OutputType>Exe</OutputType>
     <PackageId>JwtApp</PackageId>
     <RuntimeFrameworkVersion>2.0.0</RuntimeFrameworkVersion>
