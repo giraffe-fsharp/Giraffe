@@ -9,6 +9,7 @@ open Microsoft.AspNetCore.Http.Internal
 open Microsoft.Extensions.Primitives
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.TestHost
+open FSharp.Control.Tasks.ContextInsensitive
 open Xunit
 open NSubstitute
 open Giraffe

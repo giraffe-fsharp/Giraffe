@@ -8,6 +8,7 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
 open Microsoft.Net.Http.Headers
+open FSharp.Control.Tasks.ContextInsensitive
 open Giraffe.Serialization
 
 // ---------------------------

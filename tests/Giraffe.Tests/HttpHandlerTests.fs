@@ -5,6 +5,7 @@ open System.IO
 open System.Collections.Generic
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Primitives
+open FSharp.Control.Tasks.ContextInsensitive
 open Xunit
 open NSubstitute
 open Giraffe
