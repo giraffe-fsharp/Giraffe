@@ -42,7 +42,7 @@ module Dsl =
                         |> Seq.collect (
                              fun v -> 
                                 v.Value.Responses |> Seq.choose(fun r -> r.Value.Schema) 
-                                 |> Seq.collect(fun d -> d.FlattenComplexDefinitions())  )) 
+                                 |> Seq.collect(fun d -> d.FlattenComplexDefinitions()))) 
               |> Seq.toList
               |> List.distinct
             let doc =
