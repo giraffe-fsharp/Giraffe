@@ -71,6 +71,23 @@ module Generator =
   and ObjectDefinition =
     { Id:string
       Properties:IDictionary<string, PropertyDefinition> }
+    member __.FlattenComplexDefinitions () =
+      let flatten defs =
+        let rec loop acc currents =
+          seq {
+            for d in currents do
+              match d with
+              | Ref r -> yield! r.Properties.Values |> loop (r :: acc)
+              | _ -> yield! acc
+          } |> Seq.toList
+        loop [] defs
+      let children = __.Properties.Values |> flatten
+      let defs =
+        __.Properties.Values
+        |> Seq.choose(function | Ref r -> Some r | _ -> None) 
+        |> Seq.toList 
+      __ :: defs @ children
+        
   and PropertyDefinition =
     | Primitive of Type:string*Format:string
     | Ref of ObjectDefinition

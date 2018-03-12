@@ -50,6 +50,25 @@ type Car =
         Built  : DateTime
     }
 
+[<CLIMutable>]
+type MotorCycle =
+    {
+        Name   : string
+        Make   : string
+        Built  : DateTime
+        Power  : MotorPower
+    }
+    static member Random () =
+        {
+            Name = sprintf "random name %d" DateTime.UtcNow.Ticks
+            Make = "tototot"
+            Built = DateTime.UtcNow
+            Power = { Value=125 }
+        }    
+and MotorPower =
+    { Value:int }
+
+
 let submitCar =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
@@ -88,6 +107,13 @@ let docAddendums =
                     .AddConsume "model" "application/json" Body typeof<Car>)
                     .AddResponse 200 "application/json" "A car" typeof<Car>
             path, verb, ndef
+            
+        | "/motorCycle", HttpVerb.Get,def ->
+             let ndef = 
+                 { def with Produces=[]; Responses=Map.empty }
+                     .AddResponse 200 "application/json" "A moto" typeof<MotorCycle>
+             path, verb, ndef
+            
         | _ -> path,verb,pathDef
 
 let port = 5000
@@ -121,6 +147,9 @@ let webApp =
                  choose [
                       route  "/"           >=> text "index" 
                       route  "/ping"       >=> text "pong"
+                      
+                      routeCi  "/motorCycle"  >=> warbler (fun _ -> json (MotorCycle.Random()))
+                      
                       route  "/error"      >=> (fun _ _ -> failwith "Something went wrong!")
                       route  "/logout"     >=> signOut authScheme >=> text "Successfully logged out."
                       route  "/once"       >=> (time() |> text)

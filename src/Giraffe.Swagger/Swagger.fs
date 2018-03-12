@@ -36,7 +36,13 @@ module Dsl =
             let paths = documentRoutes docCtx.Routes addendums
             let definitions = 
               paths
-              |> Seq.collect(fun p -> p.Value |> Seq.collect (fun v -> v.Value.Responses |> Seq.choose(fun r -> r.Value.Schema))) 
+              |> Seq.collect(
+                   fun p -> 
+                      p.Value 
+                        |> Seq.collect (
+                             fun v -> 
+                                v.Value.Responses |> Seq.choose(fun r -> r.Value.Schema) 
+                                 |> Seq.collect(fun d -> d.FlattenComplexDefinitions()))) 
               |> Seq.toList
               |> List.distinct
             let doc =
