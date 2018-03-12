@@ -267,7 +267,7 @@ module Analyzer =
                   let modelType = 
                     match ctx.ArgTypes |> List.tryHead with
                     | Some t -> t
-                    | None -> typeof<obj>
+                    | None -> typeof<string>
                   ctx.AddResponse 200 "application/json" modelType
               )
   
