@@ -53,10 +53,11 @@ type Car =
 [<CLIMutable>]
 type MotorCycle =
     {
-        Name   : string
-        Make   : string
-        Built  : DateTime
-        Power  : MotorPower
+        Name        : string
+        Make        : string
+        Built       : DateTime
+        Power       : MotorPower
+        OwnerNames  : string array
     }
     static member Random () =
         {
@@ -64,6 +65,7 @@ type MotorCycle =
             Make = "tototot"
             Built = DateTime.UtcNow
             Power = { Value=125 }
+            OwnerNames = [| "toto"; "tata" |]
         }    
 and MotorPower =
     { Value:int }
