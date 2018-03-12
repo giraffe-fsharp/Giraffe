@@ -73,11 +73,12 @@ module Generator =
       Properties:IDictionary<string, PropertyDefinition> }
     member __.FlattenComplexDefinitions () =
       let flatten defs =
-        let rec loop acc currents =
+        let rec loop acc (currents:PropertyDefinition seq) =
           seq {
             for d in currents do
               match d with
               | Ref r -> yield! r.Properties.Values |> loop (r :: acc)
+              | Collection d -> yield! [d] |> loop acc
               | _ -> yield! acc
           } |> Seq.toList
         loop [] defs
@@ -91,6 +92,7 @@ module Generator =
   and PropertyDefinition =
     | Primitive of Type:string*Format:string
     | Ref of ObjectDefinition
+    | Collection of PropertyDefinition
     member __.ToJObject() : JObject =
       let v = JObject()
       match __ with
@@ -99,6 +101,9 @@ module Generator =
           v.Add("format", JToken.FromObject f)
       | Ref ref ->
           v.Add("$ref", JToken.FromObject <| sprintf "#/definitions/%s" ref.Id)
+      | Collection ref ->
+          v.Add("type", JToken.FromObject "array")
+          v.Add("items", ref.ToJObject())
       v
     member __.ToJson() : string =
       __.ToJObject().ToString()
@@ -170,8 +175,21 @@ module Generator =
             let arg = t.GenericTypeArguments |> Seq.exactlyOne
             Some arg
 
+        let collectionOfType (t:Type) =
+          let ie = typeof<System.Collections.IEnumerable>
+          let ieg = typedefof<IEnumerable<_>>
+          
+          if not (ie.IsAssignableFrom t)
+          then None
+          else
+            match t.GetInterfaces() |> Seq.tryFind (fun i -> i.IsGenericType && i.GetGenericTypeDefinition() = ieg) with
+            | None -> None
+            | Some i -> 
+                let arg = i.GenericTypeArguments |> Seq.exactlyOne
+                Some arg
+            
         let rec describe (t:Type) = 
-          let descProp (tp:Type) name = 
+          let rec descProp (tp:Type) name = 
             match tp.FormatAndName with
             | Some (ty,na) ->
                 Some (name, Primitive(ty,na))
@@ -181,8 +199,16 @@ module Generator =
                 then
                   None
                 else
-                  let d = Ref(describe t')
-                  Some (name, d)
+                  match collectionOfType t' with
+                  | None ->
+                      let d = Ref(describe t')
+                      Some (name, d)
+                  | Some st -> 
+                      match descProp st name with
+                      | Some (_,sd) -> 
+                          let d = Collection(sd)
+                          Some (name, d)
+                      | None -> None
           if isNull t
           then
             failwith ""
