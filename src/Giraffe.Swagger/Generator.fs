@@ -73,11 +73,12 @@ module Generator =
       Properties:IDictionary<string, PropertyDefinition> }
     member __.FlattenComplexDefinitions () =
       let flatten defs =
-        let rec loop acc currents =
+        let rec loop acc (currents:PropertyDefinition seq) =
           seq {
             for d in currents do
               match d with
               | Ref r -> yield! r.Properties.Values |> loop (r :: acc)
+              | Collection d -> yield! [d] |> loop acc
               | _ -> yield! acc
           } |> Seq.toList
         loop [] defs

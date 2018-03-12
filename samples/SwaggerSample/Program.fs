@@ -56,7 +56,7 @@ type MotorCycle =
         Name        : string
         Make        : string
         Built       : DateTime
-        Power       : MotorPower
+        Power       : MotorPower list
         OwnerNames  : string array
     }
     static member Random () =
@@ -64,7 +64,7 @@ type MotorCycle =
             Name = sprintf "random name %d" DateTime.UtcNow.Ticks
             Make = "tototot"
             Built = DateTime.UtcNow
-            Power = { Value=125 }
+            Power = [{ Value=125 }]
             OwnerNames = [| "toto"; "tata" |]
         }    
 and MotorPower =
