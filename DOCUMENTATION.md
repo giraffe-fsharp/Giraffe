@@ -1141,7 +1141,7 @@ let someHttpHandler : HttpHandler =
 
 You can also access the query string through the `ctx.Request.Query` object which returns an `IQueryCollection` object which allows you to perform more actions on it.
 
-Last but not least there is also a `HttpContext` extension method called `BindQueryString<'T>` which let's you bind an entire query string to an object of type `'T` (see [BindQueryString](#bindquerystring)).
+Last but not least there is also a `HttpContext` extension method called `BindQueryString<'T>` which let's you bind an entire query string to an object of type `'T` (see [Binding Query Strings](#binding-query-strings)).
 
 ### Model Binding
 
