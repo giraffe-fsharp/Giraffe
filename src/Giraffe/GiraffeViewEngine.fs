@@ -306,6 +306,7 @@ module Attributes =
     let _reversed           = flag "reversed"
     let _selected           = flag "selected"
     let _typemustmatch      = flag "typemustmatch"
+    let _onclick            = flag "onclick"
 
 // ---------------------------
 // Render XML string
