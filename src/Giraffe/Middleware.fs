@@ -11,16 +11,6 @@ open FSharp.Control.Tasks.ContextInsensitive
 open Giraffe.Serialization
 
 // ---------------------------
-// Logging helper functions
-// ---------------------------
-
-let private getRequestInfo (ctx : HttpContext) =
-    (ctx.Request.Protocol,
-     ctx.Request.Method,
-     ctx.Request.Path.ToString())
-    |||> sprintf "%s %s %s"
-
-// ---------------------------
 // Default middleware
 // ---------------------------
 
@@ -35,14 +25,23 @@ type GiraffeMiddleware (next          : RequestDelegate,
 
     member __.Invoke (ctx : HttpContext) =
         task {
+            let start = System.Diagnostics.Stopwatch.GetTimestamp();
+
             let! result = func ctx
             let  logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
 
             if logger.IsEnabled LogLevel.Debug then
-                match result with
-                | Some _ -> sprintf "Giraffe returned Some for %s" (getRequestInfo ctx)
-                | None   -> sprintf "Giraffe returned None for %s" (getRequestInfo ctx)
-                |> logger.LogDebug
+                let freq = double System.Diagnostics.Stopwatch.Frequency
+                let stop = System.Diagnostics.Stopwatch.GetTimestamp()
+                let elapsedMs = (double (stop - start)) * 1000.0 / freq
+
+                logger.LogDebug(
+                    "Giraffe returned {SomeNoneResult} for {HttpProtocol} {HttpMethod} at {Path} in {ElapsedMs}",
+                    (if result.IsSome then "Some" else "None"),
+                    ctx.Request.Protocol,
+                    ctx.Request.Method,
+                    ctx.Request.Path.ToString(),
+                    elapsedMs)
 
             if (result.IsNone) then
                 return! next.Invoke ctx
