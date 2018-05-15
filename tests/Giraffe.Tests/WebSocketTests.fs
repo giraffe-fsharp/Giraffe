@@ -48,7 +48,7 @@ let receiveTextAsync (websocket:WebSocket,cancellationToken) = task {
     let moveBuffer (buffer: ArraySegment<'T>) count =
         ArraySegment(buffer.Array, buffer.Offset + count, buffer.Count - count)
 
-    let rec receive receivedBytes = task {
+    let rec receive (receivedBytes : ArraySegment<_>) = task {
         let! result = websocket.ReceiveAsync(receivedBytes, cancellationToken)
         let currentBuffer = moveBuffer receivedBytes result.Count
         if result.EndOfMessage then

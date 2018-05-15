@@ -142,9 +142,13 @@ type ConnectionManager(?messageSize) =
             connections.AddOrUpdate(reference.ID, reference, fun _ _ -> reference) |> ignore
             do! connectedF reference
             let mutable running = true
-            while running && not cancellationToken.IsCancellationRequested do
-                let! msg = this.Receive<'Msg>(reference,messageF,cancellationToken)
-                running <- msg
+            try
+                while running && not cancellationToken.IsCancellationRequested do
+                    let! msg = this.Receive<'Msg>(reference,messageF,cancellationToken)
+                    running <- msg
+            with _ ->
+                //TODO: Use giraffe/aspnet logging
+                ()
 
             match connections.TryRemove reference.ID with
             | true, reference -> do! reference.CloseAsync()
