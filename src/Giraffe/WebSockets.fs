@@ -151,7 +151,12 @@ type ConnectionManager(?messageSize) =
                 ()
 
             match connections.TryRemove reference.ID with
-            | true, reference -> do! reference.CloseAsync()
+            | true, reference -> 
+                try
+                    do! reference.CloseAsync()
+                with _ ->
+                    //TODO: Use giraffe/aspnet logging
+                    ()
             | _ -> ()
         }
 
@@ -173,11 +178,13 @@ type ConnectionManager(?messageSize) =
                         match supportedProtocols |> Seq.tryFind (fun supported -> requestedSubProtocols |> Seq.contains supported.Name) with
                         | Some subProtocol ->
                             let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync(subProtocol.Name)
+                            use websocket = websocket
                             return! run websocket
                         | None ->
                             return! HttpStatusCodeHandlers.RequestErrors.badRequest (text "websocket subprotocol not supported") next ctx
                     | _ ->
                         let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync()
+                        use websocket = websocket
                         return! run websocket                         
                 else
                     return! HttpStatusCodeHandlers.RequestErrors.badRequest (text "no websocket request") next ctx
