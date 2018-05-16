@@ -31,33 +31,32 @@ type WebSocketReference = {
     with
         /// Sends a UTF-8 encoded text message to the WebSocket client.
         member this.SendTextAsync(msg:string,?cancellationToken) = task {
-            let byteResponse = System.Text.Encoding.UTF8.GetBytes msg
-            let segment = ArraySegment<byte>(byteResponse, 0, byteResponse.Length)
-
             if not (isNull this.WebSocket) then
-                if this.WebSocket.State = WebSocketState.Open then
-                    let cancellationToken = cancellationToken |> Option.defaultValue CancellationToken.None
-                    try
+                try
+                    if this.WebSocket.State = WebSocketState.Open then
+                        let byteResponse = System.Text.Encoding.UTF8.GetBytes msg
+                        let segment = ArraySegment<byte>(byteResponse, 0, byteResponse.Length)
+                        let cancellationToken = cancellationToken |> Option.defaultValue CancellationToken.None
                         do! this.WebSocket.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken)
-                    with
-                    | _ -> 
-                        // TODO: Tracing 
-                        ()
+                with
+                | _ -> 
+                    // TODO: Tracing 
+                    ()
         }
         
 
         /// Closes the connection to the WebSocket client.
         member this.CloseAsync(?reason,?cancellationToken) = task {
             if not (isNull this.WebSocket) then
+                try
                 if this.WebSocket.State = WebSocketState.Open then
                     let cancellationToken = cancellationToken |> Option.defaultValue CancellationToken.None
                     let reason = reason |> Option.defaultValue "Closed by the WebSocket server"
-                    try
-                        do! this.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, reason, cancellationToken)
-                    with
-                    | _ -> 
-                        // TODO: Tracing 
-                        ()
+                    do! this.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, reason, cancellationToken)
+                with
+                | _ -> 
+                    // TODO: Tracing 
+                    ()
         }
 
         
@@ -117,30 +116,35 @@ type ConnectionManager(?messageSize) =
             return ()
         }
 
-        member private this.RegisterClient<'Msg>(reference:WebSocketReference,connectedF: WebSocketReference -> Task<unit>,messageF: WebSocketReference -> string -> Task<unit>,cancellationToken:CancellationToken) = task {
+        member private __.RegisterClient<'Msg>(reference:WebSocketReference,connectedF: Task<unit>,messageF: WebSocketReference -> string -> Task<unit>,cancellationToken:CancellationToken) = task {
             connections.AddOrUpdate(reference.ID, reference, fun _ _ -> reference) |> ignore
-            do! connectedF reference
-            let buffer = Array.zeroCreate messageSize
+            do! connectedF            
             let mutable finished = false
             while not finished do
-                let! received = reference.WebSocket.ReceiveAsync(ArraySegment<byte> buffer, cancellationToken)
-                finished <- received.CloseStatus.HasValue
-                if finished then
-                    do! reference.WebSocket.CloseAsync(received.CloseStatus.Value, received.CloseStatusDescription, cancellationToken)
-                else
-                    if received.EndOfMessage then
-                        match received.MessageType with
-                        | WebSocketMessageType.Binary ->
-                            raise (NotImplementedException())
-                        | WebSocketMessageType.Text ->
-                            let! _r = 
-                                ArraySegment<byte>(buffer, 0, received.Count).Array
-                                |> System.Text.Encoding.UTF8.GetString
-                                |> fun s -> s.TrimEnd(char 0)
-                                |> messageF reference
-                            ()
-                        | _ ->
-                            raise (NotImplementedException())
+                try
+                    let buffer = Array.zeroCreate messageSize
+                    let! received = reference.WebSocket.ReceiveAsync(ArraySegment<byte> buffer, cancellationToken)
+                    finished <- received.CloseStatus.HasValue
+                    if finished then
+                        do! reference.WebSocket.CloseAsync(received.CloseStatus.Value, received.CloseStatusDescription, cancellationToken)
+                    else
+                        if received.EndOfMessage then
+                            match received.MessageType with
+                            | WebSocketMessageType.Binary ->
+                                raise (NotImplementedException())
+                            | WebSocketMessageType.Text ->
+                                let! _r = 
+                                    ArraySegment<byte>(buffer, 0, received.Count).Array
+                                    |> System.Text.Encoding.UTF8.GetString
+                                    |> fun s -> s.TrimEnd(char 0)
+                                    |> messageF reference
+                                ()
+                            | _ ->
+                                raise (NotImplementedException())
+                with
+                | _ ->
+                    //TODO: Use giraffe/aspnet logging
+                    finished <- true
 
             match connections.TryRemove reference.ID with
             | true, reference ->
