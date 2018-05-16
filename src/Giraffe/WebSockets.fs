@@ -93,7 +93,7 @@ type ConnectionManager(?messageSize) =
             let byteResponse = System.Text.Encoding.UTF8.GetBytes msg
             
             let cancellationToken = cancellationToken |> Option.defaultValue CancellationToken.None
-            let toRemove = System.Collections.Generic.List<_>()
+            let toRemove = System.Collections.Concurrent.ConcurrentBag<_>()
             let! _ =
                 connections
                 |> Seq.map (fun kv -> task {
