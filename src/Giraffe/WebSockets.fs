@@ -124,7 +124,7 @@ type ConnectionManager(?messageSize) =
             let mutable finished = false
             while not finished do
                 let! received = reference.WebSocket.ReceiveAsync(ArraySegment<byte> buffer, cancellationToken)
-                finished <- not received.CloseStatus.HasValue
+                finished <- received.CloseStatus.HasValue
                 if finished then
                     do! reference.WebSocket.CloseAsync(received.CloseStatus.Value, received.CloseStatusDescription, cancellationToken)
                 else
