@@ -27,6 +27,8 @@ type WebSocketReference = {
     Subprotocol : WebSocketSubprotocol option
     /// The internal ID of the WebSocket.
     ID : string
+    /// Task that will be started after websocket is closed
+    OnClose : unit -> Task<unit>
 }
     with
         /// Sends a UTF-8 encoded text message to the WebSocket client.
@@ -61,9 +63,10 @@ type WebSocketReference = {
 
         
         /// Creates a new reference to a WebSocket.
-        static member FromWebSocket(websocket,?webSocketID,?subProtocol) : WebSocketReference = {
+        static member FromWebSocket(websocket,onClose,?webSocketID,?subProtocol) : WebSocketReference = {
             WebSocket  = websocket
             Subprotocol = subProtocol
+            OnClose = onClose
             ID = webSocketID |> Option.defaultWith (fun _ -> Guid.NewGuid().ToString())
         }
 
@@ -72,6 +75,7 @@ type ConnectionManager(?messageSize) =
     let messageSize = defaultArg messageSize DefaultWebSocketOptions.ReceiveBufferSize
 
     let connections = new System.Collections.Concurrent.ConcurrentDictionary<string, WebSocketReference>()
+   
 
     with
 
@@ -87,7 +91,7 @@ type ConnectionManager(?messageSize) =
         /// Sends a UTF-8 encoded text message to all WebSocket connections.
         member __.BroadcastTextAsync(msg:string,?cancellationToken:CancellationToken) = task {
             let byteResponse = System.Text.Encoding.UTF8.GetBytes msg
-            let segment = ArraySegment<byte>(byteResponse, 0, byteResponse.Length)
+            
             let cancellationToken = cancellationToken |> Option.defaultValue CancellationToken.None
             let toRemove = System.Collections.Generic.List<_>()
             let! _ =
@@ -98,72 +102,71 @@ type ConnectionManager(?messageSize) =
                             let webSocket = kv.Value.WebSocket
                             if webSocket.State = WebSocketState.Open then
                                 try
+                                    let segment = ArraySegment<byte>(byteResponse, 0, byteResponse.Length)
                                     do! webSocket.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken)
                                 with 
                                 | _ ->
                                     // TODO: Tracing 
                                     ()
                             else
-                                if webSocket.State = WebSocketState.Closed then
-                                    toRemove.Add kv.Key
+                                toRemove.Add kv.Key
                     with
                     | _ -> () })
                 |> Task.WhenAll
             
             for key in toRemove do
-                connections.TryRemove key |> ignore
+                match connections.TryRemove key with
+                | true, reference ->
+                    do! reference.OnClose()
+                | _ -> ()
 
             return ()
         }
 
-        member private __.RegisterClient<'Msg>(reference:WebSocketReference,connectedF: Task<unit>,messageF: WebSocketReference -> string -> Task<unit>,cancellationToken:CancellationToken) = task {
-            connections.AddOrUpdate(reference.ID, reference, fun _ _ -> reference) |> ignore
-            do! connectedF            
-            let mutable finished = false
-            while not finished do
-                try
-                    let buffer = Array.zeroCreate messageSize
-                    let! received = reference.WebSocket.ReceiveAsync(ArraySegment<byte> buffer, cancellationToken)
-                    finished <- received.CloseStatus.HasValue
-                    if finished then
-                        do! reference.WebSocket.CloseAsync(received.CloseStatus.Value, received.CloseStatusDescription, cancellationToken)
-                    else
-                        if received.EndOfMessage then
-                            match received.MessageType with
-                            | WebSocketMessageType.Binary ->
-                                raise (NotImplementedException())
-                            | WebSocketMessageType.Text ->
-                                let! _r = 
-                                    ArraySegment<byte>(buffer, 0, received.Count).Array
-                                    |> System.Text.Encoding.UTF8.GetString
-                                    |> fun s -> s.TrimEnd(char 0)
-                                    |> messageF reference
-                                ()
-                            | _ ->
-                                raise (NotImplementedException())
-                with
-                | _ ->
-                    //TODO: Use giraffe/aspnet logging
-                    finished <- true
-
-            match connections.TryRemove reference.ID with
-            | true, reference ->
-                try
-                    do! reference.CloseAsync()
-                with _ ->
-                    //TODO: Use giraffe/aspnet logging
-                    ()
-            | _ -> ()
-        }
 
         /// Creates a new WebSocket connection and negotiates the subprotocol.
-        member this.CreateSocket(onConnected,onMessage,?webSocketID,?supportedProtocols:seq<WebSocketSubprotocol>,?cancellationToken) =
+        member __.CreateSocket(onConnected:unit ->Task<unit>,onMessage: WebSocketReference -> string -> Task<unit>,onClose:unit ->Task<unit>,?webSocketID,?supportedProtocols:seq<WebSocketSubprotocol>,?cancellationToken) =
             fun next (ctx : Microsoft.AspNetCore.Http.HttpContext) -> task {
                 let run(websocket) = task {
                     let webSocketID = webSocketID |> Option.defaultWith (fun _ -> Guid.NewGuid().ToString())
-                    let reference = WebSocketReference.FromWebSocket(websocket,webSocketID=webSocketID)
+                    let reference = WebSocketReference.FromWebSocket(websocket,onClose,webSocketID=webSocketID)
+                    connections.AddOrUpdate(reference.ID, reference, fun _ _ -> reference) |> ignore
                     let cancellationToken = cancellationToken |> Option.defaultValue CancellationToken.None
-                    do! this.RegisterClient(reference,onConnected,onMessage,cancellationToken)
+                    do! onConnected()
+
+                    let mutable finished = false
+            
+                    while not finished do
+                        try
+                            let buffer = Array.zeroCreate messageSize
+                            let! received = reference.WebSocket.ReceiveAsync(ArraySegment<byte> buffer, cancellationToken)
+                            finished <- received.CloseStatus.HasValue
+                            if finished then
+                                do! reference.WebSocket.CloseAsync(received.CloseStatus.Value, received.CloseStatusDescription, cancellationToken)
+                            else
+                                if received.EndOfMessage then
+                                    match received.MessageType with
+                                    | WebSocketMessageType.Binary ->
+                                        raise (NotImplementedException())
+                                    | WebSocketMessageType.Text ->
+                                        let! _r = 
+                                            ArraySegment<byte>(buffer, 0, received.Count).Array
+                                            |> System.Text.Encoding.UTF8.GetString
+                                            |> fun s -> s.TrimEnd(char 0)
+                                            |> onMessage reference
+                                        ()
+                                    | _ ->
+                                        raise (NotImplementedException())
+                        with
+                        | _ ->
+                            //TODO: Use giraffe/aspnet logging
+                            finished <- true
+
+                    match connections.TryRemove reference.ID with
+                    | true, reference ->
+                        do! reference.OnClose()
+                    | _ -> ()
+                    
                     return! Successful.ok (text "OK") next ctx
                 }
 
