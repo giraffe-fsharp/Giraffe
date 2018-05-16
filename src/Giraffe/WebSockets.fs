@@ -37,7 +37,12 @@ type WebSocketReference = {
             if not (isNull this.WebSocket) then
                 if this.WebSocket.State = WebSocketState.Open then
                     let cancellationToken = cancellationToken |> Option.defaultValue CancellationToken.None
-                    do! this.WebSocket.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken)
+                    try
+                        do! this.WebSocket.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken)
+                    with
+                    | _ -> 
+                        // TODO: Tracing 
+                        ()
         }
         
 
@@ -47,7 +52,12 @@ type WebSocketReference = {
                 if this.WebSocket.State = WebSocketState.Open then
                     let cancellationToken = cancellationToken |> Option.defaultValue CancellationToken.None
                     let reason = reason |> Option.defaultValue "Closed by the WebSocket server"
-                    do! this.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, reason, cancellationToken)
+                    try
+                        do! this.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, reason, cancellationToken)
+                    with
+                    | _ -> 
+                        // TODO: Tracing 
+                        ()
         }
 
         
@@ -88,7 +98,12 @@ type ConnectionManager(?messageSize) =
                         if not cancellationToken.IsCancellationRequested then
                             let webSocket = kv.Value.WebSocket
                             if webSocket.State = WebSocketState.Open then
-                                do! webSocket.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken)
+                                try
+                                    do! webSocket.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken)
+                                with 
+                                | _ ->
+                                    // TODO: Tracing 
+                                    ()
                             else
                                 if webSocket.State = WebSocketState.Closed then
                                     toRemove.Add kv.Key
@@ -102,56 +117,33 @@ type ConnectionManager(?messageSize) =
             return ()
         }
 
-        member private __.Receive<'Msg> (reference:WebSocketReference,messageF: WebSocketReference -> string -> Task<unit>,cancellationToken:CancellationToken) = task {
-            let buffer = Array.zeroCreate messageSize |> ArraySegment<byte>
-            use memoryStream = new IO.MemoryStream()
-            let mutable endOfMessage = false
-            let mutable keepRunning = Unchecked.defaultof<_>
-
-            while not endOfMessage do
-                let! received = reference.WebSocket.ReceiveAsync(buffer, cancellationToken)
-                if received.CloseStatus.HasValue then
+        member private this.RegisterClient<'Msg>(reference:WebSocketReference,connectedF: WebSocketReference -> Task<unit>,messageF: WebSocketReference -> string -> Task<unit>,cancellationToken:CancellationToken) = task {
+            connections.AddOrUpdate(reference.ID, reference, fun _ _ -> reference) |> ignore
+            do! connectedF reference
+            let buffer = Array.zeroCreate messageSize
+            let mutable finished = false
+            while not finished do
+                let! received = reference.WebSocket.ReceiveAsync(ArraySegment<byte> buffer, cancellationToken)
+                finished <- not received.CloseStatus.HasValue
+                if finished then
                     do! reference.WebSocket.CloseAsync(received.CloseStatus.Value, received.CloseStatusDescription, cancellationToken)
-                    keepRunning <- false
-                    endOfMessage <- true
                 else
-                    memoryStream.Write(buffer.Array,buffer.Offset,received.Count)
                     if received.EndOfMessage then
                         match received.MessageType with
                         | WebSocketMessageType.Binary ->
                             raise (NotImplementedException())
-                        | WebSocketMessageType.Close ->
-                            keepRunning <- false 
-                            endOfMessage <- true
                         | WebSocketMessageType.Text ->
-                            let! r = 
-                                memoryStream.ToArray()
+                            let! _r = 
+                                ArraySegment<byte>(buffer, 0, received.Count).Array
                                 |> System.Text.Encoding.UTF8.GetString
                                 |> fun s -> s.TrimEnd(char 0)
                                 |> messageF reference
-
-                            keepRunning <- true
-                            endOfMessage <- true
+                            ()
                         | _ ->
                             raise (NotImplementedException())
 
-            return keepRunning
-        }
-
-        member private this.RegisterClient<'Msg>(reference:WebSocketReference,connectedF: WebSocketReference -> Task<unit>,messageF,cancellationToken:CancellationToken) = task {
-            connections.AddOrUpdate(reference.ID, reference, fun _ _ -> reference) |> ignore
-            do! connectedF reference
-            let mutable running = true
-            try
-                while running && not cancellationToken.IsCancellationRequested do
-                    let! msg = this.Receive<'Msg>(reference,messageF,cancellationToken)
-                    running <- msg
-            with _ ->
-                //TODO: Use giraffe/aspnet logging
-                ()
-
             match connections.TryRemove reference.ID with
-            | true, reference -> 
+            | true, reference ->
                 try
                     do! reference.CloseAsync()
                 with _ ->
@@ -171,21 +163,24 @@ type ConnectionManager(?messageSize) =
                     return! Successful.ok (text "OK") next ctx
                 }
 
-                if ctx.WebSockets.IsWebSocketRequest then
-                    let requestedSubProtocols = ctx.WebSockets.WebSocketRequestedProtocols
-                    match supportedProtocols with
-                    | Some supportedProtocols when requestedSubProtocols |> Seq.isEmpty |> not ->
-                        match supportedProtocols |> Seq.tryFind (fun supported -> requestedSubProtocols |> Seq.contains supported.Name) with
-                        | Some subProtocol ->
-                            let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync(subProtocol.Name)
+                try
+                    if ctx.WebSockets.IsWebSocketRequest then
+                        let requestedSubProtocols = ctx.WebSockets.WebSocketRequestedProtocols
+                        match supportedProtocols with
+                        | Some supportedProtocols when requestedSubProtocols |> Seq.isEmpty |> not ->
+                            match supportedProtocols |> Seq.tryFind (fun supported -> requestedSubProtocols |> Seq.contains supported.Name) with
+                            | Some subProtocol ->
+                                let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync(subProtocol.Name)
+                                use websocket = websocket
+                                return! run websocket
+                            | None ->
+                                return! HttpStatusCodeHandlers.RequestErrors.badRequest (text "websocket subprotocol not supported") next ctx
+                        | _ ->
+                            let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync()
                             use websocket = websocket
                             return! run websocket
-                        | None ->
-                            return! HttpStatusCodeHandlers.RequestErrors.badRequest (text "websocket subprotocol not supported") next ctx
-                    | _ ->
-                        let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync()
-                        use websocket = websocket
-                        return! run websocket                         
-                else
-                    return! HttpStatusCodeHandlers.RequestErrors.badRequest (text "no websocket request") next ctx
+                    else
+                        return! HttpStatusCodeHandlers.RequestErrors.badRequest (text "no websocket request") next ctx
+                with
+                | exn -> return! HttpStatusCodeHandlers.RequestErrors.badRequest (text ("bad websocket request: " +  exn.Message)) next ctx
             }
