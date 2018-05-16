@@ -142,12 +142,21 @@ type ConnectionManager(?messageSize) =
             connections.AddOrUpdate(reference.ID, reference, fun _ _ -> reference) |> ignore
             do! connectedF reference
             let mutable running = true
-            while running && not cancellationToken.IsCancellationRequested do
-                let! msg = this.Receive<'Msg>(reference,messageF,cancellationToken)
-                running <- msg
+            try
+                while running && not cancellationToken.IsCancellationRequested do
+                    let! msg = this.Receive<'Msg>(reference,messageF,cancellationToken)
+                    running <- msg
+            with _ ->
+                //TODO: Use giraffe/aspnet logging
+                ()
 
             match connections.TryRemove reference.ID with
-            | true, reference -> do! reference.CloseAsync()
+            | true, reference -> 
+                try
+                    do! reference.CloseAsync()
+                with _ ->
+                    //TODO: Use giraffe/aspnet logging
+                    ()
             | _ -> ()
         }
 
@@ -169,11 +178,13 @@ type ConnectionManager(?messageSize) =
                         match supportedProtocols |> Seq.tryFind (fun supported -> requestedSubProtocols |> Seq.contains supported.Name) with
                         | Some subProtocol ->
                             let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync(subProtocol.Name)
+                            use websocket = websocket
                             return! run websocket
                         | None ->
                             return! HttpStatusCodeHandlers.RequestErrors.badRequest (text "websocket subprotocol not supported") next ctx
                     | _ ->
                         let! (websocket : WebSocket) = ctx.WebSockets.AcceptWebSocketAsync()
+                        use websocket = websocket
                         return! run websocket                         
                 else
                     return! HttpStatusCodeHandlers.RequestErrors.badRequest (text "no websocket request") next ctx
