@@ -55,7 +55,7 @@ dotnet new -i "giraffe-template::*"
 
 Afterwards you can create a new Giraffe application by running `dotnet new giraffe`.
 
-For more information about the Giraffe tempalte please visit the official [giraffe-template repository](https://github.com/giraffe-fsharp/giraffe-template).
+For more information about the Giraffe template please visit the official [giraffe-template repository](https://github.com/giraffe-fsharp/giraffe-template).
 
 ### Doing it manually
 
