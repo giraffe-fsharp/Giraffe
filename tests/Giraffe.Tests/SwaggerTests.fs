@@ -168,10 +168,7 @@ let ``webapp is a simple route with verb `DELETE` with a condition returning tex
         ]
     }
   let route = ctx.Routes |> Seq.exactlyOne
-  
-  let ss = sprintf "%A" webApp
-  printfn "ss: %s" ss
-  
+
   Assert.Equal(exp.Path, route.Path)
   Assert.Equal(exp.Verb, route.Verb)
   assertListDeepEqual exp.Responses route.Responses
@@ -212,9 +209,6 @@ let ``webapp is a simple route with verb `POST` with a more complex condition re
         ]
     }
   let route = ctx.Routes |> Seq.exactlyOne
-  
-  let ss = sprintf "%A" webApp
-  printfn "ss: %s" ss
   
   Assert.Equal(exp.Path, route.Path)
   Assert.Equal(exp.Verb, route.Verb)

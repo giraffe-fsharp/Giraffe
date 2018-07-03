@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Giraffe.Swagger\Giraffe.Swagger.fsproj" />
     <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="2.0.*" />
+    <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.*" />
   </ItemGroup>
 
   <ItemGroup>
