@@ -329,6 +329,54 @@ let ``routef: GET "/foo/b%2Fc/bar" returns "b/c"`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
+[<Fact>]
+let ``routef: GET "/foo/d7292237-e563-4555-8763-675a77c1995c/blah/bar" returns "Id: d7292237-e563-4555-8763-675a77c1995c, Name: blah"`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            route  "/"       >=> text "Hello World"
+            route  "/foo"    >=> text "bar"
+            routef "/foo/%O/%s/bar" (fun (id: Guid, name) -> text (sprintf "Id: %O, Name: %s" id name))
+            routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/d7292237-e563-4555-8763-675a77c1995c/blah/bar")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "Id: d7292237-e563-4555-8763-675a77c1995c, Name: blah"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``routef: GET "/foo/d7292237e56345558763675a77c1995c/blah/bar" returns "Id: d7292237-e563-4555-8763-675a77c1995c, Name: blah"`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            route  "/"       >=> text "Hello World"
+            route  "/foo"    >=> text "bar"
+            routef "/foo/%O/%s/bar" (fun (id: Guid, name) -> text (sprintf "Id: %O, Name: %s" id name))
+            routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/d7292237e56345558763675a77c1995c/blah/bar")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "Id: d7292237-e563-4555-8763-675a77c1995c, Name: blah"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
 // ---------------------------------
 // routeCif Tests
 // ---------------------------------
