@@ -1,11 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFrameworks>net461;netcoreapp2.0</TargetFrameworks>
     <AssemblyName>Giraffe.Tests</AssemblyName>
     <DebugType>portable</DebugType>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.*" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.0.*" />
@@ -20,16 +18,15 @@
     <PackageReference Include="FsCheck" Version="3.0.0-*" />
     <PackageReference Include="FsCheck.Xunit" Version="3.0.0-*" />
   </ItemGroup>
-
   <ItemGroup>
-    <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.*" />
+    <ProjectReference Include="..\..\src\Giraffe.Swagger\Giraffe.Swagger.fsproj" />
     <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="2.0.*" />
+    <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.*" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Giraffe\Giraffe.fsproj" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Include="Helpers.fs" />
     <Compile Include="FormatExpressionTests.fs" />
@@ -41,13 +38,12 @@
     <Compile Include="ModelValidationTests.fs" />
     <Compile Include="HttpContextExtensionsTests.fs" />
     <Compile Include="StreamingTests.fs" />
+    <Compile Include="SwaggerTests.fs" />
     <Compile Include="PreconditionalTests.fs" />
   </ItemGroup>
-
   <ItemGroup>
     <Content Include="TestFiles\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
 </Project>
