@@ -9,6 +9,7 @@ open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Internal
 open Microsoft.Extensions.Primitives
+open FSharp.Control.Tasks.ContextInsensitive
 open Xunit
 open NSubstitute
 open Newtonsoft.Json

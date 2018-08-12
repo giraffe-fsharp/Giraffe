@@ -5,9 +5,9 @@ open System
 open System.Collections.Generic
 open System.Text.RegularExpressions
 open Microsoft.AspNetCore.Http
-open Newtonsoft.Json.Linq
-open Giraffe.FormatExpressions
 open Microsoft.Extensions.Primitives
+open FSharp.Control.Tasks.ContextInsensitive
+open Giraffe.FormatExpressions
 
 // ---------------------------
 // Private sub route helper functions

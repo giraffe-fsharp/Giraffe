@@ -1,6 +1,11 @@
 Release Notes
 =============
 
+## 1.2.0-preview-1
+
+- Updated `TaskBuilder.fs` dependency to version `1.2.0-rc`.
+- Fixed bug in `routef`, `routeCif` and `subRoutef` to parse multiple guids
+
 ## 1.1.0
 
 #### New features
