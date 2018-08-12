@@ -287,8 +287,59 @@ module Attributes =
     let _value              = attr "value"
     let _width              = attr "width"
     let _wrap               = attr "wrap"
-    let _onclick            = attr "onclick"
 
+    // Mouse events
+    // https://www.w3schools.com/jsref/obj_mouseevent.asp
+    let _onclick            = attr "onclick"
+    let _oncontextmenu      = attr "oncontextmenu"
+    let _ondblclick         = attr "ondblclick"
+    let _onmousedown        = attr "onmousedown"
+    let _onmouseenter       = attr "onmouseenter"
+    let _onmouseleave       = attr "onmouseleave"
+    let _onmousemove        = attr "onmousemove"
+    let _onmouseout         = attr "onmouseout"
+    let _onmouseover        = attr "onmouseover"
+    let _onmouseup          = attr "onmouseup"
+
+    // Touch events
+    // https://www.w3schools.com/jsref/obj_touchevent.asp
+    let _ontouchcancel      = attr "ontouchcancel"
+    let _ontouchend         = attr "ontouchend"
+    let _ontouchmove        = attr "ontouchmove"
+    let _ontouchstart       = attr "ontouchstart"
+
+    // Keyboard events
+    // https://www.w3schools.com/jsref/obj_keyboardevent.asp
+    let _onkeydown          = attr "onkeydown"
+    let _onkeypress         = attr "onkeypress"
+    let _onkeyup            = attr "onkeyup"
+
+    // Drag and drop events
+    // https://www.w3schools.com/jsref/obj_dragevent.asp
+    let _ondrag             = attr "ondrag"
+    let _ondragend          = attr "ondragend"
+    let _ondragenter        = attr "ondragenter"
+    let _ondragleave        = attr "ondragleave"
+    let _ondragover         = attr "ondragover"
+    let _ondragstart        = attr "ondragstart"
+    let _ondrop             = attr "ondrop"
+
+    // Focus events
+    // https://www.w3schools.com/jsref/obj_focusevent.asp
+    let _onblur              = attr "onblur"
+    let _onfocus             = attr "onfocus"
+    let _onfocusin           = attr "onfocusin"
+    let _onfocusout          = attr "onfocusout"
+
+    // Input events
+    // https://www.w3schools.com/jsref/obj_inputevent.asp
+    let _oninput             = attr "oninput"
+
+    // Mouse wheel events
+    // https://www.w3schools.com/jsref/obj_wheelevent.asp
+    let _onwheel            = attr "onwheel"
+
+    // Flags
     let _async              = flag "async"
     let _autofocus          = flag "autofocus"
     let _autoplay           = flag "autoplay"
