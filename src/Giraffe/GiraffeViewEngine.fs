@@ -287,6 +287,7 @@ module Attributes =
     let _value              = attr "value"
     let _width              = attr "width"
     let _wrap               = attr "wrap"
+    let _onclick            = attr "onclick"
 
     let _async              = flag "async"
     let _autofocus          = flag "autofocus"
