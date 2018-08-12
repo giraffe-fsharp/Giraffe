@@ -34,7 +34,6 @@ function Invoke-Cmd ($cmd)
 
 function dotnet-info                      { Invoke-Cmd "dotnet --info" }
 function dotnet-version                   { Invoke-Cmd "dotnet --version" }
-function dotnet-build   ($project, $argv) { Invoke-Cmd "dotnet build $project $argv" }
 function dotnet-run     ($project, $argv) { Invoke-Cmd "dotnet run --project $project $argv" }
 function dotnet-test    ($project, $argv) { Invoke-Cmd "dotnet test $project $argv" }
 function dotnet-pack    ($project, $argv) { Invoke-Cmd "dotnet pack $project $argv" }
@@ -47,8 +46,40 @@ function Get-DotNetRuntimeVersion
     $version.Split(":")[1].Trim()
 }
 
-function dotnet-xunit   ($project, $argv)
+function Get-TargetFrameworks ($projFile)
 {
+    [xml]$proj = Get-Content $projFile
+
+    if ($proj.Project.PropertyGroup.TargetFrameworks -ne $null) {
+        ($proj.Project.PropertyGroup.TargetFrameworks).Split(";")
+    }
+    else {
+        @($proj.Project.PropertyGroup.TargetFramework)
+    }
+}
+
+function Get-NetCoreTargetFramework ($projFile)
+{
+    Get-TargetFrameworks $projFile | where { $_ -like "netstandard*" -or $_ -like "netcoreapp*" }
+}
+
+function dotnet-build ($project, $argv)
+{
+    if ($OnlyNetStandard.IsPresent) {
+        $fw = Get-NetCoreTargetFramework $project
+        $argv += " -f $fw"
+    }
+
+    Invoke-Cmd "dotnet build $project $argv"
+}
+
+function dotnet-xunit ($project, $argv)
+{
+    if(!(Test-IsWindows) -or $OnlyNetStandard.IsPresent) {
+        $tfw = Get-NetCoreTargetFramework $project;
+        $argv += " -framework $tfw"
+    }
+
     $fxversion = Get-DotNetRuntimeVersion
     Push-Location (Get-Item $project).Directory.FullName
     Invoke-Cmd "dotnet xunit -fxversion $fxversion $argv"
@@ -111,26 +142,6 @@ function Remove-OldBuildArtifacts
         Remove-Item $_ -Recurse -Force }
 }
 
-function Get-TargetFrameworks ($projFile)
-{
-    [xml]$proj = Get-Content $projFile
-    ($proj.Project.PropertyGroup.TargetFrameworks).Split(";")
-}
-
-function Get-NetCoreTargetFramework ($projFile)
-{
-    Get-TargetFrameworks $projFile  | where { $_ -like "netstandard*" -or $_ -like "netcoreapp*" }
-}
-
-function Get-FrameworkArg ($projFile)
-{
-    if ($OnlyNetStandard.IsPresent) {
-        $fw = Get-NetCoreTargetFramework $projFile
-        "-f $fw"
-    }
-    else { "" }
-}
-
 # ----------------------------------------------
 # Main
 # ----------------------------------------------
@@ -142,6 +153,7 @@ if ($ClearOnly.IsPresent) {
 
 $giraffe               = ".\src\Giraffe\Giraffe.fsproj"
 $giraffeTests          = ".\tests\Giraffe.Tests\Giraffe.Tests.fsproj"
+$giraffeAcceptTests    = ".\tests\Giraffe.AcceptanceTests\Giraffe.AcceptanceTests.fsproj"
 $identityApp           = ".\samples\IdentityApp\IdentityApp\IdentityApp.fsproj"
 $jwtApp                = ".\samples\JwtApp\JwtApp\JwtApp.fsproj"
 $sampleApp             = ".\samples\SampleApp\SampleApp\SampleApp.fsproj"
@@ -156,19 +168,18 @@ Remove-OldBuildArtifacts
 $configuration = if ($Release.IsPresent) { "Release" } else { "Debug" }
 
 Write-Host "Building Giraffe..." -ForegroundColor Magenta
-$framework = Get-FrameworkArg $giraffe
-dotnet-build   $giraffe "-c $configuration $framework"
+dotnet-build   $giraffe "-c $configuration"
 
 if (!$ExcludeTests.IsPresent -and !$Run.IsPresent)
 {
     Write-Host "Building and running tests..." -ForegroundColor Magenta
-    $framework = Get-FrameworkArg $giraffeTests
 
-    dotnet-build   $giraffeTests $framework
+    dotnet-build $giraffeTests
+    dotnet-xunit $giraffeTests
 
-    $xunitArgs = ""
-    if(!(Test-IsWindows)) { $tfw = Get-NetCoreTargetFramework $giraffeTests; $xunitArgs = "-framework $tfw" }
-    dotnet-xunit $giraffeTests $xunitArgs
+    dotnet-build $giraffeAcceptTests
+    # dotnet-xunit $giraffeAcceptTests
+
 }
 
 if (!$ExcludeSamples.IsPresent -and !$Run.IsPresent)

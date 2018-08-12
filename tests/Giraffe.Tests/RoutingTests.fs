@@ -306,7 +306,7 @@ let ``routef: GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
     }
 
 [<Fact>]
-let ``routef: GET "/foo/b%2Fc/bar" returns "b/c"`` () =
+let ``routef: GET "/foo/b%2Fc/bar" returns "b%2Fc"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
@@ -319,7 +319,31 @@ let ``routef: GET "/foo/b%2Fc/bar" returns "b/c"`` () =
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/b%2Fc/bar")) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "b/c"
+    let expected = "b%2Fc"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``routef: GET "/foo/a%2Fb%2Bc.d%2Ce/bar" returns "a%2Fb%2Bc.d%2Ce"`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            route  "/"       >=> text "Hello World"
+            route  "/foo"    >=> text "bar"
+            routef "/foo/%s/bar" text
+            routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/a%2Fb%2Bc.d%2Ce/bar")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "a%2Fb%2Bc.d%2Ce"
 
     task {
         let! result = app next ctx
