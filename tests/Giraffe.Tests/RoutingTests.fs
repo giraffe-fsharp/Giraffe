@@ -329,6 +329,31 @@ let ``routef: GET "/foo/b%2Fc/bar" returns "b/c"`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
+[<Fact>]
+let ``routef: GET "/foo/%O/bar/%O" returns "Guid1: ..., Guid2: ..."`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            route  "/"       >=> text "Hello World"
+            route  "/foo"    >=> text "bar"
+            routef "/foo/%s/bar" text
+            routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
+            routef "/foo/%O/bar/%O" (fun (guid1: Guid, guid2: Guid) -> text (sprintf "Guid1: %O, Guid2: %O" guid1 guid2))
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/4ec87f064d1e41b49342ab1aead1f99d/bar/2a6c9185-95d9-4d8c-80a6-575f99c2a716")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "Guid1: 4ec87f06-4d1e-41b4-9342-ab1aead1f99d, Guid2: 2a6c9185-95d9-4d8c-80a6-575f99c2a716"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
 // ---------------------------------
 // routeCif Tests
 // ---------------------------------

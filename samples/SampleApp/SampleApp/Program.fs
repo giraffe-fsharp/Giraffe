@@ -133,6 +133,7 @@ let webApp =
                 route  "/configured" >=> configuredHandler
                 route  "/upload"     >=> fileUploadHandler
                 route  "/upload2"    >=> fileUploadHandler2
+                routef "/encode/%s"  text
             ]
         route "/car"  >=> bindModel<Car> None json
         route "/car2" >=> tryBindQuery<Car> parsingErrorHandler None (validateModel xml)

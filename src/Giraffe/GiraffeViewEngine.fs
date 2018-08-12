@@ -75,6 +75,7 @@ let style      = tag "style"
 let title      = tag "title"
 
 // Content sectioning
+let blockquote = tag "blockquote"
 let body       = tag "body"
 let address    = tag "address"
 let article    = tag "article"
@@ -240,6 +241,7 @@ module Attributes =
     let _hreflang           = attr "hreflang"
     let _httpEquiv          = attr "http-equiv"
     let _id                 = attr "id"
+    let _integrity          = attr "integrity"
     let _keytype            = attr "keytype"
     let _kind               = attr "kind"
     let _label              = attr "label"
@@ -305,6 +307,7 @@ module Attributes =
     let _readonly           = flag "readonly"
     let _required           = flag "required"
     let _reversed           = flag "reversed"
+    let _scoped             = flag "scoped"
     let _selected           = flag "selected"
     let _typemustmatch      = flag "typemustmatch"
 

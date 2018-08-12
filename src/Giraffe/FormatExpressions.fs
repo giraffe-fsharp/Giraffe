@@ -11,15 +11,18 @@ open Microsoft.FSharp.Reflection
 // ---------------------------
 
 let private formatStringMap =
+    let stringParser (str : string) =
+        str.Replace("%2F", "/")
+
     let guidFormatStr =
-        "(([0-9A-Fa-f]{8}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{12})|([0-9A-Fa-f]{32}))"
+        "([0-9A-Fa-f]{8}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{12}|[0-9A-Fa-f]{32})"
 
     dict [
     // Char    Regex                    Parser
     // -------------------------------------------------------------
         'b', ("(?i:(true|false)){1}",   bool.Parse           >> box)  // bool
         'c', ("(.{1})",                 char                 >> box)  // char
-        's', ("(.+)",                   WebUtility.UrlDecode >> box)  // string
+        's', ("(.+)",                   stringParser         >> box)  // string
         'i', ("(-?\d+)",                int32                >> box)  // int
         'd', ("(-?\d+)",                int64                >> box)  // int64
         'f', ("(-?\d+\.{1}\d+)",        float                >> box)  // float
