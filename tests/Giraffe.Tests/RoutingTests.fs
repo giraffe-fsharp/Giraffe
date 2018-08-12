@@ -319,7 +319,7 @@ let ``routef: GET "/foo/b%2Fc/bar" returns "b%2Fc"`` () =
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/b%2Fc/bar")) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "b%2Fc"
+    let expected = "b/c"
 
     task {
         let! result = app next ctx
@@ -343,7 +343,7 @@ let ``routef: GET "/foo/a%2Fb%2Bc.d%2Ce/bar" returns "a%2Fb%2Bc.d%2Ce"`` () =
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/a%2Fb%2Bc.d%2Ce/bar")) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "a%2Fb%2Bc.d%2Ce"
+    let expected = "a/b%2Bc.d%2Ce"
 
     task {
         let! result = app next ctx

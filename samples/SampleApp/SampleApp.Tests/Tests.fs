@@ -127,12 +127,3 @@ let ``Test /user/{id} returns success when logged in as user`` () =
     |> ensureSuccess
     |> readText
     |> shouldEqual "User ID: 1"
-
-[<Fact>]
-let ``Test url decode`` () =
-    use server = new TestServer(createHost())
-    use client = server.CreateClient()
-
-    get client "/encode/a%2Fb%2Bc.d%2Ce"
-    |> readText
-    |> shouldEqual "a/b+c.d,e"

@@ -202,10 +202,10 @@ let ``Format string with single "%O" matches "FE9CFE1935D44EDC9A955D38C4D579BD"`
 
 [<Fact>]
 let ``Format string with "%s" matches url encoded string`` () =
-    tryMatchInput "/encode/%s" "/encode/a%2Fb%2Bc.d%2Ce" false
+    tryMatchInput "/encode/%s" "/encode/a%2fb%2Bc.d%2Ce" false
     |> function
         | None              -> assertFail "Format failed to match input."
-        | Some (s : string) -> Assert.Equal("a%2Fb%2Bc.d%2Ce", s)
+        | Some (s : string) -> Assert.Equal("a/b%2Bc.d%2Ce", s)
 
 // ---------------------------------
 // Negative Tests
