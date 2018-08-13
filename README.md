@@ -160,7 +160,15 @@ Please check out [Jimmy Byrd](https://github.com/TheAngryByrd)'s [dotnet-web-ben
 
 Giraffe is built with the latest [.NET Core SDK](https://www.microsoft.com/net/download/core).
 
-You can either install [Visual Studio 2017](https://www.visualstudio.com/vs/) which comes with the latest SDK or manually download and install the [.NET SDK 2.0](https://www.microsoft.com/net/download/core).
+### Visual Studio
+
+You can install [Visual Studio 2017](https://www.visualstudio.com/vs/) which comes with the latest SDK, but to build and run you'll need to select your project name inside the IIS dropdown next to the Configuration Manager settings at the top of the window to avoid using the default IIS Express-- which will cause your project to fail. Example:
+
+![](https://user-images.githubusercontent.com/3818802/39714515-5535b446-51f8-11e8-9b76-9c89a3e70eea.png)
+
+### Manually Install SDK
+
+Download and install the [.NET SDK 2.0](https://www.microsoft.com/net/download/core).
 
 After installation you should be able to run the `.\build.ps1` script to successfully build, test and package the library.
 
