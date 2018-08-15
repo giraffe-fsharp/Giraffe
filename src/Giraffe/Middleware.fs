@@ -7,6 +7,7 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
+open Microsoft.Extensions.DependencyInjection.Extensions
 open FSharp.Control.Tasks.ContextInsensitive
 open Giraffe.Serialization
 
@@ -110,6 +111,7 @@ type IServiceCollection with
     /// ** Output **
     /// Returns an `IServiceCollection` builder object.
     member this.AddGiraffe() =
-        this.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer(NewtonsoftJsonSerializer.DefaultSettings))
-            .AddSingleton<IXmlSerializer>(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
-            .AddSingleton<INegotiationConfig, DefaultNegotiationConfig>()
+        this.TryAddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer(NewtonsoftJsonSerializer.DefaultSettings))
+        this.TryAddSingleton<IXmlSerializer>(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
+        this.TryAddSingleton<INegotiationConfig, DefaultNegotiationConfig>()
+        this

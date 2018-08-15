@@ -3,6 +3,7 @@ Release Notes
 
 ## 1.2.0 (Next Release)
 
+- The `AddGiraffe()` extension method which can be used to register Giraffe dependencies uses the more idiomatic `TryAdd` pattern now.
 - Added `Successful.NO_CONTENT` http handler for returning HTTP 204 responses.
 - Updated `TaskBuilder.fs` dependency to version `2.0.*`.
 - Updated ASP.NET Core NuGet packages to latest `2.1.*` versions.
