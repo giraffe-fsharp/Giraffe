@@ -210,13 +210,7 @@ let configureServices (services : IServiceCollection) =
         ) |> ignore
 
     // Register Identity Dependencies
-    services.AddIdentity<IdentityUser, IdentityRole>()
-        .AddEntityFrameworkStores<IdentityDbContext<IdentityUser>>()
-        .AddDefaultTokenProviders()
-        |> ignore
-
-    // Configure Identity
-    services.Configure<IdentityOptions>(
+    services.AddIdentity<IdentityUser, IdentityRole>(
         fun options ->
             // Password settings
             options.Password.RequireDigit   <- true
@@ -231,7 +225,10 @@ let configureServices (services : IServiceCollection) =
 
             // User settings
             options.User.RequireUniqueEmail <- true
-        ) |> ignore
+        )
+        .AddEntityFrameworkStores<IdentityDbContext<IdentityUser>>()
+        .AddDefaultTokenProviders()
+        |> ignore
 
     // Configure app cookie
     services.ConfigureApplicationCookie(

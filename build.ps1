@@ -35,7 +35,6 @@ function Invoke-Cmd ($cmd)
 function dotnet-info                      { Invoke-Cmd "dotnet --info" }
 function dotnet-version                   { Invoke-Cmd "dotnet --version" }
 function dotnet-run     ($project, $argv) { Invoke-Cmd "dotnet run --project $project $argv" }
-function dotnet-test    ($project, $argv) { Invoke-Cmd "dotnet test $project $argv" }
 function dotnet-pack    ($project, $argv) { Invoke-Cmd "dotnet pack $project $argv" }
 
 function Get-DotNetRuntimeVersion
@@ -67,23 +66,26 @@ function dotnet-build ($project, $argv)
 {
     if ($OnlyNetStandard.IsPresent) {
         $fw = Get-NetCoreTargetFramework $project
-        $argv += " -f $fw"
+        $argv = "-f $fw " + $argv
     }
 
     Invoke-Cmd "dotnet build $project $argv"
 }
 
-function dotnet-xunit ($project, $argv)
+function dotnet-test ($project, $argv)
 {
+    # Currently dotnet test does not work for net461 on Linux/Mac
+    # See: https://github.com/Microsoft/vstest/issues/1318
+    #
+    # Previously dotnet-xunit was a great alternative, however after
+    # issues with the maintenance dotnet xunit has been discontinued
+    # after xunit 2.4: https://xunit.github.io/releases/2.4
     if(!(Test-IsWindows) -or $OnlyNetStandard.IsPresent) {
-        $tfw = Get-NetCoreTargetFramework $project;
-        $argv += " -framework $tfw"
+        $fw = Get-NetCoreTargetFramework $project;
+        $argv = "-f $fw " + $argv
     }
 
-    $fxversion = Get-DotNetRuntimeVersion
-    Push-Location (Get-Item $project).Directory.FullName
-    Invoke-Cmd "dotnet xunit -fxversion $fxversion $argv"
-    Pop-Location
+    Invoke-Cmd "dotnet test $project $argv"
 }
 
 function Write-DotnetVersion
@@ -146,6 +148,12 @@ function Remove-OldBuildArtifacts
 # Main
 # ----------------------------------------------
 
+Write-Host ""
+Write-Host "--------------------------------" -ForegroundColor DarkYellow
+Write-Host " Starting Giraffe build script  " -ForegroundColor DarkYellow
+Write-Host "--------------------------------" -ForegroundColor DarkYellow
+Write-Host ""
+
 if ($ClearOnly.IsPresent) {
     Remove-OldBuildArtifacts
     return
@@ -153,7 +161,6 @@ if ($ClearOnly.IsPresent) {
 
 $giraffe               = ".\src\Giraffe\Giraffe.fsproj"
 $giraffeTests          = ".\tests\Giraffe.Tests\Giraffe.Tests.fsproj"
-$giraffeAcceptTests    = ".\tests\Giraffe.AcceptanceTests\Giraffe.AcceptanceTests.fsproj"
 $identityApp           = ".\samples\IdentityApp\IdentityApp\IdentityApp.fsproj"
 $jwtApp                = ".\samples\JwtApp\JwtApp\JwtApp.fsproj"
 $sampleApp             = ".\samples\SampleApp\SampleApp\SampleApp.fsproj"
@@ -175,11 +182,7 @@ if (!$ExcludeTests.IsPresent -and !$Run.IsPresent)
     Write-Host "Building and running tests..." -ForegroundColor Magenta
 
     dotnet-build $giraffeTests
-    dotnet-xunit $giraffeTests
-
-    dotnet-build $giraffeAcceptTests
-    # dotnet-xunit $giraffeAcceptTests
-
+    dotnet-test $giraffeTests
 }
 
 if (!$ExcludeSamples.IsPresent -and !$Run.IsPresent)
@@ -191,7 +194,7 @@ if (!$ExcludeSamples.IsPresent -and !$Run.IsPresent)
     dotnet-build   $sampleApp
 
     dotnet-build   $sampleAppTests
-    dotnet-xunit   $sampleAppTests
+    dotnet-test   $sampleAppTests
 }
 
 if ($Run.IsPresent)

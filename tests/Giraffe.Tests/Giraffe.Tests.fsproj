@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net461;netcoreapp2.0</TargetFrameworks>
+    <TargetFrameworks>net461;netcoreapp2.1</TargetFrameworks>
     <AssemblyName>Giraffe.Tests</AssemblyName>
-    <DebugType>portable</DebugType>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,9 +18,6 @@
     <Compile Include="HttpContextExtensionsTests.fs" />
     <Compile Include="StreamingTests.fs" />
     <Compile Include="PreconditionalTests.fs" />
-    <Content Include="TestFiles\index.html" />
-    <Content Include="TestFiles\streaming.txt" />
-    <Content Include="TestFiles\streaming2.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,26 +27,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.8.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.0.*" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.*" />
     <PackageReference Include="System.Net.Http" Version="4.3.*" />
-    <PackageReference Include="xunit" Version="2.3.*" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.0.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.0.*" />
+    <PackageReference Include="xunit" Version="2.4.*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.*" />
     <PackageReference Include="NSubstitute" Version="3.1.*" />
-    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.0.*" />
     <PackageReference Include="FsCheck" Version="3.0.0-*" />
     <PackageReference Include="FsCheck.Xunit" Version="3.0.0-*" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.*" />
-    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.0.*" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Giraffe\Giraffe.fsproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="2.0.*" />
-    <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.*" />
   </ItemGroup>
 </Project>
