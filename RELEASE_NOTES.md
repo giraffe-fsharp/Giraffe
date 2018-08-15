@@ -3,8 +3,15 @@ Release Notes
 
 ## 1.2.0 (Next Release)
 
-- Updated `TaskBuilder.fs` dependency to version `1.2.0-rc`.
+- Updated `TaskBuilder.fs` dependency to version `2.0.*`.
+- Updated ASP.NET Core NuGet packages to latest `2.1.*` versions.
+- Added more JavaScript event handlers for mouse, keyboard, touch, etc. to the `GiraffeViewEngine`.
+- Added `blockquote`, `_integrity` and `_scoped` to the `GiraffeViewEngine`.
+- Fixed bug in `routef` where URL encoded strings have been decoded twice (because Kestrel decodes parts of them first).
 - Fixed bug in `routef`, `routeCif` and `subRoutef` to parse multiple guids
+- Enabled `BindModelAsync<'T>` to also bind a model from `PATCH` and `DELETE` HTTP requests.
+- Improved Giraffe middleware logging to be more structured.
+- Enabled `return!` in `opt { }` computation expressions.
 
 ## 1.1.0
 
