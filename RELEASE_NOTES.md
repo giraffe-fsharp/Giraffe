@@ -3,6 +3,7 @@ Release Notes
 
 ## 1.2.0 (Next Release)
 
+- Added `Successful.NO_CONTENT` http handler for returning HTTP 204 responses.
 - Updated `TaskBuilder.fs` dependency to version `2.0.*`.
 - Updated ASP.NET Core NuGet packages to latest `2.1.*` versions.
 - Added more JavaScript event handlers for mouse, keyboard, touch, etc. to the `GiraffeViewEngine`.

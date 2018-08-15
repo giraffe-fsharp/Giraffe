@@ -19,6 +19,8 @@ module Successful =
     let accepted x  = setStatusCode 202 >=> x
     let ACCEPTED x  = accepted (negotiate x)
 
+    let NO_CONTENT : HttpHandler = setStatusCode 204 >=> setBody [||]
+
 /// ** Description **
 /// A collection of `HttpHandler` functions to return HTTP status code `4xx` responses.
 module RequestErrors =
