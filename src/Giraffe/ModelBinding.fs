@@ -293,7 +293,7 @@ type HttpContext with
     member this.BindModelAsync<'T> (?cultureInfo : CultureInfo) =
         task {
             let method = this.Request.Method
-            if method.Equals "POST" || method.Equals "PUT" then
+            if method.Equals "POST" || method.Equals "PUT" || method.Equals "PATCH" || method.Equals "DELETE" then
                 let original = StringSegment(this.Request.ContentType)
                 let parsed   = ref (MediaTypeHeaderValue(StringSegment("*/*")))
                 return!
