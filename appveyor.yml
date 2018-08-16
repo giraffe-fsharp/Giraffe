@@ -4,6 +4,8 @@ environment:
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
 init:
   - git config --global core.autocrlf true
+install:
+  - ps: .\install-dotnet.ps1
 build: off
 build_script:
   - ps: .\build.ps1 -Release -Pack
