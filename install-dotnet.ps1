@@ -59,8 +59,17 @@ function Install-NetCoreSdk ($sdkZipPath)
 
 $ErrorActionPreference = "Stop"
 
+# Rename the global.json before making the dotnet --version call
+# This will prevent AppVeyor to fail because it might not find
+# the desired SDK specified in the global.json
+$globalJson = Get-Item "global.json"
+Rename-Item -Path $globalJson.FullName -NewName "global.json.bak" -Force
+
 $desiredSdk = Get-DesiredSdk
 $currentSdk = dotnet-version
+
+# After we established the current installed .NET SDK we can put the global.json back
+Rename-Item -Path ($globalJson.FullName + ".bak") -NewName "global.json" -Force
 
 if ($desiredSdk -eq $currentSdk)
 {
