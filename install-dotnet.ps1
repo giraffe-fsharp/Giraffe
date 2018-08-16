@@ -62,6 +62,9 @@ $ErrorActionPreference = "Stop"
 # Rename the global.json before making the dotnet --version call
 # This will prevent AppVeyor to fail because it might not find
 # the desired SDK specified in the global.json
+
+Get-ChildItem
+
 $globalJson = Get-Item "global.json"
 Rename-Item -Path $globalJson.FullName -NewName "global.json.bak" -Force
 
