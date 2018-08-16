@@ -26,10 +26,10 @@ function Get-NetCoreSdk ($version)
 {
     $os = if (Test-IsWindows) { "windows" } else { "linux" }
 
-    $response = Invoke-WebRequest
-                    -Uri "https://www.microsoft.com/net/download/thank-you/dotnet-sdk-$version-$os-x64-binaries"
-                    -Method Get
-                    -MaximumRedirection 0
+    $response = Invoke-WebRequest `
+                    -Uri "https://www.microsoft.com/net/download/thank-you/dotnet-sdk-$version-$os-x64-binaries" `
+                    -Method Get `
+                    -MaximumRedirection 0 `
                     -SkipCertificateCheck
 
     $downloadLink =
