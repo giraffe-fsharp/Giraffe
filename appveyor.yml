@@ -4,6 +4,7 @@ environment:
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
 init:
   - git config --global core.autocrlf true
+  - ps: (New-Object System.Net.WebClient).DownloadFile("https://raw.githubusercontent.com/giraffe-fsharp/Giraffe/develop/install-dotnet.ps1", "install-dotnet.ps1")
   - ps: .\install-dotnet.ps1
 build: off
 build_script:
