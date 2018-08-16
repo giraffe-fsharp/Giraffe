@@ -22,6 +22,43 @@ function Get-DesiredSdk
     Get-Content "global.json" | ConvertFrom-Json | % { $_.sdk.version.ToString() }
 }
 
+function Get-NetCoreSdk ($version)
+{
+    $os = if (Test-IsWindows) { "windows" } else { "linux" }
+
+    $response = Invoke-WebRequest
+                    -Uri "https://www.microsoft.com/net/download/thank-you/dotnet-sdk-$version-$os-x64-binaries"
+                    -Method Get
+                    -MaximumRedirection 0
+                    -SkipCertificateCheck
+
+    $downloadLink =
+        $response.Links `
+            | Where-Object { $_.onclick -eq "recordManualDownload()" } `
+            | Select-Object -Expand href
+
+    $tempFile  = [System.IO.Path]::GetTempFileName()
+    $webClient = New-Object System.Net.WebClient
+    $webClient.DownloadFile($downloadLink, $tempFile)
+    return $tempFile
+}
+
+function Install-NetCoreSdk ($sdkZipPath)
+{
+    $env:DOTNET_INSTALL_DIR = "$pwd\.dotnetsdk"
+    New-Item $env:DOTNET_INSTALL_DIR -ItemType Directory -Force
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem;
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($sdkZipPath, $env:DOTNET_INSTALL_DIR)
+    $env:Path = "$env:DOTNET_INSTALL_DIR;$env:Path"
+}
+
+# ----------------------------------------------
+# Install .NET Core SDK
+# ----------------------------------------------
+
+$ErrorActionPreference = "Stop"
+
 $desiredSdk = Get-DesiredSdk
 $currentSdk = dotnet-version
 
@@ -34,17 +71,8 @@ if ($desiredSdk -eq $currentSdk)
 Write-Host "The current .NET SDK ($currentSdk) doesn't match the project's desired .NET SDK ($desiredSdk)." -ForegroundColor Yellow
 Write-Host "Attempting to download and install the correct .NET SDK..."
 
-# Download .NET Core SDK and add to PATH
-# https://download.microsoft.com/download/9/D/2/9D2354BE-778B-42D6-BA4F-3CEF489A4FDE/dotnet-sdk-2.1.400-win-x64.zip
-$url = "https://www.microsoft.com/net/download/thank-you/dotnet-sdk-$desiredSdk-windows-x64-binaries"
-$env:DOTNET_INSTALL_DIR = "$pwd\.dotnetsdk"
-New-Item $env:DOTNET_INSTALL_DIR -ItemType Directory -Force
-$tempFile = [System.IO.Path]::GetTempFileName()
-(New-Object System.Net.WebClient).DownloadFile($url, $tempFile)
-
-Add-Type -AssemblyName System.IO.Compression.FileSystem;
-[System.IO.Compression.ZipFile]::ExtractToDirectory($tempFile, $env:DOTNET_INSTALL_DIR)
-$env:Path = "$env:DOTNET_INSTALL_DIR;$env:Path"
+$sdkZipPath = Get-NetCoreSdk $desiredSdk
+Install-NetCoreSdk $sdkZipPath
 
 Write-Host ".NET SDK installation complete." -ForegroundColor Green
 dotnet-version
