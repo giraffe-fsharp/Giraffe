@@ -30,7 +30,6 @@ function Get-NetCoreSdk ($version)
                     -Uri "https://www.microsoft.com/net/download/thank-you/dotnet-sdk-$version-$os-x64-binaries" `
                     -Method Get `
                     -MaximumRedirection 0 `
-                    -SkipCertificateCheck
 
     $downloadLink =
         $response.Links `
