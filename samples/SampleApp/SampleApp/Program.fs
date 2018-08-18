@@ -42,7 +42,7 @@ let mustBeAdmin =
 
 let mustBeJohn =
     requiresAuthentication accessDenied
-    >=> requiresAuthPolicy (fun u -> u.HasClaim (ClaimTypes.Name, "John")) accessDenied
+    >=> evaluateUserPolicy (fun u -> u.HasClaim (ClaimTypes.Name, "John")) accessDenied
 
 let loginHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
