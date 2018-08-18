@@ -23,13 +23,19 @@ type internal RangeBoundary =
     member this.Length = this.End - this.Start + 1L
 
 /// **Description**
+///
 /// A collection of helper functions to parse and validate the `Range` and `If-Range` HTTP headers of a request.
+///
 module internal RangeHelper =
 
-    /// ** Description **
+    /// **Description**
+    ///
     /// Parses the `Range` HTTP header of a request.
+    ///
     /// Original code taken from ASP.NET Core:
+    ///
     /// https://github.com/aspnet/StaticFiles/blob/dev/shared/Microsoft.AspNetCore.RangeHelper.Sources/RangeHelper.cs
+    ///
     let parseRange (request : HttpRequest) =
         let rawRangeHeader = request.Headers.[HeaderNames.Range]
         if StringValues.IsNullOrEmpty(rawRangeHeader) then None
@@ -44,8 +50,10 @@ module internal RangeHelper =
             else if isNull range.Ranges then None
             else Some range.Ranges
 
-    /// ** Description **
+    /// **Description**
+    ///
     /// Validates if the provided set of `ranges` can be satisfied with the given `contentLength`.
+    ///
     let validateRanges (ranges : ICollection<RangeItemHeaderValue>) (contentLength : int64) =
         if      ranges.Count.Equals  0 then Error "No ranges provided."
         else if contentLength.Equals 0 then Error "Range exceeds content length (which is zero)."
@@ -72,8 +80,10 @@ module internal RangeHelper =
                     let endOfRange   = startOfRange + bytes - 1L
                     Ok { Start = startOfRange; End = endOfRange }
 
-    /// ** Description **
+    /// **Description**
+    ///
     /// Parses and validates the `If-Range` HTTP header
+    ///
     let isIfRangeValid (request      : HttpRequest)
                        (eTag         : EntityTagHeaderValue option)
                        (lastModified : DateTimeOffset option) =
@@ -140,19 +150,23 @@ type HttpContext with
                 return Some this
         }
 
-    /// ** Description **
+    /// **Description**
+    ///
     /// Streams data to the client.
     ///
     /// The handler will respect any valid HTTP pre-conditions (e.g. `If-Match`, `If-Modified-Since`, etc.) and return the most appropriate response. If the optional parameters `eTag` and/or `lastModified` have been set, then it will also set the `ETag` and/or `Last-Modified` HTTP headers in the response.
     ///
-    /// ** Parameters **
-    ///     - `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
-    ///     - `stream`: The stream to be send to the client.
-    ///     - `eTag`: An optional entity tag which identifies the exact version of the data.
-    ///     - `lastModified`: An optional parameter denoting the last modifed date time of the data.
+    /// **Parameters**
     ///
-    /// ** Output **
+    /// - `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
+    /// - `stream`: The stream to be send to the client.
+    /// - `eTag`: An optional entity tag which identifies the exact version of the data.
+    /// - `lastModified`: An optional parameter denoting the last modifed date time of the data.
+    ///
+    /// **Output**
+    ///
     /// Task of `Some HttpContext` after writing to the body of the response.
+    ///
     member this.WriteStreamAsync (enableRangeProcessing : bool)
                                  (stream                : Stream)
                                  (eTag                  : EntityTagHeaderValue option)
@@ -186,19 +200,23 @@ type HttpContext with
                                 return Some this
         }
 
-    /// ** Description **
+    /// **Description**
+    ///
     /// Streams a file to the client.
     ///
     /// The handler will respect any valid HTTP pre-conditions (e.g. `If-Match`, `If-Modified-Since`, etc.) and return the most appropriate response. If the optional parameters `eTag` and/or `lastModified` have been set, then it will also set the `ETag` and/or `Last-Modified` HTTP headers in the response.
     ///
-    /// ** Parameters **
-    ///     - `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
-    ///     - `filePath`: The absolute or relative path (to `ContentRoot`) of the file.
-    ///     - `eTag`: An optional entity tag which identifies the exact version of the file.
-    ///     - `lastModified`: An optional parameter denoting the last modifed date time of the file.
+    /// **Parameters**
     ///
-    /// ** Output **
+    /// - `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
+    /// - `filePath`: The absolute or relative path (to `ContentRoot`) of the file.
+    /// - `eTag`: An optional entity tag which identifies the exact version of the file.
+    /// - `lastModified`: An optional parameter denoting the last modifed date time of the file.
+    ///
+    /// **Output**
+    ///
     /// Task of `Some HttpContext` after writing to the body of the response.
+    ///
     member this.WriteFileStreamAsync (enableRangeProcessing : bool)
                                      (filePath              : string)
                                      (eTag                  : EntityTagHeaderValue option)
@@ -218,19 +236,23 @@ type HttpContext with
 // HttpHandler functions
 // ---------------------------
 
-/// ** Description **
+/// **Description**
+///
 /// Streams data to the client.
 ///
 /// The handler will respect any valid HTTP pre-conditions (e.g. `If-Match`, `If-Modified-Since`, etc.) and return the most appropriate response. If the optional parameters `eTag` and/or `lastModified` have been set, then it will also set the `ETag` and/or `Last-Modified` HTTP headers in the response.
 ///
-/// ** Parameters **
-///     - `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
-///     - `stream`: The stream to be send to the client.
-///     - `eTag`: An optional entity tag which identifies the exact version of the data.
-///     - `lastModified`: An optional parameter denoting the last modifed date time of the file.
+/// **Parameters**
 ///
-/// ** Output **
+/// - `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
+/// - `stream`: The stream to be send to the client.
+/// - `eTag`: An optional entity tag which identifies the exact version of the data.
+/// - `lastModified`: An optional parameter denoting the last modifed date time of the file.
+///
+/// **Output**
+///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
 let streamData (enableRangeProcessing : bool)
                (stream                : Stream)
                (eTag                  : EntityTagHeaderValue option)
@@ -239,19 +261,23 @@ let streamData (enableRangeProcessing : bool)
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteStreamAsync enableRangeProcessing stream eTag lastModified
 
-/// ** Description **
+/// **Description**
+///
 /// Streams a file to the client.
 ///
 /// The handler will respect any valid HTTP pre-conditions (e.g. `If-Match`, `If-Modified-Since`, etc.) and return the most appropriate response. If the optional parameters `eTag` and/or `lastModified` have been set, then it will also set the `ETag` and/or `Last-Modified` HTTP headers in the response.
 ///
-/// ** Parameters **
-///     - `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
-///     - `filePath`: The absolute or relative path (to `ContentRoot`) of the file.
-///     - `eTag`: An optional entity tag which identifies the exact version of the file.
-///     - `lastModified`: An optional parameter denoting the last modifed date time of the file.
+/// **Parameters**
 ///
-/// ** Output **
+/// - `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
+/// - `filePath`: The absolute or relative path (to `ContentRoot`) of the file.
+/// - `eTag`: An optional entity tag which identifies the exact version of the file.
+/// - `lastModified`: An optional parameter denoting the last modifed date time of the file.
+///
+/// **Output**
+///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
 let streamFile (enableRangeProcessing : bool)
                (filePath              : string)
                (eTag                  : EntityTagHeaderValue option)

@@ -10,7 +10,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 | Windows | Linux |
 | :------ | :---- |
-| [![Windows Build status](https://ci.appveyor.com/api/projects/status/0ft2427dflip7wti/branch/develop?svg=true)](https://ci.appveyor.com/project/dustinmoris/giraffe/branch/develop) | [![Linux Build status](https://travis-ci.org/giraffe-fsharp/Giraffe.svg?branch=develop)](https://travis-ci.org/giraffe-fsharp/Giraffe/builds?branch=develop) |
+| [![Build status](https://ci.appveyor.com/api/projects/status/bcst827ht2tcuhwo/branch/develop?svg=true)](https://ci.appveyor.com/project/dustinmoris/giraffe/branch/develop) | [![Linux Build status](https://travis-ci.org/giraffe-fsharp/Giraffe.svg?branch=develop)](https://travis-ci.org/giraffe-fsharp/Giraffe/builds?branch=develop) |
 | [![Windows Build history](https://buildstats.info/appveyor/chart/dustinmoris/giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/giraffe/history?branch=develop) | [![Linux Build history](https://buildstats.info/travisci/chart/giraffe-fsharp/Giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://travis-ci.org/giraffe-fsharp/Giraffe/builds?branch=develop) |
 
 
@@ -55,7 +55,9 @@ dotnet new -i "giraffe-template::*"
 
 Afterwards you can create a new Giraffe application by running `dotnet new giraffe`.
 
-For more information about the Giraffe tempalte please visit the official [giraffe-template repository](https://github.com/giraffe-fsharp/giraffe-template).
+If you are using dotnet core 2.1.4, you will need to specify the language: `dotnet new giraffe -lang F#`
+
+For more information about the Giraffe template please visit the official [giraffe-template repository](https://github.com/giraffe-fsharp/giraffe-template).
 
 ### Doing it manually
 
@@ -158,7 +160,7 @@ Please check out [Jimmy Byrd](https://github.com/TheAngryByrd)'s [dotnet-web-ben
 
 Giraffe is built with the latest [.NET Core SDK](https://www.microsoft.com/net/download/core).
 
-You can either install [Visual Studio 2017](https://www.visualstudio.com/vs/) which comes with the latest SDK or manually download and install the [.NET SDK 2.0](https://www.microsoft.com/net/download/core).
+You can either install [Visual Studio 2017](https://www.visualstudio.com/vs/) which comes with the latest SDK or manually download and install the [.NET SDK 2.1](https://www.microsoft.com/net/download/core).
 
 After installation you should be able to run the `.\build.ps1` script to successfully build, test and package the library.
 
@@ -303,6 +305,10 @@ If you add this source to your NuGet CLI or project settings then you can pull u
 - [Giraffe brings F# functional programming to ASP.Net Core](https://www.infoworld.com/article/3229005/web-development/f-and-functional-programming-come-to-asp-net-core.html) (by Paul Krill from InfoWorld)
 - [JSON Web Token with Giraffe and F#](https://medium.com/@dsincl12/json-web-token-with-giraffe-and-f-4cebe1c3ef3b) (by David Sinclair)
 - [WebSockets with Giraffe and F#](https://medium.com/@dsincl12/websockets-with-f-and-giraffe-772be829e121) (by David Sinclair)
+- [Use appsettings in a Giraffe web app](https://www.devprotocol.com/use-appsettings-in-a-giraffe-web-app/) (by Jan Tourlamain)
+- [Integrate Azure AD in your Giraffe web app](https://www.devprotocol.com/integrate-azure-ad-in-your-giraffe-web-app/) (by Jan Tourlamain)
+- [Web development in F#: Getting started](https://samueleresca.net/2018/04/web-development-in-f-getting-started/) (by Samuele Resca)
+- [Build web service using F# and ASP.NET Core](https://samueleresca.net/2018/04/build-web-service-using-f-and-asp-net-core/) (by Samuele Resca)
 
 If you have blogged about Giraffe, demonstrating a useful topic or some other tips or tricks then please feel free to submit a pull request and add your article to this list as a reference for other Giraffe users. Thank you!
 

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>Giraffe</AssemblyName>
-    <Version>1.1.0</Version>
+    <Version>2.0.0</Version>
     <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
     <Copyright>Copyright 2018 Dustin Moris Gorski</Copyright>
     <NeutralLanguage>en-GB</NeutralLanguage>
@@ -22,17 +22,19 @@
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/dustinmoris/giraffe</RepositoryUrl>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.*" />
     <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.0.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.0.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.0.*" />
-    <PackageReference Include="Newtonsoft.Json" Version="10.0.*" />
-    <PackageReference Include="TaskBuilder.fs" Version="1.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="2.1.*" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.*" />
+    <PackageReference Include="TaskBuilder.fs" Version="2.0.*" />
   </ItemGroup>
 
   <ItemGroup>

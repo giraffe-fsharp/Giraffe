@@ -2,7 +2,7 @@ language: csharp
 sudo: required
 dist: trusty
 
-dotnet: 2.1.4
+dotnet: 2.1.400
 mono:
   - 4.6.1
   - 4.8.1
@@ -16,6 +16,7 @@ before_install:
   - curl https://packages.microsoft.com/config/ubuntu/14.04/prod.list | sudo tee /etc/apt/sources.list.d/microsoft.list
   - sudo apt-get update
   - sudo apt-get install -y powershell
+  - sudo pwsh ./install-dotnet.ps1
 
 script:
   - export FrameworkPathOverride=$(dirname $(which mono))/../lib/mono/4.5/

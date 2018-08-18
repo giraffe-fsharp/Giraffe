@@ -75,6 +75,7 @@ let style      = tag "style"
 let title      = tag "title"
 
 // Content sectioning
+let blockquote = tag "blockquote"
 let body       = tag "body"
 let address    = tag "address"
 let article    = tag "article"
@@ -240,6 +241,7 @@ module Attributes =
     let _hreflang           = attr "hreflang"
     let _httpEquiv          = attr "http-equiv"
     let _id                 = attr "id"
+    let _integrity          = attr "integrity"
     let _keytype            = attr "keytype"
     let _kind               = attr "kind"
     let _label              = attr "label"
@@ -286,6 +288,58 @@ module Attributes =
     let _width              = attr "width"
     let _wrap               = attr "wrap"
 
+    // Mouse events
+    // https://www.w3schools.com/jsref/obj_mouseevent.asp
+    let _onclick            = attr "onclick"
+    let _oncontextmenu      = attr "oncontextmenu"
+    let _ondblclick         = attr "ondblclick"
+    let _onmousedown        = attr "onmousedown"
+    let _onmouseenter       = attr "onmouseenter"
+    let _onmouseleave       = attr "onmouseleave"
+    let _onmousemove        = attr "onmousemove"
+    let _onmouseout         = attr "onmouseout"
+    let _onmouseover        = attr "onmouseover"
+    let _onmouseup          = attr "onmouseup"
+
+    // Touch events
+    // https://www.w3schools.com/jsref/obj_touchevent.asp
+    let _ontouchcancel      = attr "ontouchcancel"
+    let _ontouchend         = attr "ontouchend"
+    let _ontouchmove        = attr "ontouchmove"
+    let _ontouchstart       = attr "ontouchstart"
+
+    // Keyboard events
+    // https://www.w3schools.com/jsref/obj_keyboardevent.asp
+    let _onkeydown          = attr "onkeydown"
+    let _onkeypress         = attr "onkeypress"
+    let _onkeyup            = attr "onkeyup"
+
+    // Drag and drop events
+    // https://www.w3schools.com/jsref/obj_dragevent.asp
+    let _ondrag             = attr "ondrag"
+    let _ondragend          = attr "ondragend"
+    let _ondragenter        = attr "ondragenter"
+    let _ondragleave        = attr "ondragleave"
+    let _ondragover         = attr "ondragover"
+    let _ondragstart        = attr "ondragstart"
+    let _ondrop             = attr "ondrop"
+
+    // Focus events
+    // https://www.w3schools.com/jsref/obj_focusevent.asp
+    let _onblur              = attr "onblur"
+    let _onfocus             = attr "onfocus"
+    let _onfocusin           = attr "onfocusin"
+    let _onfocusout          = attr "onfocusout"
+
+    // Input events
+    // https://www.w3schools.com/jsref/obj_inputevent.asp
+    let _oninput             = attr "oninput"
+
+    // Mouse wheel events
+    // https://www.w3schools.com/jsref/obj_wheelevent.asp
+    let _onwheel            = attr "onwheel"
+
+    // Flags
     let _async              = flag "async"
     let _autofocus          = flag "autofocus"
     let _autoplay           = flag "autoplay"
@@ -304,8 +358,136 @@ module Attributes =
     let _readonly           = flag "readonly"
     let _required           = flag "required"
     let _reversed           = flag "reversed"
+    let _scoped             = flag "scoped"
     let _selected           = flag "selected"
     let _typemustmatch      = flag "typemustmatch"
+
+
+/// Attributes to support WAI-ARIA accessibility guidelines
+module Accessibility =
+    
+    // Valid role attributes
+    // (obtained from https://www.w3.org/TR/wai-aria/#role_definitions)
+    let _roleAlert            = attr "role" "alert"
+    let _roleAlertDialog      = attr "role" "alertdialog"
+    let _roleApplication      = attr "role" "application"
+    let _roleArticle          = attr "role" "article"
+    let _roleBanner           = attr "role" "banner"
+    let _roleButton           = attr "role" "button"
+    let _roleCell             = attr "role" "cell"
+    let _roleCheckBox         = attr "role" "checkbox"
+    let _roleColumnHeader     = attr "role" "columnheader"
+    let _roleComboBox         = attr "role" "combobox"
+    let _roleComplementary    = attr "role" "complementary"
+    let _roleContentInfo      = attr "role" "contentinfo"
+    let _roleDefinition       = attr "role" "definition"
+    let _roleDialog           = attr "role" "dialog"
+    let _roleDirectory        = attr "role" "directory"
+    let _roleDocument         = attr "role" "document"
+    let _roleFeed             = attr "role" "feed"
+    let _roleFigure           = attr "role" "figure"
+    let _roleForm             = attr "role" "form"
+    let _roleGrid             = attr "role" "grid"
+    let _roleGridCell         = attr "role" "gridcell"
+    let _roleGroup            = attr "role" "group"
+    let _roleHeading          = attr "role" "heading"
+    let _roleImg              = attr "role" "img"
+    let _roleLink             = attr "role" "link"
+    let _roleList             = attr "role" "list"
+    let _roleListBox          = attr "role" "listbox"
+    let _roleListItem         = attr "role" "listitem"
+    let _roleLog              = attr "role" "log"
+    let _roleMain             = attr "role" "main"
+    let _roleMarquee          = attr "role" "marquee"
+    let _roleMath             = attr "role" "math"
+    let _roleMenuBar          = attr "role" "menubar"
+    let _roleMenuItem         = attr "role" "menuitem"
+    let _roleMenuItemCheckBox = attr "role" "menuitemcheckbox"
+    let _roleMenuItemRadio    = attr "role" "menuitemradio"
+    let _roleNavigation       = attr "role" "navigation"
+    let _roleNone             = attr "role" "none"
+    let _roleNote             = attr "role" "note"
+    let _roleOption           = attr "role" "option"
+    let _rolePresentation     = attr "role" "presentation"
+    let _roleProgressBar      = attr "role" "progressbar"
+    let _roleRadio            = attr "role" "radio"
+    let _roleRadioGroup       = attr "role" "radiogroup"
+    let _roleRegion           = attr "role" "region"
+    let _roleRow              = attr "role" "row"
+    let _roleRowGroup         = attr "role" "rowgroup"
+    let _roleRowHeader        = attr "role" "rowheader"
+    let _roleScrollBar        = attr "role" "scrollbar"
+    let _roleSearch           = attr "role" "search"
+    let _roleSearchBox        = attr "role" "searchbox"
+    let _roleSeparator        = attr "role" "separator"
+    let _roleSlider           = attr "role" "slider"
+    let _roleSpinButton       = attr "role" "spinbutton"
+    let _roleStatus           = attr "role" "status"
+    let _roleSwitch           = attr "role" "switch"
+    let _roleTab              = attr "role" "tab"
+    let _roleTable            = attr "role" "table"
+    let _roleTabList          = attr "role" "tablist"
+    let _roleTabPanel         = attr "role" "tabpanel"
+    let _roleTerm             = attr "role" "term"
+    let _roleTextBox          = attr "role" "textbox"
+    let _roleTimer            = attr "role" "timer"
+    let _roleToolBar          = attr "role" "toolbar"
+    let _roleToolTip          = attr "role" "tooltip"
+    let _roleTree             = attr "role" "tree"
+    let _roleTreeGrid         = attr "role" "treegrid"
+    let _roleTreeItem         = attr "role" "treeitem"
+    
+    // Valid aria attributes
+    // (obtained from https://www.w3.org/TR/wai-aria/#state_prop_def)
+    let _ariaActiveDescendant = attr "aria-activedescendant"
+    let _ariaAtomic           = attr "aria-atomic"
+    let _ariaAutocomplete     = attr "aria-autocomplete"
+    let _ariaBusy             = attr "aria-busy"
+    let _ariaChecked          = attr "aria-checked"
+    let _ariaColCount         = attr "aria-colcount"
+    let _ariaColIndex         = attr "aria-colindex"
+    let _ariaColSpan          = attr "aria-colspan"
+    let _ariaControls         = attr "aria-controls"
+    let _ariaCurrent          = attr "aria-current"
+    let _ariaDescribedBy      = attr "aria-describedby"
+    let _ariaDetails          = attr "aria-details"
+    let _ariaDisabled         = attr "aria-disabled"
+    let _ariaDropEffect       = attr "aria-dropeffect"
+    let _ariaErrorMessage     = attr "aria-errormessage"
+    let _ariaExpanded         = attr "aria-expanded"
+    let _ariaFlowTo           = attr "aria-flowto"
+    let _ariaGrabbed          = attr "aria-grabbed"
+    let _ariaHasPopup         = attr "aria-haspopup"
+    let _ariaHidden           = attr "aria-hidden"
+    let _ariaInvalid          = attr "aria-invalid"
+    let _ariaKeyShortcuts     = attr "aria-keyshortcuts"
+    let _ariaLabel            = attr "aria-label"
+    let _ariaLabelledBy       = attr "aria-labeledby"
+    let _ariaLevel            = attr "aria-level"
+    let _ariaLive             = attr "aria-live"
+    let _ariaModal            = attr "aria-modal"
+    let _ariaMultiline        = attr "aria-multiline"
+    let _ariaMultiSelectable  = attr "aria-multiselectable"
+    let _ariaOrientation      = attr "aria-orientation"
+    let _ariaOwns             = attr "aria-owns"
+    let _ariaPlaceholder      = attr "aria-placeholder"
+    let _ariaPosInset         = attr "aria-posinset"
+    let _ariaPressed          = attr "aria-pressed"
+    let _ariaReadOnly         = attr "aria-readonly"
+    let _ariaRelevant         = attr "aria-relevant"
+    let _ariaRequired         = attr "aria-required"
+    let _ariaRoleDescription  = attr "aria-roledescription"
+    let _ariaRowCount         = attr "aria-rowcount"
+    let _ariaRowIndex         = attr "aria-rowindex"
+    let _ariaRowSpan          = attr "aria-rowspan"
+    let _ariaSelected         = attr "aria-selected"
+    let _ariaSetSize          = attr "aria-setsize"
+    let _ariaSort             = attr "aria-sort"
+    let _ariaValueMax         = attr "aria-valuemax"
+    let _ariaValueMin         = attr "aria-valuemin"
+    let _ariaValueNow         = attr "aria-valuenow"
+    let _ariaValueText        = attr "aria-valuetext"
+
 
 // ---------------------------
 // Render XML string

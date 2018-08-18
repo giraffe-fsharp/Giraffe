@@ -11,15 +11,27 @@ open Microsoft.FSharp.Reflection
 // ---------------------------
 
 let private formatStringMap =
+    let decodeSlashes (str : string) =
+        // Kestrel has made the weird decision to
+        // partially decode a route argument, which
+        // means that a given route argument would get
+        // entirely URL decoded except for '%2F' (/).
+        // Hence decoding %2F must happen separately as
+        // part of the string parsing function.
+        //
+        // For more information please check:
+        // https://github.com/aspnet/Mvc/issues/4599
+        str.Replace("%2F", "/").Replace("%2f", "/")
+
     let guidFormatStr =
-        "(([0-9A-Fa-f]{8}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{12})|([0-9A-Fa-f]{32}))"
+        "([0-9A-Fa-f]{8}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{12}|[0-9A-Fa-f]{32})"
 
     dict [
     // Char    Regex                    Parser
     // -------------------------------------------------------------
         'b', ("(?i:(true|false)){1}",   bool.Parse           >> box)  // bool
         'c', ("(.{1})",                 char                 >> box)  // char
-        's', ("(.+)",                   WebUtility.UrlDecode >> box)  // string
+        's', ("(.+)",                   decodeSlashes        >> box)  // string
         'i', ("(-?\d+)",                int32                >> box)  // int
         'd', ("(-?\d+)",                int64                >> box)  // int64
         'f', ("(-?\d+\.{1}\d+)",        float                >> box)  // float
@@ -46,13 +58,19 @@ let private convertToRegexPatternAndFormatChars (formatString : string) =
     |> convert
     |> (fun (pattern, formatChars) -> sprintf "^%s$" pattern, formatChars)
 
-/// ** Description **
+/// **Description**
+///
 /// Tries to parse an input string based on a given format string and return a tuple of all parsed arguments.
-/// ** Parameters **
-///     - `format`: The format string which shall be used for parsing.
-///     - `input`: The input string from which the parsed arguments shall be extracted.
-/// ** Output **
+///
+/// **Parameters**
+///
+/// - `format`: The format string which shall be used for parsing.
+/// - `input`: The input string from which the parsed arguments shall be extracted.
+///
+/// **Output**
+///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
 let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreCase : bool) =
     try
         let pattern, formatChars =
@@ -102,12 +120,18 @@ let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreC
 // Validation helper functions
 // ---------------------------
 
-/// ** Description **
+/// **Description**
+///
 /// Validates if a given format string can be matched with a given tuple.
-/// ** Parameters **
-///     - `format`: The format string which shall be used for parsing.
-/// ** Output **
+///
+/// **Parameters**
+///
+/// - `format`: The format string which shall be used for parsing.
+///
+/// **Output**
+///
 /// Returns `unit` if validation was successful otherwise will throw an `Exception`.
+///
 let validateFormat (format : PrintfFormat<_,_,_,_, 'T>) =
 
     let mapping = [

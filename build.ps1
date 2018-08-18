@@ -34,9 +34,7 @@ function Invoke-Cmd ($cmd)
 
 function dotnet-info                      { Invoke-Cmd "dotnet --info" }
 function dotnet-version                   { Invoke-Cmd "dotnet --version" }
-function dotnet-build   ($project, $argv) { Invoke-Cmd "dotnet build $project $argv" }
 function dotnet-run     ($project, $argv) { Invoke-Cmd "dotnet run --project $project $argv" }
-function dotnet-test    ($project, $argv) { Invoke-Cmd "dotnet test $project $argv" }
 function dotnet-pack    ($project, $argv) { Invoke-Cmd "dotnet pack $project $argv" }
 
 function Get-DotNetRuntimeVersion
@@ -47,12 +45,47 @@ function Get-DotNetRuntimeVersion
     $version.Split(":")[1].Trim()
 }
 
-function dotnet-xunit   ($project, $argv)
+function Get-TargetFrameworks ($projFile)
 {
-    $fxversion = Get-DotNetRuntimeVersion
-    Push-Location (Get-Item $project).Directory.FullName
-    Invoke-Cmd "dotnet xunit -fxversion $fxversion $argv"
-    Pop-Location
+    [xml]$proj = Get-Content $projFile
+
+    if ($proj.Project.PropertyGroup.TargetFrameworks -ne $null) {
+        ($proj.Project.PropertyGroup.TargetFrameworks).Split(";")
+    }
+    else {
+        @($proj.Project.PropertyGroup.TargetFramework)
+    }
+}
+
+function Get-NetCoreTargetFramework ($projFile)
+{
+    Get-TargetFrameworks $projFile | where { $_ -like "netstandard*" -or $_ -like "netcoreapp*" }
+}
+
+function dotnet-build ($project, $argv)
+{
+    if ($OnlyNetStandard.IsPresent) {
+        $fw = Get-NetCoreTargetFramework $project
+        $argv = "-f $fw " + $argv
+    }
+
+    Invoke-Cmd "dotnet build $project $argv"
+}
+
+function dotnet-test ($project, $argv)
+{
+    # Currently dotnet test does not work for net461 on Linux/Mac
+    # See: https://github.com/Microsoft/vstest/issues/1318
+    #
+    # Previously dotnet-xunit was a great alternative, however after
+    # issues with the maintenance dotnet xunit has been discontinued
+    # after xunit 2.4: https://xunit.github.io/releases/2.4
+    if(!(Test-IsWindows) -or $OnlyNetStandard.IsPresent) {
+        $fw = Get-NetCoreTargetFramework $project;
+        $argv = "-f $fw " + $argv
+    }
+
+    Invoke-Cmd "dotnet test $project $argv"
 }
 
 function Write-DotnetVersion
@@ -111,29 +144,15 @@ function Remove-OldBuildArtifacts
         Remove-Item $_ -Recurse -Force }
 }
 
-function Get-TargetFrameworks ($projFile)
-{
-    [xml]$proj = Get-Content $projFile
-    ($proj.Project.PropertyGroup.TargetFrameworks).Split(";")
-}
-
-function Get-NetCoreTargetFramework ($projFile)
-{
-    Get-TargetFrameworks $projFile  | where { $_ -like "netstandard*" -or $_ -like "netcoreapp*" }
-}
-
-function Get-FrameworkArg ($projFile)
-{
-    if ($OnlyNetStandard.IsPresent) {
-        $fw = Get-NetCoreTargetFramework $projFile
-        "-f $fw"
-    }
-    else { "" }
-}
-
 # ----------------------------------------------
 # Main
 # ----------------------------------------------
+
+Write-Host ""
+Write-Host "--------------------------------" -ForegroundColor DarkYellow
+Write-Host " Starting Giraffe build script  " -ForegroundColor DarkYellow
+Write-Host "--------------------------------" -ForegroundColor DarkYellow
+Write-Host ""
 
 if ($ClearOnly.IsPresent) {
     Remove-OldBuildArtifacts
@@ -156,19 +175,14 @@ Remove-OldBuildArtifacts
 $configuration = if ($Release.IsPresent) { "Release" } else { "Debug" }
 
 Write-Host "Building Giraffe..." -ForegroundColor Magenta
-$framework = Get-FrameworkArg $giraffe
-dotnet-build   $giraffe "-c $configuration $framework"
+dotnet-build   $giraffe "-c $configuration"
 
 if (!$ExcludeTests.IsPresent -and !$Run.IsPresent)
 {
     Write-Host "Building and running tests..." -ForegroundColor Magenta
-    $framework = Get-FrameworkArg $giraffeTests
 
-    dotnet-build   $giraffeTests $framework
-
-    $xunitArgs = ""
-    if(!(Test-IsWindows)) { $tfw = Get-NetCoreTargetFramework $giraffeTests; $xunitArgs = "-framework $tfw" }
-    dotnet-xunit $giraffeTests $xunitArgs
+    dotnet-build $giraffeTests
+    dotnet-test $giraffeTests
 }
 
 if (!$ExcludeSamples.IsPresent -and !$Run.IsPresent)
@@ -180,7 +194,7 @@ if (!$ExcludeSamples.IsPresent -and !$Run.IsPresent)
     dotnet-build   $sampleApp
 
     dotnet-build   $sampleAppTests
-    dotnet-xunit   $sampleAppTests
+    dotnet-test   $sampleAppTests
 }
 
 if ($Run.IsPresent)

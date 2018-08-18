@@ -1,6 +1,33 @@
 Release Notes
 =============
 
+## 2.0.0
+
+#### Breaking changes
+
+- Changed the name of the handler `requiresAuthPolicy` to `evaluateUserPolicy` in order to better describe its functionality and to avoid a name clash between two newly added handlers for validating ASP.NET Core's `AuthorizationPolicy` objects (see new features).
+- Changed how he `AddGiraffe()` extension method registers Giraffe dependencies in ASP.NET Core. It now follows the `TryAdd` pattern which will only register a dependency if it hasn't been registered beforehand.
+- Changed the `HttpContext.GetService<'T>()` extension method to throw a `MissingDependencyException` if it cannot resolve a desired dependency.
+
+#### New features
+
+- Added two new http handlers to validate an ASP.NET Core `AuthorizationPolicy` (see: [Policy based authorization](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-2.1)). The `authorizeByPolicyName` and `authorizeByPolicy` http handlers will use ASP.NET Core's authorization service to validate a user against a given policy.
+- Updated `TaskBuilder.fs` to version `2.0.*`.
+- Updated ASP.NET Core NuGet packages to latest `2.1.*` versions.
+- Enabled `return!` for `opt { }` computation expressions.
+- Added `blockquote`, `_integrity` and `_scoped` to the `GiraffeViewEngine`.
+- Added attributes for mouse, keyboard, touch, drag & drop, focus, input and mouse wheel events to the `GiraffeViewEngine`.
+- Added new accessibility attributes to the `GriaffeViewEngine`. These can be used after opening the `Giraffe.GiraffeViewEngine.Accessibility` module.
+- Added a new `Successful.NO_CONTENT` http handler which can be used to return a HTTP 204 response.
+- Added more structured logging around the Giraffe middleware.
+
+#### Bug fixes
+
+- Fixed a bug in `routef`, `routeCif` and `subRoutef` which prohibited to parse multiple GUIDs
+- Fixed a bug in `routef`, `routeCif` and `subRoutef` which wrongly decoded a route argument twice (and therefore turned `+` signs into spaces).
+- Fixed XML documentation for all Giraffe functions which should make function tooltips nicely formatted again.
+- Enabled the `HttpContext.BindModelAsync<'T>()` extension method and the `bindModel<'T>` http handler to also bind to a model in the case of a `PATCH` or `DELETE` http request.
+
 ## 1.1.0
 
 #### New features
