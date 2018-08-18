@@ -12,13 +12,18 @@ open FSharp.Control.Tasks.ContextInsensitive
 open Giraffe.Serialization
 
 // ---------------------------
+// Giraffe exception types
+// ---------------------------
+
+type MissingDependencyException(dependencyName : string) =
+    inherit Exception(
+        sprintf "Could not retrieve object of type '%s' from ASP.NET Core's dependency container. Please register all Giraffe dependencies by adding `services.AddGiraffe()` to your startup code. For more information visit https://github.com/giraffe-fsharp/Giraffe." dependencyName)
+
+// ---------------------------
 // HttpContext extensions
 // ---------------------------
 
 type HttpContext with
-
-    member private __.MissingServiceError (t : string) =
-        NullReferenceException (sprintf "Could not retrieve object of type '%s' from ASP.NET Core's dependency container. Please register all Giraffe dependencies by adding `services.AddGiraffe()` to your startup code. For more information visit https://github.com/giraffe-fsharp/Giraffe." t)
 
     /// **Description**
     ///
@@ -31,7 +36,7 @@ type HttpContext with
     member this.GetService<'T>() =
         let t = typeof<'T>
         match this.RequestServices.GetService t with
-        | null    -> raise (this.MissingServiceError t.Name)
+        | null    -> raise (MissingDependencyException t.Name)
         | service -> service :?> 'T
 
     /// **Description**

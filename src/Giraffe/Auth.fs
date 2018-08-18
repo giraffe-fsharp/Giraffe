@@ -58,9 +58,9 @@ let signOut (authScheme : string) : HttpHandler =
 ///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
-let evaluateUserPolicy (predicate : ClaimsPrincipal -> bool) (authFailedHandler : HttpHandler) : HttpHandler =
+let evaluateUserPolicy (policy : ClaimsPrincipal -> bool) (authFailedHandler : HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        if predicate ctx.User
+        if policy ctx.User
         then next ctx
         else authFailedHandler finish ctx
 
