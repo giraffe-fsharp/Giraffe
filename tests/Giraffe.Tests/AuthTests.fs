@@ -48,7 +48,7 @@ module TestApp =
     let private mustBeOperatorOrAdmin = requiresRoleOf ["admin"; "operator"] accessDenied
 
     let private isJohn (user : ClaimsPrincipal) = user.HasClaim (ClaimTypes.Name, "John")
-    let private mustBeJohn = requiresAuthPolicy isJohn accessDenied
+    let private mustBeJohn = evaluateUserPolicy isJohn accessDenied
 
     let app =
         GET >=> choose [

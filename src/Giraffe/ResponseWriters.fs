@@ -13,12 +13,18 @@ open Giraffe.GiraffeViewEngine
 // ---------------------------
 
 type HttpContext with
-    /// ** Description **
+    /// **Description**
+    ///
     /// Writes a byte array to the body of the HTTP response and sets the HTTP `Content-Length` header accordingly.
-    /// ** Parameters **
-    ///     - `bytes`: The byte array to be send back to the client.
-    /// ** Output **
+    ///
+    /// **Parameters**
+    ///
+    /// - `bytes`: The byte array to be send back to the client.
+    ///
+    /// **Output**
+    ///
     /// Task of `Some HttpContext` after writing to the body of the response.
+    ///
     member this.WriteBytesAsync (bytes : byte[]) =
         task {
             this.SetHttpHeader HeaderNames.ContentLength bytes.Length
@@ -26,60 +32,95 @@ type HttpContext with
             return Some this
         }
 
-    /// ** Description **
+    /// **Description**
+    ///
     /// Writes an UTF-8 encoded string to the body of the HTTP response and sets the HTTP `Content-Length` header accordingly.
-    /// ** Parameters **
-    ///     - `str`: The string value to be send back to the client.
-    /// ** Output **
+    ///
+    /// **Parameters**
+    ///
+    /// - `str`: The string value to be send back to the client.
+    ///
+    /// **Output**
+    ///
     /// Task of `Some HttpContext` after writing to the body of the response.
+    ///
     member this.WriteStringAsync (str : string) =
         this.WriteBytesAsync(Encoding.UTF8.GetBytes str)
 
-    /// ** Description **
+    /// **Description**
+    ///
     /// Writes an UTF-8 encoded string to the body of the HTTP response and sets the HTTP `Content-Length` header accordingly, as well as the `Content-Type` header to `text/plain`.
-    /// ** Parameters **
-    ///     - `str`: The string value to be send back to the client.
-    /// ** Output **
+    ///
+    /// **Parameters**
+    ///
+    /// - `str`: The string value to be send back to the client.
+    ///
+    /// **Output**
+    ///
     /// Task of `Some HttpContext` after writing to the body of the response.
+    ///
     member this.WriteTextAsync (str : string) =
         this.SetContentType "text/plain"
         this.WriteStringAsync str
 
-    /// ** Description **
+    /// **Description**
+    ///
     /// Serializes an object to JSON and writes the output to the body of the HTTP response.
+    ///
     /// It also sets the HTTP `Content-Type` header to `application/json` and sets the `Content-Length` header accordingly.
+    ///
     /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type `IJsonSerializer`.
-    /// ** Parameters **
-    ///     - `dataObj`: The object to be send back to the client.
-    /// ** Output **
+    ///
+    /// **Parameters**
+    ///
+    /// - `dataObj`: The object to be send back to the client.
+    ///
+    /// **Output**
+    ///
     /// Task of `Some HttpContext` after writing to the body of the response.
+    ///
     member this.WriteJsonAsync (dataObj : obj) =
         this.SetContentType "application/json"
         let serializer = this.GetJsonSerializer()
         serializer.Serialize dataObj
         |> this.WriteStringAsync
 
-    /// ** Description **
+    /// **Description**
+    ///
     /// Serializes an object to XML and writes the output to the body of the HTTP response.
+    ///
     /// It also sets the HTTP `Content-Type` header to `application/xml` and sets the `Content-Length` header accordingly.
+    ///
     /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type `IXmlSerializer`.
-    /// ** Parameters **
-    ///     - `dataObj`: The object to be send back to the client.
-    /// ** Output **
+    ///
+    /// **Parameters**
+    ///
+    /// - `dataObj`: The object to be send back to the client.
+    ///
+    /// **Output**
+    ///
     /// Task of `Some HttpContext` after writing to the body of the response.
+    ///
     member this.WriteXmlAsync (dataObj : obj) =
         this.SetContentType "application/xml"
         let serializer = this.GetXmlSerializer()
         serializer.Serialize dataObj
         |> this.WriteBytesAsync
 
-    /// ** Description **
+    /// **Description**
+    ///
     /// Reads a HTML file from disk and writes its contents to the body of the HTTP response.
+    ///
     /// It also sets the HTTP header `Content-Type` to `text/html` and sets the `Content-Length` header accordingly.
-    /// ** Parameters **
-    ///     - `filePath`: A relative or absolute file path to the HTML file.
-    /// ** Output **
+    ///
+    /// **Parameters**
+    ///
+    /// - `filePath`: A relative or absolute file path to the HTML file.
+    ///
+    /// **Output**
+    ///
     /// Task of `Some HttpContext` after writing to the body of the response.
+    ///
     member this.WriteHtmlFileAsync (filePath : string) =
         task {
             let filePath =
@@ -93,24 +134,38 @@ type HttpContext with
             return! this.WriteStringAsync html
         }
 
-    /// ** Description **
+    /// **Description**
+    ///
     /// Writes a HTML string to the body of the HTTP response.
+    ///
     /// It also sets the HTTP header `Content-Type` to `text/html` and sets the `Content-Length` header accordingly.
-    /// ** Parameters **
-    ///     - `html`: The HTML string to be send back to the client.
-    /// ** Output **
+    ///
+    /// **Parameters**
+    ///
+    /// - `html`: The HTML string to be send back to the client.
+    ///
+    /// **Output**
+    ///
     /// Task of `Some HttpContext` after writing to the body of the response.
+    ///
     member this.WriteHtmlStringAsync (html : string) =
         this.SetContentType "text/html"
         this.WriteStringAsync html
 
-    /// ** Description **
+    /// **Description**
+    ///
     /// Compiles a `Giraffe.GiraffeViewEngine.XmlNode` object to a HTML view and writes the output to the body of the HTTP response.
+    ///
     /// It also sets the HTTP header `Content-Type` to `text/html` and sets the `Content-Length` header accordingly.
-    /// ** Parameters **
-    ///     - `htmlView`: An `XmlNode` object to be send back to the client and which represents a valid HTML view.
-    /// ** Output **
+    ///
+    /// **Parameters**
+    ///
+    /// - `htmlView`: An `XmlNode` object to be send back to the client and which represents a valid HTML view.
+    ///
+    /// **Output**
+    ///
     /// Task of `Some HttpContext` after writing to the body of the response.
+    ///
     member this.WriteHtmlViewAsync (htmlView : XmlNode) =
         this.SetContentType "text/html"
         this.WriteStringAsync (renderHtmlDocument htmlView)
@@ -119,89 +174,144 @@ type HttpContext with
 // HttpHandler functions
 // ---------------------------
 
-/// ** Description **
+/// **Description**
+///
 /// Writes a byte array to the body of the HTTP response and sets the HTTP `Content-Length` header accordingly.
-/// ** Parameters **
-///     - `bytes`: The byte array to be send back to the client.
-/// ** Output **
+///
+/// **Parameters**
+///
+/// - `bytes`: The byte array to be send back to the client.
+///
+/// **Output**
+///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
 let setBody (bytes : byte array) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteBytesAsync bytes
 
-/// ** Description **
+/// **Description**
+///
 /// Writes an UTF-8 encoded string to the body of the HTTP response and sets the HTTP `Content-Length` header accordingly.
-/// ** Parameters **
-///     - `str`: The string value to be send back to the client.
-/// ** Output **
+///
+/// **Parameters**
+///
+/// - `str`: The string value to be send back to the client.
+///
+/// **Output**
+///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
 let setBodyFromString (str : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteStringAsync str
 
-/// ** Description **
+/// **Description**
+///
 /// Writes an UTF-8 encoded string to the body of the HTTP response and sets the HTTP `Content-Length` header accordingly, as well as the `Content-Type` header to `text/plain`.
-/// ** Parameters **
-///     - `str`: The string value to be send back to the client.
-/// ** Output **
+///
+/// **Parameters**
+///
+/// - `str`: The string value to be send back to the client.
+///
+/// **Output**
+///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
 let text (str : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteTextAsync str
 
-/// ** Description **
+/// **Description**
+///
 /// Serializes an object to JSON and writes the output to the body of the HTTP response.
+///
 /// It also sets the HTTP `Content-Type` header to `application/json` and sets the `Content-Length` header accordingly.
+///
 /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type `IJsonSerializer`.
-/// ** Parameters **
-///     - `dataObj`: The object to be send back to the client.
-/// ** Output **
+///
+/// **Parameters**
+///
+/// - `dataObj`: The object to be send back to the client.
+///
+/// **Output**
+///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
 let json (dataObj : obj) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteJsonAsync dataObj
 
-/// ** Description **
+/// **Description**
+///
 /// Serializes an object to XML and writes the output to the body of the HTTP response.
+///
 /// It also sets the HTTP `Content-Type` header to `application/xml` and sets the `Content-Length` header accordingly.
+///
 /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type `IXmlSerializer`.
-/// ** Parameters **
-///     - `dataObj`: The object to be send back to the client.
-/// ** Output **
+///
+/// **Parameters**
+///
+/// - `dataObj`: The object to be send back to the client.
+///
+/// **Output**
+///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
 let xml (dataObj : obj) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteXmlAsync dataObj
 
-/// ** Description **
+/// **Description**
+///
 /// Reads a HTML file from disk and writes its contents to the body of the HTTP response.
+///
 /// It also sets the HTTP header `Content-Type` to `text/html` and sets the `Content-Length` header accordingly.
-/// ** Parameters **
-///     - `filePath`: A relative or absolute file path to the HTML file.
-/// ** Output **
+///
+/// **Parameters**
+///
+/// - `filePath`: A relative or absolute file path to the HTML file.
+///
+/// **Output**
+///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
 let htmlFile (filePath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteHtmlFileAsync filePath
 
-/// ** Description **
+/// **Description**
+///
 /// Writes a HTML string to the body of the HTTP response.
+///
 /// It also sets the HTTP header `Content-Type` to `text/html` and sets the `Content-Length` header accordingly.
-/// ** Parameters **
-///     - `html`: The HTML string to be send back to the client.
-/// ** Output **
+///
+/// **Parameters**
+///
+/// - `html`: The HTML string to be send back to the client.
+///
+/// **Output**
+///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
 let htmlString (html : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteHtmlStringAsync html
 
-/// ** Description **
+/// **Description**
+///
 /// Compiles a `Giraffe.GiraffeViewEngine.XmlNode` object to a HTML view and writes the output to the body of the HTTP response.
+///
 /// It also sets the HTTP header `Content-Type` to `text/html` and sets the `Content-Length` header accordingly.
-/// ** Parameters **
-///     - `htmlView`: An `XmlNode` object to be send back to the client and which represents a valid HTML view.
-/// ** Output **
+///
+/// **Parameters**
+///
+/// - `htmlView`: An `XmlNode` object to be send back to the client and which represents a valid HTML view.
+///
+/// **Output**
+///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
 let htmlView (htmlView : XmlNode) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteHtmlViewAsync htmlView
