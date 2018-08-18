@@ -686,6 +686,7 @@ The following sub modules and status code `HttpHandler` functions are available 
 | 201 | CREATED | `route "/" >=> Successful.CREATED someObj` |
 | 202 | accepted | `route "/" >=> Successful.accepted (xml someObj)` |
 | 202 | ACCEPTED | `route "/" >=> Successful.ACCEPTED someObj` |
+| 204 | NO_CONTENT | `route "/" >=> Successful.NO_CONTENT` |
 
 #### RequestErrors
 
@@ -1954,6 +1955,70 @@ let webApp =
     ]
 ```
 
+#### evaluateUserPolicy
+
+The `evaluateUserPolicy (policy : ClaimsPrincipal -> bool) (authFailedHandler : HttpHandler)` http handler checks if an authenticated user meets a given user policy. If the policy cannot be satisfied then the `authFailedHandler` will be executed:
+
+```fsharp
+let notLoggedIn =
+    RequestErrors.UNAUTHORIZED
+        "Basic"
+        "Some Realm"
+        "You must be logged in."
+
+let accessDenied = setStatusCode 401 >=> text "Access Denied"
+
+let mustBeLoggedIn = requiresAuthentication notLoggedIn
+
+let mustBeJohn =
+    evaluateUserPolicy (fun u -> u.HasClaim (ClaimTypes.Name, "John")) accessDenied
+
+let webApp =
+    choose [
+        route "/" >=> text "Hello World"
+
+        route "/john-only"
+        >=> mustBeLoggedIn
+        >=> mustBeJohn
+        >=> userHandler
+    ]
+```
+
+#### authorizeByPolicyName
+
+The `authorizeByPolicyName (policyName : string) (authFailedHandler : HttpHandler)` http handler checks if an authenticated user meets a given authorization policy. If the policy cannot be satisfied then the `authFailedHandler` will be executed:
+
+```fsharp
+let notLoggedIn =
+    RequestErrors.UNAUTHORIZED
+        "Basic"
+        "Some Realm"
+        "You must be logged in."
+
+let accessDenied = setStatusCode 401 >=> text "Access Denied"
+
+let mustBeLoggedIn = requiresAuthentication notLoggedIn
+
+let mustBeOver21 =
+    authorizeByPolicyName "MustBeOver21" accessDenied
+
+let webApp =
+    choose [
+        route "/" >=> text "Hello World"
+
+        route "/adults-only"
+        >=> mustBeLoggedIn
+        >=> mustBeOver21
+        >=> userHandler
+    ]
+```
+
+#### authorizeByPolicy
+
+The `authorizeByPolicy (policy : AuthorizationPolicy) (authFailedHandler : HttpHandler)` http handler checks if an authenticated user meets a given authorization policy. If the policy cannot be satisfied then the `authFailedHandler` will be executed.
+
+See [authorizeByPolicyName](#authorizebypolicyname) for more information.
+
 #### challenge
 
 The `challenge (authScheme : string)` http handler will challenge the client to authenticate with a specific `authScheme`. This function is often used in combination with the `requiresAuthentication` http handler:
@@ -2535,6 +2600,8 @@ The second category of attributes are `Boolean` flags. There are not many but so
 ```fsharp
 script [ _src "some.js"; _async ] []
 ```
+
+There's also a wealth of [accessibility attributes](https://www.w3.org/TR/html-aria/) available under the `Giraffe.GiraffeViewEngine.Accessibility` module (needs to be explicitly opened).
 
 ### Text Content
 

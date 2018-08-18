@@ -10,7 +10,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 | Windows | Linux |
 | :------ | :---- |
-| [![Windows Build status](https://ci.appveyor.com/api/projects/status/0ft2427dflip7wti/branch/develop?svg=true)](https://ci.appveyor.com/project/dustinmoris/giraffe/branch/develop) | [![Linux Build status](https://travis-ci.org/giraffe-fsharp/Giraffe.svg?branch=develop)](https://travis-ci.org/giraffe-fsharp/Giraffe/builds?branch=develop) |
+| [![Build status](https://ci.appveyor.com/api/projects/status/bcst827ht2tcuhwo/branch/develop?svg=true)](https://ci.appveyor.com/project/dustinmoris/giraffe/branch/develop) | [![Linux Build status](https://travis-ci.org/giraffe-fsharp/Giraffe.svg?branch=develop)](https://travis-ci.org/giraffe-fsharp/Giraffe/builds?branch=develop) |
 | [![Windows Build history](https://buildstats.info/appveyor/chart/dustinmoris/giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/giraffe/history?branch=develop) | [![Linux Build history](https://buildstats.info/travisci/chart/giraffe-fsharp/Giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://travis-ci.org/giraffe-fsharp/Giraffe/builds?branch=develop) |
 
 
@@ -160,7 +160,7 @@ Please check out [Jimmy Byrd](https://github.com/TheAngryByrd)'s [dotnet-web-ben
 
 Giraffe is built with the latest [.NET Core SDK](https://www.microsoft.com/net/download/core).
 
-You can either install [Visual Studio 2017](https://www.visualstudio.com/vs/) which comes with the latest SDK or manually download and install the [.NET SDK 2.0](https://www.microsoft.com/net/download/core).
+You can either install [Visual Studio 2017](https://www.visualstudio.com/vs/) which comes with the latest SDK or manually download and install the [.NET SDK 2.1](https://www.microsoft.com/net/download/core).
 
 After installation you should be able to run the `.\build.ps1` script to successfully build, test and package the library.
 
