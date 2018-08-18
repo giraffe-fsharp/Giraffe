@@ -307,6 +307,8 @@ If you add this source to your NuGet CLI or project settings then you can pull u
 - [WebSockets with Giraffe and F#](https://medium.com/@dsincl12/websockets-with-f-and-giraffe-772be829e121) (by David Sinclair)
 - [Use appsettings in a Giraffe web app](https://www.devprotocol.com/use-appsettings-in-a-giraffe-web-app/) (by Jan Tourlamain)
 - [Integrate Azure AD in your Giraffe web app](https://www.devprotocol.com/integrate-azure-ad-in-your-giraffe-web-app/) (by Jan Tourlamain)
+- [Web development in F#: Getting started](https://samueleresca.net/2018/04/web-development-in-f-getting-started/) (by Samuele Resca)
+- [Build web service using F# and ASP.NET Core](https://samueleresca.net/2018/04/build-web-service-using-f-and-asp-net-core/) (by Samuele Resca)
 
 If you have blogged about Giraffe, demonstrating a useful topic or some other tips or tricks then please feel free to submit a pull request and add your article to this list as a reference for other Giraffe users. Thank you!
 
