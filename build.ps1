@@ -49,7 +49,7 @@ function Get-TargetFrameworks ($projFile)
 {
     [xml]$proj = Get-Content $projFile
 
-    if ($proj.Project.PropertyGroup.TargetFrameworks -ne $null) {
+    if ($null -ne $proj.Project.PropertyGroup.TargetFrameworks) {
         ($proj.Project.PropertyGroup.TargetFrameworks).Split(";")
     }
     else {
