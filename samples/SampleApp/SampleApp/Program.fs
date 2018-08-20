@@ -13,7 +13,7 @@ open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
-open FSharp.Control.Tasks.ContextInsensitive
+open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe
 open SampleApp.Models
 open SampleApp.HtmlViews

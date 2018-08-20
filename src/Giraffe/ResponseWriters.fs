@@ -5,7 +5,7 @@ open System.IO
 open System.Text
 open Microsoft.AspNetCore.Http
 open Microsoft.Net.Http.Headers
-open FSharp.Control.Tasks.ContextInsensitive
+open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe.GiraffeViewEngine
 
 // ---------------------------

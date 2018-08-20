@@ -12,7 +12,7 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Primitives
 open Microsoft.Net.Http.Headers
 open Microsoft.FSharp.Reflection
-open FSharp.Control.Tasks.ContextInsensitive
+open FSharp.Control.Tasks.V2.ContextInsensitive
 
 // ---------------------------
 // Model parsing functions

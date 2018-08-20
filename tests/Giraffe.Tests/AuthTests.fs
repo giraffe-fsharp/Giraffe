@@ -7,7 +7,7 @@ open Xunit
 open NSubstitute
 open FsCheck
 open FsCheck.Xunit
-open FSharp.Control.Tasks.ContextInsensitive
+open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe
 
 [<AutoOpen>]

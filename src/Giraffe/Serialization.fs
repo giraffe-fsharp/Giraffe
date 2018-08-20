@@ -10,7 +10,7 @@ module Json =
     open System.Threading.Tasks
     open Newtonsoft.Json
     open Newtonsoft.Json.Serialization
-    open FSharp.Control.Tasks.ContextInsensitive
+    open FSharp.Control.Tasks.V2.ContextInsensitive
 
     /// **Description**
     ///

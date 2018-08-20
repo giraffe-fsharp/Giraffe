@@ -9,7 +9,7 @@ open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Extensions
 open Microsoft.Extensions.Primitives
 open Microsoft.Net.Http.Headers
-open FSharp.Control.Tasks.ContextInsensitive
+open FSharp.Control.Tasks.V2.ContextInsensitive
 
 // ---------------------------
 // HTTP Range parsing
