@@ -169,7 +169,7 @@ let personHandler =
 The `task {}` CE is an independent project maintained by [Robert Peele](https://github.com/rspeele) and can be used from any other F# application as well. All you have to do is add a reference to the `TaskBuilder.fs` NuGet library and open the module:
 
 ```fsharp
-open FSharp.Control.Tasks
+open FSharp.Control.Tasks.V2
 
 let readFileAndDoSomething (filePath : string) =
     task {
@@ -190,7 +190,7 @@ For more information please visit the official [TaskBuilder.fs](https://github.c
 If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks.ContextInsensitive` namespace to resolve any type inference issues:
 
 ```fsharp
-open FSharp.Control.Tasks.ContextInsensitive
+open FSharp.Control.Tasks.V2.ContextInsensitive
 ```
 
 ## Basics

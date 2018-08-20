@@ -3,9 +3,6 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <DebugType>portable</DebugType>
-    <AssemblyName>IdentityApp</AssemblyName>
-    <OutputType>Exe</OutputType>
-    <PackageId>IdentityApp</PackageId>
     <EnableDefaultContentItems>false</EnableDefaultContentItems>
     <RunWorkingDirectory>$(MSBuildThisFileDirectory)</RunWorkingDirectory>
   </PropertyGroup>

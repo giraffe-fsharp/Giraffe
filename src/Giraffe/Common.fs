@@ -12,7 +12,7 @@ open System.IO
 ///
 /// All tasks are configured with `ConfigurAwait(false)`.
 ///
-let task = FSharp.Control.Tasks.ContextInsensitive.task
+let task = FSharp.Control.Tasks.V2.ContextInsensitive.task
 
 // ---------------------------
 // Useful extension methods
