@@ -167,6 +167,65 @@ function Write-DotnetCoreVersions
     Write-Host ".NET Core Runtime version:  $runtimeVersion" -ForegroundColor Cyan
 }
 
+function Get-DesiredSdk
+{
+    <#
+        .DESCRIPTION
+        Gets the desired .NET Core SDK version from the global.json file.
+    #>
+
+    Get-Content "global.json" `
+    | ConvertFrom-Json `
+    | ForEach-Object { $_.sdk.version.ToString() }
+}
+
+function Download-NetCoreSdk ($version)
+{
+    <#
+        .DESCRIPTION
+        Downloads the desired .NET Core SDK version from the internet and saves it under a temporary file name which will be returned by the function.
+
+        .PARAMETER version
+        The SDK version which should be downloaded.
+    #>
+
+    $os = if (Test-IsWindows) { "windows" } else { "linux" }
+
+    $response = Invoke-WebRequest `
+                    -Uri "https://www.microsoft.com/net/download/thank-you/dotnet-sdk-$version-$os-x64-binaries" `
+                    -Method Get `
+                    -MaximumRedirection 0 `
+
+    $downloadLink =
+        $response.Links `
+            | Where-Object { $_.onclick -eq "recordManualDownload()" } `
+            | Select-Object -Expand href
+
+    $tempFile  = [System.IO.Path]::GetTempFileName()
+    $webClient = New-Object System.Net.WebClient
+    $webClient.DownloadFile($downloadLink, $tempFile)
+    return $tempFile
+}
+
+function Install-NetCoreSdk ($sdkZipPath)
+{
+    <#
+        .DESCRIPTION
+        Extracts the zip archive which contains the .NET Core SDK and installs it in the current working directory under .dotnetsdk.
+
+        .PARAMETER version
+        The zip archive which contains the .NET Core SDK.
+    #>
+
+
+    $env:DOTNET_INSTALL_DIR = "$pwd\.dotnetsdk"
+    New-Item $env:DOTNET_INSTALL_DIR -ItemType Directory -Force
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem;
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($sdkZipPath, $env:DOTNET_INSTALL_DIR)
+    $env:Path = "$env:DOTNET_INSTALL_DIR;$env:Path"
+}
+
 # ----------------------------------------------
 # AppVeyor functions
 # ----------------------------------------------

@@ -24,7 +24,7 @@ Write-Host " Starting Giraffe build script  " -ForegroundColor DarkYellow
 Write-Host "--------------------------------" -ForegroundColor DarkYellow
 Write-Host ""
 
-Import-module "$pwd\.psscripts\build-functions.ps1" -Force
+Import-module "$PSScriptRoot\.psscripts\build-functions.ps1" -Force
 
 if ($ClearOnly.IsPresent)
 {
