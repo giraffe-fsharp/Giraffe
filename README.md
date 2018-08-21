@@ -171,7 +171,6 @@ The build script supports the following flags:
 - `-All` will build and test all projects
 - `-Release` will build Giraffe with the `Release` configuration
 - `-Pack` will create a NuGet package for Giraffe and giraffe-template.
-- `-OnlyNetStandard` will build Giraffe only targeting the NETStandard1.6 framework
 
 Examples:
 

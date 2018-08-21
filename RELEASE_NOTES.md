@@ -3,7 +3,7 @@ Release Notes
 
 ## 2.0.1
 
-Changed the `task {}` CE to load from `FSharp.Control.Tasks.V2.ContextInsensitive` instead of `FSharp.Control.Tasks.ContextInsensitive`
+Changed the `task {}` CE to load from `FSharp.Control.Tasks.V2.ContextInsensitive` instead of `FSharp.Control.Tasks.ContextInsensitive`.
 
 ## 2.0.0
 
