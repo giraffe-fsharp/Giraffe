@@ -29,7 +29,7 @@ if ($desiredSdk -eq $currentSdk)
 Write-Host "The current .NET SDK ($currentSdk) doesn't match the project's desired .NET SDK ($desiredSdk)." -ForegroundColor Yellow
 Write-Host "Attempting to download and install the correct .NET SDK..."
 
-$sdkZipPath = Get-NetCoreSdk $desiredSdk
+$sdkZipPath = Get-NetCoreSdkFromWeb $desiredSdk
 Install-NetCoreSdk $sdkZipPath
 
 Write-Host ".NET SDK installation complete." -ForegroundColor Green

@@ -179,7 +179,7 @@ function Get-DesiredSdk
     | ForEach-Object { $_.sdk.version.ToString() }
 }
 
-function Download-NetCoreSdk ($version)
+function Get-NetCoreSdkFromWeb ($version)
 {
     <#
         .DESCRIPTION
