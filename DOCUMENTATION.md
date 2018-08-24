@@ -1318,7 +1318,7 @@ let webApp =
     ]
 ```
 
-Alternatively you can use the `bindFrom<'T>` http handler (which also accepts an additional parameter of type `CultureInfo option`):
+Alternatively you can use the `bindForm<'T>` http handler (which also accepts an additional parameter of type `CultureInfo option`):
 
 ```fsharp
 [<CLIMutable>]
