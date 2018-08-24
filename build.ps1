@@ -24,7 +24,7 @@ Write-Host " Starting Giraffe build script  " -ForegroundColor DarkYellow
 Write-Host "--------------------------------" -ForegroundColor DarkYellow
 Write-Host ""
 
-Import-module "$PSScriptRoot\.psscripts\build-functions.ps1" -Force
+Import-module "$PSScriptRoot/.psscripts/build-functions.ps1" -Force
 
 if ($ClearOnly.IsPresent)
 {
@@ -32,12 +32,12 @@ if ($ClearOnly.IsPresent)
     return
 }
 
-$giraffe               = ".\src\Giraffe\Giraffe.fsproj"
-$giraffeTests          = ".\tests\Giraffe.Tests\Giraffe.Tests.fsproj"
-$identityApp           = ".\samples\IdentityApp\IdentityApp\IdentityApp.fsproj"
-$jwtApp                = ".\samples\JwtApp\JwtApp\JwtApp.fsproj"
-$sampleApp             = ".\samples\SampleApp\SampleApp\SampleApp.fsproj"
-$sampleAppTests        = ".\samples\SampleApp\SampleApp.Tests\SampleApp.Tests.fsproj"
+$giraffe               = "./src/Giraffe/Giraffe.fsproj"
+$giraffeTests          = "./tests/Giraffe.Tests/Giraffe.Tests.fsproj"
+$identityApp           = "./samples/IdentityApp/IdentityApp/IdentityApp.fsproj"
+$jwtApp                = "./samples/JwtApp/JwtApp/JwtApp.fsproj"
+$sampleApp             = "./samples/SampleApp/SampleApp/SampleApp.fsproj"
+$sampleAppTests        = "./samples/SampleApp/SampleApp.Tests/SampleApp.Tests.fsproj"
 
 Update-AppVeyorBuildVersion $giraffe
 
