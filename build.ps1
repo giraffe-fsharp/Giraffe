@@ -18,13 +18,9 @@ param
 
 $ErrorActionPreference = "Stop"
 
-Write-Host ""
-Write-Host "--------------------------------" -ForegroundColor DarkYellow
-Write-Host " Starting Giraffe build script  " -ForegroundColor DarkYellow
-Write-Host "--------------------------------" -ForegroundColor DarkYellow
-Write-Host ""
-
 Import-module "$PSScriptRoot/.psscripts/build-functions.ps1" -Force
+
+Write-BuildHeader "Starting Giraffe build script"
 
 if ($ClearOnly.IsPresent)
 {
@@ -39,7 +35,8 @@ $jwtApp                = "./samples/JwtApp/JwtApp/JwtApp.fsproj"
 $sampleApp             = "./samples/SampleApp/SampleApp/SampleApp.fsproj"
 $sampleAppTests        = "./samples/SampleApp/SampleApp.Tests/SampleApp.Tests.fsproj"
 
-Update-AppVeyorBuildVersion $giraffe
+$version = Get-ProjectVersion $giraffe
+Update-AppVeyorBuildVersion $version
 
 if (Test-IsAppVeyorBuildTriggeredByGitTag)
 {
@@ -90,8 +87,4 @@ if ($Pack.IsPresent)
     dotnet-pack $giraffe "-c $configuration"
 }
 
-Write-Host ""
-Write-Host " .~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~. " -ForegroundColor Green
-Write-Host "  Giraffe build completed successfully!  " -ForegroundColor Green
-Write-Host " '~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~' " -ForegroundColor Green
-Write-Host ""
+Write-SuccessFooter "Giraffe build completed successfully!"
