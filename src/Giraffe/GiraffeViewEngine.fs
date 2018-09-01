@@ -553,14 +553,14 @@ module StatefullRendering =
     let inline private (+=) (sb:StringBuilder) (text:string) = sb.Append(text)
     let inline private (+!) (sb:StringBuilder) (text:string) = sb.Append(text) |> ignore
 
-    let private selfClosingBracket isHtml  =
+    let inline private selfClosingBracket isHtml  =
         match isHtml with
         | false -> " />"
         | true  -> ">"
 
     let rec private appendNodeToStringBuilder (htmlStyle : bool) (sb : StringBuilder) (node : XmlNode) : unit =
         
-        let writeStartElement closingBracket (elemName, attributes : XmlAttribute array) =
+        let writeStartElement (sb : StringBuilder) closingBracket (elemName, attributes : XmlAttribute array) =
             match attributes with
             | [||] -> do sb += "<" += elemName +! closingBracket
             | _    -> 
@@ -576,7 +576,7 @@ module StatefullRendering =
             do sb += "</" += elemName +! ">"
 
         let inline writeParentNode (elem : XmlElement, nodes : XmlNode list) =
-            do writeStartElement ">" elem
+            do writeStartElement sb ">" elem
             do List.iter (appendNodeToStringBuilder htmlStyle sb) nodes
             do writeEndElement elem
 
@@ -584,7 +584,7 @@ module StatefullRendering =
         | EncodedText text      -> do sb +! (WebUtility.HtmlEncode text)
         | RawText text          -> do sb +! text
         | ParentNode (e, nodes) -> do writeParentNode (e, nodes)
-        | VoidElement e         -> do writeStartElement (selfClosingBracket htmlStyle) e
+        | VoidElement e         -> do writeStartElement sb (selfClosingBracket htmlStyle) e
 
     let renderXmlNode = 
         appendNodeToStringBuilder false 
