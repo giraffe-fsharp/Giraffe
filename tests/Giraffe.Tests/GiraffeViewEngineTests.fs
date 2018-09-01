@@ -2,6 +2,7 @@ module Giraffe.Tests.GiraffeViewEngineTests
 
 open Xunit
 open Giraffe.GiraffeViewEngine
+open System.Text
 
 [<Fact>]
 let ``Single html root should compile`` () =
@@ -52,3 +53,65 @@ let ``Void tag in XML should be self closing tag`` () =
 let ``Void tag in HTML should be unary tag`` () =
     let unary =  br [] |> renderHtmlNode
     Assert.Equal("<br>", unary)
+
+
+let doc = 
+     div [] [
+            div [ _class "top-bar" ]
+                [ div [ _class "top-bar-left" ]
+                    [ ul [ _class "dropdown menu"
+                           _data "dropdown-menu" ]
+                        [ li [ _class "menu-text" ]
+                            [ RawText "Site Title" ]
+                          li [ ]
+                            [ a [ _href "#" ]
+                                [ EncodedText """One <script>alert("hello world")</script>""" ]
+                              ul [ _class "menu vertical" ]
+                                [ li [ ]
+                                    [ a [ _href "#" ]
+                                        [ RawText "One" ] ]
+                                  li [ ]
+                                    [ a [ _href "#" ]
+                                        [ EncodedText "Two" ] ]
+                                  li [ ]
+                                    [ a [ _href "#" ]
+                                        [ RawText "Three" ] ] ] ]
+                          li [ ]
+                            [ a [ _href "#" ]
+                                [ EncodedText "Two" ] ]
+                          li [ ]
+                            [ a [ _href "#" ]
+                                [ EncodedText "Three" ] ] ] ]
+                  div [ _class "top-bar-right" ]
+                    [ ul [ _class "menu" ]
+                        [ li [ ]
+                            [ input [ _type "search"
+                                      _placeholder "Search" ] ]
+                          li [ ]
+                            [ button [ _type "button"
+                                       _class "button" ]
+                                [ RawText "Search" ] ] ] ] ]
+        ]
+
+[<Fact>]
+let ``Statefull rendering produces same result as original implementation when rendering HTML`` () =
+   
+    let original = renderHtmlDocument doc
+
+    let sb = StringBuilder()
+    StatefullRendering.renderHtmlDocument sb doc
+    let statefull = sb.ToString()
+
+    Assert.Equal (original, statefull)
+
+
+[<Fact>]
+let ``Statefull rendering produces same result as original implementation when rendering XML`` () =
+  
+    let original = renderXmlNode doc
+
+    let sb = StringBuilder()
+    StatefullRendering.renderXmlNode sb doc
+    let statefull = sb.ToString()
+
+    Assert.Equal (original, statefull)
