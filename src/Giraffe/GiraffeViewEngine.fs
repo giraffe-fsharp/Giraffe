@@ -560,31 +560,36 @@ module StatefullRendering =
 
     let rec private appendNodeToStringBuilder (htmlStyle : bool) (sb : StringBuilder) (node : XmlNode) : unit =
         
-        let writeStartElement (sb : StringBuilder) closingBracket (elemName, attributes : XmlAttribute array) =
+        let writeStartElement closingBracket (elemName, attributes : XmlAttribute array) =
             match attributes with
             | [||] -> do sb += "<" += elemName +! closingBracket
             | _    -> 
                 do sb += "<" +! elemName
+
                 attributes
                 |> Array.iter (fun attr ->
                     match attr with
                     | KeyValue (k, v) -> do sb += " " += k += "=\"" += v +! "\""
                     | Boolean k       -> do sb += " " +! k )
+
                 do sb +! closingBracket
 
         let inline writeEndElement (elemName, _) = 
             do sb += "</" += elemName +! ">"
 
-        let inline writeParentNode (elem : XmlElement, nodes : XmlNode list) =
-            do writeStartElement sb ">" elem
-            do List.iter (appendNodeToStringBuilder htmlStyle sb) nodes
+        let inline writeParentNode (elem : XmlElement) (nodes : XmlNode list) =
+            do writeStartElement ">" elem
+
+            for node in nodes do
+                appendNodeToStringBuilder htmlStyle sb node
+
             do writeEndElement elem
 
         match node with
         | EncodedText text      -> do sb +! (WebUtility.HtmlEncode text)
         | RawText text          -> do sb +! text
-        | ParentNode (e, nodes) -> do writeParentNode (e, nodes)
-        | VoidElement e         -> do writeStartElement sb (selfClosingBracket htmlStyle) e
+        | ParentNode (e, nodes) -> do writeParentNode e nodes
+        | VoidElement e         -> do writeStartElement (selfClosingBracket htmlStyle) e
 
     let renderXmlNode = 
         appendNodeToStringBuilder false 

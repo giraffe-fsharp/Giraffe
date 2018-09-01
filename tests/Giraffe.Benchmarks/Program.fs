@@ -4,7 +4,7 @@ open BenchmarkDotNet.Running;
 open Giraffe.GiraffeViewEngine
 open System.Text
 
-let private DefaultCapacity = 8 * 1024
+let private DefaultCapacity = 16 * 1024
 let private MaxBuilderSize = DefaultCapacity * 3
 
 type MemoryStreamCache = 
@@ -88,6 +88,12 @@ type HtmlBench() =
         let sb = MemoryStreamCache.Get()
         StatefullRendering.renderHtmlDocument sb doc
         sb.ToString() |> ignore
+        MemoryStreamCache.Release sb
+
+    [<Benchmark>]
+    member this.RenderHtmlStatefullCachedNoCopy() = 
+        let sb = MemoryStreamCache.Get()
+        StatefullRendering.renderHtmlDocument sb doc
         MemoryStreamCache.Release sb
 
 [<EntryPoint>]
