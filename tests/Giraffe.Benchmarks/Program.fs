@@ -1,36 +1,9 @@
-﻿open System
-open BenchmarkDotNet.Attributes;
+﻿open BenchmarkDotNet.Attributes;
 open BenchmarkDotNet.Running;
 open Giraffe.GiraffeViewEngine
 open System.Text
-
-let private DefaultCapacity = 16 * 1024
-let private MaxBuilderSize = DefaultCapacity * 3
-
-type MemoryStreamCache = 
-
-    [<ThreadStatic>]
-    [<DefaultValue>]
-    static val mutable private instance: StringBuilder
-
-    static member Get() = MemoryStreamCache.Get(DefaultCapacity)
-    static member Get(capacity:int) = 
-        
-        if capacity <= MaxBuilderSize then
-            let ms = MemoryStreamCache.instance;
-            let capacity = max capacity DefaultCapacity
-            
-            if ms <> null && capacity <= ms.Capacity then
-                MemoryStreamCache.instance <- null;
-                ms.Clear()
-            else
-                new StringBuilder(capacity)
-        else
-            new StringBuilder(capacity)
-
-    static member Release(ms:StringBuilder) = 
-        if ms.Capacity <= MaxBuilderSize then
-            MemoryStreamCache.instance <- ms
+open System.Buffers
+open Giraffe.ResponseWriters.Caching
 
 [<MemoryDiagnoser>]
 type HtmlBench() =
@@ -74,27 +47,31 @@ type HtmlBench() =
         ]
 
     [<Benchmark( Baseline = true )>]
-    member this.RenderHtmlOriginal() = 
-        renderHtmlDocument doc
+    member this.RenderHtmlOriginalUtf8() = 
+        renderHtmlDocument doc |> Encoding.UTF8.GetBytes
 
     [<Benchmark>]
-    member this.RenderHtmlStatefull() = 
+    member this.RenderHtmlStatefullUtf8() = 
         let sb = new StringBuilder()
         StatefullRendering.renderHtmlDocument sb doc
-        sb.ToString() |> ignore
+        sb.ToString() |> Encoding.UTF8.GetBytes
 
     [<Benchmark>]
-    member this.RenderHtmlStatefullCached() = 
-        let sb = MemoryStreamCache.Get()
+    member this.RenderHtmlStatefullCachedUtf8() = 
+        let sb = StringBuilderCache.Get()
         StatefullRendering.renderHtmlDocument sb doc
-        sb.ToString() |> ignore
-        MemoryStreamCache.Release sb
+        sb.ToString() |> Encoding.UTF8.GetBytes |> ignore
+        StringBuilderCache.Release sb
 
     [<Benchmark>]
-    member this.RenderHtmlStatefullCachedNoCopy() = 
-        let sb = MemoryStreamCache.Get()
+    member this.RenderHtmlStatefullCachedPooledUtf8() = 
+        let sb = StringBuilderCache.Get()
         StatefullRendering.renderHtmlDocument sb doc
-        MemoryStreamCache.Release sb
+        let chars = ArrayPool<char>.Shared.Rent(sb.Length)
+        sb.CopyTo(0, chars, 0, sb.Length) 
+        Encoding.UTF8.GetBytes(chars, 0, sb.Length) |> ignore
+        ArrayPool<char>.Shared.Return(chars)
+        StringBuilderCache.Release sb
 
 [<EntryPoint>]
 let main args =

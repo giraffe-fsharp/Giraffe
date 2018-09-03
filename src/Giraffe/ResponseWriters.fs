@@ -7,6 +7,41 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Net.Http.Headers
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe.GiraffeViewEngine
+open System.Buffers
+
+// ---------------------------
+// Internal implementation of caching
+// ---------------------------
+
+module Caching =
+    open System
+
+    let private DefaultCapacity = 8 * 1024
+    let private MaxBuilderSize = DefaultCapacity * 8
+
+    // ---------------------------
+    // Holds an instance of StringBuilder of maximum capacity per thread.
+    // For StringBuilder of larger size will behave exactly as creating a new instance
+    // ---------------------------
+
+    type StringBuilderCache = 
+
+        [<ThreadStatic>]
+        [<DefaultValue>]
+        static val mutable private instance: StringBuilder
+
+        static member Get() : StringBuilder = 
+            let ms = StringBuilderCache.instance;
+            
+            if ms <> null && DefaultCapacity <= ms.Capacity then
+                StringBuilderCache.instance <- null;
+                ms.Clear()
+            else
+                new StringBuilder(DefaultCapacity)
+
+        static member Release(ms:StringBuilder) : unit = 
+            if ms.Capacity <= MaxBuilderSize then
+                StringBuilderCache.instance <- ms
 
 // ---------------------------
 // HttpContext extensions
@@ -167,8 +202,19 @@ type HttpContext with
     /// Task of `Some HttpContext` after writing to the body of the response.
     ///
     member this.WriteHtmlViewAsync (htmlView : XmlNode) =
+
+        let inline render htmlView : byte[] = 
+            let sb = Caching.StringBuilderCache.Get()
+            StatefullRendering.renderHtmlDocument sb htmlView
+            let chars = ArrayPool<char>.Shared.Rent(sb.Length)
+            sb.CopyTo(0, chars, 0, sb.Length)
+            let result = Encoding.UTF8.GetBytes(chars, 0, sb.Length)
+            Caching.StringBuilderCache.Release sb
+            ArrayPool<char>.Shared.Return chars
+            result 
+
         this.SetContentType "text/html"
-        this.WriteStringAsync (renderHtmlDocument htmlView)
+        this.WriteBytesAsync <| render htmlView
 
 // ---------------------------
 // HttpHandler functions
