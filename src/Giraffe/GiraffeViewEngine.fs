@@ -17,6 +17,7 @@ module Giraffe.GiraffeViewEngine
 
 open System
 open System.Net
+open System.Text
 
 // ---------------------------
 // Definition of different HTML content
@@ -488,121 +489,73 @@ module Accessibility =
     let _ariaValueNow         = attr "aria-valuenow"
     let _ariaValueText        = attr "aria-valuetext"
 
+// ---------------------------
+// Render to string builder
+// ---------------------------
+
+let inline private (+=) (sb: StringBuilder) (text: string) = sb.Append(text)
+let inline private (+!) (sb: StringBuilder) (text: string) = sb.Append(text) |> ignore
+
+let inline private selfClosingBracket isHtml  =
+    match isHtml with
+    | false -> " />"
+    | true  -> ">"
+
+let rec private appendNodeToStringBuilder (htmlStyle: bool) (sb: StringBuilder) (node: XmlNode) : unit =
+        
+    let writeStartElement closingBracket (elemName, attributes : XmlAttribute array) =
+        match attributes with
+        | [||] -> do sb += "<" += elemName +! closingBracket
+        | _    -> 
+            do sb += "<" +! elemName
+
+            attributes
+            |> Array.iter (fun attr ->
+                match attr with
+                | KeyValue (k, v) -> do sb += " " += k += "=\"" += v +! "\""
+                | Boolean k       -> do sb += " " +! k )
+
+            do sb +! closingBracket
+
+    let inline writeEndElement (elemName, _) = 
+        do sb += "</" += elemName +! ">"
+
+    let inline writeParentNode (elem : XmlElement) (nodes : XmlNode list) =
+        do writeStartElement ">" elem
+
+        for node in nodes do
+            appendNodeToStringBuilder htmlStyle sb node
+
+        do writeEndElement elem
+
+    match node with
+    | EncodedText text      -> do sb +! (WebUtility.HtmlEncode text)
+    | RawText text          -> do sb +! text
+    | ParentNode (e, nodes) -> do writeParentNode e nodes
+    | VoidElement e         -> do writeStartElement (selfClosingBracket htmlStyle) e
+
+let renderXmlNode' sb node = appendNodeToStringBuilder false sb node
+    
+let renderXmlNodes' sb (nodes : XmlNode list) = 
+    for node in nodes do
+        renderXmlNode' sb node 
+
+let renderHtmlNode' sb node = appendNodeToStringBuilder true sb node
+
+let renderHtmlNodes' sb (nodes : XmlNode list) = 
+    for node in nodes do
+        renderHtmlNode' sb node
+
+let renderHtmlDocument' sb (document : XmlNode) =
+    sb += "<!DOCTYPE html>" +! Environment.NewLine
+    renderHtmlNode' sb document
 
 // ---------------------------
 // Render XML string
 // ---------------------------
 
-let rec private nodeToString (htmlStyle : bool) (node : XmlNode) =
-    let startElementToString selfClosing (elemName, attributes : XmlAttribute array) =
-        let closingBracket =
-            match selfClosing with
-            | false -> ">"
-            | true ->
-                match htmlStyle with
-                | false -> " />"
-                | true  -> ">"
-        match attributes with
-        | [||] -> sprintf "<%s%s" elemName closingBracket
-        | _    ->
-            attributes
-            |> Array.map (fun attr ->
-                match attr with
-                | KeyValue (k, v) -> sprintf " %s=\"%s\"" k v
-                | Boolean k       -> sprintf " %s" k)
-            |> String.Concat
-            |> sprintf "<%s%s%s" elemName
-            <| closingBracket
-
-    let endElementToString (elemName, _) = sprintf "</%s>" elemName
-
-    let parentNodeToString (elem : XmlElement, nodes : XmlNode list) =
-        let innerContent = nodes |> List.map (nodeToString htmlStyle) |> String.Concat
-        let startTag     = elem  |> startElementToString false
-        let endTag       = elem  |> endElementToString
-        sprintf "%s%s%s" startTag innerContent endTag
-
-    match node with
-    | EncodedText text      -> WebUtility.HtmlEncode text
-    | RawText text          -> text
-    | ParentNode (e, nodes) -> parentNodeToString (e, nodes)
-    | VoidElement e         -> startElementToString true e
-
-let renderXmlNode = nodeToString false
-
-let renderXmlNodes (nodes : XmlNode list) =
-    nodes
-    |> List.map renderXmlNode
-    |> String.Concat
-
-let renderHtmlNode = nodeToString true
-
-let renderHtmlNodes (nodes : XmlNode list) =
-    nodes
-    |> List.map renderHtmlNode
-    |> String.Concat
-
-let renderHtmlDocument (document : XmlNode) =
-    document
-    |> renderHtmlNode
-    |> sprintf "<!DOCTYPE html>%s%s" Environment.NewLine
-
-module StatefullRendering = 
-    open System.Text
-
-    let inline private (+=) (sb:StringBuilder) (text:string) = sb.Append(text)
-    let inline private (+!) (sb:StringBuilder) (text:string) = sb.Append(text) |> ignore
-
-    let inline private selfClosingBracket isHtml  =
-        match isHtml with
-        | false -> " />"
-        | true  -> ">"
-
-    let rec private appendNodeToStringBuilder (htmlStyle : bool) (sb : StringBuilder) (node : XmlNode) : unit =
-        
-        let writeStartElement closingBracket (elemName, attributes : XmlAttribute array) =
-            match attributes with
-            | [||] -> do sb += "<" += elemName +! closingBracket
-            | _    -> 
-                do sb += "<" +! elemName
-
-                attributes
-                |> Array.iter (fun attr ->
-                    match attr with
-                    | KeyValue (k, v) -> do sb += " " += k += "=\"" += v +! "\""
-                    | Boolean k       -> do sb += " " +! k )
-
-                do sb +! closingBracket
-
-        let inline writeEndElement (elemName, _) = 
-            do sb += "</" += elemName +! ">"
-
-        let inline writeParentNode (elem : XmlElement) (nodes : XmlNode list) =
-            do writeStartElement ">" elem
-
-            for node in nodes do
-                appendNodeToStringBuilder htmlStyle sb node
-
-            do writeEndElement elem
-
-        match node with
-        | EncodedText text      -> do sb +! (WebUtility.HtmlEncode text)
-        | RawText text          -> do sb +! text
-        | ParentNode (e, nodes) -> do writeParentNode e nodes
-        | VoidElement e         -> do writeStartElement (selfClosingBracket htmlStyle) e
-
-    let renderXmlNode = 
-        appendNodeToStringBuilder false 
-    
-    let renderXmlNodes sb (nodes : XmlNode list) = 
-        nodes |> List.iter (renderXmlNode sb)
-
-    let renderHtmlNode = 
-        appendNodeToStringBuilder true 
-
-    let renderHtmlNodes sb (nodes : XmlNode list) = 
-        nodes |> List.iter (renderHtmlNode sb)
-
-    let renderHtmlDocument sb (document : XmlNode) =
-        sb += "<!DOCTYPE html>" +! Environment.NewLine
-        renderHtmlNode sb document
+let renderXmlNode (node: XmlNode): string           = let sb = new StringBuilder() in renderXmlNode'      sb node;     sb.ToString()
+let renderXmlNodes (nodes: XmlNode list): string    = let sb = new StringBuilder() in renderXmlNodes'     sb nodes;    sb.ToString()
+let renderHtmlNode (node:XmlNode): string           = let sb = new StringBuilder() in renderHtmlNode'     sb node;     sb.ToString()
+let renderHtmlNodes (nodes: XmlNode list): string   = let sb = new StringBuilder() in renderHtmlNodes'    sb nodes;    sb.ToString()
+let renderHtmlDocument (document: XmlNode): string  = let sb = new StringBuilder() in renderHtmlDocument' sb document; sb.ToString()

@@ -1,6 +1,7 @@
 [<AutoOpen>]
 module Giraffe.ResponseWriters
 
+open System
 open System.IO
 open System.Text
 open Microsoft.AspNetCore.Http
@@ -10,20 +11,16 @@ open Giraffe.GiraffeViewEngine
 open System.Buffers
 
 // ---------------------------
-// Internal implementation of caching
+// Internal implementation of string builder caching
 // ---------------------------
 
-module Caching =
-    open System
+module private Caching =
 
-    let private DefaultCapacity = 8 * 1024
-    let private MaxBuilderSize = DefaultCapacity * 8
+    let DefaultCapacity = 8 * 1024
+    let MaxBuilderSize = DefaultCapacity * 8
 
-    // ---------------------------
-    // Holds an instance of StringBuilder of maximum capacity per thread.
-    // For StringBuilder of larger size will behave exactly as creating a new instance
-    // ---------------------------
-
+    /// Holds an instance of StringBuilder of maximum capacity per thread.
+    /// For `StringBuilder` of larger than `MaxBuilderSize` will behave as `new StringBuilder()` constructor call
     type StringBuilderCache = 
 
         [<ThreadStatic>]
@@ -203,9 +200,11 @@ type HttpContext with
     ///
     member this.WriteHtmlViewAsync (htmlView : XmlNode) =
 
-        let inline render htmlView : byte[] = 
+        /// renders html document to cached string builder instance
+        /// and converts it to the utf8 byte array
+        let inline render (htmlView: XmlNode): byte[] = 
             let sb = Caching.StringBuilderCache.Get()
-            StatefullRendering.renderHtmlDocument sb htmlView
+            renderHtmlDocument' sb htmlView |> ignore
             let chars = ArrayPool<char>.Shared.Rent(sb.Length)
             sb.CopyTo(0, chars, 0, sb.Length)
             let result = Encoding.UTF8.GetBytes(chars, 0, sb.Length)

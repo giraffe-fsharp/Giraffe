@@ -3,10 +3,35 @@ open BenchmarkDotNet.Running;
 open Giraffe.GiraffeViewEngine
 open System.Text
 open System.Buffers
-open Giraffe.ResponseWriters.Caching
+open System
+
+[<AutoOpen>]
+module Caching =
+
+    let DefaultCapacity = 8 * 1024
+    let MaxBuilderSize = DefaultCapacity * 8
+    
+    type StringBuilderCache = 
+
+        [<ThreadStatic>]
+        [<DefaultValue>]
+        static val mutable private instance: StringBuilder
+
+        static member Get() : StringBuilder = 
+            let ms = StringBuilderCache.instance;
+            
+            if ms <> null && DefaultCapacity <= ms.Capacity then
+                StringBuilderCache.instance <- null;
+                ms.Clear()
+            else
+                new StringBuilder(DefaultCapacity)
+
+        static member Release(ms:StringBuilder) : unit = 
+            if ms.Capacity <= MaxBuilderSize then
+                StringBuilderCache.instance <- ms
 
 [<MemoryDiagnoser>]
-type HtmlBench() =
+type HtmlUtf8Benchmark() =
 
     let doc = 
         div [] [
@@ -47,26 +72,20 @@ type HtmlBench() =
         ]
 
     [<Benchmark( Baseline = true )>]
-    member this.RenderHtmlOriginalUtf8() = 
+    member this.String() = 
         renderHtmlDocument doc |> Encoding.UTF8.GetBytes
 
     [<Benchmark>]
-    member this.RenderHtmlStatefullUtf8() = 
-        let sb = new StringBuilder()
-        StatefullRendering.renderHtmlDocument sb doc
-        sb.ToString() |> Encoding.UTF8.GetBytes
-
-    [<Benchmark>]
-    member this.RenderHtmlStatefullCachedUtf8() = 
+    member this.Cached() = 
         let sb = StringBuilderCache.Get()
-        StatefullRendering.renderHtmlDocument sb doc
+        renderHtmlDocument' sb doc
         sb.ToString() |> Encoding.UTF8.GetBytes |> ignore
         StringBuilderCache.Release sb
 
     [<Benchmark>]
-    member this.RenderHtmlStatefullCachedPooledUtf8() = 
+    member this.CachedAndPooled() = 
         let sb = StringBuilderCache.Get()
-        StatefullRendering.renderHtmlDocument sb doc
+        renderHtmlDocument' sb doc
         let chars = ArrayPool<char>.Shared.Rent(sb.Length)
         sb.CopyTo(0, chars, 0, sb.Length) 
         Encoding.UTF8.GetBytes(chars, 0, sb.Length) |> ignore
@@ -75,7 +94,7 @@ type HtmlBench() =
 
 [<EntryPoint>]
 let main args =
-    let asm = typeof<HtmlBench>.Assembly
+    let asm = typeof<HtmlUtf8Benchmark>.Assembly
     BenchmarkSwitcher.FromAssembly(asm).Run(args) |> ignore
     0
 
