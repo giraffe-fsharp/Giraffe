@@ -1,1 +1,0 @@
-pwsh ./nuget.ps1
