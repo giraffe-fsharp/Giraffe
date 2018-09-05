@@ -78,6 +78,7 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
 [<Fact>]
 let ``WriteHtmlViewAsync should add html to the context`` () =
     let ctx = Substitute.For<HttpContext>()
+    mockCache ctx
 
     let testHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->

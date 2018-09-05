@@ -99,3 +99,41 @@ module Xml =
                 let serializer = XmlSerializer(typeof<'T>)
                 use reader = new StringReader(xml)
                 serializer.Deserialize reader :?> 'T
+
+[<AutoOpen>]
+module Cache = 
+    open System.Text
+    open System
+    
+    type IStringBuilderCache = 
+        abstract member Get: unit -> StringBuilder
+        abstract member Release: StringBuilder -> unit
+
+    type NoOpStringBuilderCache(DefaultCapacity: int) = 
+        interface IStringBuilderCache with
+            member this.Get() = new StringBuilder(DefaultCapacity)
+            member this.Release _ = ();
+
+    type private StringBuilderCache = 
+
+        [<ThreadStatic>]
+        [<DefaultValue>]
+        static val mutable private instance: StringBuilder
+
+        static member Get(defaultCapacity) : StringBuilder = 
+            let sb = StringBuilderCache.instance;
+            
+            if sb <> null && sb.Capacity >= defaultCapacity then
+                StringBuilderCache.instance <- null;
+                sb.Clear()
+            else
+                new StringBuilder(defaultCapacity)
+
+        static member Release(sb: StringBuilder, maxBuilderSize) : unit = 
+            if sb.Capacity <= maxBuilderSize then
+                StringBuilderCache.instance <- sb
+
+    type ThreadStaticStringBuilderCache(DefaultCapacity, MaxCapacity) = 
+        interface IStringBuilderCache with
+            member this.Get() = StringBuilderCache.Get DefaultCapacity
+            member this.Release sb = StringBuilderCache.Release(sb, MaxCapacity)

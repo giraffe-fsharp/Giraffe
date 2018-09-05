@@ -9,36 +9,7 @@ open Microsoft.Net.Http.Headers
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe.GiraffeViewEngine
 open System.Buffers
-
-// ---------------------------
-// Internal implementation of string builder caching
-// ---------------------------
-
-module private Caching =
-
-    let DefaultCapacity = 8 * 1024
-    let MaxBuilderSize = DefaultCapacity * 8
-
-    /// Holds an instance of StringBuilder of maximum capacity per thread.
-    /// For `StringBuilder` of larger than `MaxBuilderSize` will behave as `new StringBuilder()` constructor call
-    type StringBuilderCache = 
-
-        [<ThreadStatic>]
-        [<DefaultValue>]
-        static val mutable private instance: StringBuilder
-
-        static member Get() : StringBuilder = 
-            let ms = StringBuilderCache.instance;
-            
-            if ms <> null && DefaultCapacity <= ms.Capacity then
-                StringBuilderCache.instance <- null;
-                ms.Clear()
-            else
-                new StringBuilder(DefaultCapacity)
-
-        static member Release(ms:StringBuilder) : unit = 
-            if ms.Capacity <= MaxBuilderSize then
-                StringBuilderCache.instance <- ms
+open Giraffe.Serialization.Cache
 
 // ---------------------------
 // HttpContext extensions
@@ -200,15 +171,17 @@ type HttpContext with
     ///
     member this.WriteHtmlViewAsync (htmlView : XmlNode) =
 
+        let stringBuilderCache = this.GetService<IStringBuilderCache>()
+
         /// renders html document to cached string builder instance
         /// and converts it to the utf8 byte array
         let inline render (htmlView: XmlNode): byte[] = 
-            let sb = Caching.StringBuilderCache.Get()
-            renderHtmlDocument' sb htmlView |> ignore
+            let sb = stringBuilderCache.Get()
+            renderHtmlDocument' sb htmlView
             let chars = ArrayPool<char>.Shared.Rent(sb.Length)
             sb.CopyTo(0, chars, 0, sb.Length)
             let result = Encoding.UTF8.GetBytes(chars, 0, sb.Length)
-            Caching.StringBuilderCache.Release sb
+            stringBuilderCache.Release sb
             ArrayPool<char>.Shared.Return chars
             result 
 
