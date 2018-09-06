@@ -9,6 +9,7 @@ open Microsoft.Net.Http.Headers
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe.GiraffeViewEngine
 open System.Buffers
+open Giraffe.Serialization.Cache
 
 // ---------------------------
 // Internal implementation of string builder caching
@@ -200,6 +201,8 @@ type HttpContext with
     ///
     member this.WriteHtmlViewAsync (htmlView : XmlNode) =
 
+        let stringBuilderCache = this.GetService<IStringBuilderCache>()
+
         /// renders html document to cached string builder instance
         /// and converts it to the utf8 byte array
         let inline render (htmlView: XmlNode): byte[] =
@@ -208,7 +211,7 @@ type HttpContext with
             let chars = ArrayPool<char>.Shared.Rent(sb.Length)
             sb.CopyTo(0, chars, 0, sb.Length)
             let result = Encoding.UTF8.GetBytes(chars, 0, sb.Length)
-            Caching.StringBuilderCache.Release sb
+            stringBuilderCache.Release sb
             ArrayPool<char>.Shared.Return chars
             result
 

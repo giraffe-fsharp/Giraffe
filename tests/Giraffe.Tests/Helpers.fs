@@ -97,6 +97,12 @@ let createHost (configureApp      : 'Tuple -> IApplicationBuilder -> unit)
         .Configure(Action<IApplicationBuilder> (configureApp args))
         .ConfigureServices(Action<IServiceCollection> configureServices)
 
+let mockCache (ctx : HttpContext) = 
+    ctx.RequestServices
+       .GetService(typeof<IStringBuilderCache>)
+       .Returns(NoOpStringBuilderCache(1024))
+    |> ignore
+
 let mockJson (ctx : HttpContext) (settings : JsonSerializerSettings option) =
     let jsonSettings =
         defaultArg settings NewtonsoftJsonSerializer.DefaultSettings

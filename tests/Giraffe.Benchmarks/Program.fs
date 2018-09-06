@@ -3,35 +3,12 @@ open BenchmarkDotNet.Running;
 open Giraffe.GiraffeViewEngine
 open System.Text
 open System.Buffers
-open System
-
-[<AutoOpen>]
-module Caching =
-
-    let DefaultCapacity = 8 * 1024
-    let MaxBuilderSize = DefaultCapacity * 8
-    
-    type StringBuilderCache = 
-
-        [<ThreadStatic>]
-        [<DefaultValue>]
-        static val mutable private instance: StringBuilder
-
-        static member Get() : StringBuilder = 
-            let ms = StringBuilderCache.instance;
-            
-            if ms <> null && DefaultCapacity <= ms.Capacity then
-                StringBuilderCache.instance <- null;
-                ms.Clear()
-            else
-                new StringBuilder(DefaultCapacity)
-
-        static member Release(ms:StringBuilder) : unit = 
-            if ms.Capacity <= MaxBuilderSize then
-                StringBuilderCache.instance <- ms
+open Giraffe.Serialization.Cache
 
 [<MemoryDiagnoser>]
 type HtmlUtf8Benchmark() =
+
+    let cache = new ThreadStaticStringBuilderCache(1024, 32 * 1024) :> IStringBuilderCache
 
     let doc = 
         div [] [
@@ -77,20 +54,20 @@ type HtmlUtf8Benchmark() =
 
     [<Benchmark>]
     member this.Cached() = 
-        let sb = StringBuilderCache.Get()
+        let sb = cache.Get()
         renderHtmlDocument' sb doc
         sb.ToString() |> Encoding.UTF8.GetBytes |> ignore
-        StringBuilderCache.Release sb
+        cache.Release sb
 
     [<Benchmark>]
     member this.CachedAndPooled() = 
-        let sb = StringBuilderCache.Get()
+        let sb = cache.Get()
         renderHtmlDocument' sb doc
         let chars = ArrayPool<char>.Shared.Rent(sb.Length)
         sb.CopyTo(0, chars, 0, sb.Length) 
         Encoding.UTF8.GetBytes(chars, 0, sb.Length) |> ignore
         ArrayPool<char>.Shared.Return(chars)
-        StringBuilderCache.Release sb
+        cache.Release sb
 
 [<EntryPoint>]
 let main args =
