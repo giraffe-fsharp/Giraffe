@@ -21,22 +21,22 @@ module private Caching =
 
     /// Holds an instance of StringBuilder of maximum capacity per thread.
     /// For `StringBuilder` of larger than `MaxBuilderSize` will behave as `new StringBuilder()` constructor call
-    type StringBuilderCache = 
+    type StringBuilderCache =
 
         [<ThreadStatic>]
         [<DefaultValue>]
         static val mutable private instance: StringBuilder
 
-        static member Get() : StringBuilder = 
+        static member Get() : StringBuilder =
             let ms = StringBuilderCache.instance;
-            
+
             if ms <> null && DefaultCapacity <= ms.Capacity then
                 StringBuilderCache.instance <- null;
                 ms.Clear()
             else
                 new StringBuilder(DefaultCapacity)
 
-        static member Release(ms:StringBuilder) : unit = 
+        static member Release(ms:StringBuilder) : unit =
             if ms.Capacity <= MaxBuilderSize then
                 StringBuilderCache.instance <- ms
 
@@ -202,15 +202,15 @@ type HttpContext with
 
         /// renders html document to cached string builder instance
         /// and converts it to the utf8 byte array
-        let inline render (htmlView: XmlNode): byte[] = 
+        let inline render (htmlView: XmlNode): byte[] =
             let sb = Caching.StringBuilderCache.Get()
-            renderHtmlDocument' sb htmlView |> ignore
+            buildHtmlDocument sb htmlView |> ignore
             let chars = ArrayPool<char>.Shared.Rent(sb.Length)
             sb.CopyTo(0, chars, 0, sb.Length)
             let result = Encoding.UTF8.GetBytes(chars, 0, sb.Length)
             Caching.StringBuilderCache.Release sb
             ArrayPool<char>.Shared.Return chars
-            result 
+            result
 
         this.SetContentType "text/html"
         this.WriteBytesAsync <| render htmlView
