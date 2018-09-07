@@ -2,7 +2,6 @@ module Giraffe.Tests.GiraffeViewEngineTests
 
 open Xunit
 open Giraffe.GiraffeViewEngine
-open System.Text
 
 [<Fact>]
 let ``Single html root should compile`` () =
@@ -34,9 +33,9 @@ let ``Nested content should render correctly`` () =
             comment "this is a test"
             h1 [] [ encodedText "Header" ]
             p [] [
-                EncodedText "Lorem "
+                rawText "Lorem "
                 strong [] [ encodedText "Ipsum" ]
-                RawText " dollar"
+                encodedText " dollar"
         ] ]
     let html =
         nested

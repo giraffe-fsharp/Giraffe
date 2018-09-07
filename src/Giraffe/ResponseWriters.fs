@@ -4,42 +4,12 @@ module Giraffe.ResponseWriters
 open System
 open System.IO
 open System.Text
+open System.Buffers
 open Microsoft.AspNetCore.Http
 open Microsoft.Net.Http.Headers
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe.GiraffeViewEngine
-open System.Buffers
-open Giraffe.Serialization.Cache
-
-// ---------------------------
-// Internal implementation of string builder caching
-// ---------------------------
-
-module private Caching =
-
-    let DefaultCapacity = 8 * 1024
-    let MaxBuilderSize = DefaultCapacity * 8
-
-    /// Holds an instance of StringBuilder of maximum capacity per thread.
-    /// For `StringBuilder` of larger than `MaxBuilderSize` will behave as `new StringBuilder()` constructor call
-    type StringBuilderCache =
-
-        [<ThreadStatic>]
-        [<DefaultValue>]
-        static val mutable private instance: StringBuilder
-
-        static member Get() : StringBuilder =
-            let ms = StringBuilderCache.instance;
-
-            if ms <> null && DefaultCapacity <= ms.Capacity then
-                StringBuilderCache.instance <- null;
-                ms.Clear()
-            else
-                new StringBuilder(DefaultCapacity)
-
-        static member Release(ms:StringBuilder) : unit =
-            if ms.Capacity <= MaxBuilderSize then
-                StringBuilderCache.instance <- ms
+open Giraffe.StringBuilders
 
 // ---------------------------
 // HttpContext extensions
@@ -200,23 +170,17 @@ type HttpContext with
     /// Task of `Some HttpContext` after writing to the body of the response.
     ///
     member this.WriteHtmlViewAsync (htmlView : XmlNode) =
-
-        let stringBuilderCache = this.GetService<IStringBuilderCache>()
-
-        /// renders html document to cached string builder instance
-        /// and converts it to the utf8 byte array
-        let inline render (htmlView: XmlNode): byte[] =
-            let sb = Caching.StringBuilderCache.Get()
+        let bytes =
+            use sbProvider = this.GetService<IStringBuilderProvider>()
+            let sb = sbProvider.Get()
             buildHtmlDocument sb htmlView |> ignore
             let chars = ArrayPool<char>.Shared.Rent(sb.Length)
             sb.CopyTo(0, chars, 0, sb.Length)
             let result = Encoding.UTF8.GetBytes(chars, 0, sb.Length)
-            stringBuilderCache.Release sb
             ArrayPool<char>.Shared.Return chars
             result
-
         this.SetContentType "text/html"
-        this.WriteBytesAsync <| render htmlView
+        this.WriteBytesAsync bytes
 
 // ---------------------------
 // HttpHandler functions

@@ -495,7 +495,7 @@ module Accessibility =
     let _ariaValueText        = attr "aria-valuetext"
 
 // ---------------------------
-// Render to StringBuilder
+// Build HTML/XML views
 // ---------------------------
 
 let inline private (+=) (sb : StringBuilder) (text : string) = sb.Append(text)
@@ -530,18 +530,18 @@ let rec private buildNode (isHtml : bool) (sb : StringBuilder) (node : XmlNode) 
     | ParentNode (e, nodes) -> do buildParentNode e nodes
     | VoidElement e         -> do buildElement (selfClosingBracket isHtml) e
 
-let private buildXmlNode  = buildNode false
-let private buildHtmlNode = buildNode true
+let buildXmlNode  = buildNode false
+let buildHtmlNode = buildNode true
 
-let private buildXmlNodes  sb (nodes : XmlNode list) = for n in nodes do buildXmlNode sb n
-let private buildHtmlNodes sb (nodes : XmlNode list) = for n in nodes do buildHtmlNode sb n
+let buildXmlNodes  sb (nodes : XmlNode list) = for n in nodes do buildXmlNode sb n
+let buildHtmlNodes sb (nodes : XmlNode list) = for n in nodes do buildHtmlNode sb n
 
 let buildHtmlDocument sb (document : XmlNode) =
     sb += "<!DOCTYPE html>" +! Environment.NewLine
     buildHtmlNode sb document
 
 // ---------------------------
-// Render HTML/XML strings
+// Render HTML/XML views
 // ---------------------------
 
 let renderXmlNode (node : XmlNode) : string =

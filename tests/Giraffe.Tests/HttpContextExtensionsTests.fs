@@ -86,7 +86,7 @@ let ``WriteHtmlViewAsync should add html to the context`` () =
                 html [] [
                     head [] []
                     body [] [
-                        h1 [] [ EncodedText "Hello world" ]
+                        h1 [] [ Text "Hello world" ]
                     ]
                 ]
             ctx.WriteHtmlViewAsync(htmlDoc)
