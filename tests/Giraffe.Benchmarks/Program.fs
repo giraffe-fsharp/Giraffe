@@ -3,12 +3,9 @@ open BenchmarkDotNet.Running;
 open Giraffe.GiraffeViewEngine
 open System.Text
 open System.Buffers
-open Giraffe.Serialization.Cache
 
 [<MemoryDiagnoser>]
 type HtmlUtf8Benchmark() =
-
-    let cache = new ThreadStaticStringBuilderCache(1024, 32 * 1024) :> IStringBuilderCache
 
     let doc = 
         div [] [
@@ -48,30 +45,30 @@ type HtmlUtf8Benchmark() =
                                 [ rawText "Search" ] ] ] ] ]
         ]
 
+    let stringBuilder = new StringBuilder(16 * 1024)
+
     [<Benchmark( Baseline = true )>]
-    member this.String() = 
+    member this.Default() = 
         renderHtmlDocument doc |> Encoding.UTF8.GetBytes
 
     [<Benchmark>]
-    member this.Cached() = 
-        let sb = cache.Get()
-        renderHtmlDocument' sb doc
-        sb.ToString() |> Encoding.UTF8.GetBytes |> ignore
-        cache.Release sb
+    member this.CachedStringBuilder() = 
+        ViewBuilder.buildHtmlDocument stringBuilder doc
+        stringBuilder.ToString() |> Encoding.UTF8.GetBytes |> ignore
+        stringBuilder.Clear();
 
     [<Benchmark>]
-    member this.CachedAndPooled() = 
-        let sb = cache.Get()
-        renderHtmlDocument' sb doc
-        let chars = ArrayPool<char>.Shared.Rent(sb.Length)
-        sb.CopyTo(0, chars, 0, sb.Length) 
-        Encoding.UTF8.GetBytes(chars, 0, sb.Length) |> ignore
+    member this.CachedStringBuilderPooledUtf8Array() = 
+        ViewBuilder.buildHtmlDocument stringBuilder doc
+        let chars = ArrayPool<char>.Shared.Rent(stringBuilder.Length)
+        stringBuilder.CopyTo(0, chars, 0, stringBuilder.Length) 
+        Encoding.UTF8.GetBytes(chars, 0, stringBuilder.Length) |> ignore
         ArrayPool<char>.Shared.Return(chars)
-        cache.Release sb
+        stringBuilder.Clear()
+
 
 [<EntryPoint>]
 let main args =
     let asm = typeof<HtmlUtf8Benchmark>.Assembly
     BenchmarkSwitcher.FromAssembly(asm).Run(args) |> ignore
     0
-
