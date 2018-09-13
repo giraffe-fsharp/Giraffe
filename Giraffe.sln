@@ -7,9 +7,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{9E892FBB-74F
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{152E856C-48EA-42A1-A5F4-960819BEC170}"
 EndProject
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Giraffe", "src\Giraffe\Giraffe.fsproj", "{A16935F3-2E48-4D38-B08C-36E5ADE3B199}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Giraffe", "src\Giraffe\Giraffe.fsproj", "{A16935F3-2E48-4D38-B08C-36E5ADE3B199}"
 EndProject
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Giraffe.Tests", "tests\Giraffe.Tests\Giraffe.Tests.fsproj", "{2AF14B8E-56FF-4E54-99DA-C530D573814D}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Giraffe.Tests", "tests\Giraffe.Tests\Giraffe.Tests.fsproj", "{2AF14B8E-56FF-4E54-99DA-C530D573814D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{34A76D42-035A-4CD1-85B2-EC01D9CE3571}"
 EndProject
@@ -45,15 +45,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "IdentityApp", "IdentityApp"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GoogleAuthApp", "GoogleAuthApp", "{53C796EB-20D2-4AF9-AAB9-130150005E21}"
 EndProject
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "GoogleAuthApp", "samples\GoogleAuthApp\GoogleAuthApp\GoogleAuthApp.fsproj", "{FE396475-56EA-48AC-87B8-97EF6A66612F}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "GoogleAuthApp", "samples\GoogleAuthApp\GoogleAuthApp\GoogleAuthApp.fsproj", "{FE396475-56EA-48AC-87B8-97EF6A66612F}"
 EndProject
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "IdentityApp", "samples\IdentityApp\IdentityApp\IdentityApp.fsproj", "{3AAA2ECF-350F-4574-925F-21A909F41F42}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "IdentityApp", "samples\IdentityApp\IdentityApp\IdentityApp.fsproj", "{3AAA2ECF-350F-4574-925F-21A909F41F42}"
 EndProject
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "JwtApp", "samples\JwtApp\JwtApp\JwtApp.fsproj", "{BCD0E9C4-62AB-45B2-8362-A7AD1E4C03A7}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "JwtApp", "samples\JwtApp\JwtApp\JwtApp.fsproj", "{BCD0E9C4-62AB-45B2-8362-A7AD1E4C03A7}"
 EndProject
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "SampleApp", "samples\SampleApp\SampleApp\SampleApp.fsproj", "{61E7381C-C021-4048-A6F3-542E190F0D48}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "SampleApp", "samples\SampleApp\SampleApp\SampleApp.fsproj", "{61E7381C-C021-4048-A6F3-542E190F0D48}"
 EndProject
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "SampleApp.Tests", "samples\SampleApp\SampleApp.Tests\SampleApp.Tests.fsproj", "{A878E197-31F3-4DBB-B8CC-6FBB4A53733E}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "SampleApp.Tests", "samples\SampleApp\SampleApp.Tests\SampleApp.Tests.fsproj", "{A878E197-31F3-4DBB-B8CC-6FBB4A53733E}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Giraffe.Benchmarks", "tests\Giraffe.Benchmarks\Giraffe.Benchmarks.fsproj", "{2188E634-B828-4629-89B9-3680422460F5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,9 +65,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{A16935F3-2E48-4D38-B08C-36E5ADE3B199}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -152,6 +151,21 @@ Global
 		{A878E197-31F3-4DBB-B8CC-6FBB4A53733E}.Release|x64.Build.0 = Release|Any CPU
 		{A878E197-31F3-4DBB-B8CC-6FBB4A53733E}.Release|x86.ActiveCfg = Release|Any CPU
 		{A878E197-31F3-4DBB-B8CC-6FBB4A53733E}.Release|x86.Build.0 = Release|Any CPU
+		{2188E634-B828-4629-89B9-3680422460F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2188E634-B828-4629-89B9-3680422460F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2188E634-B828-4629-89B9-3680422460F5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2188E634-B828-4629-89B9-3680422460F5}.Debug|x64.Build.0 = Debug|Any CPU
+		{2188E634-B828-4629-89B9-3680422460F5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2188E634-B828-4629-89B9-3680422460F5}.Debug|x86.Build.0 = Debug|Any CPU
+		{2188E634-B828-4629-89B9-3680422460F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2188E634-B828-4629-89B9-3680422460F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2188E634-B828-4629-89B9-3680422460F5}.Release|x64.ActiveCfg = Release|Any CPU
+		{2188E634-B828-4629-89B9-3680422460F5}.Release|x64.Build.0 = Release|Any CPU
+		{2188E634-B828-4629-89B9-3680422460F5}.Release|x86.ActiveCfg = Release|Any CPU
+		{2188E634-B828-4629-89B9-3680422460F5}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{A16935F3-2E48-4D38-B08C-36E5ADE3B199} = {9E892FBB-74FD-464B-8939-6E4D9D70D99D}
@@ -165,5 +179,9 @@ Global
 		{BCD0E9C4-62AB-45B2-8362-A7AD1E4C03A7} = {8AC0E934-6177-4D6D-9520-6E0931E527B9}
 		{61E7381C-C021-4048-A6F3-542E190F0D48} = {E3500770-59F9-4526-9FFA-73E725C0008F}
 		{A878E197-31F3-4DBB-B8CC-6FBB4A53733E} = {E3500770-59F9-4526-9FFA-73E725C0008F}
+		{2188E634-B828-4629-89B9-3680422460F5} = {152E856C-48EA-42A1-A5F4-960819BEC170}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {77FFE315-7928-4985-B60D-8009AE1A3805}
 	EndGlobalSection
 EndGlobal

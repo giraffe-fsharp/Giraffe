@@ -310,6 +310,7 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
 [<Fact>]
 let ``GET "/person" returns rendered HTML view`` () =
     let ctx = Substitute.For<HttpContext>()
+
     let personView model =
         html [] [
             head [] [
