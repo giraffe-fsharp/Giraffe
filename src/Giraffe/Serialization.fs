@@ -10,7 +10,7 @@ module Json =
     open System.Threading.Tasks
     open Newtonsoft.Json
     open Newtonsoft.Json.Serialization
-    open FSharp.Control.Tasks.V2.ContextInsensitive
+    open System.Text
 
     /// **Description**
     ///
@@ -18,10 +18,12 @@ module Json =
     ///
     [<AllowNullLiteral>]
     type IJsonSerializer =
-        abstract member Serialize            : obj    -> string
-        abstract member Deserialize<'T>      : string -> 'T
-        abstract member Deserialize<'T>      : Stream -> 'T
-        abstract member DeserializeAsync<'T> : Stream -> Task<'T>
+        abstract member Serialize<'T>           : 'T -> string
+        abstract member SerializeToBytes<'T>    : 'T -> byte[]
+        abstract member SerializeAsync<'T>      : 'T * Stream -> Task
+        abstract member Deserialize<'T>         : string -> 'T
+        abstract member Deserialize<'T>         : Stream -> 'T
+        abstract member DeserializeAsync<'T>    : Stream -> Task<'T>
 
     /// **Description**
     ///
@@ -30,14 +32,30 @@ module Json =
     /// Serializes objects to camel cased JSON code.
     ///
     type NewtonsoftJsonSerializer (settings : JsonSerializerSettings) =
+    
+        let Utf8EncodingWithoutBom = new UTF8Encoding(false)
+        let DefaultBufferSize = 1024
+
         static member DefaultSettings =
             JsonSerializerSettings(
                 ContractResolver = CamelCasePropertyNamesContractResolver())
 
         interface IJsonSerializer with
-            member __.Serialize (o : obj) = JsonConvert.SerializeObject(o, settings)
+            member __.Serialize (o : 'T) = JsonConvert.SerializeObject(o, settings)
 
-            member __.Deserialize<'T> (json : string) = JsonConvert.DeserializeObject<'T>(json, settings)
+            member __.SerializeToBytes (o: 'T) = 
+                let json = JsonConvert.SerializeObject(o, settings)
+                Encoding.UTF8.GetBytes(json)
+
+            member __.SerializeAsync (o: 'T, stream: Stream) = 
+                use sw = new StreamWriter(stream, Utf8EncodingWithoutBom, DefaultBufferSize, true)
+                use jw = new JsonTextWriter(sw)
+                let sr = JsonSerializer.Create settings
+                sr.Serialize(jw, o)
+                Task.CompletedTask
+
+            member __.Deserialize<'T> (json : string) = 
+                JsonConvert.DeserializeObject<'T>(json, settings)
 
             member __.Deserialize<'T> (stream : Stream) =
                 use sr = new StreamReader(stream, true)
@@ -46,12 +64,10 @@ module Json =
                 sr.Deserialize<'T> jr
 
             member __.DeserializeAsync<'T> (stream : Stream) =
-                task {
-                    use sr = new StreamReader(stream, true)
-                    use jr = new JsonTextReader(sr)
-                    let sr = JsonSerializer.Create settings
-                    return sr.Deserialize<'T> jr
-                }
+                use sr = new StreamReader(stream, true)
+                use jr = new JsonTextReader(sr)
+                let sr = JsonSerializer.Create settings
+                Task.FromResult( sr.Deserialize<'T> jr )
 
 // ---------------------------
 // XML
