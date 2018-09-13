@@ -9,6 +9,8 @@ Release Notes
 
 This change should not affect the majority of Giraffe users unless you were constructing your own `XmlNode` elements which were of type `RawText` or `EncodedText`.
 
+- Removed the `task {}` override in Giraffe which was forcing the `FSharp.Control.Tasks.V2.ContextInsensitive` version of the Task CE. This change has no effect on existing Giraffe applications other than that it might require an additional open statement of the aforementioned module in some places, but behaviour wise it will remain exactly the same (even if the context sensitive module gets opened, because there is no difference between context sensitive or insensitive in the context of an ASP.NET Core application).
+
 #### Improvements
 
 - Huge performance gains by changing the underlying way of how views are being composed by the `GriaffeViewEngine`.
