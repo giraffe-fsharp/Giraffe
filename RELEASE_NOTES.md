@@ -1,6 +1,18 @@
 Release Notes
 =============
 
+## 3.0.0
+
+#### Breaking changes
+
+- Changed the type `XmlNode` by removing the `RawText` and `EncodedText` union cases and replaced them by a single `Text` union case. The encoding is being done at an earlier stage now when calling one of the two helper functions `rawText` and `encodedText`.
+
+This change should not affect the majority of Giraffe users unless you were constructing your own `XmlNode` elements which were of type `RawText` or `EncodedText`.
+
+#### Improvements
+
+- Huge performance gains by changing the underlying way of how views are being composed by the `GriaffeViewEngine`.
+
 ## 2.0.1
 
 Changed the `task {}` CE to load from `FSharp.Control.Tasks.V2.ContextInsensitive` instead of `FSharp.Control.Tasks.ContextInsensitive`.

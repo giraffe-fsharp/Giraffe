@@ -498,68 +498,70 @@ module Accessibility =
 // Build HTML/XML views
 // ---------------------------
 
-let inline private (+=) (sb : StringBuilder) (text : string) = sb.Append(text)
-let inline private (+!) (sb : StringBuilder) (text : string) = sb.Append(text) |> ignore
+[<RequireQualifiedAccess>]
+module ViewBuilder =
+    let inline private (+=) (sb : StringBuilder) (text : string) = sb.Append(text)
+    let inline private (+!) (sb : StringBuilder) (text : string) = sb.Append(text) |> ignore
 
-let inline private selfClosingBracket (isHtml : bool) =
-    if isHtml then ">" else " />"
+    let inline private selfClosingBracket (isHtml : bool) =
+        if isHtml then ">" else " />"
 
-let rec private buildNode (isHtml : bool) (sb : StringBuilder) (node : XmlNode) : unit =
+    let rec private buildNode (isHtml : bool) (sb : StringBuilder) (node : XmlNode) : unit =
 
-    let buildElement closingBracket (elemName, attributes : XmlAttribute array) =
-        match attributes with
-        | [||] -> do sb += "<" += elemName +! closingBracket
-        | _    ->
-            do sb += "<" +! elemName
+        let buildElement closingBracket (elemName, attributes : XmlAttribute array) =
+            match attributes with
+            | [||] -> do sb += "<" += elemName +! closingBracket
+            | _    ->
+                do sb += "<" +! elemName
 
-            attributes
-            |> Array.iter (fun attr ->
-                match attr with
-                | KeyValue (k, v) -> do sb += " " += k += "=\"" += v +! "\""
-                | Boolean k       -> do sb += " " +! k)
+                attributes
+                |> Array.iter (fun attr ->
+                    match attr with
+                    | KeyValue (k, v) -> do sb += " " += k += "=\"" += v +! "\""
+                    | Boolean k       -> do sb += " " +! k)
 
-            do sb +! closingBracket
+                do sb +! closingBracket
 
-    let inline buildParentNode (elemName, attributes : XmlAttribute array) (nodes : XmlNode list) =
-        do buildElement ">" (elemName, attributes)
-        for node in nodes do buildNode isHtml sb node
-        do sb += "</" += elemName +! ">"
+        let inline buildParentNode (elemName, attributes : XmlAttribute array) (nodes : XmlNode list) =
+            do buildElement ">" (elemName, attributes)
+            for node in nodes do buildNode isHtml sb node
+            do sb += "</" += elemName +! ">"
 
-    match node with
-    | Text text             -> do sb +! text
-    | ParentNode (e, nodes) -> do buildParentNode e nodes
-    | VoidElement e         -> do buildElement (selfClosingBracket isHtml) e
+        match node with
+        | Text text             -> do sb +! text
+        | ParentNode (e, nodes) -> do buildParentNode e nodes
+        | VoidElement e         -> do buildElement (selfClosingBracket isHtml) e
 
-let buildXmlNode  = buildNode false
-let buildHtmlNode = buildNode true
+    let buildXmlNode  = buildNode false
+    let buildHtmlNode = buildNode true
 
-let buildXmlNodes  sb (nodes : XmlNode list) = for n in nodes do buildXmlNode sb n
-let buildHtmlNodes sb (nodes : XmlNode list) = for n in nodes do buildHtmlNode sb n
+    let buildXmlNodes  sb (nodes : XmlNode list) = for n in nodes do buildXmlNode sb n
+    let buildHtmlNodes sb (nodes : XmlNode list) = for n in nodes do buildHtmlNode sb n
 
-let buildHtmlDocument sb (document : XmlNode) =
-    sb += "<!DOCTYPE html>" +! Environment.NewLine
-    buildHtmlNode sb document
+    let buildHtmlDocument sb (document : XmlNode) =
+        sb += "<!DOCTYPE html>" +! Environment.NewLine
+        buildHtmlNode sb document
 
 // ---------------------------
 // Render HTML/XML views
 // ---------------------------
 
 let renderXmlNode (node : XmlNode) : string =
-    let sb = new StringBuilder() in buildXmlNode sb node
+    let sb = new StringBuilder() in ViewBuilder.buildXmlNode sb node
     sb.ToString()
 
 let renderXmlNodes (nodes : XmlNode list) : string =
-    let sb = new StringBuilder() in buildXmlNodes sb nodes
+    let sb = new StringBuilder() in ViewBuilder.buildXmlNodes sb nodes
     sb.ToString()
 
 let renderHtmlNode (node : XmlNode) : string =
-    let sb = new StringBuilder() in buildHtmlNode sb node
+    let sb = new StringBuilder() in ViewBuilder.buildHtmlNode sb node
     sb.ToString()
 
 let renderHtmlNodes (nodes : XmlNode list) : string =
-    let sb = new StringBuilder() in buildHtmlNodes sb nodes
+    let sb = new StringBuilder() in ViewBuilder.buildHtmlNodes sb nodes
     sb.ToString()
 
 let renderHtmlDocument (document : XmlNode) : string =
-    let sb = new StringBuilder() in buildHtmlDocument sb document
+    let sb = new StringBuilder() in ViewBuilder.buildHtmlDocument sb document
     sb.ToString()

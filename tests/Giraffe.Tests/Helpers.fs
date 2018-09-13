@@ -19,7 +19,6 @@ open NSubstitute
 open Newtonsoft.Json
 open Giraffe
 open Giraffe.Serialization
-open Giraffe.StringBuilders
 
 // ---------------------------------
 // Common functions
@@ -97,12 +96,6 @@ let createHost (configureApp      : 'Tuple -> IApplicationBuilder -> unit)
         .UseContentRoot(Directory.GetCurrentDirectory())
         .Configure(Action<IApplicationBuilder> (configureApp args))
         .ConfigureServices(Action<IServiceCollection> configureServices)
-
-let mockCache (ctx : HttpContext) =
-    ctx.RequestServices
-       .GetService(typeof<IStringBuilderProvider>)
-       .Returns(new DefaultStringBuilderProvider())
-    |> ignore
 
 let mockJson (ctx : HttpContext) (settings : JsonSerializerSettings option) =
     let jsonSettings =

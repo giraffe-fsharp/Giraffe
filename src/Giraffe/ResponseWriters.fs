@@ -9,7 +9,6 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Net.Http.Headers
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe.GiraffeViewEngine
-open Giraffe.StringBuilders
 
 // ---------------------------
 // HttpContext extensions
@@ -170,17 +169,15 @@ type HttpContext with
     /// Task of `Some HttpContext` after writing to the body of the response.
     ///
     member this.WriteHtmlViewAsync (htmlView : XmlNode) =
-        let bytes =
-            use sbProvider = this.GetService<IStringBuilderProvider>()
-            let sb = sbProvider.Get()
-            buildHtmlDocument sb htmlView |> ignore
-            let chars = ArrayPool<char>.Shared.Rent(sb.Length)
-            sb.CopyTo(0, chars, 0, sb.Length)
-            let result = Encoding.UTF8.GetBytes(chars, 0, sb.Length)
-            ArrayPool<char>.Shared.Return chars
-            result
+        let sb = new StringBuilder()
+        ViewBuilder.buildHtmlDocument sb htmlView |> ignore
+        let chars = ArrayPool<char>.Shared.Rent(sb.Length)
+        sb.CopyTo(0, chars, 0, sb.Length)
+        let result = Encoding.UTF8.GetBytes(chars, 0, sb.Length)
+        ArrayPool<char>.Shared.Return chars
+
         this.SetContentType "text/html"
-        this.WriteBytesAsync bytes
+        this.WriteBytesAsync result
 
 // ---------------------------
 // HttpHandler functions

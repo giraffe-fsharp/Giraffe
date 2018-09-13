@@ -10,7 +10,6 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.DependencyInjection.Extensions
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe.Serialization
-open Giraffe.StringBuilders
 
 // ---------------------------
 // Default middleware
@@ -123,7 +122,6 @@ type IServiceCollection with
     /// Returns an `IServiceCollection` builder object.
     ///
     member this.AddGiraffe() =
-        this.TryAddSingleton<IStringBuilderProvider, DefaultStringBuilderProvider>()
         this.TryAddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer(NewtonsoftJsonSerializer.DefaultSettings))
         this.TryAddSingleton<IXmlSerializer>(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
         this.TryAddSingleton<INegotiationConfig, DefaultNegotiationConfig>()
