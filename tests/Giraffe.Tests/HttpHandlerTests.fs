@@ -93,6 +93,85 @@ let ``GET "/json" with custom json settings returns json object`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
+[<Theory>]
+[<InlineData(1)>]
+[<InlineData(2)>]
+[<InlineData(4)>]
+[<InlineData(8)>]
+[<InlineData(16)>]
+[<InlineData(32)>]
+[<InlineData(64)>]
+[<InlineData(128)>]
+[<InlineData(256)>]
+[<InlineData(512)>]
+[<InlineData(1024)>]
+let ``GET "/jsonChunked" returns json object`` (size: int) =
+    let ctx = Substitute.For<HttpContext>()
+    mockJson ctx None
+    let app =
+        GET >=> choose [
+            route "/"     >=> text "Hello World"
+            route "/foo"  >=> text "bar"
+            route "/jsonChunked" >=> json ( Array.replicate size { Foo = "john"; Bar = "doe"; Age = 30 } )
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/jsonChunked")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let expected = 
+        let o = "{\"foo\":\"john\",\"bar\":\"doe\",\"age\":30}"
+        let os = Array.replicate size o |> String.concat ","
+        "[" +  os + "]"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Theory>]
+[<InlineData(1)>]
+[<InlineData(2)>]
+[<InlineData(4)>]
+[<InlineData(8)>]
+[<InlineData(16)>]
+[<InlineData(32)>]
+[<InlineData(64)>]
+[<InlineData(128)>]
+[<InlineData(256)>]
+[<InlineData(512)>]
+[<InlineData(1024)>]
+let ``GET "/jsonChunked" with custom json settings returns json object`` (size: int) =
+    let settings = Newtonsoft.Json.JsonSerializerSettings()
+    let ctx = Substitute.For<HttpContext>()
+    mockJson ctx (Some settings)
+    let app =
+        GET >=> choose [
+            route "/"     >=> text "Hello World"
+            route "/foo"  >=> text "bar"
+            route "/jsonChunked" >=> json ( Array.replicate size { Foo = "john"; Bar = "doe"; Age = 30 } )
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/jsonChunked")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let expected = 
+        let o = "{\"Foo\":\"john\",\"Bar\":\"doe\",\"Age\":30}"
+        let os = Array.replicate size o |> String.concat ","
+        "[" +  os + "]"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
 [<Fact>]
 let ``POST "/post/1" returns "1"`` () =
     let ctx = Substitute.For<HttpContext>()
