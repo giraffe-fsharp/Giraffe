@@ -1,7 +1,6 @@
 [<AutoOpen>]
 module Giraffe.ResponseWriters
 
-open System
 open System.IO
 open System.Text
 open System.Buffers

@@ -153,9 +153,10 @@ let webApp =
 
 Another important aspect of Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core only works with tasks out of the box).
 
-For this purpose Giraffe uses the `task {}` computation expression which comes with the [`TaskBuilder.fs` NuGet package](https://www.nuget.org/packages/TaskBuilder.fs/). Syntactically it works identical to F#'s async workflows:
+For this purpose Giraffe uses the `task {}` computation expression which comes with the [`TaskBuilder.fs` NuGet package](https://www.nuget.org/packages/TaskBuilder.fs/). Syntactically it works identical to F#'s async workflows (after opening the `FSharp.Control.Tasks.V2.ContextInsensitive` module):
 
 ```fsharp
+open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe
 
 let personHandler =
@@ -166,7 +167,7 @@ let personHandler =
         }
 ```
 
-The `task {}` CE is an independent project maintained by [Robert Peele](https://github.com/rspeele) and can be used from any other F# application as well. All you have to do is add a reference to the `TaskBuilder.fs` NuGet library and open the module:
+The `task {}` CE is an independent project maintained by [Robert Peele](https://github.com/rspeele) and can be used from any other F# application as well. All you have to do is add a reference to the `TaskBuilder.fs` NuGet library and open the `FSharp.Control.Tasks.V2` module:
 
 ```fsharp
 open FSharp.Control.Tasks.V2
