@@ -201,6 +201,20 @@ let ``Format string with single "%O" matches "FE9CFE1935D44EDC9A955D38C4D579BD"`
         | Some g -> Assert.Equal(Guid("FE9CFE19-35D4-4EDC-9A95-5D38C4D579BD"), g)
 
 [<Fact>]
+let ``Format string with single "%O" matches "Xy0MVKupFES9NpmZ9TiHcw"`` () =
+    tryMatchInput "%O" "Xy0MVKupFES9NpmZ9TiHcw" false
+    |> function
+        | None   -> assertFail "Format failed to match input."
+        | Some g -> Assert.Equal(Guid("540c2d5f-a9ab-4414-bd36-9999f5388773"), g)
+
+[<Fact>]
+let ``Format string with single "%u" matches "FOwfPLe6waQ"`` () =
+    tryMatchInput "%u" "FOwfPLe6waQ" false
+    |> function
+        | None    -> assertFail "Format failed to match input."
+        | Some id -> Assert.Equal(1507614320903242148UL, id)
+
+[<Fact>]
 let ``Format string with "%s" matches url encoded string`` () =
     tryMatchInput "/encode/%s" "/encode/a%2fb%2Bc.d%2Ce" false
     |> function

@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Compile Include="Helpers.fs" />
+    <Compile Include="GuidAndIdTests.fs" />
     <Compile Include="FormatExpressionTests.fs" />
     <Compile Include="HttpHandlerTests.fs" />
     <Compile Include="RoutingTests.fs" />
