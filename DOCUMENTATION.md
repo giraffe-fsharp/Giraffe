@@ -153,9 +153,10 @@ let webApp =
 
 Another important aspect of Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core only works with tasks out of the box).
 
-For this purpose Giraffe uses the `task {}` computation expression which comes with the [`TaskBuilder.fs` NuGet package](https://www.nuget.org/packages/TaskBuilder.fs/). Syntactically it works identical to F#'s async workflows:
+For this purpose Giraffe uses the `task {}` computation expression which comes with the [`TaskBuilder.fs` NuGet package](https://www.nuget.org/packages/TaskBuilder.fs/). Syntactically it works identical to F#'s async workflows (after opening the `FSharp.Control.Tasks.V2.ContextInsensitive` module):
 
 ```fsharp
+open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe
 
 let personHandler =
@@ -166,7 +167,7 @@ let personHandler =
         }
 ```
 
-The `task {}` CE is an independent project maintained by [Robert Peele](https://github.com/rspeele) and can be used from any other F# application as well. All you have to do is add a reference to the `TaskBuilder.fs` NuGet library and open the module:
+The `task {}` CE is an independent project maintained by [Robert Peele](https://github.com/rspeele) and can be used from any other F# application as well. All you have to do is add a reference to the `TaskBuilder.fs` NuGet library and open the `FSharp.Control.Tasks.V2` module:
 
 ```fsharp
 open FSharp.Control.Tasks.V2
@@ -1318,7 +1319,7 @@ let webApp =
     ]
 ```
 
-Alternatively you can use the `bindFrom<'T>` http handler (which also accepts an additional parameter of type `CultureInfo option`):
+Alternatively you can use the `bindForm<'T>` http handler (which also accepts an additional parameter of type `CultureInfo option`):
 
 ```fsharp
 [<CLIMutable>]
@@ -2531,9 +2532,9 @@ Please note that if the `permanent` flag is set to `true` then the Giraffe web a
 
 ## Giraffe View Engine
 
-Giraffe has its own functional view engine which can be used to build rich GUIs for web applications. The single biggest and best contrast to other view engines (e.g. Razor, Liquid, etc.) is that the Giraffe View Engine is entirely functional written in normal (and compiled) F# code.
+Giraffe has its own functional view engine which can be used to build rich UIs for web applications. The single biggest and best contrast to other view engines (e.g. Razor, Liquid, etc.) is that the Giraffe View Engine is entirely functional written in normal (and compiled) F# code.
 
-This means that the Giraffe View Engine is by definition one of the most feature rich view engines, requires no disk IO to load a view and views are automatically compiled at build time.
+This means that the Giraffe View Engine is by definition one of the most feature rich view engines available, requires no disk IO to load a view and views are automatically compiled at build time.
 
 The Giraffe View Engine uses traditional functions and F# record types to generate rich HTML/XML views.
 
@@ -2556,7 +2557,7 @@ let indexView =
     ]
 ```
 
-A HTML element can either be a `ParentNode`, a `VoidElement` or `RawText`/`EncodedText`.
+A HTML element can either be a `ParentNode`, a `VoidElement` or a `Text` element.
 
 For example the `<html>` or `<div>` tags are typical `ParentNode` elements. They can hold an `XmlAttribute list` and a second `XmlElement list` for their child elements:
 
@@ -2614,7 +2615,7 @@ Naturally the most frequent content in any HTML document is pure text:
 </div>
 ```
 
-The Giraffe View Engine lets one create pure text content as either `RawText` or `EncodedText`:
+The Giraffe View Engine lets one create pure text content as a `Text` element. A `Text` element can either be generated via the `rawText` or `encodedText` functions:
 
 ```fsharp
 let someHtml =
@@ -2624,7 +2625,7 @@ let someHtml =
     ]
 ```
 
-The `rawText` function will create an object of type `RawText` and the `encodedText` function will output an object of type `EncodedText`. The difference is that the latter will HTML encode the value when rendering the view.
+The `rawText` function will create an object of type `Text` where the content will be rendered in its original form and the `encodedText` function will output a string where the content has been HTML encoded.
 
 In this example the first `p` element will literally output the string as it is (`<div>Hello World</div>`) while the second `p` element will output the value as HTML encoded string `&lt;div&gt;Hello World&lt;/div&gt;`.
 
@@ -2734,6 +2735,44 @@ let output1 = renderHtmlNode someContent
 
 // Void tag will be rendered to valid XML: <foo />
 let output2 = renderXmlNode someContent
+```
+
+Additionally with Giraffe 3.0.0 or higher there is a new module called `ViewBuilder` under the `Giraffe.GiraffeViewEngine` namespace. This module exposes additional view rendering functions which compile a view into a `StringBuilder` object instead of returning a single `string`:
+
+- `ViewBuilder.buildHtmlDocument`
+- `ViewBuilder.buildHtmlNodes`
+- `ViewBuilder.buildHtmlNode`
+- `ViewBuilder.buildXmlNodes`
+- `ViewBuilder.buildXmlNode`
+
+The `ViewBuilder.build[...]` functions can be useful if there is additional string processing required before/after composing a view by the `GiraffeViewEngine` (e.g. embedding HTML snippets in an email template, etc.). These functions also serve as the lower level building blocks of the equivalent `render[...]` functions.
+
+Example usage:
+
+```fsharp
+open System.Text
+open Giraffe.GiraffeViewEngine
+
+let someHtml =
+    div [] [
+        tag "foo" [ attr "bar" "blah" ] [
+            voidTag "otherFoo" [ flag "flag1" ]
+        ]
+    ]
+
+let sb = new StringBuilder()
+
+// Perform actions on the `sb` object...
+sb.AppendLine "This is a HTML snippet inside a markdown string:"
+  .AppendLine ""
+  .AppendLine "```html" |> ignore
+
+let sb' = ViewBuilder.buildHtmlNode sb someHtml
+
+// Perform more actions on the `sb` object...
+sb'.AppendLine "```" |> ignore
+
+let markdownOutput = sb'.ToString()
 ```
 
 ### Common View Engine Features

@@ -33,9 +33,9 @@ let ``Nested content should render correctly`` () =
             comment "this is a test"
             h1 [] [ encodedText "Header" ]
             p [] [
-                EncodedText "Lorem "
+                rawText "Lorem "
                 strong [] [ encodedText "Ipsum" ]
-                RawText " dollar"
+                encodedText " dollar"
         ] ]
     let html =
         nested

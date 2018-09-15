@@ -17,6 +17,7 @@ module Giraffe.GiraffeViewEngine
 
 open System
 open System.Net
+open System.Text
 
 // ---------------------------
 // Definition of different HTML content
@@ -35,14 +36,19 @@ type XmlElement   = string * XmlAttribute[]    // Name * XML attributes
 type XmlNode =
     | ParentNode  of XmlElement * XmlNode list // An XML element which contains nested XML elements
     | VoidElement of XmlElement                // An XML element which cannot contain nested XML (e.g. <hr /> or <br />)
-    | EncodedText of string                    // XML encoded text content
-    | RawText     of string                    // Raw text content
+    | Text        of string                    // Text content
+
+// ---------------------------
+// Helper functions
+// ---------------------------
+
+let inline private encode v = WebUtility.HtmlEncode v
 
 // ---------------------------
 // Building blocks
 // ---------------------------
 
-let attr (key : string) (value : string) = KeyValue (key, value)
+let attr (key : string) (value : string) = KeyValue (key, encode value)
 let flag (key : string) = Boolean key
 
 let tag (tagName    : string)
@@ -54,8 +60,8 @@ let voidTag (tagName    : string)
             (attributes : XmlAttribute list) =
     VoidElement (tagName, Array.ofList attributes)
 
-let encodedText (content : string) = EncodedText content
-let rawText     (content : string) = RawText content
+let encodedText (content : string) = Text (encode content)
+let rawText     (content : string) = Text content
 let emptyText                      = rawText ""
 let comment     (content : string) = rawText (sprintf "<!-- %s -->" content)
 
@@ -365,7 +371,7 @@ module Attributes =
 
 /// Attributes to support WAI-ARIA accessibility guidelines
 module Accessibility =
-    
+
     // Valid role attributes
     // (obtained from https://www.w3.org/TR/wai-aria/#role_definitions)
     let _roleAlert            = attr "role" "alert"
@@ -436,7 +442,7 @@ module Accessibility =
     let _roleTree             = attr "role" "tree"
     let _roleTreeGrid         = attr "role" "treegrid"
     let _roleTreeItem         = attr "role" "treeitem"
-    
+
     // Valid aria attributes
     // (obtained from https://www.w3.org/TR/wai-aria/#state_prop_def)
     let _ariaActiveDescendant = attr "aria-activedescendant"
@@ -488,61 +494,74 @@ module Accessibility =
     let _ariaValueNow         = attr "aria-valuenow"
     let _ariaValueText        = attr "aria-valuetext"
 
+// ---------------------------
+// Build HTML/XML views
+// ---------------------------
+
+[<RequireQualifiedAccess>]
+module ViewBuilder =
+    let inline private (+=) (sb : StringBuilder) (text : string) = sb.Append(text)
+    let inline private (+!) (sb : StringBuilder) (text : string) = sb.Append(text) |> ignore
+
+    let inline private selfClosingBracket (isHtml : bool) =
+        if isHtml then ">" else " />"
+
+    let rec private buildNode (isHtml : bool) (sb : StringBuilder) (node : XmlNode) : unit =
+
+        let buildElement closingBracket (elemName, attributes : XmlAttribute array) =
+            match attributes with
+            | [||] -> do sb += "<" += elemName +! closingBracket
+            | _    ->
+                do sb += "<" +! elemName
+
+                attributes
+                |> Array.iter (fun attr ->
+                    match attr with
+                    | KeyValue (k, v) -> do sb += " " += k += "=\"" += v +! "\""
+                    | Boolean k       -> do sb += " " +! k)
+
+                do sb +! closingBracket
+
+        let inline buildParentNode (elemName, attributes : XmlAttribute array) (nodes : XmlNode list) =
+            do buildElement ">" (elemName, attributes)
+            for node in nodes do buildNode isHtml sb node
+            do sb += "</" += elemName +! ">"
+
+        match node with
+        | Text text             -> do sb +! text
+        | ParentNode (e, nodes) -> do buildParentNode e nodes
+        | VoidElement e         -> do buildElement (selfClosingBracket isHtml) e
+
+    let buildXmlNode  = buildNode false
+    let buildHtmlNode = buildNode true
+
+    let buildXmlNodes  sb (nodes : XmlNode list) = for n in nodes do buildXmlNode sb n
+    let buildHtmlNodes sb (nodes : XmlNode list) = for n in nodes do buildHtmlNode sb n
+
+    let buildHtmlDocument sb (document : XmlNode) =
+        sb += "<!DOCTYPE html>" +! Environment.NewLine
+        buildHtmlNode sb document
 
 // ---------------------------
-// Render XML string
+// Render HTML/XML views
 // ---------------------------
 
-let rec private nodeToString (htmlStyle : bool) (node : XmlNode) =
-    let startElementToString selfClosing (elemName, attributes : XmlAttribute array) =
-        let closingBracket =
-            match selfClosing with
-            | false -> ">"
-            | true ->
-                match htmlStyle with
-                | false -> " />"
-                | true  -> ">"
-        match attributes with
-        | [||] -> sprintf "<%s%s" elemName closingBracket
-        | _    ->
-            attributes
-            |> Array.map (fun attr ->
-                match attr with
-                | KeyValue (k, v) -> sprintf " %s=\"%s\"" k (WebUtility.HtmlEncode v)
-                | Boolean k       -> sprintf " %s" k)
-            |> String.Concat
-            |> sprintf "<%s%s%s" elemName
-            <| closingBracket
+let renderXmlNode (node : XmlNode) : string =
+    let sb = new StringBuilder() in ViewBuilder.buildXmlNode sb node
+    sb.ToString()
 
-    let endElementToString (elemName, _) = sprintf "</%s>" elemName
+let renderXmlNodes (nodes : XmlNode list) : string =
+    let sb = new StringBuilder() in ViewBuilder.buildXmlNodes sb nodes
+    sb.ToString()
 
-    let parentNodeToString (elem : XmlElement, nodes : XmlNode list) =
-        let innerContent = nodes |> List.map (nodeToString htmlStyle) |> String.Concat
-        let startTag     = elem  |> startElementToString false
-        let endTag       = elem  |> endElementToString
-        sprintf "%s%s%s" startTag innerContent endTag
+let renderHtmlNode (node : XmlNode) : string =
+    let sb = new StringBuilder() in ViewBuilder.buildHtmlNode sb node
+    sb.ToString()
 
-    match node with
-    | EncodedText text      -> WebUtility.HtmlEncode text
-    | RawText text          -> text
-    | ParentNode (e, nodes) -> parentNodeToString (e, nodes)
-    | VoidElement e         -> startElementToString true e
+let renderHtmlNodes (nodes : XmlNode list) : string =
+    let sb = new StringBuilder() in ViewBuilder.buildHtmlNodes sb nodes
+    sb.ToString()
 
-let renderXmlNode = nodeToString false
-
-let renderXmlNodes (nodes : XmlNode list) =
-    nodes
-    |> List.map renderXmlNode
-    |> String.Concat
-
-let renderHtmlNode = nodeToString true
-
-let renderHtmlNodes (nodes : XmlNode list) =
-    nodes
-    |> List.map renderHtmlNode
-    |> String.Concat
-
-let renderHtmlDocument (document : XmlNode) =
-    document
-    |> renderHtmlNode
-    |> sprintf "<!DOCTYPE html>%s%s" Environment.NewLine
+let renderHtmlDocument (document : XmlNode) : string =
+    let sb = new StringBuilder() in ViewBuilder.buildHtmlDocument sb document
+    sb.ToString()

@@ -1,7 +1,6 @@
 module Giraffe.FormatExpressions
 
 open System
-open System.Net
 open System.Text.RegularExpressions
 open FSharp.Core
 open Microsoft.FSharp.Reflection
