@@ -45,6 +45,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [JSON](#json)
     - [XML](#xml)
 - [Miscellaneous](#miscellaneous)
+    - [Short GUIDs and Short IDs](#short-guids-and-short-ids)
     - [Common Helper Functions](#common-helper-functions)
     - [Computation Expressions](#computation-expressions)
 - [Additional Features](#additional-features)
@@ -153,9 +154,10 @@ let webApp =
 
 Another important aspect of Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core only works with tasks out of the box).
 
-For this purpose Giraffe uses the `task {}` computation expression which comes with the [`TaskBuilder.fs` NuGet package](https://www.nuget.org/packages/TaskBuilder.fs/). Syntactically it works identical to F#'s async workflows:
+For this purpose Giraffe uses the `task {}` computation expression which comes with the [`TaskBuilder.fs` NuGet package](https://www.nuget.org/packages/TaskBuilder.fs/). Syntactically it works identical to F#'s async workflows (after opening the `FSharp.Control.Tasks.V2.ContextInsensitive` module):
 
 ```fsharp
+open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe
 
 let personHandler =
@@ -166,7 +168,7 @@ let personHandler =
         }
 ```
 
-The `task {}` CE is an independent project maintained by [Robert Peele](https://github.com/rspeele) and can be used from any other F# application as well. All you have to do is add a reference to the `TaskBuilder.fs` NuGet library and open the module:
+The `task {}` CE is an independent project maintained by [Robert Peele](https://github.com/rspeele) and can be used from any other F# application as well. All you have to do is add a reference to the `TaskBuilder.fs` NuGet library and open the `FSharp.Control.Tasks.V2` module:
 
 ```fsharp
 open FSharp.Control.Tasks.V2
@@ -895,7 +897,24 @@ The format string supports the following format chars:
 | `%i` | `int` |
 | `%d` | `int64` |
 | `%f` | `float`/`double` |
-| `%O` | `Guid` |
+| `%O` | `Guid` (including short GUIDs*) |
+| `%u` | `uint64` (formatted as a short ID*) |
+
+*) Please note that the `%O` and `%u` format characters also support URL friendly short GUIDs and IDs.
+
+The `%O` format character supports GUIDs in the format of:
+
+- `00000000000000000000000000000000`
+- `00000000-0000-0000-0000-000000000000`
+- `Xy0MVKupFES9NpmZ9TiHcw`
+
+The last string represents an example of a [Short GUID](https://madskristensen.net/blog/A-shorter-and-URL-friendly-GUID) which is a normal GUID shortened into a URL encoded 22 character long string. Routes which use the `%O` format character will be able to automatically resolve a [Short GUID](https://madskristensen.net/blog/A-shorter-and-URL-friendly-GUID) as well as a normal GUID into a `System.Guid` argument.
+
+The `%u` format character can only resolve an 11 character long [Short ID](https://webapps.stackexchange.com/questions/54443/format-for-id-of-youtube-video) (aka YouTube ID) into a `uint64` value.
+
+Short GUIDs and short IDs are popular choices to make URLs shorter and friendlier whilst still mapping to a unique `System.Guid` or `uint64` value on the server side.
+
+[Short GUIDs and IDs can also be resolved from query string parameters](#short-guids-and-short-ids) by making use of the `ShortGuid` and `ShortId` helper modules.
 
 #### routeCif
 
@@ -910,6 +929,8 @@ let webApp =
         RequestErrors.NOT_FOUND "Not Found"
     ]
 ```
+
+Please be aware that a case insensitive URL matching will return unexpected results in combination with case sensitive arguments such as short GUIDs and short IDs.
 
 #### routeBind
 
@@ -1318,7 +1339,7 @@ let webApp =
     ]
 ```
 
-Alternatively you can use the `bindFrom<'T>` http handler (which also accepts an additional parameter of type `CultureInfo option`):
+Alternatively you can use the `bindForm<'T>` http handler (which also accepts an additional parameter of type `CultureInfo option`):
 
 ```fsharp
 [<CLIMutable>]
@@ -2531,9 +2552,9 @@ Please note that if the `permanent` flag is set to `true` then the Giraffe web a
 
 ## Giraffe View Engine
 
-Giraffe has its own functional view engine which can be used to build rich GUIs for web applications. The single biggest and best contrast to other view engines (e.g. Razor, Liquid, etc.) is that the Giraffe View Engine is entirely functional written in normal (and compiled) F# code.
+Giraffe has its own functional view engine which can be used to build rich UIs for web applications. The single biggest and best contrast to other view engines (e.g. Razor, Liquid, etc.) is that the Giraffe View Engine is entirely functional written in normal (and compiled) F# code.
 
-This means that the Giraffe View Engine is by definition one of the most feature rich view engines, requires no disk IO to load a view and views are automatically compiled at build time.
+This means that the Giraffe View Engine is by definition one of the most feature rich view engines available, requires no disk IO to load a view and views are automatically compiled at build time.
 
 The Giraffe View Engine uses traditional functions and F# record types to generate rich HTML/XML views.
 
@@ -2556,7 +2577,7 @@ let indexView =
     ]
 ```
 
-A HTML element can either be a `ParentNode`, a `VoidElement` or `RawText`/`EncodedText`.
+A HTML element can either be a `ParentNode`, a `VoidElement` or a `Text` element.
 
 For example the `<html>` or `<div>` tags are typical `ParentNode` elements. They can hold an `XmlAttribute list` and a second `XmlElement list` for their child elements:
 
@@ -2614,7 +2635,7 @@ Naturally the most frequent content in any HTML document is pure text:
 </div>
 ```
 
-The Giraffe View Engine lets one create pure text content as either `RawText` or `EncodedText`:
+The Giraffe View Engine lets one create pure text content as a `Text` element. A `Text` element can either be generated via the `rawText` or `encodedText` functions:
 
 ```fsharp
 let someHtml =
@@ -2624,7 +2645,7 @@ let someHtml =
     ]
 ```
 
-The `rawText` function will create an object of type `RawText` and the `encodedText` function will output an object of type `EncodedText`. The difference is that the latter will HTML encode the value when rendering the view.
+The `rawText` function will create an object of type `Text` where the content will be rendered in its original form and the `encodedText` function will output a string where the content has been HTML encoded.
 
 In this example the first `p` element will literally output the string as it is (`<div>Hello World</div>`) while the second `p` element will output the value as HTML encoded string `&lt;div&gt;Hello World&lt;/div&gt;`.
 
@@ -2734,6 +2755,44 @@ let output1 = renderHtmlNode someContent
 
 // Void tag will be rendered to valid XML: <foo />
 let output2 = renderXmlNode someContent
+```
+
+Additionally with Giraffe 3.0.0 or higher there is a new module called `ViewBuilder` under the `Giraffe.GiraffeViewEngine` namespace. This module exposes additional view rendering functions which compile a view into a `StringBuilder` object instead of returning a single `string`:
+
+- `ViewBuilder.buildHtmlDocument`
+- `ViewBuilder.buildHtmlNodes`
+- `ViewBuilder.buildHtmlNode`
+- `ViewBuilder.buildXmlNodes`
+- `ViewBuilder.buildXmlNode`
+
+The `ViewBuilder.build[...]` functions can be useful if there is additional string processing required before/after composing a view by the `GiraffeViewEngine` (e.g. embedding HTML snippets in an email template, etc.). These functions also serve as the lower level building blocks of the equivalent `render[...]` functions.
+
+Example usage:
+
+```fsharp
+open System.Text
+open Giraffe.GiraffeViewEngine
+
+let someHtml =
+    div [] [
+        tag "foo" [ attr "bar" "blah" ] [
+            voidTag "otherFoo" [ flag "flag1" ]
+        ]
+    ]
+
+let sb = new StringBuilder()
+
+// Perform actions on the `sb` object...
+sb.AppendLine "This is a HTML snippet inside a markdown string:"
+  .AppendLine ""
+  .AppendLine "```html" |> ignore
+
+let sb' = ViewBuilder.buildHtmlNode sb someHtml
+
+// Perform more actions on the `sb` object...
+sb'.AppendLine "```" |> ignore
+
+let markdownOutput = sb'.ToString()
 ```
 
 ### Common View Engine Features
@@ -3042,6 +3101,48 @@ let customHandler (dataObj : obj) : HttpHandler =
 ## Miscellaneous
 
 On top of default HTTP related functions such as `HttpContext` extension methods and `HttpHandler` functions Giraffe also provides a few other helper functions which are commonly required in Giraffe web applications.
+
+### Short GUIDs and Short IDs
+
+The `ShortGuid` and `ShortId` modules offer helper functions to work with [Short GUIDs](https://madskristensen.net/blog/A-shorter-and-URL-friendly-GUID) and [Short IDs](https://webapps.stackexchange.com/questions/54443/format-for-id-of-youtube-video) inside Giraffe.
+
+#### ShortGuid
+
+The `ShortGuid.fromGuid` function will convert a `System.Guid` into a URL friendly 22 character long `string` value.
+
+The `ShortGuid.toGuid` function will convert a 22 character short GUID `string` into a valid `System.Guid` object. This function can be useful when converting a `string` query parameter into a valid `Guid` argument:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let guid =
+            match ctx.TryGetQueryStringValue "id" with
+            | None           -> Guid.Empty
+            | Some shortGuid -> ShortGuid.toGuid shortGuid
+
+        // Do something with `guid`...
+        // Return a Task<HttpContext option>
+```
+
+#### ShortId
+
+The `ShortId.fromUInt64` function will convert an `uint64` into a URL friendly 11 character long `string` value.
+
+The `ShortId.toUInt64` function will convert a 11 character short ID `string` into a `uint64` value. This function can be useful when converting a `string` query parameter into a valid `uint64` argument:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let id =
+            match ctx.TryGetQueryStringValue "id" with
+            | None         -> 0UL
+            | Some shortId -> ShortId.toUInt64 shortId
+
+        // Do something with `id`...
+        // Return a Task<HttpContext option>
+```
+
+Short GUIDs and short IDs can also be [automatically resolved from route arguments](#routef).
 
 ### Common Helper Functions
 
