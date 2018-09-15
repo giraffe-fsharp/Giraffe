@@ -61,10 +61,16 @@ For more information about the Giraffe template please visit the official [giraf
 
 ### Doing it manually
 
-Install the [Giraffe](https://www.nuget.org/packages/Giraffe) NuGet package:
+Install the [Giraffe](https://www.nuget.org/packages/Giraffe) NuGet package*:
 
 ```
 PM> Install-Package Giraffe
+```
+
+*) If you haven't installed the ASP.NET Core NuGet package yet then you'll also need to add a package reference to `Microsoft.AspNetCore.App`:
+
+```
+PM> Install-Package Microsoft.AspNetCore.App
 ```
 
 Create a web application and plug it into the ASP.NET Core middleware:
