@@ -22,8 +22,15 @@ let private formatStringMap =
         // https://github.com/aspnet/Mvc/issues/4599
         str.Replace("%2F", "/").Replace("%2f", "/")
 
-    let guidFormatStr =
-        "([0-9A-Fa-f]{8}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{12}|[0-9A-Fa-f]{32})"
+    let parseGuid (str : string) =
+        match str.Length with
+        | 22 -> ShortGuid.toGuid str
+        | _  -> Guid str
+
+    let guidPattern =
+        "([0-9A-Fa-f]{8}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{12}|[0-9A-Fa-f]{32}|[-_0-9A-Za-z]{22})"
+
+    let shortIdPattern = "([-_0-9A-Za-z]{10}[048AEIMQUYcgkosw])"
 
     dict [
     // Char    Regex                    Parser
@@ -34,7 +41,8 @@ let private formatStringMap =
         'i', ("(-?\d+)",                int32                >> box)  // int
         'd', ("(-?\d+)",                int64                >> box)  // int64
         'f', ("(-?\d+\.{1}\d+)",        float                >> box)  // float
-        'O', (guidFormatStr,            Guid                 >> box)  // Guid
+        'O', (guidPattern,              parseGuid            >> box)  // Guid
+        'u', (shortIdPattern,           ShortId.toUInt64     >> box)  // uint64
     ]
 
 let private convertToRegexPatternAndFormatChars (formatString : string) =
@@ -141,6 +149,7 @@ let validateFormat (format : PrintfFormat<_,_,_,_, 'T>) =
         'd' , typeof<int64>          // int64
         'f' , typeof<float>          // float
         'O' , typeof<System.Guid>    // guid
+        'u' , typeof<uint64>    // guid
     ]
 
     let tuplePrint pos last name =

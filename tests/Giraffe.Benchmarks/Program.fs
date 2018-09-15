@@ -7,7 +7,7 @@ open System.Buffers
 [<MemoryDiagnoser>]
 type HtmlUtf8Benchmark() =
 
-    let doc = 
+    let doc =
         div [] [
             div [ _class "top-bar" ]
                 [ div [ _class "top-bar-left" ]
@@ -48,20 +48,20 @@ type HtmlUtf8Benchmark() =
     let stringBuilder = new StringBuilder(16 * 1024)
 
     [<Benchmark( Baseline = true )>]
-    member this.Default() = 
+    member this.Default() =
         renderHtmlDocument doc |> Encoding.UTF8.GetBytes
 
     [<Benchmark>]
-    member this.CachedStringBuilder() = 
+    member this.CachedStringBuilder() =
         ViewBuilder.buildHtmlDocument stringBuilder doc
         stringBuilder.ToString() |> Encoding.UTF8.GetBytes |> ignore
         stringBuilder.Clear();
 
     [<Benchmark>]
-    member this.CachedStringBuilderPooledUtf8Array() = 
+    member this.CachedStringBuilderPooledUtf8Array() =
         ViewBuilder.buildHtmlDocument stringBuilder doc
         let chars = ArrayPool<char>.Shared.Rent(stringBuilder.Length)
-        stringBuilder.CopyTo(0, chars, 0, stringBuilder.Length) 
+        stringBuilder.CopyTo(0, chars, 0, stringBuilder.Length)
         Encoding.UTF8.GetBytes(chars, 0, stringBuilder.Length) |> ignore
         ArrayPool<char>.Shared.Return(chars)
         stringBuilder.Clear()

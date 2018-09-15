@@ -13,7 +13,11 @@ This change should not affect the majority of Giraffe users unless you were cons
 
 #### Improvements
 
-- Huge performance gains by changing the underlying way of how views are being composed by the `GriaffeViewEngine`.
+- Significant performance gains by changing the underlying way of how views are being composed by the `GriaffeViewEngine`.
+
+#### New featurs
+
+- Support for short GUIDs and short IDs (aka YouTube IDs) [in route arguments](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#routef) and [query string parameters](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#short-guids-and-short-ids).
 
 ## 2.0.1
 

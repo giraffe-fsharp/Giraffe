@@ -45,6 +45,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [JSON](#json)
     - [XML](#xml)
 - [Miscellaneous](#miscellaneous)
+    - [Short GUIDs and Short IDs](#short-guids-and-short-ids)
     - [Common Helper Functions](#common-helper-functions)
     - [Computation Expressions](#computation-expressions)
 - [Additional Features](#additional-features)
@@ -896,7 +897,24 @@ The format string supports the following format chars:
 | `%i` | `int` |
 | `%d` | `int64` |
 | `%f` | `float`/`double` |
-| `%O` | `Guid` |
+| `%O` | `Guid` (including short GUIDs*) |
+| `%u` | `uint64` (formatted as a short ID*) |
+
+*) Please note that the `%O` and `%u` format characters also support URL friendly short GUIDs and IDs.
+
+The `%O` format character supports GUIDs in the format of:
+
+- `00000000000000000000000000000000`
+- `00000000-0000-0000-0000-000000000000`
+- `Xy0MVKupFES9NpmZ9TiHcw`
+
+The last string represents an example of a [Short GUID](https://madskristensen.net/blog/A-shorter-and-URL-friendly-GUID) which is a normal GUID shortened into a URL encoded 22 character long string. Routes which use the `%O` format character will be able to automatically resolve a [Short GUID](https://madskristensen.net/blog/A-shorter-and-URL-friendly-GUID) as well as a normal GUID into a `System.Guid` argument.
+
+The `%u` format character can only resolve an 11 character long [Short ID](https://webapps.stackexchange.com/questions/54443/format-for-id-of-youtube-video) (aka YouTube ID) into a `uint64` value.
+
+Short GUIDs and short IDs are popular choices to make URLs shorter and friendlier whilst still mapping to a unique `System.Guid` or `uint64` value on the server side.
+
+[Short GUIDs and IDs can also be resolved from query string parameters](#short-guids-and-short-ids) by making use of the `ShortGuid` and `ShortId` helper modules.
 
 #### routeCif
 
@@ -911,6 +929,8 @@ let webApp =
         RequestErrors.NOT_FOUND "Not Found"
     ]
 ```
+
+Please be aware that a case insensitive URL matching will return unexpected results in combination with case sensitive arguments such as short GUIDs and short IDs.
 
 #### routeBind
 
@@ -3081,6 +3101,48 @@ let customHandler (dataObj : obj) : HttpHandler =
 ## Miscellaneous
 
 On top of default HTTP related functions such as `HttpContext` extension methods and `HttpHandler` functions Giraffe also provides a few other helper functions which are commonly required in Giraffe web applications.
+
+### Short GUIDs and Short IDs
+
+The `ShortGuid` and `ShortId` modules offer helper functions to work with [Short GUIDs](https://madskristensen.net/blog/A-shorter-and-URL-friendly-GUID) and [Short IDs](https://webapps.stackexchange.com/questions/54443/format-for-id-of-youtube-video) inside Giraffe.
+
+#### ShortGuid
+
+The `ShortGuid.fromGuid` function will convert a `System.Guid` into a URL friendly 22 character long `string` value.
+
+The `ShortGuid.toGuid` function will convert a 22 character short GUID `string` into a valid `System.Guid` object. This function can be useful when converting a `string` query parameter into a valid `Guid` argument:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let guid =
+            match ctx.TryGetQueryStringValue "id" with
+            | None           -> Guid.Empty
+            | Some shortGuid -> ShortGuid.toGuid shortGuid
+
+        // Do something with `guid`...
+        // Return a Task<HttpContext option>
+```
+
+#### ShortId
+
+The `ShortId.fromUInt64` function will convert an `uint64` into a URL friendly 11 character long `string` value.
+
+The `ShortId.toUInt64` function will convert a 11 character short ID `string` into a `uint64` value. This function can be useful when converting a `string` query parameter into a valid `uint64` argument:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let id =
+            match ctx.TryGetQueryStringValue "id" with
+            | None         -> 0UL
+            | Some shortId -> ShortId.toUInt64 shortId
+
+        // Do something with `id`...
+        // Return a Task<HttpContext option>
+```
+
+Short GUIDs and short IDs can also be [automatically resolved from route arguments](#routef).
 
 ### Common Helper Functions
 
