@@ -73,9 +73,20 @@ PM> Install-Package Giraffe
 PM> Install-Package Microsoft.AspNetCore.App
 ```
 
-Create a web application and plug it into the ASP.NET Core middleware:
+Alternatively you can also use the .NET CLI to add the packages:
+
+```
+dotnet add [PROJECT] package Microsoft.AspNetCore.App --package-directory [PACKAGE_CIRECTORY]
+dotnet add [PROJECT] package Giraffe --package-directory [PACKAGE_CIRECTORY]
+```
+
+Next create a web application and plug it into the ASP.NET Core middleware:
 
 ```fsharp
+open System
+open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Hosting
+open Microsoft.Extensions.DependencyInjection
 open Giraffe
 
 let webApp =
@@ -107,6 +118,10 @@ let main _ =
 Instead of creating a `Startup` class you can also add Giraffe in a more functional way:
 
 ```fsharp
+open System
+open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Hosting
+open Microsoft.Extensions.DependencyInjection
 open Giraffe
 
 let webApp =
