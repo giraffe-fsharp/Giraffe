@@ -90,7 +90,7 @@ type HttpContext with
     ///
     /// Serializes an object to JSON and writes the output to the body of the HTTP response using chunked transfer encoding.
     ///
-    /// It also sets the HTTP `Content-Type` header to `application/json` and sets the `Content-Length` header accordingly.
+    /// It also sets the HTTP `Content-Type` header to `application/json` and sets the `Transfer-Encoding` header to `chunked`.
     ///
     /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type `IJsonSerializer`.
     ///
@@ -104,6 +104,7 @@ type HttpContext with
     ///
     member this.WriteJsonChunkedAsync<'T> (dataObj : 'T) = task {
         this.SetContentType "application/json"
+        this.SetHttpHeader "Transfer-Encoding" "chunked"
         let serializer = this.GetJsonSerializer()
         do! serializer.SerializeToStreamAsync dataObj this.Response.Body
         return Some this
@@ -277,7 +278,7 @@ let json<'T> (dataObj : 'T) : HttpHandler =
 ///
 /// Serializes an object to JSON and writes the output to the body of the HTTP response using chunked transfer encoding.
 ///
-/// It also sets the HTTP `Content-Type` header to `application/json` and sets the `Content-Length` header accordingly.
+/// It also sets the HTTP `Content-Type` header to `application/json` and sets the `Transfer-Encoding` header to `chunked`.
 ///
 /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type `IJsonSerializer`.
 ///

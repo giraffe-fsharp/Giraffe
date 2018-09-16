@@ -28,6 +28,14 @@ module Json =
         abstract member Deserialize<'T>      : byte[] -> 'T
         abstract member DeserializeAsync<'T> : Stream -> Task<'T>
 
+    /// **Description**
+    ///
+    /// The `Utf8JsonSerializer` is the default `IJsonSerializer` in Giraffe.
+    ///
+    /// It uses `Utf8Json` as the underlying JSON serializer to (de-)serialize
+    /// JSON content. [Utf8Json](https://github.com/neuecc/Utf8Json) is currently
+    /// the fastest JSON serializer for .NET.
+    ///
     type Utf8JsonSerializer (resolver : IJsonFormatterResolver) =
         interface IJsonSerializer with
             member __.SerializeToString (x : 'T) =
@@ -51,7 +59,15 @@ module Json =
 
     /// **Description**
     ///
-    /// Default JSON serializer in Giraffe.
+    /// The previous default JSON serializer in Giraffe.
+    ///
+    /// The `NewtonsoftJsonSerializer` has been replaced by `Utf8JsonSerializer` as
+    /// the default `IJsonSerializer` which has much better performance and supports
+    /// true chunked transfer encoding.
+    ///
+    /// The `NewtonsoftJsonSerializer` remains available as an alternative JSON
+    /// serializer which can be used to override the `Utf8JsonSerializer` for
+    /// backwards compatibility.
     ///
     /// Serializes objects to camel cased JSON code.
     ///
