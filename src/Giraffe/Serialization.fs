@@ -28,26 +28,26 @@ module Json =
         abstract member Deserialize<'T>      : byte[] -> 'T
         abstract member DeserializeAsync<'T> : Stream -> Task<'T>
 
-    type Utf8JsonSerializer () =
+    type Utf8JsonSerializer (resolver : IJsonFormatterResolver) =
         interface IJsonSerializer with
             member __.SerializeToString (x : 'T) =
-                JsonSerializer.ToJsonString x
+                JsonSerializer.ToJsonString (x, resolver)
 
             member __.SerializeToBytes (x : 'T) =
-                JsonSerializer.Serialize x
+                JsonSerializer.Serialize (x, resolver)
 
             member __.SerializeToStreamAsync (x : 'T) (stream : Stream) =
-                JsonSerializer.SerializeAsync(stream, x)
+                JsonSerializer.SerializeAsync(stream, x, resolver)
 
             member __.Deserialize<'T> (json : string) : 'T =
-                Encoding.UTF8.GetBytes json
-                |> JsonSerializer.Deserialize
+                let bytes = Encoding.UTF8.GetBytes json
+                JsonSerializer.Deserialize(bytes, resolver)
 
             member __.Deserialize<'T> (bytes : byte array) : 'T =
-                JsonSerializer.Deserialize bytes
+                JsonSerializer.Deserialize(bytes, resolver)
 
             member __.DeserializeAsync<'T> (stream : Stream) : Task<'T> =
-                JsonSerializer.DeserializeAsync stream
+                JsonSerializer.DeserializeAsync(stream, resolver)
 
     /// **Description**
     ///
