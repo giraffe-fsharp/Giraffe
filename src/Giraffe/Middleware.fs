@@ -122,7 +122,7 @@ type IServiceCollection with
     /// Returns an `IServiceCollection` builder object.
     ///
     member this.AddGiraffe() =
-        this.TryAddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer(NewtonsoftJsonSerializer.DefaultSettings))
+        this.TryAddSingleton<IJsonSerializer, Utf8JsonSerializer>()
         this.TryAddSingleton<IXmlSerializer>(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
         this.TryAddSingleton<INegotiationConfig, DefaultNegotiationConfig>()
         this

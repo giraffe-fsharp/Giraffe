@@ -105,7 +105,7 @@ type HttpContext with
     member this.WriteJsonChunkedAsync<'T> (dataObj : 'T) = task {
         this.SetContentType "application/json"
         let serializer = this.GetJsonSerializer()
-        do! serializer.SerializeAsync (dataObj, this.Response.Body)
+        do! serializer.SerializeToStreamAsync dataObj this.Response.Body
         return Some this
     }
 

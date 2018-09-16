@@ -6,11 +6,13 @@ namespace Giraffe.Serialization
 
 [<AutoOpen>]
 module Json =
+    open System
     open System.IO
+    open System.Text
     open System.Threading.Tasks
     open Newtonsoft.Json
     open Newtonsoft.Json.Serialization
-    open System.Text
+    open Utf8Json
 
     /// **Description**
     ///
@@ -18,12 +20,34 @@ module Json =
     ///
     [<AllowNullLiteral>]
     type IJsonSerializer =
-        abstract member Serialize<'T>           : 'T -> string
-        abstract member SerializeToBytes<'T>    : 'T -> byte[]
-        abstract member SerializeAsync<'T>      : 'T * Stream -> Task
-        abstract member Deserialize<'T>         : string -> 'T
-        abstract member Deserialize<'T>         : Stream -> 'T
-        abstract member DeserializeAsync<'T>    : Stream -> Task<'T>
+        abstract member SerializeToString<'T>      : 'T -> string
+        abstract member SerializeToBytes<'T>       : 'T -> byte array
+        abstract member SerializeToStreamAsync<'T> : 'T -> Stream -> Task
+
+        abstract member Deserialize<'T>      : string -> 'T
+        abstract member Deserialize<'T>      : byte[] -> 'T
+        abstract member DeserializeAsync<'T> : Stream -> Task<'T>
+
+    type Utf8JsonSerializer () =
+        interface IJsonSerializer with
+            member __.SerializeToString (x : 'T) =
+                JsonSerializer.ToJsonString x
+
+            member __.SerializeToBytes (x : 'T) =
+                JsonSerializer.Serialize x
+
+            member __.SerializeToStreamAsync (x : 'T) (stream : Stream) =
+                JsonSerializer.SerializeAsync(stream, x)
+
+            member __.Deserialize<'T> (json : string) : 'T =
+                Encoding.UTF8.GetBytes json
+                |> JsonSerializer.Deserialize
+
+            member __.Deserialize<'T> (bytes : byte array) : 'T =
+                JsonSerializer.Deserialize bytes
+
+            member __.DeserializeAsync<'T> (stream : Stream) : Task<'T> =
+                JsonSerializer.DeserializeAsync stream
 
     /// **Description**
     ///
@@ -32,7 +56,7 @@ module Json =
     /// Serializes objects to camel cased JSON code.
     ///
     type NewtonsoftJsonSerializer (settings : JsonSerializerSettings) =
-    
+
         let Utf8EncodingWithoutBom = new UTF8Encoding(false)
         let DefaultBufferSize = 1024
 
@@ -41,33 +65,32 @@ module Json =
                 ContractResolver = CamelCasePropertyNamesContractResolver())
 
         interface IJsonSerializer with
-            member __.Serialize (o : 'T) = JsonConvert.SerializeObject(o, settings)
+            member __.SerializeToString (x : 'T) =
+                JsonConvert.SerializeObject(x, settings)
 
-            member __.SerializeToBytes (o: 'T) = 
-                let json = JsonConvert.SerializeObject(o, settings)
-                Encoding.UTF8.GetBytes(json)
+            member __.SerializeToBytes (x : 'T) =
+                JsonConvert.SerializeObject(x, settings)
+                |> Encoding.UTF8.GetBytes
 
-            member __.SerializeAsync (o: 'T, stream: Stream) = 
+            member __.SerializeToStreamAsync (x : 'T) (stream : Stream) =
                 use sw = new StreamWriter(stream, Utf8EncodingWithoutBom, DefaultBufferSize, true)
                 use jw = new JsonTextWriter(sw)
                 let sr = JsonSerializer.Create settings
-                sr.Serialize(jw, o)
+                sr.Serialize(jw, x)
                 Task.CompletedTask
 
-            member __.Deserialize<'T> (json : string) = 
+            member __.Deserialize<'T> (json : string) =
                 JsonConvert.DeserializeObject<'T>(json, settings)
 
-            member __.Deserialize<'T> (stream : Stream) =
-                use sr = new StreamReader(stream, true)
-                use jr = new JsonTextReader(sr)
-                let sr = JsonSerializer.Create settings
-                sr.Deserialize<'T> jr
+            member __.Deserialize<'T> (bytes : byte array) =
+                let json = Encoding.UTF8.GetString bytes
+                JsonConvert.DeserializeObject<'T>(json, settings)
 
             member __.DeserializeAsync<'T> (stream : Stream) =
                 use sr = new StreamReader(stream, true)
                 use jr = new JsonTextReader(sr)
                 let sr = JsonSerializer.Create settings
-                Task.FromResult( sr.Deserialize<'T> jr )
+                Task.FromResult(sr.Deserialize<'T> jr)
 
 // ---------------------------
 // XML
