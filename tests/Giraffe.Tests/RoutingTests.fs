@@ -86,10 +86,12 @@ let ``route: GET "/FOO" returns 404 "Not found"`` () =
 // routeCi Tests
 // ---------------------------------
 
+
+
 [<Fact>]
 let ``GET "/JSON" returns "BaR"`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx None
+    mockJson ctx (Newtonsoft None)
     let app =
         GET >=> choose [
             route   "/"       >=> text "Hello World"
@@ -411,7 +413,7 @@ let ``routef: GET "/foo/%u/bar/%u" returns "Id1: ..., Id2: ..."`` () =
 [<Fact>]
 let ``POST "/POsT/1" returns "1"`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx None
+    mockJson ctx (Newtonsoft None)
     let app =
         choose [
             GET >=> choose [
@@ -437,7 +439,7 @@ let ``POST "/POsT/1" returns "1"`` () =
 [<Fact>]
 let ``POST "/POsT/523" returns "523"`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx None
+    mockJson ctx (Newtonsoft None)
     let app =
         choose [
             GET >=> choose [

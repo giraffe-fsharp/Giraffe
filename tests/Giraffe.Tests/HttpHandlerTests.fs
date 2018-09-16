@@ -44,10 +44,11 @@ type Person =
 // Tests
 // ---------------------------------
 
-[<Fact>]
-let ``GET "/json" returns json object`` () =
+[<Theory>]
+[<MemberData("DefaultData", MemberType=typedefof<JsonSerializersData>)>]
+let ``GET "/json" returns json object`` (settings) =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx None
+    mockJson ctx settings
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -68,11 +69,12 @@ let ``GET "/json" returns json object`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-[<Fact>]
-let ``GET "/json" with custom json settings returns json object`` () =
-    let settings = Newtonsoft.Json.JsonSerializerSettings()
+[<Theory>]
+[<MemberData("PreserveCaseData", MemberType=typedefof<JsonSerializersData>)>]
+let ``GET "/json" with custom json settings returns json object`` (settings) =
+
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx (Some settings)
+    mockJson ctx settings
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -93,21 +95,19 @@ let ``GET "/json" with custom json settings returns json object`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
+let DefaultMocksWithSize = 
+    [
+        let ``powers of two`` = [1..10] |> List.map (pown 2)
+        for size in ``powers of two`` do
+        for setting in JsonSerializersData.DefaultSettings do
+            yield size ,setting
+    ] |> toTheoryData2
+
 [<Theory>]
-[<InlineData(1)>]
-[<InlineData(2)>]
-[<InlineData(4)>]
-[<InlineData(8)>]
-[<InlineData(16)>]
-[<InlineData(32)>]
-[<InlineData(64)>]
-[<InlineData(128)>]
-[<InlineData(256)>]
-[<InlineData(512)>]
-[<InlineData(1024)>]
-let ``GET "/jsonChunked" returns json object`` (size: int) =
+[<MemberData("DefaultMocksWithSize")>]
+let ``GET "/jsonChunked" returns json object`` (size: int, settings) =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx None
+    mockJson ctx settings
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -132,22 +132,19 @@ let ``GET "/jsonChunked" returns json object`` (size: int) =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
+let CamelCasedMocksWithSize = 
+    [
+        let ``powers of two`` = [1..10] |> List.map (pown 2)
+        for size in ``powers of two`` do
+        for setting in JsonSerializersData.PreserveCaseSettings do
+            yield size ,setting
+    ] |> toTheoryData2
+
 [<Theory>]
-[<InlineData(1)>]
-[<InlineData(2)>]
-[<InlineData(4)>]
-[<InlineData(8)>]
-[<InlineData(16)>]
-[<InlineData(32)>]
-[<InlineData(64)>]
-[<InlineData(128)>]
-[<InlineData(256)>]
-[<InlineData(512)>]
-[<InlineData(1024)>]
-let ``GET "/jsonChunked" with custom json settings returns json object`` (size: int) =
-    let settings = Newtonsoft.Json.JsonSerializerSettings()
+[<MemberData("CamelCasedMocksWithSize")>]
+let ``GET "/jsonChunked" with custom json settings returns json object`` (size: int, settings) =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx (Some settings)
+    mockJson ctx settings
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -289,7 +286,7 @@ let ``POST "/text" with supported Accept header returns "text"`` () =
 [<Fact>]
 let ``POST "/json" with supported Accept header returns "json"`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx None
+    mockJson ctx ( Newtonsoft None )
     let app =
         choose [
             GET >=> choose [
@@ -439,7 +436,7 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
         }
 
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx None
+    mockJson ctx (Newtonsoft None)
     mockNegotiation ctx
     let app =
         GET >=> choose [
@@ -481,7 +478,7 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
         }
 
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx None
+    mockJson ctx (Newtonsoft None)
     mockNegotiation ctx
     let app =
         GET >=> choose [
@@ -627,7 +624,7 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
         }
 
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx None
+    mockJson ctx (Newtonsoft None)
     mockNegotiation ctx
     let app =
         GET >=> choose [
@@ -860,7 +857,7 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
         }
 
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx None
+    mockJson ctx (Newtonsoft None)
     mockNegotiation ctx
     let app =
         GET >=> choose [

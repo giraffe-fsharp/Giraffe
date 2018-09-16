@@ -37,6 +37,9 @@ module Json =
     /// the fastest JSON serializer for .NET.
     ///
     type Utf8JsonSerializer (resolver : IJsonFormatterResolver) =
+
+        static member DefaultResolver = Utf8Json.Resolvers.StandardResolver.CamelCase
+
         interface IJsonSerializer with
             member __.SerializeToString (x : 'T) =
                 JsonSerializer.ToJsonString (x, resolver)
