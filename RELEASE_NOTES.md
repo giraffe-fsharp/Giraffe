@@ -15,9 +15,10 @@ This change should not affect the majority of Giraffe users unless you were cons
 
 - Significant performance gains by changing the underlying way of how views are being composed by the `GriaffeViewEngine`.
 
-#### New featurs
+#### New features
 
 - Support for short GUIDs and short IDs (aka YouTube IDs) [in route arguments](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#routef) and [query string parameters](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#short-guids-and-short-ids).
+- Enabled [SourceLink](https://github.com/dotnet/sourcelink/) support for Giraffe source code (thanks [Cameron Taggart](https://github.com/ctaggart))! For more information check out [Adding SourceLink to your .NET Core Library](https://carlos.mendible.com/2018/08/25/adding-sourcelink-to-your-net-core-library/).
 
 ## 2.0.1
 

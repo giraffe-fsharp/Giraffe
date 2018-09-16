@@ -61,15 +61,32 @@ For more information about the Giraffe template please visit the official [giraf
 
 ### Doing it manually
 
-Install the [Giraffe](https://www.nuget.org/packages/Giraffe) NuGet package:
+Install the [Giraffe](https://www.nuget.org/packages/Giraffe) NuGet package*:
 
 ```
 PM> Install-Package Giraffe
 ```
 
-Create a web application and plug it into the ASP.NET Core middleware:
+*) If you haven't installed the ASP.NET Core NuGet package yet then you'll also need to add a package reference to `Microsoft.AspNetCore.App`:
+
+```
+PM> Install-Package Microsoft.AspNetCore.App
+```
+
+Alternatively you can also use the .NET CLI to add the packages:
+
+```
+dotnet add [PROJECT] package Microsoft.AspNetCore.App --package-directory [PACKAGE_CIRECTORY]
+dotnet add [PROJECT] package Giraffe --package-directory [PACKAGE_CIRECTORY]
+```
+
+Next create a web application and plug it into the ASP.NET Core middleware:
 
 ```fsharp
+open System
+open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Hosting
+open Microsoft.Extensions.DependencyInjection
 open Giraffe
 
 let webApp =
@@ -101,6 +118,10 @@ let main _ =
 Instead of creating a `Startup` class you can also add Giraffe in a more functional way:
 
 ```fsharp
+open System
+open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Hosting
+open Microsoft.Extensions.DependencyInjection
 open Giraffe
 
 let webApp =
@@ -152,9 +173,15 @@ More sample applications will be added in the future.
 
 ## Benchmarks
 
-Currently Giraffe has only been tested against a simple plain text route and measured the total amount of handled requests per second. The latest result yielded an average of 79093 req/s over a period of 10 seconds, which was only closely after plain Kestrel which was capable of handling 79399 req/s on average.
+Giraffe is part of the [TechEmpower Web Framework Benchmarks](https://www.techempower.com/benchmarks/#section=test&runid=a1843d12-6091-4780-92a6-a747fab77cb1&hw=ph&test=plaintext&l=hra0hp-1&p=zik0zj-zik0zj-zijocf-5m9r) and will be listed in the official results page in the upcoming Round 17 for the first time.
 
-Please check out [Jimmy Byrd](https://github.com/TheAngryByrd)'s [dotnet-web-benchmarks](https://github.com/TheAngryByrd/dotnet-web-benchmarks) for more details.
+Unofficial test results are currently available on the [TFB Status page](https://tfb-status.techempower.com/).
+
+As of today Giraffe competes in the Plaintext, JSON and Fortunes categories and has been doing pretty well so far, even outperforming ASP.NET Core MVC in Plaintext and JSON at the time of writing.
+
+The latest implementation which is being used for the benchmark tests can be seen inside the [TechEmpower repository](https://github.com/TechEmpower/FrameworkBenchmarks/tree/master/frameworks/FSharp/giraffe).
+
+Giraffe is also featured in [Jimmy Byrd](https://github.com/TheAngryByrd)'s [dotnet-web-benchmarks](https://github.com/TheAngryByrd/dotnet-web-benchmarks) where we've run earlier performance tests.
 
 ## Building and developing
 
