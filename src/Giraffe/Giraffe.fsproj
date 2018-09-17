@@ -56,7 +56,7 @@
     <Compile Include="Serialization.fs" />
     <Compile Include="FormatExpressions.fs" />
     <Compile Include="Core.fs" />
-    <Compile Include="Caching.fs" />
+    <Compile Include="ResponseCaching.fs" />
     <Compile Include="GiraffeViewEngine.fs" />
     <Compile Include="ModelBinding.fs" />
     <Compile Include="ModelValidation.fs" />
