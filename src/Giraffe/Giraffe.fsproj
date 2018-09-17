@@ -44,6 +44,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.1.*" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.1.*" />
     <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="2.1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.ResponseCaching" Version="2.1.*" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.*" />
     <PackageReference Include="TaskBuilder.fs" Version="2.0.*" />
   </ItemGroup>
@@ -54,6 +55,7 @@
     <Compile Include="Serialization.fs" />
     <Compile Include="FormatExpressions.fs" />
     <Compile Include="Core.fs" />
+    <Compile Include="Caching.fs" />
     <Compile Include="GiraffeViewEngine.fs" />
     <Compile Include="ModelBinding.fs" />
     <Compile Include="ModelValidation.fs" />

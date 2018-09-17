@@ -133,6 +133,8 @@ let webApp =
                 route  "/configured" >=> configuredHandler
                 route  "/upload"     >=> fileUploadHandler
                 route  "/upload2"    >=> fileUploadHandler2
+                route  "/cache/1"    >=> publicResponseCaching 30 >=> warbler (fun _ -> text (Guid.NewGuid().ToString()))
+                route  "/cache/2"    >=> noResponseCaching >=> warbler (fun _ -> text (Guid.NewGuid().ToString()))
             ]
         route "/car"  >=> bindModel<Car> None json
         route "/car2" >=> tryBindQuery<Car> parsingErrorHandler None (validateModel xml)
@@ -151,12 +153,14 @@ let cookieAuth (o : CookieAuthenticationOptions) =
 
 let configureApp (app : IApplicationBuilder) =
     app.UseGiraffeErrorHandler(errorHandler)
+       .UseResponseCaching()
        .UseStaticFiles()
        .UseAuthentication()
        .UseGiraffe webApp
 
 let configureServices (services : IServiceCollection) =
     services
+        .AddResponseCaching()
         .AddGiraffe()
         .AddAuthentication(authScheme)
         .AddCookie(cookieAuth)   |> ignore
