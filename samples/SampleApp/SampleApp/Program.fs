@@ -133,7 +133,7 @@ let webApp =
                 route  "/configured" >=> configuredHandler
                 route  "/upload"     >=> fileUploadHandler
                 route  "/upload2"    >=> fileUploadHandler2
-                route  "/cache/1"    >=> publicResponseCaching 30 >=> warbler (fun _ -> text (Guid.NewGuid().ToString()))
+                route  "/cache/1"    >=> publicResponseCaching 30 None >=> warbler (fun _ -> text (Guid.NewGuid().ToString()))
                 route  "/cache/2"    >=> noResponseCaching >=> warbler (fun _ -> text (Guid.NewGuid().ToString()))
             ]
         route "/car"  >=> bindModel<Car> None json

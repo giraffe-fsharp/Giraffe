@@ -228,4 +228,3 @@ module ShortId =
                 | true  -> Array.Reverse arr; arr
                 | false -> arr)
         BitConverter.ToUInt64 (bytes, 0)
-
