@@ -45,7 +45,7 @@ type Person =
 // ---------------------------------
 
 [<Theory>]
-[<MemberData("DefaultData", MemberType=typedefof<JsonSerializersData>)>]
+[<MemberData("DefaultData", MemberType = typedefof<JsonSerializersData>)>]
 let ``GET "/json" returns json object`` (settings) =
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
@@ -70,7 +70,7 @@ let ``GET "/json" returns json object`` (settings) =
     }
 
 [<Theory>]
-[<MemberData("PreserveCaseData", MemberType=typedefof<JsonSerializersData>)>]
+[<MemberData("PreserveCaseData", MemberType = typedefof<JsonSerializersData>)>]
 let ``GET "/json" with custom json settings returns json object`` (settings) =
 
     let ctx = Substitute.For<HttpContext>()
@@ -95,12 +95,12 @@ let ``GET "/json" with custom json settings returns json object`` (settings) =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-let DefaultMocksWithSize = 
+let DefaultMocksWithSize =
     [
-        let ``powers of two`` = [1..10] |> List.map (pown 2)
+        let ``powers of two`` = [ 1..10 ] |> List.map (pown 2)
         for size in ``powers of two`` do
         for setting in JsonSerializersData.DefaultSettings do
-            yield size ,setting
+            yield size, setting
     ] |> toTheoryData2
 
 [<Theory>]
@@ -119,7 +119,7 @@ let ``GET "/jsonChunked" returns json object`` (size: int, settings) =
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/jsonChunked")) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = 
+    let expected =
         let o = "{\"foo\":\"john\",\"bar\":\"doe\",\"age\":30}"
         let os = Array.replicate size o |> String.concat ","
         "[" +  os + "]"
@@ -132,7 +132,7 @@ let ``GET "/jsonChunked" returns json object`` (size: int, settings) =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-let CamelCasedMocksWithSize = 
+let CamelCasedMocksWithSize =
     [
         let ``powers of two`` = [1..10] |> List.map (pown 2)
         for size in ``powers of two`` do
@@ -156,7 +156,7 @@ let ``GET "/jsonChunked" with custom json settings returns json object`` (size: 
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/jsonChunked")) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = 
+    let expected =
         let o = "{\"Foo\":\"john\",\"Bar\":\"doe\",\"Age\":30}"
         let os = Array.replicate size o |> String.concat ","
         "[" +  os + "]"

@@ -548,7 +548,7 @@ let ``tryBindQuery with complete data but baldy formated list items`` () =
 // ---------------------------------
 
 [<Theory>]
-[<MemberData("PreserveCaseData", MemberType=typedefof<JsonSerializersData>)>]
+[<MemberData("PreserveCaseData", MemberType = typedefof<JsonSerializersData>)>]
 let ``BindJsonAsync test`` (settings) =
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
@@ -771,7 +771,7 @@ let ``BindQueryString with nullable property test`` () =
     }
 
 [<Theory>]
-[<MemberData("DefaultData", MemberType=typedefof<JsonSerializersData>)>]
+[<MemberData("DefaultData", MemberType = typedefof<JsonSerializersData>)>]
 let ``BindModelAsync with JSON content returns correct result`` (settings) =
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
@@ -810,7 +810,7 @@ let ``BindModelAsync with JSON content returns correct result`` (settings) =
     }
 
 [<Theory>]
-[<MemberData("PreserveCaseData", MemberType=typedefof<JsonSerializersData>)>]
+[<MemberData("PreserveCaseData", MemberType = typedefof<JsonSerializersData>)>]
 let ``BindModelAsync with JSON content that uses custom serialization settings returns correct result`` (settings) =
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
@@ -966,7 +966,7 @@ let ``BindModelAsync with culture aware form content returns correct result`` ()
     }
 
 [<Theory>]
-[<MemberData("PreserveCaseData", MemberType=typedefof<JsonSerializersData>)>]
+[<MemberData("PreserveCaseData", MemberType = typedefof<JsonSerializersData>)>]
 let ``BindModelAsync with JSON content and a specific charset returns correct result`` (settings) =
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings

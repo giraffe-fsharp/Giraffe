@@ -102,13 +102,14 @@ type HttpContext with
     ///
     /// Task of `Some HttpContext` after writing to the body of the response.
     ///
-    member this.WriteJsonChunkedAsync<'T> (dataObj : 'T) = task {
-        this.SetContentType "application/json"
-        this.SetHttpHeader "Transfer-Encoding" "chunked"
-        let serializer = this.GetJsonSerializer()
-        do! serializer.SerializeToStreamAsync dataObj this.Response.Body
-        return Some this
-    }
+    member this.WriteJsonChunkedAsync<'T> (dataObj : 'T) =
+        task {
+            this.SetContentType "application/json"
+            this.SetHttpHeader "Transfer-Encoding" "chunked"
+            let serializer = this.GetJsonSerializer()
+            do! serializer.SerializeToStreamAsync dataObj this.Response.Body
+            return Some this
+        }
 
     /// **Description**
     ///

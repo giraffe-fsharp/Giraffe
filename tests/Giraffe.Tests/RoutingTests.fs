@@ -86,8 +86,6 @@ let ``route: GET "/FOO" returns 404 "Not found"`` () =
 // routeCi Tests
 // ---------------------------------
 
-
-
 [<Fact>]
 let ``GET "/JSON" returns "BaR"`` () =
     let ctx = Substitute.For<HttpContext>()
