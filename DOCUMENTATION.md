@@ -2207,24 +2207,41 @@ let someHandler (str : string) : HttpHandler =
 
 #### Writing JSON
 
-The `WriteJsonAsync (dataObj : obj)` extension method and the `json (dataObj : obj)` http handler will both serialize an object to a JSON string and write the output to the response stream of the HTTP request. They will also set the `Content-Length`HTTP header and the `Content-Type` header to `application/json` in the response:
+The `WriteJsonAsync<'T> (dataObj : 'T)` extension method and the `json<'T> (dataObj : 'T)` http handler will both serialize an object to a JSON string and write the output to the response stream of the HTTP request. They will also set the `Content-Length` HTTP header and the `Content-Type` header to `application/json` in the response:
 
 ```fsharp
-let someHandler (dataObj : obj) : HttpHandler =
+let someHandler (animal : Animal) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Do stuff
-            return! ctx.WriteJsonAsync dataObj
+            return! ctx.WriteJsonAsync animal
         }
 
 // or...
 
-let someHandler (dataObj : obj) : HttpHandler =
+let someHandler (animal : Animal) : HttpHandler =
     // Do stuff
-    json dataObj
+    json animal
 ```
 
 The underlying JSON serializer can be configured as a dependency during application startup (see [JSON](#json)).
+
+The `WriteJsonChunkedAsync<'T> (dataObj : 'T)` extension method and the `jsonChunked (dataObj : 'T)` http handler write directly to th response stream of the HTTP request without extra buffering into a byte array. They will not set a `Content-Length` header and instead set the `Transfer-Encoding: chunked` header and `Content-Type: application/json`:
+
+```fsharp
+let someHandler (person : Person) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteJsonChunkedAsync person
+        }
+
+// or...
+
+let someHandler (person : Person) : HttpHandler =
+    // Do stuff
+    jsonChunked person
+```
 
 #### Writing XML
 
@@ -2939,7 +2956,25 @@ Overall the Giraffe View Engine is extremely flexible and feature rich by nature
 
 By default Giraffe uses [Newtonsoft JSON.NET](https://www.newtonsoft.com/json) for (de-)serializing JSON content. An application can modify the default serializer by registering a new dependency which implements the `IJsonSerializer` interface during application startup.
 
-Customizing Giraffe's JSON serialization can either happen via providing a custom object of `JsonSerializerSettings` when instantiating the default `NewtonsoftJsonSerializer` or swap in an entire different JSON library by creating a new class which implements the `IJsonSerializer` interface.
+Customizing Giraffe's JSON serialization can either happen via providing a custom object of `JsonSerializerSettings` when instantiating the default `NewtonsoftJsonSerializer` or by swapping in an entire different JSON library by creating a new class which implements the `IJsonSerializer` interface.
+
+By default Giraffe offers two `IJsonSerializer` implementations out of the box:
+
+| Name | Description | Default |
+| :--- | :---------- | :------ |
+| `NewtonsoftJsonSerializer` | Uses `Newtonsoft.Json` aka JSON.Net for JSON (de-)serialization in Giraffe. It is the most downloaded library on NuGet, battle tested by millions of users and has great support for F# data types. Use this json serializer for maximum compatibility and easy adoption. | True |
+| `Utf8JsonSerializer` | Uses `Utf8Json` for JSON (de-)serialization in Giraffe. This is the fastest JSON serializer written in .NET with huge extensibility points and native support for directly serializing JSON content to the HTTP response stream via chunked encoding. This serializer has been specifically crafted for maximum performance and should be used when that extra perf is important. | False |
+
+The `Utf8JsonSerializer` can be used instead of the `NewtonsoftJsonSerializer` by registering a new dependency of type `IJsonSerializer` during application configuration:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now register Utf8JsonSerializer
+    this.AddSingleton<IJsonSerializer>(Utf8JsonSerializer(Utf8JsonSerializer.DefaultResolver)) |> ignore
+```
 
 #### Customizing JsonSerializerSettings
 
@@ -2977,9 +3012,12 @@ You can change the entire underlying JSON serializer by creating a new class whi
 type CustomJsonSerializer() =
     interface IJsonSerializer with
         // Use different JSON library ...
-        member __.Serialize (o : obj) = // ...
+        member __.SerializeToString<'T>      (x : 'T) = // ...
+        member __.SerializeToBytes<'T>       (x : 'T) = // ...
+        member __.SerializeToStreamAsync<'T> (x : 'T) = // ...
+
         member __.Deserialize<'T> (json : string) = // ...
-        member __.Deserialize<'T> (stream : Stream) = // ...
+        member __.Deserialize<'T> (bytes : byte[]) = // ...
         member __.DeserializeAsync<'T> (stream : Stream) = // ...
 ```
 

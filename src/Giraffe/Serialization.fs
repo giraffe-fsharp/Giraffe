@@ -6,11 +6,13 @@ namespace Giraffe.Serialization
 
 [<AutoOpen>]
 module Json =
+    open System
     open System.IO
+    open System.Text
     open System.Threading.Tasks
     open Newtonsoft.Json
     open Newtonsoft.Json.Serialization
-    open FSharp.Control.Tasks.V2.ContextInsensitive
+    open Utf8Json
 
     /// **Description**
     ///
@@ -18,40 +20,96 @@ module Json =
     ///
     [<AllowNullLiteral>]
     type IJsonSerializer =
-        abstract member Serialize            : obj    -> string
+        abstract member SerializeToString<'T>      : 'T -> string
+        abstract member SerializeToBytes<'T>       : 'T -> byte array
+        abstract member SerializeToStreamAsync<'T> : 'T -> Stream -> Task
+
         abstract member Deserialize<'T>      : string -> 'T
-        abstract member Deserialize<'T>      : Stream -> 'T
+        abstract member Deserialize<'T>      : byte[] -> 'T
         abstract member DeserializeAsync<'T> : Stream -> Task<'T>
 
     /// **Description**
     ///
-    /// Default JSON serializer in Giraffe.
+    /// The `Utf8JsonSerializer` is the default `IJsonSerializer` in Giraffe.
+    ///
+    /// It uses `Utf8Json` as the underlying JSON serializer to (de-)serialize
+    /// JSON content. [Utf8Json](https://github.com/neuecc/Utf8Json) is currently
+    /// the fastest JSON serializer for .NET.
+    ///
+    type Utf8JsonSerializer (resolver : IJsonFormatterResolver) =
+
+        static member DefaultResolver = Utf8Json.Resolvers.StandardResolver.CamelCase
+
+        interface IJsonSerializer with
+            member __.SerializeToString (x : 'T) =
+                JsonSerializer.ToJsonString (x, resolver)
+
+            member __.SerializeToBytes (x : 'T) =
+                JsonSerializer.Serialize (x, resolver)
+
+            member __.SerializeToStreamAsync (x : 'T) (stream : Stream) =
+                JsonSerializer.SerializeAsync(stream, x, resolver)
+
+            member __.Deserialize<'T> (json : string) : 'T =
+                let bytes = Encoding.UTF8.GetBytes json
+                JsonSerializer.Deserialize(bytes, resolver)
+
+            member __.Deserialize<'T> (bytes : byte array) : 'T =
+                JsonSerializer.Deserialize(bytes, resolver)
+
+            member __.DeserializeAsync<'T> (stream : Stream) : Task<'T> =
+                JsonSerializer.DeserializeAsync(stream, resolver)
+
+    /// **Description**
+    ///
+    /// The previous default JSON serializer in Giraffe.
+    ///
+    /// The `NewtonsoftJsonSerializer` has been replaced by `Utf8JsonSerializer` as
+    /// the default `IJsonSerializer` which has much better performance and supports
+    /// true chunked transfer encoding.
+    ///
+    /// The `NewtonsoftJsonSerializer` remains available as an alternative JSON
+    /// serializer which can be used to override the `Utf8JsonSerializer` for
+    /// backwards compatibility.
     ///
     /// Serializes objects to camel cased JSON code.
     ///
     type NewtonsoftJsonSerializer (settings : JsonSerializerSettings) =
+
+        let Utf8EncodingWithoutBom = new UTF8Encoding(false)
+        let DefaultBufferSize = 1024
+
         static member DefaultSettings =
             JsonSerializerSettings(
                 ContractResolver = CamelCasePropertyNamesContractResolver())
 
         interface IJsonSerializer with
-            member __.Serialize (o : obj) = JsonConvert.SerializeObject(o, settings)
+            member __.SerializeToString (x : 'T) =
+                JsonConvert.SerializeObject(x, settings)
 
-            member __.Deserialize<'T> (json : string) = JsonConvert.DeserializeObject<'T>(json, settings)
+            member __.SerializeToBytes (x : 'T) =
+                JsonConvert.SerializeObject(x, settings)
+                |> Encoding.UTF8.GetBytes
 
-            member __.Deserialize<'T> (stream : Stream) =
+            member __.SerializeToStreamAsync (x : 'T) (stream : Stream) =
+                use sw = new StreamWriter(stream, Utf8EncodingWithoutBom, DefaultBufferSize, true)
+                use jw = new JsonTextWriter(sw)
+                let sr = JsonSerializer.Create settings
+                sr.Serialize(jw, x)
+                Task.CompletedTask
+
+            member __.Deserialize<'T> (json : string) =
+                JsonConvert.DeserializeObject<'T>(json, settings)
+
+            member __.Deserialize<'T> (bytes : byte array) =
+                let json = Encoding.UTF8.GetString bytes
+                JsonConvert.DeserializeObject<'T>(json, settings)
+
+            member __.DeserializeAsync<'T> (stream : Stream) =
                 use sr = new StreamReader(stream, true)
                 use jr = new JsonTextReader(sr)
                 let sr = JsonSerializer.Create settings
-                sr.Deserialize<'T> jr
-
-            member __.DeserializeAsync<'T> (stream : Stream) =
-                task {
-                    use sr = new StreamReader(stream, true)
-                    use jr = new JsonTextReader(sr)
-                    let sr = JsonSerializer.Create settings
-                    return sr.Deserialize<'T> jr
-                }
+                Task.FromResult(sr.Deserialize<'T> jr)
 
 // ---------------------------
 // XML
