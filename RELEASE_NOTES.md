@@ -39,6 +39,10 @@ Release Notes
 - Added a new `jsonChunked` http handler. This handler is the equivalent http handler version of the `WriteJsonChunkedAsync` extension method.
 - Added first class support for [ASP.NET Core's response caching](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#response-caching) feature.
 
+#### Special thanks
+
+Special thanks to [Dmitry Kushnir](https://github.com/dv00d00) for doing the bulk work of all the perf improvements in this release as well as adding Giraffe to the [TechEmpower Webframework Benchmarks](https://techempower.com/benchmarks/)!
+
 ## 2.0.1
 
 Changed the `task {}` CE to load from `FSharp.Control.Tasks.V2.ContextInsensitive` instead of `FSharp.Control.Tasks.ContextInsensitive`.
