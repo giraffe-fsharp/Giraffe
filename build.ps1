@@ -41,7 +41,7 @@ Update-AppVeyorBuildVersion $version
 if (Test-IsAppVeyorBuildTriggeredByGitTag)
 {
     $gitTag = Get-AppVeyorGitTag
-    Test-CompareVersions $giraffe $gitTag
+    Test-CompareVersions $version $gitTag
 }
 
 Write-DotnetCoreVersions
