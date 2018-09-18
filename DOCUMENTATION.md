@@ -2210,23 +2210,38 @@ let someHandler (str : string) : HttpHandler =
 The `WriteJsonAsync<'T> (dataObj : 'T)` extension method and the `json<'T> (dataObj : 'T)` http handler will both serialize an object to a JSON string and write the output to the response stream of the HTTP request. They will also set the `Content-Length` HTTP header and the `Content-Type` header to `application/json` in the response:
 
 ```fsharp
-let someHandler (dataObj : obj) : HttpHandler =
+let someHandler (animal : Animal) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Do stuff
-            return! ctx.WriteJsonAsync dataObj
+            return! ctx.WriteJsonAsync animal
         }
 
 // or...
 
-let someHandler (dataObj : obj) : HttpHandler =
+let someHandler (animal : Animal) : HttpHandler =
     // Do stuff
-    json dataObj
+    json animal
 ```
 
 The underlying JSON serializer can be configured as a dependency during application startup (see [JSON](#json)).
 
-The `WriteJsonChunkedAsync<'T> (dataObj : 'T)` extension method and the `jsonChunked (dataObj : 'T)` http handler write directly to th response stream of the HTTP request without extra buffering into a byte array.
+The `WriteJsonChunkedAsync<'T> (dataObj : 'T)` extension method and the `jsonChunked (dataObj : 'T)` http handler write directly to th response stream of the HTTP request without extra buffering into a byte array. They will not set a `Content-Length` header and instead set the `Transfer-Encoding: chunked` header and `Content-Type: application/json`:
+
+```fsharp
+let someHandler (person : Person) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteJsonChunkedAsync person
+        }
+
+// or...
+
+let someHandler (person : Person) : HttpHandler =
+    // Do stuff
+    jsonChunked person
+```
 
 #### Writing XML
 
