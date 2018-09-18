@@ -33,6 +33,8 @@ An in depth functional reference to all of Giraffe's default features.
     - [Content Negotiation](#content-negotiation)
     - [Streaming](#streaming)
     - [Redirection](#redirection)
+    - [Response Caching](#response-caching)
+    - [Response Compression](#response-compression)
 - [Giraffe View Engine](#giraffe-view-engine)
     - [HTML Elements and Attributes](#html-elements-and-attributes)
     - [Text Content](#text-content)
@@ -45,6 +47,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [JSON](#json)
     - [XML](#xml)
 - [Miscellaneous](#miscellaneous)
+    - [Short GUIDs and Short IDs](#short-guids-and-short-ids)
     - [Common Helper Functions](#common-helper-functions)
     - [Computation Expressions](#computation-expressions)
 - [Additional Features](#additional-features)
@@ -153,9 +156,10 @@ let webApp =
 
 Another important aspect of Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core only works with tasks out of the box).
 
-For this purpose Giraffe uses the `task {}` computation expression which comes with the [`TaskBuilder.fs` NuGet package](https://www.nuget.org/packages/TaskBuilder.fs/). Syntactically it works identical to F#'s async workflows:
+For this purpose Giraffe uses the `task {}` computation expression which comes with the [`TaskBuilder.fs` NuGet package](https://www.nuget.org/packages/TaskBuilder.fs/). Syntactically it works identical to F#'s async workflows (after opening the `FSharp.Control.Tasks.V2.ContextInsensitive` module):
 
 ```fsharp
+open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe
 
 let personHandler =
@@ -166,7 +170,7 @@ let personHandler =
         }
 ```
 
-The `task {}` CE is an independent project maintained by [Robert Peele](https://github.com/rspeele) and can be used from any other F# application as well. All you have to do is add a reference to the `TaskBuilder.fs` NuGet library and open the module:
+The `task {}` CE is an independent project maintained by [Robert Peele](https://github.com/rspeele) and can be used from any other F# application as well. All you have to do is add a reference to the `TaskBuilder.fs` NuGet library and open the `FSharp.Control.Tasks.V2` module:
 
 ```fsharp
 open FSharp.Control.Tasks.V2
@@ -895,7 +899,24 @@ The format string supports the following format chars:
 | `%i` | `int` |
 | `%d` | `int64` |
 | `%f` | `float`/`double` |
-| `%O` | `Guid` |
+| `%O` | `Guid` (including short GUIDs*) |
+| `%u` | `uint64` (formatted as a short ID*) |
+
+*) Please note that the `%O` and `%u` format characters also support URL friendly short GUIDs and IDs.
+
+The `%O` format character supports GUIDs in the format of:
+
+- `00000000000000000000000000000000`
+- `00000000-0000-0000-0000-000000000000`
+- `Xy0MVKupFES9NpmZ9TiHcw`
+
+The last string represents an example of a [Short GUID](https://madskristensen.net/blog/A-shorter-and-URL-friendly-GUID) which is a normal GUID shortened into a URL encoded 22 character long string. Routes which use the `%O` format character will be able to automatically resolve a [Short GUID](https://madskristensen.net/blog/A-shorter-and-URL-friendly-GUID) as well as a normal GUID into a `System.Guid` argument.
+
+The `%u` format character can only resolve an 11 character long [Short ID](https://webapps.stackexchange.com/questions/54443/format-for-id-of-youtube-video) (aka YouTube ID) into a `uint64` value.
+
+Short GUIDs and short IDs are popular choices to make URLs shorter and friendlier whilst still mapping to a unique `System.Guid` or `uint64` value on the server side.
+
+[Short GUIDs and IDs can also be resolved from query string parameters](#short-guids-and-short-ids) by making use of the `ShortGuid` and `ShortId` helper modules.
 
 #### routeCif
 
@@ -910,6 +931,8 @@ let webApp =
         RequestErrors.NOT_FOUND "Not Found"
     ]
 ```
+
+Please be aware that a case insensitive URL matching will return unexpected results in combination with case sensitive arguments such as short GUIDs and short IDs.
 
 #### routeBind
 
@@ -1318,7 +1341,7 @@ let webApp =
     ]
 ```
 
-Alternatively you can use the `bindFrom<'T>` http handler (which also accepts an additional parameter of type `CultureInfo option`):
+Alternatively you can use the `bindForm<'T>` http handler (which also accepts an additional parameter of type `CultureInfo option`):
 
 ```fsharp
 [<CLIMutable>]
@@ -2186,24 +2209,41 @@ let someHandler (str : string) : HttpHandler =
 
 #### Writing JSON
 
-The `WriteJsonAsync (dataObj : obj)` extension method and the `json (dataObj : obj)` http handler will both serialize an object to a JSON string and write the output to the response stream of the HTTP request. They will also set the `Content-Length`HTTP header and the `Content-Type` header to `application/json` in the response:
+The `WriteJsonAsync<'T> (dataObj : 'T)` extension method and the `json<'T> (dataObj : 'T)` http handler will both serialize an object to a JSON string and write the output to the response stream of the HTTP request. They will also set the `Content-Length` HTTP header and the `Content-Type` header to `application/json` in the response:
 
 ```fsharp
-let someHandler (dataObj : obj) : HttpHandler =
+let someHandler (animal : Animal) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Do stuff
-            return! ctx.WriteJsonAsync dataObj
+            return! ctx.WriteJsonAsync animal
         }
 
 // or...
 
-let someHandler (dataObj : obj) : HttpHandler =
+let someHandler (animal : Animal) : HttpHandler =
     // Do stuff
-    json dataObj
+    json animal
 ```
 
 The underlying JSON serializer can be configured as a dependency during application startup (see [JSON](#json)).
+
+The `WriteJsonChunkedAsync<'T> (dataObj : 'T)` extension method and the `jsonChunked (dataObj : 'T)` http handler write directly to th response stream of the HTTP request without extra buffering into a byte array. They will not set a `Content-Length` header and instead set the `Transfer-Encoding: chunked` header and `Content-Type: application/json`:
+
+```fsharp
+let someHandler (person : Person) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Do stuff
+            return! ctx.WriteJsonChunkedAsync person
+        }
+
+// or...
+
+let someHandler (person : Person) : HttpHandler =
+    // Do stuff
+    jsonChunked person
+```
 
 #### Writing XML
 
@@ -2529,11 +2569,113 @@ let webApp =
 
 Please note that if the `permanent` flag is set to `true` then the Giraffe web application will send a `301` HTTP status code to browsers which will tell them that the redirection is permanent. This often leads to browsers cache the information and not hit the deprecated URL a second time any more. If this is not desired then please set `permanent` to `false` in order to guarantee that browsers will continue hitting the old URL before redirecting to the (temporary) new one.
 
+### Response Caching
+
+ASP.NET Core comes with a standard [Response Caching Middleware](https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-2.1) which works out of the box with Giraffe.
+
+If you are not already using one of the two ASP.NET Core meta packages (`Microsoft.AspNetCore.App` or `Microsoft.AspNetCore.All`) then you will have to add an additional reference to the [Microsoft.AspNetCore.ResponseCaching](https://www.nuget.org/packages/Microsoft.AspNetCore.ResponseCaching/) NuGet package.
+
+After adding the NuGet package you need to register the response caching middleware inside your application's startup code before registering Giraffe:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    services
+        .AddResponseCaching() // <-- Here the order doesn't matter
+        .AddGiraffe()         // This is just registering dependencies
+    |> ignore
+
+let configureApp (app : IApplicationBuilder) =
+    app.UseGiraffeErrorHandler(errorHandler)
+       .UseStaticFiles()     // Optional if you use static files
+       .UseAuthentication()  // Optional if you use authentication
+       .UseResponseCaching() // <-- Before UseGiraffe webApp
+       .UseGiraffe webApp
+```
+
+After setting up the [ASP.NET Core response caching middleware](https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-2.1#configuration) you can use Giraffe's response caching http handlers to add response caching to your routes:
+
+```fsharp
+// A test handler which generates a new GUID on every request
+let generateGuidHandler : HttpHandler =
+    warbler (fun _ -> text (Guid.NewGuid().ToString()))
+
+let webApp =
+    GET >=> choose [
+        route "/route1" >=> publicResponseCaching 30 None >=> generateGuidHandler
+        route "/route2" >=> noResponseCaching >=> generateGuidHandler
+    ]
+```
+
+Requests to `/route1` can be cached for up to 30 seconds whilst requests to `/route2` have response caching completely disabled.
+
+*Note: if you test the above code with [Postman](https://www.getpostman.com/) then make sure you [disable the No-Cache feature](https://www.getpostman.com/docs/v6/postman/launching_postman/settings) in Postman in order to test the correct caching behaviour.*
+
+Giraffe offers in total 4 http handlers which can be used to configure response caching for an endpoint.
+
+In the above example we used the `noResponseCaching` http handler to completely disable response caching on the client and on any proxy server. The `noResponseCaching` http handler will send the following HTTP headers in the response:
+
+```
+Cache-Control: no-store, no-cache
+Pragma: no-cache
+Expires: -1
+```
+
+The `publicResponseCaching` or `privateResponseCaching` http handlers will enable response caching on the client and/or on proxy servers. The
+`publicResponseCaching` http handler will set the `Cache-Control` directive to `public`, which means that not only the client is allowed to cache a response for the given cache duration, but also any intermediary proxy server as well as the ASP.NET Core middleware. This is useful for HTTP GET/HEAD endpoints which do not hold any user specific data, authentication data or any cookies and where the response data doesn't change frequently.
+
+The `privateResponseCaching` http handler sets the `Cache-Control` directive to `private` which means that only the end client is allowed to store the response for the given cache duration. Proxy servers and the ASP.NET Core response caching middleware must not cache the response.
+
+Both http handlers require the cache duration in seconds and an optional `vary` parameter:
+
+```fsharp
+// Cache for 10 seconds without any vary headers
+publicResponseCaching 10 None
+
+// Cache for 30 seconds with Accept and Accept-Encoding as vary headers
+publicResponseCaching 30 (Some "Accept, Accept-Encoding")
+```
+
+The `vary` parameter specifies which HTTP request headers must be respected to vary the cached response. For example if an endpoint returns a different response (`Content-Type`) based on the client's `Accept` header (= [content negotiation](#content-negotiation)) then the `Accept` header must also be considered when returning a response from the cache. The same applies if the web server has response compression enabled. If a response varies based on the client's accepted compression algorithm then the cache must also respect the client's `Accept-Encoding` HTTP header when serving a response from the cache.
+
+#### VaryByQueryKeys
+
+The ASP.NET Core response caching middleware offers one more additional feature which is not part of the response's HTTP headers. By default, if a route is cachable then the middleware will try to returnn a cached response even if the query parameters were different.
+
+For example if a request to `/foo/bar` has been cached, then the cached version will also be returned if a request is made to `/foo/bar?query1=a` or `/foo/bar?query1=a&query2=b`.
+
+Sometimes this is not desired and the `VaryByQueryKeys` feature lets the [middleware vary its cached responses based on a request's query keys](https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-2.1#varybyquerykeys).
+
+The generic `responseCaching` http handler is the most basic response caching handler which can be used to configure custom response caching handlers as well as make use of the `VaryByQueryKeys` feature:
+
+```fsharp
+responseCaching
+    (Public (TimeSpan.FromSeconds (float 5)))
+    (Some "Accept, Accept-Encoding")
+    (Some [| "query1"; "query2" |])
+```
+
+The first parameter is of type `CacheDirective` which is defines as following:
+
+```fsharp
+type CacheDirective =
+    | NoCache
+    | Public  of TimeSpan
+    | Private of TimeSpan
+```
+
+The second parameter is an `string option` which defines the `vary` parameter.
+
+The third and last parameter is a `string list option` which defines an optional list of query parameter values which must be used to vary a cached response by the ASP.NET Core response caching middleware. Please be aware that this feature only applies to the ASP.NET Core response caching middleware and will not be respected by any intermediate proxy servers.
+
+### Response Compression
+
+ASP.NET Core has its own [Response Compression Middleware](https://docs.microsoft.com/en-us/aspnet/core/performance/response-compression?view=aspnetcore-2.1&tabs=aspnetcore2x) which works out of the box with Giraffe. There's no additional functionality or http handlers required in order to make it work with Giraffe web applications.
+
 ## Giraffe View Engine
 
-Giraffe has its own functional view engine which can be used to build rich GUIs for web applications. The single biggest and best contrast to other view engines (e.g. Razor, Liquid, etc.) is that the Giraffe View Engine is entirely functional written in normal (and compiled) F# code.
+Giraffe has its own functional view engine which can be used to build rich UIs for web applications. The single biggest and best contrast to other view engines (e.g. Razor, Liquid, etc.) is that the Giraffe View Engine is entirely functional written in normal (and compiled) F# code.
 
-This means that the Giraffe View Engine is by definition one of the most feature rich view engines, requires no disk IO to load a view and views are automatically compiled at build time.
+This means that the Giraffe View Engine is by definition one of the most feature rich view engines available, requires no disk IO to load a view and views are automatically compiled at build time.
 
 The Giraffe View Engine uses traditional functions and F# record types to generate rich HTML/XML views.
 
@@ -2556,7 +2698,7 @@ let indexView =
     ]
 ```
 
-A HTML element can either be a `ParentNode`, a `VoidElement` or `RawText`/`EncodedText`.
+A HTML element can either be a `ParentNode`, a `VoidElement` or a `Text` element.
 
 For example the `<html>` or `<div>` tags are typical `ParentNode` elements. They can hold an `XmlAttribute list` and a second `XmlElement list` for their child elements:
 
@@ -2614,7 +2756,7 @@ Naturally the most frequent content in any HTML document is pure text:
 </div>
 ```
 
-The Giraffe View Engine lets one create pure text content as either `RawText` or `EncodedText`:
+The Giraffe View Engine lets one create pure text content as a `Text` element. A `Text` element can either be generated via the `rawText` or `encodedText` functions:
 
 ```fsharp
 let someHtml =
@@ -2624,7 +2766,7 @@ let someHtml =
     ]
 ```
 
-The `rawText` function will create an object of type `RawText` and the `encodedText` function will output an object of type `EncodedText`. The difference is that the latter will HTML encode the value when rendering the view.
+The `rawText` function will create an object of type `Text` where the content will be rendered in its original form and the `encodedText` function will output a string where the content has been HTML encoded.
 
 In this example the first `p` element will literally output the string as it is (`<div>Hello World</div>`) while the second `p` element will output the value as HTML encoded string `&lt;div&gt;Hello World&lt;/div&gt;`.
 
@@ -2734,6 +2876,44 @@ let output1 = renderHtmlNode someContent
 
 // Void tag will be rendered to valid XML: <foo />
 let output2 = renderXmlNode someContent
+```
+
+Additionally with Giraffe 3.0.0 or higher there is a new module called `ViewBuilder` under the `Giraffe.GiraffeViewEngine` namespace. This module exposes additional view rendering functions which compile a view into a `StringBuilder` object instead of returning a single `string`:
+
+- `ViewBuilder.buildHtmlDocument`
+- `ViewBuilder.buildHtmlNodes`
+- `ViewBuilder.buildHtmlNode`
+- `ViewBuilder.buildXmlNodes`
+- `ViewBuilder.buildXmlNode`
+
+The `ViewBuilder.build[...]` functions can be useful if there is additional string processing required before/after composing a view by the `GiraffeViewEngine` (e.g. embedding HTML snippets in an email template, etc.). These functions also serve as the lower level building blocks of the equivalent `render[...]` functions.
+
+Example usage:
+
+```fsharp
+open System.Text
+open Giraffe.GiraffeViewEngine
+
+let someHtml =
+    div [] [
+        tag "foo" [ attr "bar" "blah" ] [
+            voidTag "otherFoo" [ flag "flag1" ]
+        ]
+    ]
+
+let sb = new StringBuilder()
+
+// Perform actions on the `sb` object...
+sb.AppendLine "This is a HTML snippet inside a markdown string:"
+  .AppendLine ""
+  .AppendLine "```html" |> ignore
+
+let sb' = ViewBuilder.buildHtmlNode sb someHtml
+
+// Perform more actions on the `sb` object...
+sb'.AppendLine "```" |> ignore
+
+let markdownOutput = sb'.ToString()
 ```
 
 ### Common View Engine Features
@@ -2880,7 +3060,25 @@ Overall the Giraffe View Engine is extremely flexible and feature rich by nature
 
 By default Giraffe uses [Newtonsoft JSON.NET](https://www.newtonsoft.com/json) for (de-)serializing JSON content. An application can modify the default serializer by registering a new dependency which implements the `IJsonSerializer` interface during application startup.
 
-Customizing Giraffe's JSON serialization can either happen via providing a custom object of `JsonSerializerSettings` when instantiating the default `NewtonsoftJsonSerializer` or swap in an entire different JSON library by creating a new class which implements the `IJsonSerializer` interface.
+Customizing Giraffe's JSON serialization can either happen via providing a custom object of `JsonSerializerSettings` when instantiating the default `NewtonsoftJsonSerializer` or by swapping in an entire different JSON library by creating a new class which implements the `IJsonSerializer` interface.
+
+By default Giraffe offers two `IJsonSerializer` implementations out of the box:
+
+| Name | Description | Default |
+| :--- | :---------- | :------ |
+| `NewtonsoftJsonSerializer` | Uses `Newtonsoft.Json` aka JSON.Net for JSON (de-)serialization in Giraffe. It is the most downloaded library on NuGet, battle tested by millions of users and has great support for F# data types. Use this json serializer for maximum compatibility and easy adoption. | True |
+| `Utf8JsonSerializer` | Uses `Utf8Json` for JSON (de-)serialization in Giraffe. This is the fastest JSON serializer written in .NET with huge extensibility points and native support for directly serializing JSON content to the HTTP response stream via chunked encoding. This serializer has been specifically crafted for maximum performance and should be used when that extra perf is important. | False |
+
+The `Utf8JsonSerializer` can be used instead of the `NewtonsoftJsonSerializer` by registering a new dependency of type `IJsonSerializer` during application configuration:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    // Now register Utf8JsonSerializer
+    this.AddSingleton<IJsonSerializer>(Utf8JsonSerializer(Utf8JsonSerializer.DefaultResolver)) |> ignore
+```
 
 #### Customizing JsonSerializerSettings
 
@@ -2918,9 +3116,12 @@ You can change the entire underlying JSON serializer by creating a new class whi
 type CustomJsonSerializer() =
     interface IJsonSerializer with
         // Use different JSON library ...
-        member __.Serialize (o : obj) = // ...
+        member __.SerializeToString<'T>      (x : 'T) = // ...
+        member __.SerializeToBytes<'T>       (x : 'T) = // ...
+        member __.SerializeToStreamAsync<'T> (x : 'T) = // ...
+
         member __.Deserialize<'T> (json : string) = // ...
-        member __.Deserialize<'T> (stream : Stream) = // ...
+        member __.Deserialize<'T> (bytes : byte[]) = // ...
         member __.DeserializeAsync<'T> (stream : Stream) = // ...
 ```
 
@@ -3042,6 +3243,48 @@ let customHandler (dataObj : obj) : HttpHandler =
 ## Miscellaneous
 
 On top of default HTTP related functions such as `HttpContext` extension methods and `HttpHandler` functions Giraffe also provides a few other helper functions which are commonly required in Giraffe web applications.
+
+### Short GUIDs and Short IDs
+
+The `ShortGuid` and `ShortId` modules offer helper functions to work with [Short GUIDs](https://madskristensen.net/blog/A-shorter-and-URL-friendly-GUID) and [Short IDs](https://webapps.stackexchange.com/questions/54443/format-for-id-of-youtube-video) inside Giraffe.
+
+#### ShortGuid
+
+The `ShortGuid.fromGuid` function will convert a `System.Guid` into a URL friendly 22 character long `string` value.
+
+The `ShortGuid.toGuid` function will convert a 22 character short GUID `string` into a valid `System.Guid` object. This function can be useful when converting a `string` query parameter into a valid `Guid` argument:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let guid =
+            match ctx.TryGetQueryStringValue "id" with
+            | None           -> Guid.Empty
+            | Some shortGuid -> ShortGuid.toGuid shortGuid
+
+        // Do something with `guid`...
+        // Return a Task<HttpContext option>
+```
+
+#### ShortId
+
+The `ShortId.fromUInt64` function will convert an `uint64` into a URL friendly 11 character long `string` value.
+
+The `ShortId.toUInt64` function will convert a 11 character short ID `string` into a `uint64` value. This function can be useful when converting a `string` query parameter into a valid `uint64` argument:
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let id =
+            match ctx.TryGetQueryStringValue "id" with
+            | None         -> 0UL
+            | Some shortId -> ShortId.toUInt64 shortId
+
+        // Do something with `id`...
+        // Return a Task<HttpContext option>
+```
+
+Short GUIDs and short IDs can also be [automatically resolved from route arguments](#routef).
 
 ### Common Helper Functions
 

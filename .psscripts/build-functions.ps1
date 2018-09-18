@@ -15,6 +15,27 @@ function Test-IsWindows
     [environment]::OSVersion.Platform -ne "Unix"
 }
 
+function Invoke-UnsafeCmd ($cmd)
+{
+    <#
+        .DESCRIPTION
+        Runs a shell or bash command, but doesn't throw an error if the command didn't exit with 0.
+
+        .PARAMETER cmd
+        The command to be executed.
+
+        .EXAMPLE
+        Invoke-Cmd -Cmd "dotnet new classlib"
+
+        .NOTES
+        Use this PowerShell command to execute any CLI commands which might not exit with 0 on a success.
+    #>
+
+    Write-Host $cmd -ForegroundColor DarkCyan
+    if (Test-IsWindows) { $cmd = "cmd.exe /C $cmd" }
+    Invoke-Expression -Command $cmd
+}
+
 function Invoke-Cmd ($Cmd)
 {
     <#
@@ -31,9 +52,7 @@ function Invoke-Cmd ($Cmd)
         Use this PowerShell command to execute any dotnet CLI commands in order to ensure that they behave the same way in the case of an error across different environments (Windows, OSX and Linux).
     #>
 
-    Write-Host $Cmd -ForegroundColor DarkCyan
-    if (Test-IsWindows) { $Cmd = "cmd.exe /C $Cmd" }
-    Invoke-Expression -Command $Cmd
+    Invoke-UnsafeCmd $cmd
     if ($LastExitCode -ne 0) { Write-Error "An error occured when executing '$Cmd'."; return }
 }
 
@@ -52,13 +71,39 @@ function Remove-OldBuildArtifacts
         Remove-Item $_ -Recurse -Force }
 }
 
-function Test-CompareVersions ($projFile, [string]$gitTag)
+function Get-ProjectVersion ($projFile)
 {
-    Write-Host "Matching version against git tag..." -ForegroundColor Magenta
+    <#
+        .DESCRIPTION
+        Gets the <Version> value of a .NET Core *.csproj, *.fsproj or *.vbproj file.
+
+        .PARAMETER cmd
+        The relative or absolute path to the .NET Core project file.
+    #>
 
     [xml]$xml = Get-Content $projFile
-    [string]$version = $xml.Project.PropertyGroup.Version
+    [string] $version = $xml.Project.PropertyGroup.Version
+    $version
+}
 
+function Get-NuspecVersion ($nuspecFile)
+{
+    <#
+        .DESCRIPTION
+        Gets the <version> value of a .nuspec file.
+
+        .PARAMETER cmd
+        The relative or absolute path to the .nuspec file.
+    #>
+
+    [xml] $xml = Get-Content $nuspecFile
+    [string] $version = $xml.package.metadata.version
+    $version
+}
+
+function Test-CompareVersions ($version, [string]$gitTag)
+{
+    Write-Host "Matching version against git tag..." -ForegroundColor Magenta
     Write-Host "Project version: $version" -ForegroundColor Cyan
     Write-Host "Git tag version: $gitTag" -ForegroundColor Cyan
 
@@ -74,6 +119,7 @@ function Test-CompareVersions ($projFile, [string]$gitTag)
 
 function dotnet-info                      { Invoke-Cmd "dotnet --info" }
 function dotnet-version                   { Invoke-Cmd "dotnet --version" }
+function dotnet-restore ($project, $argv) { Invoke-Cmd "dotnet restore $project $argv" }
 function dotnet-build   ($project, $argv) { Invoke-Cmd "dotnet build $project $argv" }
 function dotnet-run     ($project, $argv) { Invoke-Cmd "dotnet run --project $project $argv" }
 function dotnet-pack    ($project, $argv) { Invoke-Cmd "dotnet pack $project $argv" }
@@ -167,6 +213,65 @@ function Write-DotnetCoreVersions
     Write-Host ".NET Core Runtime version:  $runtimeVersion" -ForegroundColor Cyan
 }
 
+function Get-DesiredSdk
+{
+    <#
+        .DESCRIPTION
+        Gets the desired .NET Core SDK version from the global.json file.
+    #>
+
+    Get-Content "global.json" `
+    | ConvertFrom-Json `
+    | ForEach-Object { $_.sdk.version.ToString() }
+}
+
+function Get-NetCoreSdkFromWeb ($version)
+{
+    <#
+        .DESCRIPTION
+        Downloads the desired .NET Core SDK version from the internet and saves it under a temporary file name which will be returned by the function.
+
+        .PARAMETER version
+        The SDK version which should be downloaded.
+    #>
+
+    $os = if (Test-IsWindows) { "windows" } else { "linux" }
+
+    $response = Invoke-WebRequest `
+                    -Uri "https://www.microsoft.com/net/download/thank-you/dotnet-sdk-$version-$os-x64-binaries" `
+                    -Method Get `
+                    -MaximumRedirection 0 `
+
+    $downloadLink =
+        $response.Links `
+            | Where-Object { $_.onclick -eq "recordManualDownload()" } `
+            | Select-Object -Expand href
+
+    $tempFile  = [System.IO.Path]::GetTempFileName()
+    $webClient = New-Object System.Net.WebClient
+    $webClient.DownloadFile($downloadLink, $tempFile)
+    return $tempFile
+}
+
+function Install-NetCoreSdk ($sdkZipPath)
+{
+    <#
+        .DESCRIPTION
+        Extracts the zip archive which contains the .NET Core SDK and installs it in the current working directory under .dotnetsdk.
+
+        .PARAMETER version
+        The zip archive which contains the .NET Core SDK.
+    #>
+
+
+    $env:DOTNET_INSTALL_DIR = "$pwd\.dotnetsdk"
+    New-Item $env:DOTNET_INSTALL_DIR -ItemType Directory -Force
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem;
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($sdkZipPath, $env:DOTNET_INSTALL_DIR)
+    $env:Path = "$env:DOTNET_INSTALL_DIR;$env:Path"
+}
+
 # ----------------------------------------------
 # AppVeyor functions
 # ----------------------------------------------
@@ -175,16 +280,43 @@ function Test-IsAppVeyorBuild                  { return ($env:APPVEYOR -eq $true
 function Test-IsAppVeyorBuildTriggeredByGitTag { return ($env:APPVEYOR_REPO_TAG -eq $true) }
 function Get-AppVeyorGitTag                    { return $env:APPVEYOR_REPO_TAG_NAME }
 
-function Update-AppVeyorBuildVersion ($projFile)
+function Update-AppVeyorBuildVersion ($version)
 {
     if (Test-IsAppVeyorBuild)
     {
         Write-Host "Updating AppVeyor build version..." -ForegroundColor Magenta
-
-        [xml]$xml     = Get-Content $projFile
-        $version      = $xml.Project.PropertyGroup.Version
         $buildVersion = "$version-$env:APPVEYOR_BUILD_NUMBER"
         Write-Host "Setting AppVeyor build version to $buildVersion."
         Update-AppveyorBuild -Version $buildVersion
     }
+}
+
+# ----------------------------------------------
+# Host Writing functions
+# ----------------------------------------------
+
+function Write-BuildHeader ($projectTitle)
+{
+    $header = "  $projectTitle  ";
+    $bar = ""
+    for ($i = 0; $i -lt $header.Length; $i++) { $bar += "-" }
+
+    Write-Host ""
+    Write-Host $bar -ForegroundColor DarkYellow
+    Write-Host $header -ForegroundColor DarkYellow
+    Write-Host $bar -ForegroundColor DarkYellow
+    Write-Host ""
+}
+
+function Write-SuccessFooter ($msg)
+{
+    $footer = "  $msg  ";
+    $bar = ""
+    for ($i = 0; $i -lt $footer.Length; $i++) { $bar += "-" }
+
+    Write-Host ""
+    Write-Host $bar -ForegroundColor Green
+    Write-Host $footer -ForegroundColor Green
+    Write-Host $bar -ForegroundColor Green
+    Write-Host ""
 }

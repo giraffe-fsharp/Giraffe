@@ -547,10 +547,11 @@ let ``tryBindQuery with complete data but baldy formated list items`` () =
 // HttpContext Model Binding Tests
 // ---------------------------------
 
-[<Fact>]
-let ``BindJsonAsync test`` () =
+[<Theory>]
+[<MemberData("PreserveCaseData", MemberType = typedefof<JsonSerializersData>)>]
+let ``BindJsonAsync test`` (settings) =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx None
+    mockJson ctx settings
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
@@ -769,10 +770,11 @@ let ``BindQueryString with nullable property test`` () =
         return!  testRoute "?NullableInt=&NullableDateTime=" { NullableInt = Nullable<_>(); NullableDateTime = Nullable<_>() }
     }
 
-[<Fact>]
-let ``BindModelAsync with JSON content returns correct result`` () =
+[<Theory>]
+[<MemberData("DefaultData", MemberType = typedefof<JsonSerializersData>)>]
+let ``BindModelAsync with JSON content returns correct result`` (settings) =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx None
+    mockJson ctx settings
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
@@ -807,10 +809,11 @@ let ``BindModelAsync with JSON content returns correct result`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-[<Fact>]
-let ``BindModelAsync with JSON content that uses custom serialization settings returns correct result`` () =
+[<Theory>]
+[<MemberData("PreserveCaseData", MemberType = typedefof<JsonSerializersData>)>]
+let ``BindModelAsync with JSON content that uses custom serialization settings returns correct result`` (settings) =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx (Some (JsonSerializerSettings()))
+    mockJson ctx settings
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
@@ -962,10 +965,11 @@ let ``BindModelAsync with culture aware form content returns correct result`` ()
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-[<Fact>]
-let ``BindModelAsync with JSON content and a specific charset returns correct result`` () =
+[<Theory>]
+[<MemberData("PreserveCaseData", MemberType = typedefof<JsonSerializersData>)>]
+let ``BindModelAsync with JSON content and a specific charset returns correct result`` (settings) =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx None
+    mockJson ctx settings
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =

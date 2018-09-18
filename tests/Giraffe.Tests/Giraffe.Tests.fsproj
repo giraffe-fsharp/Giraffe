@@ -3,11 +3,12 @@
   <PropertyGroup>
     <TargetFrameworks>net461;netcoreapp2.1</TargetFrameworks>
     <AssemblyName>Giraffe.Tests</AssemblyName>
-    <IsPackable>false</IsPackable>
+    <DebugType>portable</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="Helpers.fs" />
+    <Compile Include="GuidAndIdTests.fs" />
     <Compile Include="FormatExpressionTests.fs" />
     <Compile Include="HttpHandlerTests.fs" />
     <Compile Include="RoutingTests.fs" />

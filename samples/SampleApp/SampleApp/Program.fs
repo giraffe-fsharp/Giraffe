@@ -98,6 +98,22 @@ let fileUploadHandler2 =
                 |> text) next ctx
         }
 
+let cacheHandler1 : HttpHandler =
+    publicResponseCaching 30 None
+    >=> warbler (fun _ ->
+        text (Guid.NewGuid().ToString()))
+
+let cacheHandler2 : HttpHandler =
+    responseCaching
+        (Public (TimeSpan.FromSeconds (float 30)))
+        None
+        (Some [| "key1"; "key2" |])
+    >=> warbler (fun _ ->
+        text (Guid.NewGuid().ToString()))
+
+let cacheHandler3 : HttpHandler =
+    noResponseCaching >=> warbler (fun _ -> text (Guid.NewGuid().ToString()))
+
 let time() = System.DateTime.Now.ToString()
 
 [<CLIMutable>]
@@ -133,6 +149,9 @@ let webApp =
                 route  "/configured" >=> configuredHandler
                 route  "/upload"     >=> fileUploadHandler
                 route  "/upload2"    >=> fileUploadHandler2
+                route  "/cache/1"    >=> cacheHandler1
+                route  "/cache/2"    >=> cacheHandler2
+                route  "/cache/3"    >=> cacheHandler3
             ]
         route "/car"  >=> bindModel<Car> None json
         route "/car2" >=> tryBindQuery<Car> parsingErrorHandler None (validateModel xml)
@@ -153,10 +172,12 @@ let configureApp (app : IApplicationBuilder) =
     app.UseGiraffeErrorHandler(errorHandler)
        .UseStaticFiles()
        .UseAuthentication()
+       .UseResponseCaching()
        .UseGiraffe webApp
 
 let configureServices (services : IServiceCollection) =
     services
+        .AddResponseCaching()
         .AddGiraffe()
         .AddAuthentication(authScheme)
         .AddCookie(cookieAuth)   |> ignore

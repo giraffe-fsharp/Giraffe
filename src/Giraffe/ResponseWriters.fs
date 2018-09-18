@@ -3,6 +3,7 @@ module Giraffe.ResponseWriters
 
 open System.IO
 open System.Text
+open System.Buffers
 open Microsoft.AspNetCore.Http
 open Microsoft.Net.Http.Headers
 open FSharp.Control.Tasks.V2.ContextInsensitive
@@ -79,11 +80,36 @@ type HttpContext with
     ///
     /// Task of `Some HttpContext` after writing to the body of the response.
     ///
-    member this.WriteJsonAsync (dataObj : obj) =
+    member this.WriteJsonAsync<'T> (dataObj : 'T) =
         this.SetContentType "application/json"
         let serializer = this.GetJsonSerializer()
-        serializer.Serialize dataObj
-        |> this.WriteStringAsync
+        serializer.SerializeToBytes dataObj
+        |> this.WriteBytesAsync
+
+    /// **Description**
+    ///
+    /// Serializes an object to JSON and writes the output to the body of the HTTP response using chunked transfer encoding.
+    ///
+    /// It also sets the HTTP `Content-Type` header to `application/json` and sets the `Transfer-Encoding` header to `chunked`.
+    ///
+    /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type `IJsonSerializer`.
+    ///
+    /// **Parameters**
+    ///
+    /// - `dataObj`: The object to be send back to the client.
+    ///
+    /// **Output**
+    ///
+    /// Task of `Some HttpContext` after writing to the body of the response.
+    ///
+    member this.WriteJsonChunkedAsync<'T> (dataObj : 'T) =
+        task {
+            this.SetContentType "application/json"
+            this.SetHttpHeader "Transfer-Encoding" "chunked"
+            let serializer = this.GetJsonSerializer()
+            do! serializer.SerializeToStreamAsync dataObj this.Response.Body
+            return Some this
+        }
 
     /// **Description**
     ///
@@ -167,8 +193,15 @@ type HttpContext with
     /// Task of `Some HttpContext` after writing to the body of the response.
     ///
     member this.WriteHtmlViewAsync (htmlView : XmlNode) =
+        let sb = new StringBuilder()
+        ViewBuilder.buildHtmlDocument sb htmlView |> ignore
+        let chars = ArrayPool<char>.Shared.Rent(sb.Length)
+        sb.CopyTo(0, chars, 0, sb.Length)
+        let result = Encoding.UTF8.GetBytes(chars, 0, sb.Length)
+        ArrayPool<char>.Shared.Return chars
+
         this.SetContentType "text/html"
-        this.WriteStringAsync (renderHtmlDocument htmlView)
+        this.WriteBytesAsync result
 
 // ---------------------------
 // HttpHandler functions
@@ -238,9 +271,29 @@ let text (str : string) : HttpHandler =
 ///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
-let json (dataObj : obj) : HttpHandler =
+let json<'T> (dataObj : 'T) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteJsonAsync dataObj
+
+/// **Description**
+///
+/// Serializes an object to JSON and writes the output to the body of the HTTP response using chunked transfer encoding.
+///
+/// It also sets the HTTP `Content-Type` header to `application/json` and sets the `Transfer-Encoding` header to `chunked`.
+///
+/// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type `IJsonSerializer`.
+///
+/// **Parameters**
+///
+/// - `dataObj`: The object to be send back to the client.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
+let jsonChunked<'T> (dataObj : 'T) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        ctx.WriteJsonChunkedAsync dataObj
 
 /// **Description**
 ///

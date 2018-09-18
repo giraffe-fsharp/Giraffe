@@ -89,7 +89,7 @@ let ``route: GET "/FOO" returns 404 "Not found"`` () =
 [<Fact>]
 let ``GET "/JSON" returns "BaR"`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx None
+    mockJson ctx (Newtonsoft None)
     let app =
         GET >=> choose [
             route   "/"       >=> text "Hello World"
@@ -363,13 +363,38 @@ let ``routef: GET "/foo/%O/bar/%O" returns "Guid1: ..., Guid2: ..."`` () =
             route  "/foo"    >=> text "bar"
             routef "/foo/%s/bar" text
             routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
-            routef "/foo/%O/bar/%O" (fun (guid1: Guid, guid2: Guid) -> text (sprintf "Guid1: %O, Guid2: %O" guid1 guid2))
+            routef "/foo/%O/bar/%O" (fun (guid1 : Guid, guid2 : Guid) -> text (sprintf "Guid1: %O, Guid2: %O" guid1 guid2))
             setStatusCode 404 >=> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/4ec87f064d1e41b49342ab1aead1f99d/bar/2a6c9185-95d9-4d8c-80a6-575f99c2a716")) |> ignore
     ctx.Response.Body <- new MemoryStream()
     let expected = "Guid1: 4ec87f06-4d1e-41b4-9342-ab1aead1f99d, Guid2: 2a6c9185-95d9-4d8c-80a6-575f99c2a716"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``routef: GET "/foo/%u/bar/%u" returns "Id1: ..., Id2: ..."`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            route  "/"       >=> text "Hello World"
+            route  "/foo"    >=> text "bar"
+            routef "/foo/%s/bar" text
+            routef "/foo/%s/%i" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
+            routef "/foo/%u/bar/%u" (fun (id1 : uint64, id2 : uint64) -> text (sprintf "Id1: %u, Id2: %u" id1 id2))
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/r1iKapqh_s4/bar/5aLu720NzTs")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "Id1: 12635000945053400782, Id2: 16547050693006839099"
 
     task {
         let! result = app next ctx
@@ -386,7 +411,7 @@ let ``routef: GET "/foo/%O/bar/%O" returns "Guid1: ..., Guid2: ..."`` () =
 [<Fact>]
 let ``POST "/POsT/1" returns "1"`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx None
+    mockJson ctx (Newtonsoft None)
     let app =
         choose [
             GET >=> choose [
@@ -412,7 +437,7 @@ let ``POST "/POsT/1" returns "1"`` () =
 [<Fact>]
 let ``POST "/POsT/523" returns "523"`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx None
+    mockJson ctx (Newtonsoft None)
     let app =
         choose [
             GET >=> choose [

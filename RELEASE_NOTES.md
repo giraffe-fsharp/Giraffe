@@ -1,6 +1,44 @@
 Release Notes
 =============
 
+## 3.0.0
+
+#### Breaking changes
+
+- Changed the type `XmlNode` by removing the `RawText` and `EncodedText` union case and replaced both by a single `Text` union case. The HTML encoding (or not) is being done now when calling one of the two helper functions `rawText` and `encodedText`.
+
+    - This change - even though theoretically a breaking change - should not affect the vast majority of Giraffe users unless you were constructing your own `XmlNode` elements which were of type `RawText` or `EncodedText` (which is extremely unlikely given that there's not much room for more nodes of these two types).
+
+- Removed the `task {}` override in Giraffe which was forcing the `FSharp.Control.Tasks.V2.ContextInsensitive` version of the Task CE. This change has no effect on the behaviour of `task` computation expressions in Giraffe. In the context of an ASP.NET Core web application there is not difference between `ContextSensitive` and `ContextInsensitive` which is why the override has been removed. The only breaking change which could affect an existing Giraffe web application is that in some places you will need to explicitly `open FSharp.Control.Tasks.V2.ContextInsensitive` where before it might have been sufficient to only `open Giraffe`.
+
+- Changed the members of the `IJsonSerializer` interface to accommodate new (de-)serialize methods for chunked encoding transfer.
+
+    The new interface is the following:
+
+    ```fsharp
+    type IJsonSerializer =
+        abstract member SerializeToString<'T>      : 'T -> string
+        abstract member SerializeToBytes<'T>       : 'T -> byte array
+        abstract member SerializeToStreamAsync<'T> : 'T -> Stream -> Task
+
+        abstract member Deserialize<'T>      : string -> 'T
+        abstract member Deserialize<'T>      : byte[] -> 'T
+        abstract member DeserializeAsync<'T> : Stream -> Task<'T>
+    ```
+
+#### Improvements
+
+- Significant performance improvements in the `GiraffeViewEngine` by changing the underlying composition of views from simple string concatenation to using a `StringBuilder` object.
+
+#### New features
+
+- Support for short GUIDs and short IDs (aka YouTube IDs) [in route arguments](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#routef) and [query string parameters](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#short-guids-and-short-ids).
+- Enabled [SourceLink](https://github.com/dotnet/sourcelink/) support for Giraffe source code (thanks [Cameron Taggart](https://github.com/ctaggart))! For more information check out [Adding SourceLink to your .NET Core Library](https://carlos.mendible.com/2018/08/25/adding-sourcelink-to-your-net-core-library/).
+- Added a new JSON serializer called `Utf8JsonSerializer`. This type uses the [Utf8 JSON serializer library](https://github.com/neuecc/Utf8Json/), which is currently the fastest JSON serializer for .NET. `NewtonsoftJsonSerializer` is still the default JSON serializer in Giraffe (for stability and backwards compatibility), but `Utf8JsonSerializer` can be swapped in via [ASP.NET Core's dependency injection API](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#json). The new `Utf8JsonnSerializer` is significantly faster (especially when sending chunked responses) than `NewtonsoftJsonSerializer`.
+- Added a new `HttpContext` extension method for chunked JSON transfers: `WriteJsonChunkedAsync<'T> (dataObj : 'T)`. This new `HttpContext` method can write content directly to the HTTP response stream without buffering into a byte array first (see [Writing JSON](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#writing-json)).
+- Added a new `jsonChunked` http handler. This handler is the equivalent http handler version of the `WriteJsonChunkedAsync` extension method.
+- Added first class support for [ASP.NET Core's response caching](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#response-caching) feature.
+
 ## 2.0.1
 
 Changed the `task {}` CE to load from `FSharp.Control.Tasks.V2.ContextInsensitive` instead of `FSharp.Control.Tasks.ContextInsensitive`.
@@ -21,7 +59,7 @@ Changed the `task {}` CE to load from `FSharp.Control.Tasks.V2.ContextInsensitiv
 - Enabled `return!` for `opt { }` computation expressions.
 - Added `blockquote`, `_integrity` and `_scoped` to the `GiraffeViewEngine`.
 - Added attributes for mouse, keyboard, touch, drag & drop, focus, input and mouse wheel events to the `GiraffeViewEngine`.
-- Added new accessibility attributes to the `GriaffeViewEngine`. These can be used after opening the `Giraffe.GiraffeViewEngine.Accessibility` module.
+- Added new accessibility attributes to the `GiraffeViewEngine`. These can be used after opening the `Giraffe.GiraffeViewEngine.Accessibility` module.
 - Added a new `Successful.NO_CONTENT` http handler which can be used to return a HTTP 204 response.
 - Added more structured logging around the Giraffe middleware.
 

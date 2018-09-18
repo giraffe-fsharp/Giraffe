@@ -19,10 +19,21 @@ open NSubstitute
 open Newtonsoft.Json
 open Giraffe
 open Giraffe.Serialization
+open Utf8Json
 
 // ---------------------------------
 // Common functions
 // ---------------------------------
+
+let toTheoryData xs =
+    let data = new TheoryData<_>()
+    for x in xs do data.Add x
+    data
+
+let toTheoryData2 xs =
+    let data = new TheoryData<_,_>()
+    for (a,b) in xs do data.Add(a,b)
+    data
 
 let waitForDebuggerToAttach() =
     printfn "Waiting for debugger to attach."
@@ -97,13 +108,45 @@ let createHost (configureApp      : 'Tuple -> IApplicationBuilder -> unit)
         .Configure(Action<IApplicationBuilder> (configureApp args))
         .ConfigureServices(Action<IServiceCollection> configureServices)
 
-let mockJson (ctx : HttpContext) (settings : JsonSerializerSettings option) =
-    let jsonSettings =
-        defaultArg settings NewtonsoftJsonSerializer.DefaultSettings
-    ctx.RequestServices
-       .GetService(typeof<IJsonSerializer>)
-       .Returns(NewtonsoftJsonSerializer(jsonSettings))
-    |> ignore
+type MockJsonSettings =
+    | Newtonsoft of JsonSerializerSettings option
+    | Utf8       of IJsonFormatterResolver option
+
+let mockJson (ctx : HttpContext) (settings : MockJsonSettings) =
+
+    match settings with
+    | Newtonsoft settings ->
+        let jsonSettings =
+            defaultArg settings NewtonsoftJsonSerializer.DefaultSettings
+        ctx.RequestServices
+           .GetService(typeof<IJsonSerializer>)
+           .Returns(new NewtonsoftJsonSerializer(jsonSettings))
+        |> ignore
+
+    | Utf8 settings ->
+        let resolver =
+            defaultArg settings Utf8JsonSerializer.DefaultResolver
+        ctx.RequestServices
+           .GetService(typeof<IJsonSerializer>)
+           .Returns(new Utf8JsonSerializer(resolver))
+        |> ignore
+
+type JsonSerializersData =
+
+    static member DefaultSettings = [
+            Utf8 None;
+            Newtonsoft None
+        ]
+
+    static member DefaultData = JsonSerializersData.DefaultSettings |> toTheoryData
+
+    static member PreserveCaseSettings =
+        [
+            Utf8 (Some Utf8Json.Resolvers.StandardResolver.Default)
+            Newtonsoft (Some (new JsonSerializerSettings()))
+        ]
+
+    static member PreserveCaseData = JsonSerializersData.PreserveCaseSettings |> toTheoryData
 
 let mockXml (ctx : HttpContext) =
     ctx.RequestServices
