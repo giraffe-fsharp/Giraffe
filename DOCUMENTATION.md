@@ -33,6 +33,8 @@ An in depth functional reference to all of Giraffe's default features.
     - [Content Negotiation](#content-negotiation)
     - [Streaming](#streaming)
     - [Redirection](#redirection)
+    - [Response Caching](#response-caching)
+    - [Response Compression](#response-compression)
 - [Giraffe View Engine](#giraffe-view-engine)
     - [HTML Elements and Attributes](#html-elements-and-attributes)
     - [Text Content](#text-content)
@@ -2566,6 +2568,108 @@ let webApp =
 ```
 
 Please note that if the `permanent` flag is set to `true` then the Giraffe web application will send a `301` HTTP status code to browsers which will tell them that the redirection is permanent. This often leads to browsers cache the information and not hit the deprecated URL a second time any more. If this is not desired then please set `permanent` to `false` in order to guarantee that browsers will continue hitting the old URL before redirecting to the (temporary) new one.
+
+### Response Caching
+
+ASP.NET Core comes with a standard [Response Caching Middleware](https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-2.1) which works out of the box with Giraffe.
+
+If you are not already using one of the two ASP.NET Core meta packages (`Microsoft.AspNetCore.App` or `Microsoft.AspNetCore.All`) then you will have to add an additional reference to the [Microsoft.AspNetCore.ResponseCaching](https://www.nuget.org/packages/Microsoft.AspNetCore.ResponseCaching/) NuGet package.
+
+After adding the NuGet package you need to register the response caching middleware inside your application's startup code before registering Giraffe:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    services
+        .AddResponseCaching() // <-- Here the order doesn't matter
+        .AddGiraffe()         // This is just registering dependencies
+    |> ignore
+
+let configureApp (app : IApplicationBuilder) =
+    app.UseGiraffeErrorHandler(errorHandler)
+       .UseStaticFiles()     // Optional if you use static files
+       .UseAuthentication()  // Optional if you use authentication
+       .UseResponseCaching() // <-- Before UseGiraffe webApp
+       .UseGiraffe webApp
+```
+
+After setting up the [ASP.NET Core response caching middleware](https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-2.1#configuration) you can use Giraffe's response caching http handlers to add response caching to your routes:
+
+```fsharp
+// A test handler which generates a new GUID on every request
+let generateGuidHandler : HttpHandler =
+    warbler (fun _ -> text (Guid.NewGuid().ToString()))
+
+let webApp =
+    GET >=> choose [
+        route "/route1" >=> publicResponseCaching 30 None >=> generateGuidHandler
+        route "/route2" >=> noResponseCaching >=> generateGuidHandler
+    ]
+```
+
+Requests to `/route1` can be cached for up to 30 seconds whilst requests to `/route2` have response caching completely disabled.
+
+*Note: if you test the above code with [Postman](https://www.getpostman.com/) then make sure you [disable the No-Cache feature](https://www.getpostman.com/docs/v6/postman/launching_postman/settings) in Postman in order to test the correct caching behaviour.*
+
+Giraffe offers in total 4 http handlers which can be used to configure response caching for an endpoint.
+
+In the above example we used the `noResponseCaching` http handler to completely disable response caching on the client and on any proxy server. The `noResponseCaching` http handler will send the following HTTP headers in the response:
+
+```
+Cache-Control: no-store, no-cache
+Pragma: no-cache
+Expires: -1
+```
+
+The `publicResponseCaching` or `privateResponseCaching` http handlers will enable response caching on the client and/or on proxy servers. The
+`publicResponseCaching` http handler will set the `Cache-Control` directive to `public`, which means that not only the client is allowed to cache a response for the given cache duration, but also any intermediary proxy server as well as the ASP.NET Core middleware. This is useful for HTTP GET/HEAD endpoints which do not hold any user specific data, authentication data or any cookies and where the response data doesn't change frequently.
+
+The `privateResponseCaching` http handler sets the `Cache-Control` directive to `private` which means that only the end client is allowed to store the response for the given cache duration. Proxy servers and the ASP.NET Core response caching middleware must not cache the response.
+
+Both http handlers require the cache duration in seconds and an optional `vary` parameter:
+
+```fsharp
+// Cache for 10 seconds without any vary headers
+publicResponseCaching 10 None
+
+// Cache for 30 seconds with Accept and Accept-Encoding as vary headers
+publicResponseCaching 30 (Some "Accept, Accept-Encoding")
+```
+
+The `vary` parameter specifies which HTTP request headers must be respected to vary the cached response. For example if an endpoint returns a different response (`Content-Type`) based on the client's `Accept` header (= [content negotiation](#content-negotiation)) then the `Accept` header must also be considered when returning a response from the cache. The same applies if the web server has response compression enabled. If a response varies based on the client's accepted compression algorithm then the cache must also respect the client's `Accept-Encoding` HTTP header when serving a response from the cache.
+
+#### VaryByQueryKeys
+
+The ASP.NET Core response caching middleware offers one more additional feature which is not part of the response's HTTP headers. By default, if a route is cachable then the middleware will try to returnn a cached response even if the query parameters were different.
+
+For example if a request to `/foo/bar` has been cached, then the cached version will also be returned if a request is made to `/foo/bar?query1=a` or `/foo/bar?query1=a&query2=b`.
+
+Sometimes this is not desired and the `VaryByQueryKeys` feature lets the [middleware vary its cached responses based on a request's query keys](https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-2.1#varybyquerykeys).
+
+The generic `responseCaching` http handler is the most basic response caching handler which can be used to configure custom response caching handlers as well as make use of the `VaryByQueryKeys` feature:
+
+```fsharp
+responseCaching
+    (Public (TimeSpan.FromSeconds (float 5)))
+    (Some "Accept, Accept-Encoding")
+    (Some [| "query1"; "query2" |])
+```
+
+The first parameter is of type `CacheDirective` which is defines as following:
+
+```fsharp
+type CacheDirective =
+    | NoCache
+    | Public  of TimeSpan
+    | Private of TimeSpan
+```
+
+The second parameter is an `string option` which defines the `vary` parameter.
+
+The third and last parameter is a `string list option` which defines an optional list of query parameter values which must be used to vary a cached response by the ASP.NET Core response caching middleware. Please be aware that this feature only applies to the ASP.NET Core response caching middleware and will not be respected by any intermediate proxy servers.
+
+### Response Compression
+
+ASP.NET Core has its own [Response Compression Middleware](https://docs.microsoft.com/en-us/aspnet/core/performance/response-compression?view=aspnetcore-2.1&tabs=aspnetcore2x) which works out of the box with Giraffe. There's no additional functionality or http handlers required in order to make it work with Giraffe web applications.
 
 ## Giraffe View Engine
 

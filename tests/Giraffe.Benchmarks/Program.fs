@@ -66,7 +66,6 @@ type HtmlUtf8Benchmark() =
         ArrayPool<char>.Shared.Return(chars)
         stringBuilder.Clear()
 
-
 [<EntryPoint>]
 let main args =
     let asm = typeof<HtmlUtf8Benchmark>.Assembly

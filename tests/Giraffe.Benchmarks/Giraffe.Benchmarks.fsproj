@@ -20,6 +20,4 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Giraffe\Giraffe.fsproj" />
   </ItemGroup>
-
-
 </Project>

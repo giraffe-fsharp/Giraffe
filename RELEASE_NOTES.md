@@ -37,6 +37,7 @@ Release Notes
 - Added a new JSON serializer called `Utf8JsonSerializer`. This type uses the [Utf8 JSON serializer library](https://github.com/neuecc/Utf8Json/), which is currently the fastest JSON serializer for .NET. `NewtonsoftJsonSerializer` is still the default JSON serializer in Giraffe (for stability and backwards compatibility), but `Utf8JsonSerializer` can be swapped in via [ASP.NET Core's dependency injection API](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#json). The new `Utf8JsonnSerializer` is significantly faster (especially when sending chunked responses) than `NewtonsoftJsonSerializer`.
 - Added a new `HttpContext` extension method for chunked JSON transfers: `WriteJsonChunkedAsync<'T> (dataObj : 'T)`. This new `HttpContext` method can write content directly to the HTTP response stream without buffering into a byte array first (see [Writing JSON](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#writing-json)).
 - Added a new `jsonChunked` http handler. This handler is the equivalent http handler version of the `WriteJsonChunkedAsync` extension method.
+- Added first class support for [ASP.NET Core's response caching](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#response-caching) feature.
 
 ## 2.0.1
 
@@ -58,7 +59,7 @@ Changed the `task {}` CE to load from `FSharp.Control.Tasks.V2.ContextInsensitiv
 - Enabled `return!` for `opt { }` computation expressions.
 - Added `blockquote`, `_integrity` and `_scoped` to the `GiraffeViewEngine`.
 - Added attributes for mouse, keyboard, touch, drag & drop, focus, input and mouse wheel events to the `GiraffeViewEngine`.
-- Added new accessibility attributes to the `GriaffeViewEngine`. These can be used after opening the `Giraffe.GiraffeViewEngine.Accessibility` module.
+- Added new accessibility attributes to the `GiraffeViewEngine`. These can be used after opening the `Giraffe.GiraffeViewEngine.Accessibility` module.
 - Added a new `Successful.NO_CONTENT` http handler which can be used to return a HTTP 204 response.
 - Added more structured logging around the Giraffe middleware.
 
