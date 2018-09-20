@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 3.0.1
+
+#### Bug fixes
+
+- Fixed the `Successful.NO_CONTENT` http handler, which threw an exception when calling from ASP.NET Core 2.1.
+
 ## 3.0.0
 
 #### Breaking changes
