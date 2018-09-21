@@ -2083,22 +2083,35 @@ let webApp =
 
 ### Conditional Requests
 
-Conditional HTTP headers (e.g. `If-Match`, `If-Modified-Since`) are a common way to improve performance (through web caching), avoid the [lost update problem](https://www.w3.org/1999/04/Editing/) or for [optimistic concurrency control](https://en.wikipedia.org/wiki/Optimistic_concurrency_control) when sending or requesting a resource from a web server.
+Conditional HTTP headers (e.g. `If-Match`, `If-Modified-Since`, etc.) are a common pattern to improve performance (web caching), to combat the [lost update problem](https://www.w3.org/1999/04/Editing/) or to perform [optimistic concurrency control](https://en.wikipedia.org/wiki/Optimistic_concurrency_control) when a client requests a resource from a web server.
 
-Giraffe exposes a `HttpContext` extension method called `ValidatePreconditions (eTag) (lastModified)` which can be used from within a `HttpHandler` function to validate conditional HTTP headers. The `ValidatePreconditions` method takes two optional parameters - an `eTag` value and a `lastMofified` date time, which will be used to check against the conditional HTTP headers.
+Giraffe offers the `validatePreconditions` http handler which can be used to run HTTP pre-validation checks against a given `ETag` and/or `Last-Modified` value of an incoming HTTP request:
+
+```fsharp
+let someHandler (eTag         : string)
+                (lastModified : DateTimeOffset)
+                (content      : string) =
+    let eTagHeader = Some (EntityTagHeaderValue.FromString true eTag)
+    validatePreconditions eTagHeader (Some lastModified)
+    >=> setBodyFromString content
+```
+
+The `validatePreconditions` handler takes in two optional parameters - an `eTag` and a `lastMofified` date time value - which will be used to validate a conditional HTTP request. If all conditions can be met, or if no conditions have been submitted, then the `next` http handler (of the Giraffe pipeline) will get invoked. Otherwise, if one of the pre-conditions fails or if the resource hasn't changed since the last check, then a `412 Precondition Failed` or a `304 Not Modified` response will get returned.
 
 The [ETag (Entity Tag)](https://tools.ietf.org/html/rfc7232#section-2.3) value is an opaque identifier assigned by a web server to a specific version of a resource found at a URL. The [Last-Modified](https://tools.ietf.org/html/rfc7232#section-2.2) value provides a timestamp indicating the date and time at which the origin server believes the selected representation was last modified.
 
-Giraffe's `ValidatePreconditions` method will validate the following conditional HTTP headers:
+Giraffe's `validatePreconditions` http handler validates the following conditional HTTP headers:
 
 - `If-Match`
 - `If-None-Match`
 - `If-Modified-Since`
 - `If-Unmodified-Since`
 
-The `If-Range` HTTP header will not be validated as part of `ValidatePreconditions`. It will be separately validated during Giraffe's streaming functions and only if range processing is enabled (see [Streaming](#streaming)).
+The `If-Range` HTTP header will not get validated as part the `validatePreconditions` http handler, because it is a streaming specific check which gets handled by Giraffe's [Streaming](#streaming) functionality.
 
-The output of `ValidatePreconditions` returns a `Precondition` union type, which can have one of the following cases:
+Alternatively Giraffe exposes the `HttpContext` extension method `ValidatePreconditions (eTag) (lastModified)` which can be used to create a custom conditional http handler. The `ValidatePreconditions` method takes the same two optional parameters and returns a result of type `Precondition`.
+
+The `Precondition` union type contains the following cases:
 
 | Case | Description and Recommended Action |
 | ---- | ---------------------------------- |
@@ -2107,9 +2120,11 @@ The output of `ValidatePreconditions` returns a `Precondition` union type, which
 | `ResourceNotModified` | The resource hasn't changed since the last visit. The server can skip processing this request and return a `304` status code back to the client (you can use the `HttpContext.NotModifiedResponse()` method for that purpose). |
 | `AllConditionsMet` | All pre-conditions were satisfied. The server should continue processing the request as normal. |
 
-Giraffe will make sure that all conditional HTTP headers will get correctly validated according to the HTTP spec, taking into account whether it was a `GET`, `HEAD` or other HTTP request and the correct precedence in which each HTTP header must be validated.
+The `validatePreconditions` http handler as well as the `ValidatePreconditions` extension method will not only validate all conditional HTTP headers, but also set the required `ETag` and/or `Last-Modified` HTTP response headers according to the HTTP spec.
 
-It is up to the individual `HttpHandler` implementation to decide how to proceed after validation, but it is recommended to take the recommended action as listed above:
+Both functions follow latest HTTP guidelines and validate all conditional headers in the correct precedence as defined in [RFC 2616](https://tools.ietf.org/html/rfc2616).
+
+Example of `HttpContext.ValidatePreconditions`:
 
 ```fsharp
 // Pass an optional eTag and lastModified timestamp into the handler, because generating an eTag might require to load the entire resource into memory and therefore this is not something which should be done on every request.
@@ -2130,6 +2145,8 @@ let webApp =
         route "/foo" >=> someHttpHandler
     ]
 ```
+
+
 
 ### Response Writing
 

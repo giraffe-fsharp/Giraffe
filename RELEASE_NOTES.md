@@ -1,7 +1,18 @@
 Release Notes
 =============
 
-## 3.0.1
+## 3.1.0
+
+#### New features
+
+- Added a new http handler called `validatePreconditions` to help with conditional requests:
+
+    ```fsharp
+    let someHandler (eTag : string) (content : string) =
+        let eTagHeader = Some (EntityTagHeaderValue.FromString true eTag)
+        validatePreconditions eTagHeader None
+        >=> setBodyFromString content
+    ```
 
 #### Bug fixes
 
