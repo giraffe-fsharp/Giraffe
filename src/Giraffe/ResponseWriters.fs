@@ -1,6 +1,7 @@
 [<AutoOpen>]
 module Giraffe.ResponseWriters
 
+open System
 open System.IO
 open System.Text
 open System.Buffers
@@ -9,16 +10,47 @@ open Microsoft.Net.Http.Headers
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe.GiraffeViewEngine
 
+
 // ---------------------------
 // Helper functions
 // ---------------------------
 
+let private DefaultCapacity = 1386
+let private MaxBuilderSize  = DefaultCapacity * 3
+
+type StringBuilderCache =
+
+    [<ThreadStatic>]
+    [<DefaultValue>]
+    static val mutable private instance : StringBuilder
+
+    static member Get () = StringBuilderCache.Get(DefaultCapacity)
+    static member Get (capacity : int) =
+
+        if capacity <= MaxBuilderSize then
+            let sb = StringBuilderCache.instance
+            let capacity = max capacity DefaultCapacity
+
+            if sb <> null && capacity <= sb.Capacity then
+                StringBuilderCache.instance <- null;
+                sb.Clear()
+            else
+                new StringBuilder(capacity)
+        else
+            new StringBuilder(capacity)
+
+    static member Release (sb: StringBuilder) =
+        if sb.Capacity <= MaxBuilderSize then
+            StringBuilderCache.instance <- sb
+
+
 let inline private nodeToUtf8HtmlDoc (node : XmlNode) : byte[] =
-    let sb = new StringBuilder()
-    ViewBuilder.buildHtmlDocument sb node |> ignore
-    let chars = ArrayPool<char>.Shared.Rent(sb.Length)
+    let sb = StringBuilderCache.Get()
+    ViewBuilder.buildHtmlDocument sb node
+    let chars = ArrayPool<char>.Shared.Rent sb.Length
     sb.CopyTo(0, chars, 0, sb.Length)
     let result = Encoding.UTF8.GetBytes(chars, 0, sb.Length)
+    StringBuilderCache.Release sb
     ArrayPool<char>.Shared.Return chars
     result
 
