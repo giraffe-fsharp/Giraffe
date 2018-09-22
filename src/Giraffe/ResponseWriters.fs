@@ -9,7 +9,11 @@ open Microsoft.Net.Http.Headers
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe.GiraffeViewEngine
 
-let inline private nodeToUtf8HtmlDoc (node:XmlNode) : byte[] = 
+// ---------------------------
+// Helper functions
+// ---------------------------
+
+let inline private nodeToUtf8HtmlDoc (node : XmlNode) : byte[] =
     let sb = new StringBuilder()
     ViewBuilder.buildHtmlDocument sb node |> ignore
     let chars = ArrayPool<char>.Shared.Rent(sb.Length)
@@ -239,7 +243,7 @@ let setBody (bytes : byte array) : HttpHandler =
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let setBodyFromString (str : string) : HttpHandler =
-    let bytes = Encoding.UTF8.GetBytes(str)
+    let bytes = Encoding.UTF8.GetBytes str
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteBytesAsync bytes
 

@@ -14,6 +14,10 @@ Release Notes
         >=> setBodyFromString content
     ```
 
+#### Improvements
+
+- More minor performance improvements for Giraffe's default response writers.
+
 #### Bug fixes
 
 - Fixed the `Successful.NO_CONTENT` http handler, which threw an exception when calling from ASP.NET Core 2.1.
