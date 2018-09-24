@@ -10,47 +10,43 @@ open Microsoft.Net.Http.Headers
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe.GiraffeViewEngine
 
-
 // ---------------------------
 // Helper functions
 // ---------------------------
 
-let private DefaultCapacity = 1386
-let private MaxBuilderSize  = DefaultCapacity * 3
+let private MinimumCapacity = 5000
+let private MaximumCapacity = 100000
+let private MaximumLifetime = TimeSpan.FromMinutes 10.0
 
-type StringBuilderCache =
+type private StringBuilderPool =
 
-    [<ThreadStatic>]
-    [<DefaultValue>]
+    [<DefaultValue; ThreadStatic>]
     static val mutable private instance : StringBuilder
 
-    static member Get () = StringBuilderCache.Get(DefaultCapacity)
-    static member Get (capacity : int) =
+    [<DefaultValue; ThreadStatic>]
+    static val mutable private created : DateTimeOffset
 
-        if capacity <= MaxBuilderSize then
-            let sb = StringBuilderCache.instance
-            let capacity = max capacity DefaultCapacity
+    static member Rent () =
+        let lifetime = DateTimeOffset.Now - StringBuilderPool.created
+        let expired  = lifetime > MaximumLifetime
+        let sb       = StringBuilderPool.instance
+        if not expired && sb <> null then
+            StringBuilderPool.instance <- null
+            sb.Clear()
+        else new StringBuilder(MinimumCapacity)
 
-            if sb <> null && capacity <= sb.Capacity then
-                StringBuilderCache.instance <- null;
-                sb.Clear()
-            else
-                new StringBuilder(capacity)
-        else
-            new StringBuilder(capacity)
-
-    static member Release (sb: StringBuilder) =
-        if sb.Capacity <= MaxBuilderSize then
-            StringBuilderCache.instance <- sb
-
+    static member Return (sb: StringBuilder) =
+        if sb.Capacity <= MaximumCapacity then
+            StringBuilderPool.instance <- sb
+            StringBuilderPool.created  <- DateTimeOffset.Now
 
 let inline private nodeToUtf8HtmlDoc (node : XmlNode) : byte[] =
-    let sb = StringBuilderCache.Get()
+    let sb = StringBuilderPool.Rent()
     ViewBuilder.buildHtmlDocument sb node
     let chars = ArrayPool<char>.Shared.Rent sb.Length
     sb.CopyTo(0, chars, 0, sb.Length)
     let result = Encoding.UTF8.GetBytes(chars, 0, sb.Length)
-    StringBuilderCache.Release sb
+    StringBuilderPool.Return sb
     ArrayPool<char>.Shared.Return chars
     result
 
