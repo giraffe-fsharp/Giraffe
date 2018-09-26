@@ -267,8 +267,7 @@ function Install-NetCoreSdk ($sdkZipPath)
     $env:DOTNET_INSTALL_DIR = "$pwd\.dotnetsdk"
     New-Item $env:DOTNET_INSTALL_DIR -ItemType Directory -Force
 
-    Add-Type -AssemblyName System.IO.Compression.FileSystem;
-    [System.IO.Compression.ZipFile]::ExtractToDirectory($sdkZipPath, $env:DOTNET_INSTALL_DIR)
+    Expand-Archive -Path $sdkZipPath -DestinationPath $env:DOTNET_INSTALL_DIR
     $env:Path = "$env:DOTNET_INSTALL_DIR;$env:Path"
 }
 
