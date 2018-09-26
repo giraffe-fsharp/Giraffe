@@ -15,10 +15,12 @@ open Giraffe.GiraffeViewEngine
 // ---------------------------
 
 let private MinimumCapacity = 5000
-let private MaximumCapacity = 100000
+let private MaximumCapacity = 40000
 let private MaximumLifetime = TimeSpan.FromMinutes 10.0
 
-type private StringBuilderPool =
+type public StringBuilderPool =
+    [<DefaultValue; ThreadStatic>]
+    static val mutable private alwaysCreateNew : bool
 
     [<DefaultValue; ThreadStatic>]
     static val mutable private instance : StringBuilder
@@ -26,14 +28,21 @@ type private StringBuilderPool =
     [<DefaultValue; ThreadStatic>]
     static val mutable private created : DateTimeOffset
 
+    static member AlwaysCreateNew
+        with get ()   = StringBuilderPool.alwaysCreateNew
+        and  set flag = StringBuilderPool.alwaysCreateNew <- flag
+
     static member Rent () =
-        let lifetime = DateTimeOffset.Now - StringBuilderPool.created
-        let expired  = lifetime > MaximumLifetime
-        let sb       = StringBuilderPool.instance
-        if not expired && sb <> null then
-            StringBuilderPool.instance <- null
-            sb.Clear()
-        else new StringBuilder(MinimumCapacity)
+        match StringBuilderPool.AlwaysCreateNew with
+        | true  -> new StringBuilder(MinimumCapacity)
+        | false ->
+            let lifetime = DateTimeOffset.Now - StringBuilderPool.created
+            let expired  = lifetime > MaximumLifetime
+            let sb       = StringBuilderPool.instance
+            if not expired && sb <> null then
+                StringBuilderPool.instance <- null
+                sb.Clear()
+            else new StringBuilder(MinimumCapacity)
 
     static member Return (sb: StringBuilder) =
         if sb.Capacity <= MaximumCapacity then
