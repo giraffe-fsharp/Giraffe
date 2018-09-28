@@ -1,6 +1,7 @@
 [<AutoOpen>]
 module Giraffe.ResponseWriters
 
+open System
 open System.IO
 open System.Text
 open System.Buffers
@@ -8,6 +9,55 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Net.Http.Headers
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe.GiraffeViewEngine
+
+// ---------------------------
+// Helper functions
+// ---------------------------
+
+let private MinimumCapacity = 5000
+let private MaximumCapacity = 40000
+let private MaximumLifetime = TimeSpan.FromMinutes 10.0
+
+type public StringBuilderPool =
+    [<DefaultValue(true); ThreadStatic>]
+    static val mutable private isEnabled : bool
+
+    [<DefaultValue; ThreadStatic>]
+    static val mutable private instance : StringBuilder
+
+    [<DefaultValue; ThreadStatic>]
+    static val mutable private created : DateTimeOffset
+
+    static member public IsEnabled
+        with get ()   = StringBuilderPool.isEnabled
+        and  set flag = StringBuilderPool.isEnabled <- flag
+
+    static member internal Rent () =
+        match StringBuilderPool.IsEnabled with
+        | false -> new StringBuilder(MinimumCapacity)
+        | true  ->
+            let lifetime = DateTimeOffset.Now - StringBuilderPool.created
+            let expired  = lifetime > MaximumLifetime
+            let sb       = StringBuilderPool.instance
+            if not expired && sb <> null then
+                StringBuilderPool.instance <- null
+                sb.Clear()
+            else new StringBuilder(MinimumCapacity)
+
+    static member internal Release (sb : StringBuilder) =
+        if sb.Capacity <= MaximumCapacity then
+            StringBuilderPool.instance <- sb
+            StringBuilderPool.created  <- DateTimeOffset.Now
+
+let inline private nodeToUtf8HtmlDoc (node : XmlNode) : byte[] =
+    let sb = StringBuilderPool.Rent()
+    ViewBuilder.buildHtmlDocument sb node
+    let chars = ArrayPool<char>.Shared.Rent sb.Length
+    sb.CopyTo(0, chars, 0, sb.Length)
+    let result = Encoding.UTF8.GetBytes(chars, 0, sb.Length)
+    StringBuilderPool.Release sb
+    ArrayPool<char>.Shared.Return chars
+    result
 
 // ---------------------------
 // HttpContext extensions
@@ -193,15 +243,9 @@ type HttpContext with
     /// Task of `Some HttpContext` after writing to the body of the response.
     ///
     member this.WriteHtmlViewAsync (htmlView : XmlNode) =
-        let sb = new StringBuilder()
-        ViewBuilder.buildHtmlDocument sb htmlView |> ignore
-        let chars = ArrayPool<char>.Shared.Rent(sb.Length)
-        sb.CopyTo(0, chars, 0, sb.Length)
-        let result = Encoding.UTF8.GetBytes(chars, 0, sb.Length)
-        ArrayPool<char>.Shared.Return chars
-
+        let bytes = nodeToUtf8HtmlDoc htmlView
         this.SetContentType "text/html"
-        this.WriteBytesAsync result
+        this.WriteBytesAsync bytes
 
 // ---------------------------
 // HttpHandler functions
@@ -236,8 +280,9 @@ let setBody (bytes : byte array) : HttpHandler =
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let setBodyFromString (str : string) : HttpHandler =
+    let bytes = Encoding.UTF8.GetBytes str
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        ctx.WriteStringAsync str
+        ctx.WriteBytesAsync bytes
 
 /// **Description**
 ///
@@ -252,8 +297,10 @@ let setBodyFromString (str : string) : HttpHandler =
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let text (str : string) : HttpHandler =
+    let bytes = Encoding.UTF8.GetBytes str
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        ctx.WriteTextAsync str
+        ctx.SetContentType "text/plain"
+        ctx.WriteBytesAsync bytes
 
 /// **Description**
 ///
@@ -348,8 +395,10 @@ let htmlFile (filePath : string) : HttpHandler =
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let htmlString (html : string) : HttpHandler =
+    let bytes = Encoding.UTF8.GetBytes html
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        ctx.WriteHtmlStringAsync html
+        ctx.SetContentType "text/html"
+        ctx.WriteBytesAsync bytes
 
 /// **Description**
 ///
@@ -366,5 +415,7 @@ let htmlString (html : string) : HttpHandler =
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let htmlView (htmlView : XmlNode) : HttpHandler =
+    let bytes = nodeToUtf8HtmlDoc htmlView
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        ctx.WriteHtmlViewAsync htmlView
+        ctx.SetContentType "text/html"
+        ctx.WriteBytesAsync bytes

@@ -1,6 +1,34 @@
 Release Notes
 =============
 
+## 3.1.0
+
+#### New features
+
+- Added a new http handler called `validatePreconditions` to help with conditional requests:
+
+    ```fsharp
+    let someHandler (eTag : string) (content : string) =
+        let eTagHeader = Some (EntityTagHeaderValue.FromString true eTag)
+        validatePreconditions eTagHeader None
+        >=> setBodyFromString content
+    ```
+
+- Made previously internal functionality for sub routing available through the `SubRouting` module:
+    - `SubRouting.getSavedPartialPath`: Returns the currently partially resolved path.
+    - `SubRouting.getNextPartOfPath`: Returns the yet unresolved part of the path.
+    - `SubRouting.routeWithPartialPath`: Invokes a route handler as part of a sub route.
+
+#### Improvements
+
+- Performance improvements for Giraffe's default response writers.
+- Performance improvements of the `htmlView` handler.
+- Upgraded to the latest `TaskBuilder.fs` NuGet package which also has the SourceLink integration now.
+
+#### Bug fixes
+
+- Fixed the `Successful.NO_CONTENT` http handler, which threw an exception when calling from ASP.NET Core 2.1.
+
 ## 3.0.0
 
 #### Breaking changes
@@ -38,6 +66,10 @@ Release Notes
 - Added a new `HttpContext` extension method for chunked JSON transfers: `WriteJsonChunkedAsync<'T> (dataObj : 'T)`. This new `HttpContext` method can write content directly to the HTTP response stream without buffering into a byte array first (see [Writing JSON](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#writing-json)).
 - Added a new `jsonChunked` http handler. This handler is the equivalent http handler version of the `WriteJsonChunkedAsync` extension method.
 - Added first class support for [ASP.NET Core's response caching](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#response-caching) feature.
+
+#### Special thanks
+
+Special thanks to [Dmitry Kushnir](https://github.com/dv00d00) for doing the bulk work of all the perf improvements in this release as well as adding Giraffe to the [TechEmpower Webframework Benchmarks](https://techempower.com/benchmarks/)!
 
 ## 2.0.1
 

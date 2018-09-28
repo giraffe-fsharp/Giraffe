@@ -3,10 +3,12 @@ module Giraffe.Preconditional
 
 open System
 open System.Linq
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Headers
 open Microsoft.Extensions.Primitives
 open Microsoft.Net.Http.Headers
+open FSharp.Control.Tasks.V2.ContextInsensitive
 
 type Precondition =
     | NoConditionsSpecified
@@ -162,3 +164,38 @@ type HttpContext with
     member this.PreconditionFailedResponse() =
         this.SetStatusCode StatusCodes.Status412PreconditionFailed
         Some this
+
+// ---------------------------
+// HttpHandler functions
+// ---------------------------
+
+/// **Description**
+///
+/// Validates the following conditional HTTP headers of the request:
+///
+/// - `If-Match`
+/// - `If-None-Match`
+/// - `If-Modified-Since`
+/// - `If-Unmodified-Since`
+///
+/// If the conditions are met (or non existent) then it will invoke the `next` http handler in the pipeline otherwise it will return a `304 Not Modified` or `412 Precondition Failed` response.
+///
+/// **Parameters**
+///
+/// - `eTag`: Optional ETag. You can use the static `EntityTagHeaderValue.FromString` helper method to generate a valid `EntityTagHeaderValue` object.
+/// - `lastModified`: Optional `DateTimeOffset` object denoting the last modified date.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
+let validatePreconditions (eTag           : EntityTagHeaderValue option)
+                          (lastModified   : DateTimeOffset option) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            match ctx.ValidatePreconditions eTag lastModified with
+            | ConditionFailed       -> return ctx.PreconditionFailedResponse()
+            | ResourceNotModified   -> return ctx.NotModifiedResponse()
+            | AllConditionsMet
+            | NoConditionsSpecified -> return! next ctx
+        }

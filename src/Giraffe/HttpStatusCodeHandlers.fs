@@ -23,7 +23,7 @@ module Successful =
     let accepted x  = setStatusCode 202 >=> x
     let ACCEPTED x  = accepted (negotiate x)
 
-    let NO_CONTENT : HttpHandler = setStatusCode 204 >=> setBody [||]
+    let NO_CONTENT : HttpHandler = setStatusCode 204
 
 /// **Description**
 ///

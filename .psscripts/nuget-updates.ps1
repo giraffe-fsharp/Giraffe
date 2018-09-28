@@ -36,7 +36,7 @@ Write-Host " Scanning all projects for NuGet package upgrades "
 Write-Host "--------------------------------------------------"
 Write-Host ""
 
-$projects = Get-ChildItem "..\**\*.*proj" -Recurse | % { $_.FullName }
+$projects = Get-ChildItem "$PSScriptRoot\..\**\*.*proj" -Recurse | % { $_.FullName }
 
 foreach ($project in $projects)
 {
