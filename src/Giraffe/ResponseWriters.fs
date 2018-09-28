@@ -1,6 +1,7 @@
 [<AutoOpen>]
 module Giraffe.ResponseWriters
 
+open System
 open System.IO
 open System.Text
 open System.Buffers
@@ -13,12 +14,48 @@ open Giraffe.GiraffeViewEngine
 // Helper functions
 // ---------------------------
 
+let private MinimumCapacity = 5000
+let private MaximumCapacity = 40000
+let private MaximumLifetime = TimeSpan.FromMinutes 10.0
+
+type public StringBuilderPool =
+    [<DefaultValue(true); ThreadStatic>]
+    static val mutable private isEnabled : bool
+
+    [<DefaultValue; ThreadStatic>]
+    static val mutable private instance : StringBuilder
+
+    [<DefaultValue; ThreadStatic>]
+    static val mutable private created : DateTimeOffset
+
+    static member public IsEnabled
+        with get ()   = StringBuilderPool.isEnabled
+        and  set flag = StringBuilderPool.isEnabled <- flag
+
+    static member internal Rent () =
+        match StringBuilderPool.IsEnabled with
+        | false -> new StringBuilder(MinimumCapacity)
+        | true  ->
+            let lifetime = DateTimeOffset.Now - StringBuilderPool.created
+            let expired  = lifetime > MaximumLifetime
+            let sb       = StringBuilderPool.instance
+            if not expired && sb <> null then
+                StringBuilderPool.instance <- null
+                sb.Clear()
+            else new StringBuilder(MinimumCapacity)
+
+    static member internal Release (sb : StringBuilder) =
+        if sb.Capacity <= MaximumCapacity then
+            StringBuilderPool.instance <- sb
+            StringBuilderPool.created  <- DateTimeOffset.Now
+
 let inline private nodeToUtf8HtmlDoc (node : XmlNode) : byte[] =
-    let sb = new StringBuilder()
-    ViewBuilder.buildHtmlDocument sb node |> ignore
-    let chars = ArrayPool<char>.Shared.Rent(sb.Length)
+    let sb = StringBuilderPool.Rent()
+    ViewBuilder.buildHtmlDocument sb node
+    let chars = ArrayPool<char>.Shared.Rent sb.Length
     sb.CopyTo(0, chars, 0, sb.Length)
     let result = Encoding.UTF8.GetBytes(chars, 0, sb.Length)
+    StringBuilderPool.Release sb
     ArrayPool<char>.Shared.Return chars
     result
 
