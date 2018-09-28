@@ -13,6 +13,7 @@ open Giraffe.FormatExpressions
 // Private sub route helper functions
 // ---------------------------
 
+<<<<<<< HEAD
 [<RequireQualifiedAccess>]
 module SubRouting =
     [<Literal>]
@@ -42,6 +43,35 @@ module SubRouting =
                     | None         -> ctx.Items.Remove RouteKey |> ignore
                 return result
             }
+=======
+[<Literal>]
+let private RouteKey = "giraffe_route"
+
+let private getSavedSubPath (ctx : HttpContext) =
+    if ctx.Items.ContainsKey RouteKey
+    then ctx.Items.Item RouteKey |> string |> strOption
+    else None
+
+let private getPath (ctx : HttpContext) =
+    match getSavedSubPath ctx with
+    | Some p when ctx.Request.Path.Value.Contains p -> ctx.Request.Path.Value.[p.Length..]
+    | _   -> ctx.Request.Path.Value
+
+let private handlerWithRootedPath (path : string) (handler : HttpHandler) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            let savedSubPath = getSavedSubPath ctx
+            ctx.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
+            let! result = handler next ctx
+            match result with
+            | Some _ -> ()
+            | None ->
+                match savedSubPath with
+                | Some savedSubPath -> ctx.Items.Item   RouteKey <- savedSubPath
+                | None              -> ctx.Items.Remove RouteKey |> ignore
+            return result
+        }
+>>>>>>> 220a5d8... Minor README and DOCS changes
 
 // ---------------------------
 // Public routing HttpHandler functions
@@ -86,7 +116,11 @@ let routePorts (fns : (int * HttpHandler) list) : HttpHandler =
 ///
 let route (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
+<<<<<<< HEAD
         if (SubRouting.getNextPartOfPath ctx).Equals path
+=======
+        if (getPath ctx).Equals path
+>>>>>>> 220a5d8... Minor README and DOCS changes
         then next ctx
         else abort
 
@@ -104,7 +138,11 @@ let route (path : string) : HttpHandler =
 ///
 let routeCi (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
+<<<<<<< HEAD
         if String.Equals(SubRouting.getNextPartOfPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
+=======
+        if String.Equals(getPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
+>>>>>>> 220a5d8... Minor README and DOCS changes
         then next ctx
         else abort
 
@@ -124,7 +162,11 @@ let routex (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let pattern = sprintf "^%s$" path
         let regex   = Regex(pattern, RegexOptions.Compiled)
+<<<<<<< HEAD
         let result  = regex.Match (SubRouting.getNextPartOfPath ctx)
+=======
+        let result  = regex.Match (getPath ctx)
+>>>>>>> 220a5d8... Minor README and DOCS changes
         match result.Success with
         | true -> next ctx
         | false -> abort
@@ -145,7 +187,11 @@ let routeCix (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let pattern = sprintf "^%s$" path
         let regex   = Regex(pattern, RegexOptions.IgnoreCase ||| RegexOptions.Compiled)
+<<<<<<< HEAD
         let result  = regex.Match (SubRouting.getNextPartOfPath ctx)
+=======
+        let result  = regex.Match (getPath ctx)
+>>>>>>> 220a5d8... Minor README and DOCS changes
         match result.Success with
         | true -> next ctx
         | false -> abort
@@ -178,7 +224,11 @@ let routeCix (path : string) : HttpHandler =
 let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
+<<<<<<< HEAD
         tryMatchInput path (SubRouting.getNextPartOfPath ctx) false
+=======
+        tryMatchInput path (getPath ctx) false
+>>>>>>> 220a5d8... Minor README and DOCS changes
         |> function
             | None      -> abort
             | Some args -> routeHandler args next ctx
@@ -211,7 +261,11 @@ let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler)
 let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
+<<<<<<< HEAD
         tryMatchInput path (SubRouting.getNextPartOfPath ctx) true
+=======
+        tryMatchInput path (getPath ctx) true
+>>>>>>> 220a5d8... Minor README and DOCS changes
         |> function
             | None      -> abort
             | Some args -> routeHandler args next ctx
@@ -235,7 +289,11 @@ let routeBind<'T> (route : string) (routeHandler : 'T -> HttpHandler) : HttpHand
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let pattern = route.Replace("{", "(?<").Replace("}", ">[^/\n]+)") |> sprintf "^%s$"
         let regex   = Regex(pattern, RegexOptions.IgnoreCase)
+<<<<<<< HEAD
         let result  = regex.Match (SubRouting.getNextPartOfPath ctx)
+=======
+        let result  = regex.Match (getPath ctx)
+>>>>>>> 220a5d8... Minor README and DOCS changes
         match result.Success with
         | true ->
             let groups = result.Groups
@@ -264,7 +322,11 @@ let routeBind<'T> (route : string) (routeHandler : 'T -> HttpHandler) : HttpHand
 ///
 let routeStartsWith (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
+<<<<<<< HEAD
         if (SubRouting.getNextPartOfPath ctx).StartsWith subPath
+=======
+        if (getPath ctx).StartsWith subPath
+>>>>>>> 220a5d8... Minor README and DOCS changes
         then next ctx
         else abort
 
@@ -282,7 +344,11 @@ let routeStartsWith (subPath : string) : HttpHandler =
 ///
 let routeStartsWithCi (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
+<<<<<<< HEAD
         if (SubRouting.getNextPartOfPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase)
+=======
+        if (getPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase)
+>>>>>>> 220a5d8... Minor README and DOCS changes
         then next ctx
         else abort
 
@@ -302,7 +368,11 @@ let routeStartsWithCi (subPath : string) : HttpHandler =
 ///
 let subRoute (path : string) (handler : HttpHandler) : HttpHandler =
     routeStartsWith path >=>
+<<<<<<< HEAD
     SubRouting.routeWithPartialPath path handler
+=======
+    handlerWithRootedPath path handler
+>>>>>>> 220a5d8... Minor README and DOCS changes
 
 /// **Description**
 ///
@@ -320,7 +390,11 @@ let subRoute (path : string) (handler : HttpHandler) : HttpHandler =
 ///
 let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
     routeStartsWithCi path >=>
+<<<<<<< HEAD
     SubRouting.routeWithPartialPath path handler
+=======
+    handlerWithRootedPath path handler
+>>>>>>> 220a5d8... Minor README and DOCS changes
 
 /// **Description**
 ///
@@ -353,7 +427,11 @@ let subRoutef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandl
         validateFormat path
         fun (next : HttpFunc) (ctx : HttpContext) ->
             let paramCount   = (path.Value.Split '/').Length
+<<<<<<< HEAD
             let subPathParts = (SubRouting.getNextPartOfPath ctx).Split '/'
+=======
+            let subPathParts = (getPath ctx).Split '/'
+>>>>>>> 220a5d8... Minor README and DOCS changes
             if paramCount > subPathParts.Length then abort
             else
                 let subPath =
@@ -366,4 +444,8 @@ let subRoutef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandl
                 tryMatchInput path subPath false
                 |> function
                     | None      -> abort
+<<<<<<< HEAD
                     | Some args -> SubRouting.routeWithPartialPath subPath (routeHandler args) next ctx
+=======
+                    | Some args -> handlerWithRootedPath subPath (routeHandler args) next ctx
+>>>>>>> 220a5d8... Minor README and DOCS changes

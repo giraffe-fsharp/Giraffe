@@ -14,11 +14,14 @@ Release Notes
         >=> setBodyFromString content
     ```
 
+<<<<<<< HEAD
 - Made previously internal functionality for sub routing available through the `SubRouting` module:
     - `SubRouting.getSavedPartialPath`: Returns the currently partially resolved path.
     - `SubRouting.getNextPartOfPath`: Returns the yet unresolved part of the path.
     - `SubRouting.routeWithPartialPath`: Invokes a route handler as part of a sub route.
 
+=======
+>>>>>>> 220a5d8... Minor README and DOCS changes
 #### Improvements
 
 - More minor performance improvements for Giraffe's default response writers.
