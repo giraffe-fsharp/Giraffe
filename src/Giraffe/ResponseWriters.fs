@@ -19,8 +19,8 @@ let private MaximumCapacity = 40000
 let private MaximumLifetime = TimeSpan.FromMinutes 10.0
 
 type public StringBuilderPool =
-    [<DefaultValue; ThreadStatic>]
-    static val mutable private alwaysCreateNew : bool
+    [<DefaultValue(true); ThreadStatic>]
+    static val mutable private isEnabled : bool
 
     [<DefaultValue; ThreadStatic>]
     static val mutable private instance : StringBuilder
@@ -28,14 +28,14 @@ type public StringBuilderPool =
     [<DefaultValue; ThreadStatic>]
     static val mutable private created : DateTimeOffset
 
-    static member AlwaysCreateNew
-        with get ()   = StringBuilderPool.alwaysCreateNew
-        and  set flag = StringBuilderPool.alwaysCreateNew <- flag
+    static member public IsEnabled
+        with get ()   = StringBuilderPool.isEnabled
+        and  set flag = StringBuilderPool.isEnabled <- flag
 
-    static member Rent () =
-        match StringBuilderPool.AlwaysCreateNew with
-        | true  -> new StringBuilder(MinimumCapacity)
-        | false ->
+    static member internal Rent () =
+        match StringBuilderPool.IsEnabled with
+        | false -> new StringBuilder(MinimumCapacity)
+        | true  ->
             let lifetime = DateTimeOffset.Now - StringBuilderPool.created
             let expired  = lifetime > MaximumLifetime
             let sb       = StringBuilderPool.instance
@@ -44,7 +44,7 @@ type public StringBuilderPool =
                 sb.Clear()
             else new StringBuilder(MinimumCapacity)
 
-    static member Return (sb: StringBuilder) =
+    static member internal Release (sb : StringBuilder) =
         if sb.Capacity <= MaximumCapacity then
             StringBuilderPool.instance <- sb
             StringBuilderPool.created  <- DateTimeOffset.Now
@@ -55,7 +55,7 @@ let inline private nodeToUtf8HtmlDoc (node : XmlNode) : byte[] =
     let chars = ArrayPool<char>.Shared.Rent sb.Length
     sb.CopyTo(0, chars, 0, sb.Length)
     let result = Encoding.UTF8.GetBytes(chars, 0, sb.Length)
-    StringBuilderPool.Return sb
+    StringBuilderPool.Release sb
     ArrayPool<char>.Shared.Return chars
     result
 
