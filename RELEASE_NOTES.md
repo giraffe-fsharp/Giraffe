@@ -21,8 +21,9 @@ Release Notes
 
 #### Improvements
 
-- More minor performance improvements for Giraffe's default response writers.
-- Improved the performance of the `htmlView` handler.
+- Performance improvements for Giraffe's default response writers.
+- Performance improvements of the `htmlView` handler.
+- Upgraded to the latest `TaskBuilder.fs` NuGet package which also has the SourceLink integration now.
 
 #### Bug fixes
 
