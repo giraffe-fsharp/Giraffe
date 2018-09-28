@@ -22,6 +22,7 @@ Release Notes
 #### Improvements
 
 - More minor performance improvements for Giraffe's default response writers.
+- Improved the performance of the `htmlView` handler.
 
 #### Bug fixes
 

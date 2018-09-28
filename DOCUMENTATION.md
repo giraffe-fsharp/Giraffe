@@ -2895,6 +2895,8 @@ let output1 = renderHtmlNode someContent
 let output2 = renderXmlNode someContent
 ```
 
+All `GiraffeViewEngine` http handlers are using a thread static `StringBuilderPool` to avoid the creation of large `StringBuilder` objects for each render call and dynamically grow/shrink that pool based on the application's needs. However if the application is running into any memory issues then this performance feature can be disabled by setting `StringBuilderPool.IsEnabled <- false`.
+
 Additionally with Giraffe 3.0.0 or higher there is a new module called `ViewBuilder` under the `Giraffe.GiraffeViewEngine` namespace. This module exposes additional view rendering functions which compile a view into a `StringBuilder` object instead of returning a single `string`:
 
 - `ViewBuilder.buildHtmlDocument`
