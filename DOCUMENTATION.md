@@ -2146,8 +2146,6 @@ let webApp =
     ]
 ```
 
-
-
 ### Response Writing
 
 Sending a response back to a client in Giraffe can be done through a small range of `HttpContext` extension methods and and their equivalent `HttpHandler` functions.

@@ -15,6 +15,7 @@ open Giraffe.FormatExpressions
 
 [<RequireQualifiedAccess>]
 module SubRouting =
+
     [<Literal>]
     let private RouteKey = "giraffe_route"
 
@@ -42,34 +43,6 @@ module SubRouting =
                     | None         -> ctx.Items.Remove RouteKey |> ignore
                 return result
             }
-
-[<Literal>]
-let private RouteKey = "giraffe_route"
-
-let private getSavedSubPath (ctx : HttpContext) =
-    if ctx.Items.ContainsKey RouteKey
-    then ctx.Items.Item RouteKey |> string |> strOption
-    else None
-
-let private getPath (ctx : HttpContext) =
-    match getSavedSubPath ctx with
-    | Some p when ctx.Request.Path.Value.Contains p -> ctx.Request.Path.Value.[p.Length..]
-    | _   -> ctx.Request.Path.Value
-
-let private handlerWithRootedPath (path : string) (handler : HttpHandler) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        task {
-            let savedSubPath = getSavedSubPath ctx
-            ctx.Items.Item RouteKey <- ((savedSubPath |> Option.defaultValue "") + path)
-            let! result = handler next ctx
-            match result with
-            | Some _ -> ()
-            | None ->
-                match savedSubPath with
-                | Some savedSubPath -> ctx.Items.Item   RouteKey <- savedSubPath
-                | None              -> ctx.Items.Remove RouteKey |> ignore
-            return result
-        }
 
 // ---------------------------
 // Public routing HttpHandler functions
