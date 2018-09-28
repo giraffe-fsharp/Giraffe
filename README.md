@@ -28,10 +28,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 - [Videos](#videos)
 - [License](#license)
 - [Contact and Slack Channel](#contact-and-slack-channel)
-<<<<<<< HEAD
 - [Support](#support)
-=======
->>>>>>> 220a5d8... Minor README and DOCS changes
 
 ## About
 
@@ -354,12 +351,9 @@ If you have blogged about Giraffe, demonstrating a useful topic or some other ti
 ## Contact and Slack Channel
 
 If you have any further questions feel free to reach out to me via any of the mentioned social media on [https://dusted.codes/about](https://dusted.codes/about) or join the `#giraffe` Slack channel in the [Functional Programming Slack Team](https://functionalprogramming.slack.com/). Please use [this link](https://fpchat-invite.herokuapp.com/) to request an invitation to the Functional Programming Slack Team if you don't have an account registered yet.
-<<<<<<< HEAD
 
 ## Support
 
 If you've got value from any of the content which I have created, but pull requests are not your thing, then I would also very much appreciate your support by buying me a coffee.
 
 <a href="https://www.buymeacoffee.com/dustinmoris" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
-=======
->>>>>>> 220a5d8... Minor README and DOCS changes
