@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 3.2.0
+
+#### Improvements
+
+- Adding the `charset` parameter in the HTTP `Content-Type` response header when returning a text response (text/plain, text/html) or a JSON or XML response (application/json, application/xml). By default Giraffe is using UTF8 encoding for all its responses.
+
 ## 3.1.0
 
 #### New features
