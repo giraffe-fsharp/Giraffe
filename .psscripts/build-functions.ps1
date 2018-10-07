@@ -247,7 +247,7 @@ function Get-NetCoreSdkFromWeb ($version)
             | Where-Object { $_.onclick -eq "recordManualDownload()" } `
             | Select-Object -Expand href
 
-    $tempFile  = [System.IO.Path]::GetTempFileName()
+    $tempFile  = [System.IO.Path]::GetTempFileName() + ".zip"
     $webClient = New-Object System.Net.WebClient
     $webClient.DownloadFile($downloadLink, $tempFile)
     return $tempFile
