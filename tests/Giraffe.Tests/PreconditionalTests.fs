@@ -5,9 +5,9 @@ open System.Net
 open System.Net.Http
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
+open Microsoft.Extensions.Logging
 open Xunit
 open Giraffe
-open Microsoft.Extensions.Logging
 
 // ---------------------------------
 // Text file used for feature testing
@@ -49,7 +49,7 @@ module Urls =
 module WebApp =
     let streamHandler (enableRangeProcessing : bool) args : HttpHandler =
         args
-        ||> streamFile enableRangeProcessing "TestFiles/streaming2.txt"
+        ||> streamFile enableRangeProcessing "streaming2.txt"
 
     let webApp args =
         choose [

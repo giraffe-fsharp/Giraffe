@@ -106,36 +106,31 @@ let ``WriteHtmlViewAsync should add html to the context`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-let resultOfTask<'T> (task:Task<'T>) =
-    task.Result
-
 [<Fact>]
-let ``WriteHtmlFileAsync should return html from content folder`` () =
+let ``WriteHtmlFileAsync should return html from physical folder`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let filePath =
+        Path.Combine(
+            Path.GetFullPath("TestFiles"),
+            "index.html")
+
     let testHandler : HttpHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
-            ctx.WriteHtmlFileAsync "index.html"
+            ctx.WriteHtmlFileAsync filePath
 
-    let webApp = route "/" >=> testHandler
+    let app = route "/" >=> testHandler
 
-    let configureApp (app : IApplicationBuilder) =
-        app
-           .UseStaticFiles()
-           .UseGiraffe webApp
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
 
-    let host =
-        WebHostBuilder()
-            .UseContentRoot(Path.GetFullPath("TestFiles"))
-            .Configure(Action<IApplicationBuilder> configureApp)
+    let expected = File.ReadAllText filePath
 
-    use server = new TestServer(host)
-    use client = server.CreateClient()
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
 
-    let expectedContent =
-        Path.Combine("TestFiles", "index.html")
-        |> File.ReadAllText
-
-    let actualContent =
-        client.GetStringAsync "/"
-        |> resultOfTask
-
-    Assert.Equal(expectedContent, actualContent)
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
