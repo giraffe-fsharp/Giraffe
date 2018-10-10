@@ -130,7 +130,7 @@ let ``WriteHtmlViewAsync should add html to the context`` () =
 //         match result with
 //         | None -> assertFailf "Result was expected to be %s" expected
 //         | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
+    // }
 
 [<Fact>]
 let ``WriteTextAsync with HTTP GET should return text in body`` () =
