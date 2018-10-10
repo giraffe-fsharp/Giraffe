@@ -280,7 +280,7 @@ let ``POST "/text" with supported Accept header returns "text"`` () =
         | Some ctx ->
             let body = getBody ctx
             Assert.Equal(expected, body)
-            Assert.Equal("text/plain", ctx.Response |> getContentType)
+            Assert.Equal("text/plain; charset=utf-8", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -314,7 +314,7 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
         | Some ctx ->
             let body = getBody ctx
             Assert.Equal(expected, body)
-            Assert.Equal("application/json", ctx.Response |> getContentType)
+            Assert.Equal("application/json; charset=utf-8", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -347,7 +347,7 @@ let ``POST "/either" with supported Accept header returns "either"`` () =
         | Some ctx ->
             let body = getBody ctx
             Assert.Equal(expected, body)
-            Assert.Equal("text/plain", ctx.Response |> getContentType)
+            Assert.Equal("text/plain; charset=utf-8", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -421,7 +421,7 @@ let ``GET "/person" returns rendered HTML view`` () =
         | Some ctx ->
             let body = (getBody ctx).Replace(Environment.NewLine, String.Empty)
             Assert.Equal(expected, body)
-            Assert.Equal("text/html", ctx.Response |> getContentType)
+            Assert.Equal("text/html; charset=utf-8", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -463,7 +463,7 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
         | Some ctx ->
             let body = getBody ctx
             Assert.Equal(expected, body)
-            Assert.Equal("application/json", ctx.Response |> getContentType)
+            Assert.Equal("application/json; charset=utf-8", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -505,7 +505,7 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
         | Some ctx ->
             let body = getBody ctx
             Assert.Equal(expected, body)
-            Assert.Equal("application/json", ctx.Response |> getContentType)
+            Assert.Equal("application/json; charset=utf-8", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -557,7 +557,7 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
         | Some ctx ->
             let body = getBody ctx
             XmlAssert.equals expected body
-            Assert.Equal("application/xml", ctx.Response |> getContentType)
+            Assert.Equal("application/xml; charset=utf-8", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -609,7 +609,7 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
         | Some ctx ->
             let body = getBody ctx
             XmlAssert.equals expected body
-            Assert.Equal("application/xml", ctx.Response |> getContentType)
+            Assert.Equal("application/xml; charset=utf-8", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -651,7 +651,7 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
         | Some ctx ->
             let body = getBody ctx
             Assert.Equal(expected, body)
-            Assert.Equal("application/json", ctx.Response |> getContentType)
+            Assert.Equal("application/json; charset=utf-8", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -703,7 +703,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
         | Some ctx ->
             let body = getBody ctx
             XmlAssert.equals expected body
-            Assert.Equal("application/xml", ctx.Response |> getContentType)
+            Assert.Equal("application/xml; charset=utf-8", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -755,7 +755,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
         | Some ctx ->
             let body = getBody ctx
             XmlAssert.equals expected body
-            Assert.Equal("application/xml", ctx.Response |> getContentType)
+            Assert.Equal("application/xml; charset=utf-8", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -800,7 +800,7 @@ Piercings: [|""ear""; ""nose""|]"
         | Some ctx ->
             let body = getBody ctx
             Assert.Equal(expected, body)
-            Assert.Equal("text/plain", ctx.Response |> getContentType)
+            Assert.Equal("text/plain; charset=utf-8", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -842,7 +842,7 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
             let body = getBody ctx
             Assert.Equal(406, getStatusCode ctx)
             Assert.Equal(expected, body)
-            Assert.Equal("text/plain", ctx.Response |> getContentType)
+            Assert.Equal("text/plain; charset=utf-8", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -883,7 +883,7 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
         | Some ctx ->
             let body = getBody ctx
             Assert.Equal(expected, body)
-            Assert.Equal("application/json", ctx.Response |> getContentType)
+            Assert.Equal("application/json; charset=utf-8", ctx.Response |> getContentType)
     }
 
 [<Fact>]

@@ -43,11 +43,6 @@ let waitForDebuggerToAttach() =
 let removeNewLines (html : string) : string =
     html.Replace(Environment.NewLine, String.Empty)
 
-let runTask task =
-    task
-    |> Async.AwaitTask
-    |> Async.RunSynchronously
-
 let createETag (eTag : string) =
     Some (Microsoft.Net.Http.Headers.EntityTagHeaderValue.FromString false eTag)
 
@@ -103,8 +98,8 @@ let next : HttpFunc = Some >> Task.FromResult
 let createHost (configureApp      : 'Tuple -> IApplicationBuilder -> unit)
                (configureServices : IServiceCollection -> unit)
                (args              : 'Tuple) =
-    WebHostBuilder()
-        .UseContentRoot(Directory.GetCurrentDirectory())
+    (new WebHostBuilder())
+        .UseContentRoot(Path.GetFullPath("TestFiles"))
         .Configure(Action<IApplicationBuilder> (configureApp args))
         .ConfigureServices(Action<IServiceCollection> configureServices)
 
@@ -173,7 +168,7 @@ let makeRequest configureApp configureServices args (request : HttpRequestMessag
     use client = server.CreateClient()
     request
     |> client.SendAsync
-    |> runTask
+    |> (fun t -> t.Result)
 
 let addHeader (key : string) (value : string) (request : HttpRequestMessage) =
     request.Headers.Add(key, value)
@@ -234,11 +229,11 @@ let getBody (ctx : HttpContext) =
 
 let readText (response : HttpResponseMessage) =
     response.Content.ReadAsStringAsync()
-    |> runTask
+    |> (fun t -> t.Result)
 
 let readBytes (response : HttpResponseMessage) =
     response.Content.ReadAsByteArrayAsync()
-    |> runTask
+    |> (fun t -> t.Result)
 
 let printBytes (bytes : byte[]) =
     bytes |> Array.fold (

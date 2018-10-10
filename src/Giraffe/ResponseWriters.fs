@@ -79,7 +79,8 @@ type HttpContext with
     member this.WriteBytesAsync (bytes : byte[]) =
         task {
             this.SetHttpHeader HeaderNames.ContentLength bytes.Length
-            do! this.Response.Body.WriteAsync(bytes, 0, bytes.Length)
+            if this.Request.Method <> HttpMethods.Head then
+                do! this.Response.Body.WriteAsync(bytes, 0, bytes.Length)
             return Some this
         }
 
@@ -111,7 +112,7 @@ type HttpContext with
     /// Task of `Some HttpContext` after writing to the body of the response.
     ///
     member this.WriteTextAsync (str : string) =
-        this.SetContentType "text/plain"
+        this.SetContentType "text/plain; charset=utf-8"
         this.WriteStringAsync str
 
     /// **Description**
@@ -131,7 +132,7 @@ type HttpContext with
     /// Task of `Some HttpContext` after writing to the body of the response.
     ///
     member this.WriteJsonAsync<'T> (dataObj : 'T) =
-        this.SetContentType "application/json"
+        this.SetContentType "application/json; charset=utf-8"
         let serializer = this.GetJsonSerializer()
         serializer.SerializeToBytes dataObj
         |> this.WriteBytesAsync
@@ -154,10 +155,11 @@ type HttpContext with
     ///
     member this.WriteJsonChunkedAsync<'T> (dataObj : 'T) =
         task {
-            this.SetContentType "application/json"
+            this.SetContentType "application/json; charset=utf-8"
             this.SetHttpHeader "Transfer-Encoding" "chunked"
-            let serializer = this.GetJsonSerializer()
-            do! serializer.SerializeToStreamAsync dataObj this.Response.Body
+            if this.Request.Method <> HttpMethods.Head then
+                let serializer = this.GetJsonSerializer()
+                do! serializer.SerializeToStreamAsync dataObj this.Response.Body
             return Some this
         }
 
@@ -178,7 +180,7 @@ type HttpContext with
     /// Task of `Some HttpContext` after writing to the body of the response.
     ///
     member this.WriteXmlAsync (dataObj : obj) =
-        this.SetContentType "application/xml"
+        this.SetContentType "application/xml; charset=utf-8"
         let serializer = this.GetXmlSerializer()
         serializer.Serialize dataObj
         |> this.WriteBytesAsync
@@ -205,7 +207,7 @@ type HttpContext with
                 | false ->
                     let env = this.GetHostingEnvironment()
                     Path.Combine(env.ContentRootPath, filePath)
-            this.SetContentType "text/html"
+            this.SetContentType "text/html; charset=utf-8"
             let! html = readFileAsStringAsync filePath
             return! this.WriteStringAsync html
         }
@@ -225,7 +227,7 @@ type HttpContext with
     /// Task of `Some HttpContext` after writing to the body of the response.
     ///
     member this.WriteHtmlStringAsync (html : string) =
-        this.SetContentType "text/html"
+        this.SetContentType "text/html; charset=utf-8"
         this.WriteStringAsync html
 
     /// **Description**
@@ -244,7 +246,7 @@ type HttpContext with
     ///
     member this.WriteHtmlViewAsync (htmlView : XmlNode) =
         let bytes = nodeToUtf8HtmlDoc htmlView
-        this.SetContentType "text/html"
+        this.SetContentType "text/html; charset=utf-8"
         this.WriteBytesAsync bytes
 
 // ---------------------------
@@ -299,7 +301,7 @@ let setBodyFromString (str : string) : HttpHandler =
 let text (str : string) : HttpHandler =
     let bytes = Encoding.UTF8.GetBytes str
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        ctx.SetContentType "text/plain"
+        ctx.SetContentType "text/plain; charset=utf-8"
         ctx.WriteBytesAsync bytes
 
 /// **Description**
@@ -397,7 +399,7 @@ let htmlFile (filePath : string) : HttpHandler =
 let htmlString (html : string) : HttpHandler =
     let bytes = Encoding.UTF8.GetBytes html
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        ctx.SetContentType "text/html"
+        ctx.SetContentType "text/html; charset=utf-8"
         ctx.WriteBytesAsync bytes
 
 /// **Description**
@@ -417,5 +419,5 @@ let htmlString (html : string) : HttpHandler =
 let htmlView (htmlView : XmlNode) : HttpHandler =
     let bytes = nodeToUtf8HtmlDoc htmlView
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        ctx.SetContentType "text/html"
+        ctx.SetContentType "text/html; charset=utf-8"
         ctx.WriteBytesAsync bytes
