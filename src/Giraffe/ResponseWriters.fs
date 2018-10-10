@@ -79,7 +79,8 @@ type HttpContext with
     member this.WriteBytesAsync (bytes : byte[]) =
         task {
             this.SetHttpHeader HeaderNames.ContentLength bytes.Length
-            do! this.Response.Body.WriteAsync(bytes, 0, bytes.Length)
+            if this.Request.Method <> HttpMethods.Head then
+                do! this.Response.Body.WriteAsync(bytes, 0, bytes.Length)
             return Some this
         }
 
@@ -156,8 +157,9 @@ type HttpContext with
         task {
             this.SetContentType "application/json; charset=utf-8"
             this.SetHttpHeader "Transfer-Encoding" "chunked"
-            let serializer = this.GetJsonSerializer()
-            do! serializer.SerializeToStreamAsync dataObj this.Response.Body
+            if this.Request.Method <> HttpMethods.Head then
+                let serializer = this.GetJsonSerializer()
+                do! serializer.SerializeToStreamAsync dataObj this.Response.Body
             return Some this
         }
 

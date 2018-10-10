@@ -4,11 +4,8 @@ open System
 open System.IO
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http.Internal
 open Microsoft.Extensions.Primitives
-open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.TestHost
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Xunit
 open NSubstitute
@@ -126,6 +123,54 @@ let ``WriteHtmlFileAsync should return html from physical folder`` () =
     ctx.Response.Body <- new MemoryStream()
 
     let expected = File.ReadAllText filePath
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``WriteTextAsync with HTTP GET should return text in body`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let testHandler =
+        fun (next : HttpFunc) (ctx : HttpContext) ->
+            ctx.WriteTextAsync "Hello World Giraffe"
+
+    let app = route "/" >=> testHandler
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let expected = "Hello World Giraffe"
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``WriteTextAsync with HTTP HEAD should not return text in body`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let testHandler =
+        fun (next : HttpFunc) (ctx : HttpContext) ->
+            ctx.WriteTextAsync "Hello World Giraffe"
+
+    let app = route "/" >=> testHandler
+
+    ctx.Request.Method.ReturnsForAnyArgs "HEAD" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let expected = ""
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
