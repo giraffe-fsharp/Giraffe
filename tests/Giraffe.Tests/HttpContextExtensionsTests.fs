@@ -103,34 +103,34 @@ let ``WriteHtmlViewAsync should add html to the context`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-// [<Fact>]
-// let ``WriteHtmlFileAsync should return html from physical folder`` () =
-//     let ctx = Substitute.For<HttpContext>()
+[<Fact>]
+let ``WriteHtmlFileAsync should return html from physical folder`` () =
+    let ctx = Substitute.For<HttpContext>()
 
-//     let filePath =
-//         Path.Combine(
-//             Path.GetFullPath("TestFiles"),
-//             "index.html")
+    let filePath =
+        Path.Combine(
+            Path.GetFullPath("TestFiles"),
+            "index.html")
 
-//     let testHandler : HttpHandler =
-//         fun (next : HttpFunc) (ctx : HttpContext) ->
-//             ctx.WriteHtmlFileAsync filePath
+    let testHandler : HttpHandler =
+        fun (next : HttpFunc) (ctx : HttpContext) ->
+            ctx.WriteHtmlFileAsync filePath
 
-//     let app = route "/" >=> testHandler
+    let app = route "/" >=> testHandler
 
-//     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-//     ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
-//     ctx.Response.Body <- new MemoryStream()
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
 
-//     let expected = File.ReadAllText filePath
+    let expected = File.ReadAllText filePath
 
-//     task {
-//         let! result = app (Some >> Task.FromResult) ctx
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
 
-//         match result with
-//         | None -> assertFailf "Result was expected to be %s" expected
-//         | Some ctx -> Assert.Equal(expected, getBody ctx)
-    // }
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
 
 [<Fact>]
 let ``WriteTextAsync with HTTP GET should return text in body`` () =
