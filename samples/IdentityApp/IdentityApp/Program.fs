@@ -35,10 +35,10 @@ let masterPage (pageTitle : string) (content : XmlNode list) =
 let indexPage =
     [
         p [] [
-            a [ _href "/register" ] [ rawText "Register" ]
+            a [ _href "/register" ] [ encodedText "Register" ]
         ]
         p [] [
-            a [ _href "/user" ] [ rawText "User page" ]
+            a [ _href "/user" ] [ encodedText "User page" ]
         ]
     ] |> masterPage "Home"
 
@@ -46,15 +46,15 @@ let registerPage =
     [
         form [ _action "/register"; _method "POST" ] [
             div [] [
-                label [] [ rawText "Email:" ]
+                label [] [ encodedText "Email:" ]
                 input [ _name "Email"; _type "text" ]
             ]
             div [] [
-                label [] [ rawText "User name:" ]
+                label [] [ encodedText "User name:" ]
                 input [ _name "UserName"; _type "text" ]
             ]
             div [] [
-                label [] [ rawText "Password:" ]
+                label [] [ encodedText "Password:" ]
                 input [ _name "Password"; _type "password" ]
             ]
             input [ _type "submit" ]
@@ -63,22 +63,22 @@ let registerPage =
 
 let loginPage (loginFailed : bool) =
     [
-        if loginFailed then yield p [ _style "color: Red;" ] [ rawText "Login failed." ]
+        if loginFailed then yield p [ _style "color: Red;" ] [ encodedText "Login failed." ]
 
         yield form [ _action "/login"; _method "POST" ] [
             div [] [
-                label [] [ rawText "User name:" ]
+                label [] [ encodedText "User name:" ]
                 input [ _name "UserName"; _type "text" ]
             ]
             div [] [
-                label [] [ rawText "Password:" ]
+                label [] [ encodedText "Password:" ]
                 input [ _name "Password"; _type "password" ]
             ]
             input [ _type "submit" ]
         ]
         yield p [] [
-            rawText "Don't have an account yet?"
-            a [ _href "/register" ] [ rawText "Go to registration" ]
+            encodedText "Don't have an account yet?"
+            a [ _href "/register" ] [ encodedText "Go to registration" ]
         ]
     ] |> masterPage "Login"
 

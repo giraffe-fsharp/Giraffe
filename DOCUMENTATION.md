@@ -2329,11 +2329,11 @@ Giraffe comes with its own extremely powerful view engine for functional develop
 let indexView =
     html [] [
         head [] [
-            title [] [ rawText "Giraffe" ]
+            title [] [ encodedText "Giraffe" ]
         ]
         body [] [
-            h1 [] [ rawText "Giraffe" ]
-            p [] [ rawText "Hello World." ]
+            h1 [] [ encodedText "Giraffe" ]
+            p [] [ encodedText "Hello World." ]
         ]
     ]
 
@@ -2702,12 +2702,12 @@ HTML elements and attributes are defined as F# objects:
 let indexView =
     html [] [
         head [] [
-            title [] [ rawText "Giraffe Sample" ]
+            title [] [ encodedText "Giraffe Sample" ]
         ]
         body [] [
             h1 [] [ encodedText "I |> F#" ]
             p [ _class "some-css-class"; _id "someId" ] [
-                rawText "Hello World"
+                encodedText "Hello World"
             ]
         ]
     ]
@@ -2726,7 +2726,7 @@ All `ParentNode` elements accept these two parameters:
 ```fsharp
 let someHtml =
     div [ _id "someId"; _class "css-class" ] [
-        a [ _href "https://example.org" ] [ rawText "Some text..." ]
+        a [ _href "https://example.org" ] [ encodedText "Some text..." ]
     ]
 ```
 
@@ -2737,7 +2737,7 @@ let someHtml =
     div [] [
         br []
         hr [ _class "css-class-for-hr" ]
-        p [] [ rawText "bla blah" ]
+        p [] [ encodedText "bla blah" ]
     ]
 ```
 
@@ -2781,7 +2781,7 @@ let someHtml =
     ]
 ```
 
-The `rawText` function will create an object of type `Text` where the content will be rendered in its original form and the `encodedText` function will output a string where the content has been HTML encoded.
+The `rawText` function will create an object of type `XmlNode` where the content will be rendered in its original form and the `encodedText` function will output a string where the content has been HTML encoded.
 
 In this example the first `p` element will literally output the string as it is (`<div>Hello World</div>`) while the second `p` element will output the value as HTML encoded string `&lt;div&gt;Hello World&lt;/div&gt;`.
 
@@ -2818,12 +2818,12 @@ module Views =
     let index =
         html [] [
             head [] [
-                title [] [ rawText "Giraffe Sample" ]
+                title [] [ encodedText "Giraffe Sample" ]
             ]
             body [] [
                 h1 [] [ encodedText "I |> F#" ]
                 p [ _class "some-css-class"; _id "someId" ] [
-                    rawText "Hello World"
+                    encodedText "Hello World"
                 ]
             ]
         ]
