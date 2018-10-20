@@ -15,6 +15,20 @@ function Test-IsWindows
     [environment]::OSVersion.Platform -ne "Unix"
 }
 
+function Test-IsMonoInstalled
+{
+    <#
+        .DESCRIPTION
+        Checks to see whether the current environment has the Mono framework installed.
+
+        .EXAMPLE
+        if (Test-IsMonoInstalled) { Write-Host "Mono is available." }
+    #>
+
+    $result = Invoke-Cmd "mono --version" -Silent
+    return $result.StartsWith("Mono JIT compiler version")
+}
+
 function Get-UbuntuVersion
 {
     <#
@@ -25,11 +39,13 @@ function Get-UbuntuVersion
         $ubuntuVersion = Get-UbuntuVersion
     #>
 
-    $version = Invoke-Cmd "lsb_release -r -s"
+    $version = Invoke-Cmd "lsb_release -r -s" -Silent
     return $version
 }
 
-function Invoke-UnsafeCmd ($cmd)
+function Invoke-UnsafeCmd (
+    [string] $Cmd,
+    [switch] $Silent)
 {
     <#
         .DESCRIPTION
@@ -45,12 +61,14 @@ function Invoke-UnsafeCmd ($cmd)
         Use this PowerShell command to execute any CLI commands which might not exit with 0 on a success.
     #>
 
-    Write-Host $cmd -ForegroundColor DarkCyan
+    if (!($Silent.IsPresent)) { Write-Host $cmd -ForegroundColor DarkCyan }
     if (Test-IsWindows) { $cmd = "cmd.exe /C $cmd" }
     Invoke-Expression -Command $cmd
 }
 
-function Invoke-Cmd ($Cmd)
+function Invoke-Cmd (
+    [string] $Cmd,
+    [switch] $Silent)
 {
     <#
         .DESCRIPTION
@@ -66,7 +84,7 @@ function Invoke-Cmd ($Cmd)
         Use this PowerShell command to execute any dotnet CLI commands in order to ensure that they behave the same way in the case of an error across different environments (Windows, OSX and Linux).
     #>
 
-    Invoke-UnsafeCmd $cmd
+    if ($Silent.IsPresent) { Invoke-UnsafeCmd $cmd -Silent } else { Invoke-UnsafeCmd $cmd }
     if ($LastExitCode -ne 0) { Write-Error "An error occured when executing '$Cmd'."; return }
 }
 
@@ -176,7 +194,11 @@ function Get-NetCoreTargetFramework ($projFile)
 
 function Invoke-DotNetCli ($cmd, $proj, $argv)
 {
-    if(!(Test-IsWindows))
+    # Currently dotnet test does not work for net461 on Linux/Mac
+    # See: https://github.com/Microsoft/vstest/issues/1318
+
+    if((!(Test-IsWindows) -and !(Test-IsMonoInstalled)) `
+        -or (!(Test-IsWindows) -and ($cmd -eq "test")))
     {
         $fw = Get-NetCoreTargetFramework($proj)
         $argv = "-f $fw " + $argv
@@ -184,8 +206,8 @@ function Invoke-DotNetCli ($cmd, $proj, $argv)
     Invoke-Cmd "dotnet $cmd $proj $argv"
 }
 
-function dotnet-info                      { Invoke-Cmd "dotnet --info" }
-function dotnet-version                   { Invoke-Cmd "dotnet --version" }
+function dotnet-info                      { Invoke-Cmd "dotnet --info" -Silent }
+function dotnet-version                   { Invoke-Cmd "dotnet --version" -Silent }
 function dotnet-restore ($project, $argv) { Invoke-Cmd "dotnet restore $project $argv" }
 function dotnet-build   ($project, $argv) { Invoke-DotNetCli -Cmd "build" -Proj $project -Argv $argv }
 function dotnet-test    ($project, $argv) { Invoke-DotNetCli -Cmd "test"  -Proj $project -Argv $argv  }

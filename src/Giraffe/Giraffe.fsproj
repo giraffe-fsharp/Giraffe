@@ -30,14 +30,14 @@
     <RepositoryUrl>https://github.com/dustinmoris/giraffe</RepositoryUrl>
 
     <!-- SourceLink settings -->
-    <!-- <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-    <NoWarn>FS2003</NoWarn> -->
+    <NoWarn>FS2003</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-*" PrivateAssets="All"/> -->
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-*" PrivateAssets="All"/>
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.*" />
     <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.*" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.1.*" />
