@@ -23,11 +23,11 @@ open Giraffe.GiraffeViewEngine
 let masterPage (pageTitle : string) (content : XmlNode list) =
     html [] [
         head [] [
-            title [] [ encodedText pageTitle ]
+            title [] [ str pageTitle ]
             style [] [ rawText "label { display: inline-block; width: 80px; }" ]
         ]
         body [] [
-            h1 [] [ encodedText pageTitle ]
+            h1 [] [ str pageTitle ]
             main [] content
          ]
     ]
@@ -35,10 +35,10 @@ let masterPage (pageTitle : string) (content : XmlNode list) =
 let indexPage =
     [
         p [] [
-            a [ _href "/register" ] [ encodedText "Register" ]
+            a [ _href "/register" ] [ str "Register" ]
         ]
         p [] [
-            a [ _href "/user" ] [ encodedText "User page" ]
+            a [ _href "/user" ] [ str "User page" ]
         ]
     ] |> masterPage "Home"
 
@@ -46,15 +46,15 @@ let registerPage =
     [
         form [ _action "/register"; _method "POST" ] [
             div [] [
-                label [] [ encodedText "Email:" ]
+                label [] [ str "Email:" ]
                 input [ _name "Email"; _type "text" ]
             ]
             div [] [
-                label [] [ encodedText "User name:" ]
+                label [] [ str "User name:" ]
                 input [ _name "UserName"; _type "text" ]
             ]
             div [] [
-                label [] [ encodedText "Password:" ]
+                label [] [ str "Password:" ]
                 input [ _name "Password"; _type "password" ]
             ]
             input [ _type "submit" ]
@@ -63,22 +63,22 @@ let registerPage =
 
 let loginPage (loginFailed : bool) =
     [
-        if loginFailed then yield p [ _style "color: Red;" ] [ encodedText "Login failed." ]
+        if loginFailed then yield p [ _style "color: Red;" ] [ str "Login failed." ]
 
         yield form [ _action "/login"; _method "POST" ] [
             div [] [
-                label [] [ encodedText "User name:" ]
+                label [] [ str "User name:" ]
                 input [ _name "UserName"; _type "text" ]
             ]
             div [] [
-                label [] [ encodedText "Password:" ]
+                label [] [ str "Password:" ]
                 input [ _name "Password"; _type "password" ]
             ]
             input [ _type "submit" ]
         ]
         yield p [] [
-            encodedText "Don't have an account yet?"
-            a [ _href "/register" ] [ encodedText "Go to registration" ]
+            str "Don't have an account yet?"
+            a [ _href "/register" ] [ str "Go to registration" ]
         ]
     ] |> masterPage "Login"
 
@@ -86,7 +86,7 @@ let userPage (user : IdentityUser) =
     [
         p [] [
             sprintf "User name: %s, Email: %s" user.UserName user.Email
-            |> encodedText
+            |> str
         ]
     ] |> masterPage "User details"
 

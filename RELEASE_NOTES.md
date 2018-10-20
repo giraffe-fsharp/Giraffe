@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 3.3.0
+
+#### New features
+
+- Added `str` as an alias for the `encodedText` function from the `GiraffeViewEngine`.
+
 ## 3.2.0
 
 #### Improvements

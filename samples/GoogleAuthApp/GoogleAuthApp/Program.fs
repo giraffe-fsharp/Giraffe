@@ -35,56 +35,56 @@ module Views =
     let master (content: XmlNode list) =
         html [] [
             head [] [
-                title [] [ encodedText "Google Auth Sample App" ]
+                title [] [ str "Google Auth Sample App" ]
             ]
             body [] content
         ]
 
     let index =
         [
-            h1 [] [ encodedText "Google Auth Sample App" ]
-            p [] [ encodedText "Welcome to the Google Auth Sample App!" ]
+            h1 [] [ str "Google Auth Sample App" ]
+            p [] [ str "Welcome to the Google Auth Sample App!" ]
             ul [] [
-                li [] [ a [ _href Urls.login ] [ encodedText "Login" ] ]
-                li [] [ a [ _href Urls.user ] [ encodedText "User profile" ] ]
+                li [] [ a [ _href Urls.login ] [ str "Login" ] ]
+                li [] [ a [ _href Urls.user ] [ str "User profile" ] ]
             ]
         ] |> master
 
     let login =
         [
-            h1 [] [ encodedText "Login" ]
-            p [] [ encodedText "Pick one of the options to log in:" ]
+            h1 [] [ str "Login" ]
+            p [] [ str "Pick one of the options to log in:" ]
             ul [] [
-                li [] [ a [ _href Urls.googleAuth ] [ encodedText "Google" ] ]
-                li [] [ a [ _href Urls.missing ] [ encodedText "Facebook" ] ]
-                li [] [ a [ _href Urls.missing ] [ encodedText "Twitter" ] ]
+                li [] [ a [ _href Urls.googleAuth ] [ str "Google" ] ]
+                li [] [ a [ _href Urls.missing ] [ str "Facebook" ] ]
+                li [] [ a [ _href Urls.missing ] [ str "Twitter" ] ]
             ]
             p [] [
-                a [ _href Urls.index ] [ encodedText "Return to home." ]
+                a [ _href Urls.index ] [ str "Return to home." ]
             ]
         ] |> master
 
     let user (claims : (string * string) seq) =
         [
-            h1 [] [ encodedText "User details" ]
-            h2 [] [ encodedText "Claims:" ]
+            h1 [] [ str "User details" ]
+            h2 [] [ str "Claims:" ]
             ul [] [
                 yield! claims |> Seq.map (
                     fun (key, value) ->
-                        li [] [ sprintf "%s: %s" key value |> encodedText ] )
+                        li [] [ sprintf "%s: %s" key value |> str ] )
             ]
             p [] [
-                a [ _href Urls.logout ] [ encodedText "Logout" ]
+                a [ _href Urls.logout ] [ str "Logout" ]
             ]
         ] |> master
 
     let notFound =
         [
-            h1 [] [ encodedText "Not Found" ]
-            p [] [ encodedText "The requested resource does not exist." ]
-            p [] [ encodedText "Facebook and Twitter auth handlers have not been configured yet." ]
+            h1 [] [ str "Not Found" ]
+            p [] [ str "The requested resource does not exist." ]
+            p [] [ str "Facebook and Twitter auth handlers have not been configured yet." ]
             ul [] [
-                li [] [ a [ _href Urls.index ] [ encodedText "Return to home." ] ]
+                li [] [ a [ _href Urls.index ] [ str "Return to home." ] ]
             ]
         ] |> master
 
