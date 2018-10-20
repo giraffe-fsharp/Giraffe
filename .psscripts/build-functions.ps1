@@ -131,30 +131,6 @@ function Test-CompareVersions ($version, [string]$gitTag)
 # .NET Core functions
 # ----------------------------------------------
 
-function dotnet-info                      { Invoke-Cmd "dotnet --info" }
-function dotnet-version                   { Invoke-Cmd "dotnet --version" }
-function dotnet-restore ($project, $argv) { Invoke-Cmd "dotnet restore $project $argv" }
-function dotnet-build   ($project, $argv) { Invoke-Cmd "dotnet build $project $argv" }
-function dotnet-run     ($project, $argv) { Invoke-Cmd "dotnet run --project $project $argv" }
-function dotnet-pack    ($project, $argv) { Invoke-Cmd "dotnet pack $project $argv" }
-function dotnet-publish ($project, $argv) { Invoke-Cmd "dotnet publish $project $argv" }
-
-function Get-DotNetRuntimeVersion
-{
-    <#
-        .DESCRIPTION
-        Runs the dotnet --info command and extracts the .NET Core Runtime version number.
-
-        .NOTES
-        The .NET Core Runtime version can sometimes be useful for other dotnet CLI commands (e.g. dotnet xunit -fxversion ".NET Core Runtime version").
-    #>
-
-    $info = dotnet-info
-    [System.Array]::Reverse($info)
-    $version = $info | Where-Object { $_.Contains("Version")  } | Select-Object -First 1
-    $version.Split(":")[1].Trim()
-}
-
 function Get-TargetFrameworks ($projFile)
 {
     <#
@@ -198,20 +174,39 @@ function Get-NetCoreTargetFramework ($projFile)
     Get-TargetFrameworks $projFile | Where-Object { $_ -like "netstandard*" -or $_ -like "netcoreapp*" }
 }
 
-function dotnet-test ($project, $argv)
+function Invoke-DotNetCli ($cmd, $proj, $argv)
 {
-    # Currently dotnet test does not work for net461 on Linux/Mac
-    # See: https://github.com/Microsoft/vstest/issues/1318
-    #
-    # Previously dotnet-xunit was a working alternative, however
-    # after issues with the maintenance of dotnet xunit it has been
-    # discontinued since xunit 2.4: https://xunit.github.io/releases/2.4
     if(!(Test-IsWindows))
     {
-        $fw = Get-NetCoreTargetFramework $project;
+        $fw = Get-NetCoreTargetFramework($proj)
         $argv = "-f $fw " + $argv
     }
-    Invoke-Cmd "dotnet test $project $argv"
+    Invoke-Cmd "dotnet $cmd $proj $argv"
+}
+
+function dotnet-info                      { Invoke-Cmd "dotnet --info" }
+function dotnet-version                   { Invoke-Cmd "dotnet --version" }
+function dotnet-restore ($project, $argv) { Invoke-Cmd "dotnet restore $project $argv" }
+function dotnet-build   ($project, $argv) { Invoke-DotNetCli -Cmd "build" -Proj $project -Argv $argv }
+function dotnet-test    ($project, $argv) { Invoke-DotNetCli -Cmd "test"  -Proj $project -Argv $argv  }
+function dotnet-run     ($project, $argv) { Invoke-Cmd "dotnet run --project $project $argv" }
+function dotnet-pack    ($project, $argv) { Invoke-Cmd "dotnet pack $project $argv" }
+function dotnet-publish ($project, $argv) { Invoke-Cmd "dotnet publish $project $argv" }
+
+function Get-DotNetRuntimeVersion
+{
+    <#
+        .DESCRIPTION
+        Runs the dotnet --info command and extracts the .NET Core Runtime version number.
+
+        .NOTES
+        The .NET Core Runtime version can sometimes be useful for other dotnet CLI commands (e.g. dotnet xunit -fxversion ".NET Core Runtime version").
+    #>
+
+    $info = dotnet-info
+    [System.Array]::Reverse($info)
+    $version = $info | Where-Object { $_.Contains("Version")  } | Select-Object -First 1
+    $version.Split(":")[1].Trim()
 }
 
 function Write-DotnetCoreVersions

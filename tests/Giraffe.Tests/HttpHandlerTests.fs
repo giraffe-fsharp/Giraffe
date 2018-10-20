@@ -32,12 +32,11 @@ type Person =
         Piercings : string[]
     }
     override this.ToString() =
-        let nl = Environment.NewLine
-        sprintf "First name: %s%sLast name: %s%sBirth date: %s%sHeight: %.2f%sPiercings: %A"
-            this.FirstName nl
-            this.LastName nl
-            (this.BirthDate.ToString("yyyy-MM-dd")) nl
-            this.Height nl
+        sprintf "First name: %s, Last name: %s, Birth date: %s, Height: %.2f, Piercings: %A"
+            this.FirstName
+            this.LastName
+            (this.BirthDate.ToString("yyyy-MM-dd"))
+            this.Height
             this.Piercings
 
 // ---------------------------------
@@ -786,11 +785,7 @@ let ``Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = @"First name: John
-Last name: Doe
-Birth date: 1990-07-12
-Height: 1.85
-Piercings: [|""ear""; ""nose""|]"
+    let expected = @"First name: John, Last name: Doe, Birth date: 1990-07-12, Height: 1.85, Piercings: [|""ear""; ""nose""|]"
 
     task {
         let! result = app next ctx

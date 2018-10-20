@@ -1,5 +1,8 @@
 version: 0.1.0-{build}
-image: Visual Studio 2017
+image:
+  - Ubuntu1604
+  - Ubuntu1804
+  - Visual Studio 2017
 environment:
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
 init:
