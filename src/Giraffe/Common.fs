@@ -69,7 +69,7 @@ let inline isNotNull x = not (isNull x)
 ///
 /// Returns `None` if the string was `null` or empty otherwise `Some string`.
 ///
-let inline internal strOption (str : string) =
+let inline strOption (str : string) =
     if String.IsNullOrEmpty str then None else Some str
 
 /// **Description**
@@ -84,7 +84,7 @@ let inline internal strOption (str : string) =
 ///
 /// Returns the string contents of the file wrapped in a Task.
 ///
-let internal readFileAsStringAsync (filePath : string) =
+let readFileAsStringAsync (filePath : string) =
     task {
         use reader = new StreamReader(filePath)
         return! reader.ReadToEndAsync()

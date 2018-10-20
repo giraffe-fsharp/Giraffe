@@ -1,19 +1,12 @@
 Release Notes
 =============
 
-## 4.0.0
+## 3.3.0
 
 #### New features
 
 - Added `str` as an alias for the `encodedText` function from the `GiraffeViewEngine`.
 - Added the `HttpContext.GetRequestUrl()` extension method to retrieve the entire URL string of the incoming HTTP request.
-
-#### Breaking changes
-
-Made a couple helper functions internal which didn't make sense to expose as part of Giraffe:
-
-- Made the `strOption` helper function internal.
-- Made the `readFileAsStringAsync` helper function internal.
 
 ## 3.2.0
 

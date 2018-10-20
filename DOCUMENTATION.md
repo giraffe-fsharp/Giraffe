@@ -3336,6 +3336,29 @@ else
     // ... do other stuff here
 ```
 
+#### strOption
+
+An F# application often has to check if a `string` value is `null` when interoping with other .NET languages. Representing an optionally missing value with `null` is unnatural in F# and therefore Giraffe provides the `strOption` function which can convert a `string` into an `Option<string>` value for a more natural F# experience. If a string is `null` then the `strOptoin` function will return `None`, otherwise `Some string`:
+
+```fsharp
+let someDateTime =
+    match strOption someString with
+    | Some str -> DateTimeOffset.Parse str
+    | None     -> DateTimeOffset.UtcNow
+```
+
+#### readFileAsStringAsync
+
+Reading a file from the local file system is often a common use case in a web application. The `readFileAsStringAsync` function will asynchronously read the entire content of a given `filePath` from the local file system:
+
+```fsharp
+let someFunction =
+    task {
+        let! content = readFileAsStringAsync "myfile.txt"
+        // ... do stuff
+    }
+```
+
 ### Computation Expressions
 
 Giraffe provides two additional computation expressions which can be used with `Option<'T>` and `Result<'T, 'TError>` objects.
