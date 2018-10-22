@@ -27,6 +27,23 @@ type HttpContext with
 
     /// **Description**
     ///
+    /// Returns the entire request URL.
+    ///
+    /// **Output**
+    ///
+    /// Returns a `string` URL.
+    ///
+    member this.GetRequestUrl() =
+        let req = this.Request
+        String.Concat(
+            req.Scheme, "://",
+            req.Host.ToString(),
+            req.PathBase.ToUriComponent(),
+            req.Path.ToUriComponent(),
+            req.QueryString.ToUriComponent())
+
+    /// **Description**
+    ///
     /// Gets an instance of `'T` from the request's service container.
     ///
     /// **Output**

@@ -3305,6 +3305,17 @@ Short GUIDs and short IDs can also be [automatically resolved from route argumen
 
 ### Common Helper Functions
 
+#### Additional useful HttpContext extension methods
+
+The `GetRequestUrl` extension method of the `HttpContext` type can be used to retrieve the entire URL of the HTTP request as a `string` value:
+
+```fsharp
+let someHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let requestUrl = ctx.GetRequestUrl()
+        text (sprintf "The request URL is: %s" requestUrl) next ctx
+```
+
 #### DateTime Extension methods
 
 Giraffe automatically adds the `ToHtmlString()` extension method to `DateTime` and `DateTimeOffset` objects which formats a given timestamp into an [RFC3339](https://www.ietf.org/rfc/rfc3339.txt) formatted string:
