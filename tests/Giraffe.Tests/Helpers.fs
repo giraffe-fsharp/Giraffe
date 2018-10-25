@@ -20,6 +20,7 @@ open Newtonsoft.Json
 open Giraffe
 open Giraffe.Serialization
 open Utf8Json
+open FSharp.Control.Tasks.V2.ContextInsensitive
 
 // ---------------------------------
 // Common functions
@@ -164,11 +165,14 @@ let createRequest (method : HttpMethod) (path : string) =
     new HttpRequestMessage(method, url)
 
 let makeRequest configureApp configureServices args (request : HttpRequestMessage) =
-    use server = new TestServer(createHost configureApp configureServices args)
-    use client = server.CreateClient()
-    request
-    |> client.SendAsync
-    |> (fun t -> t.Result)
+    task {
+        use server = new TestServer(createHost configureApp configureServices args)
+        use client = server.CreateClient()
+        let! response =
+            request
+            |> client.SendAsync
+        return response
+    }
 
 let addHeader (key : string) (value : string) (request : HttpRequestMessage) =
     request.Headers.Add(key, value)
