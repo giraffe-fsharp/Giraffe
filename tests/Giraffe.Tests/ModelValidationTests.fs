@@ -84,9 +84,11 @@ let ``validateModel with valid model`` () =
         let! response =
             createRequest HttpMethod.Get url
             |> makeRequest (None, None)
-        response
-        |> isStatus HttpStatusCode.OK
-        |> readText
+        let! content =
+            response
+            |> isStatus HttpStatusCode.OK
+            |> readText
+        content
         |> shouldEqual "Name: John Doe, Age: 35"
     }
 
@@ -97,8 +99,10 @@ let ``validateModel with invalid model`` () =
         let! response =
             createRequest HttpMethod.Get url
             |> makeRequest (None, None)
-        response
-        |> isStatus HttpStatusCode.BadRequest
-        |> readText
+        let! content =
+            response
+            |> isStatus HttpStatusCode.BadRequest
+            |> readText
+        content
         |> shouldEqual "Person must be an adult (age >= 18)."
     }

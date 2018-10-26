@@ -231,11 +231,9 @@ let getBody (ctx : HttpContext) =
 
 let readText (response : HttpResponseMessage) =
     response.Content.ReadAsStringAsync()
-    |> (fun t -> t.Result)
 
 let readBytes (response : HttpResponseMessage) =
     response.Content.ReadAsByteArrayAsync()
-    |> (fun t -> t.Result)
 
 let printBytes (bytes : byte[]) =
     bytes |> Array.fold (
