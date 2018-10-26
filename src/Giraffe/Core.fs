@@ -4,6 +4,7 @@ module Giraffe.Core
 open System
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.Http.Extensions
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
@@ -27,20 +28,14 @@ type HttpContext with
 
     /// **Description**
     ///
-    /// Returns the entire request URL.
+    /// Returns the entire request URL in a fully escaped form, which is suitable for use in HTTP headers and other operations.
     ///
     /// **Output**
     ///
     /// Returns a `string` URL.
     ///
     member this.GetRequestUrl() =
-        let req = this.Request
-        String.Concat(
-            req.Scheme, "://",
-            req.Host.ToString(),
-            req.PathBase.ToUriComponent(),
-            req.Path.ToUriComponent(),
-            req.QueryString.ToUriComponent())
+        this.Request.GetEncodedUrl()
 
     /// **Description**
     ///
