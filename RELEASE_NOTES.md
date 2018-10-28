@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+## 3.4.0
+
+#### New features
+
+- Added a new http handler called `authorizeRequest` to authorize a request based on a `HttpContext -> bool` predicate.
+- Added a new http handler called `authorizeUser` which is an alias for `evaluateUserPolicy`. The `evaluateUserPolicy` handler will be removed in the next major release.
+
 ## 3.3.0
 
 #### New features

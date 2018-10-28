@@ -3,7 +3,7 @@
   <PropertyGroup>
     <!-- General -->
     <AssemblyName>Giraffe</AssemblyName>
-    <Version>3.3.0</Version>
+    <Version>3.4.0</Version>
     <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
     <Copyright>Copyright 2018 Dustin Moris Gorski</Copyright>
     <Authors>Dustin Moris Gorski and contributors</Authors>
@@ -33,7 +33,7 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-    <NoWarn>FS2003</NoWarn>
+    <NoWarn>FS2003;FS0044</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
