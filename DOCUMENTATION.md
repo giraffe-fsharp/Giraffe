@@ -1978,9 +1978,34 @@ let webApp =
     ]
 ```
 
-#### evaluateUserPolicy
+#### authorizeRequest
 
-The `evaluateUserPolicy (policy : ClaimsPrincipal -> bool) (authFailedHandler : HttpHandler)` http handler checks if an authenticated user meets a given user policy. If the policy cannot be satisfied then the `authFailedHandler` will be executed:
+The `authorizeRequest (predicate : HttpContext -> bool) (authFailedHandler : HttpHandler)` http handler validates a request based on a given predicate. If the predicate returns false then the `authFailedHandler` will get executed:
+
+```fsharp
+let apiKey = "some-secret-key-1234"
+
+let validateApiKey (ctx : HttpContext) =
+    match ctx.TryGetRequestHeader "X-API-Key" with
+    | Some key -> apiKey.Equals key
+    | None     -> false
+
+let accessDenied   = setStatusCode 401 >=> text "Access Denied"
+let requiresApiKey =
+    authorizeRequest validateApiKey accessDenied
+
+let webApp =
+    choose [
+        route "/" >=> text "Hello World"
+        route "/private"
+        >=> requiresApiKey
+        >=> protectedResource
+    ]
+```
+
+#### authorizeUser
+
+The `authorizeUser (policy : ClaimsPrincipal -> bool) (authFailedHandler : HttpHandler)` http handler checks if an authenticated user meets a given user policy. If the policy cannot be satisfied then the `authFailedHandler` will get executed:
 
 ```fsharp
 let notLoggedIn =
@@ -1994,12 +2019,11 @@ let accessDenied = setStatusCode 401 >=> text "Access Denied"
 let mustBeLoggedIn = requiresAuthentication notLoggedIn
 
 let mustBeJohn =
-    evaluateUserPolicy (fun u -> u.HasClaim (ClaimTypes.Name, "John")) accessDenied
+    authorizeUser (fun u -> u.HasClaim (ClaimTypes.Name, "John")) accessDenied
 
 let webApp =
     choose [
         route "/" >=> text "Hello World"
-
         route "/john-only"
         >=> mustBeLoggedIn
         >=> mustBeJohn
@@ -2009,7 +2033,7 @@ let webApp =
 
 #### authorizeByPolicyName
 
-The `authorizeByPolicyName (policyName : string) (authFailedHandler : HttpHandler)` http handler checks if an authenticated user meets a given authorization policy. If the policy cannot be satisfied then the `authFailedHandler` will be executed:
+The `authorizeByPolicyName (policyName : string) (authFailedHandler : HttpHandler)` http handler checks if an authenticated user meets a given authorization policy. If the policy cannot be satisfied then the `authFailedHandler` will get executed:
 
 ```fsharp
 let notLoggedIn =
@@ -2028,7 +2052,6 @@ let mustBeOver21 =
 let webApp =
     choose [
         route "/" >=> text "Hello World"
-
         route "/adults-only"
         >=> mustBeLoggedIn
         >=> mustBeOver21
@@ -2038,7 +2061,7 @@ let webApp =
 
 #### authorizeByPolicy
 
-The `authorizeByPolicy (policy : AuthorizationPolicy) (authFailedHandler : HttpHandler)` http handler checks if an authenticated user meets a given authorization policy. If the policy cannot be satisfied then the `authFailedHandler` will be executed.
+The `authorizeByPolicy (policy : AuthorizationPolicy) (authFailedHandler : HttpHandler)` http handler checks if an authenticated user meets a given authorization policy. If the policy cannot be satisfied then the `authFailedHandler` will get executed.
 
 See [authorizeByPolicyName](#authorizebypolicyname) for more information.
 

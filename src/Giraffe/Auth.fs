@@ -1,6 +1,7 @@
 [<AutoOpen>]
 module Giraffe.Auth
 
+open System
 open System.Security.Claims
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Authentication
@@ -47,7 +48,24 @@ let signOut (authScheme : string) : HttpHandler =
 
 /// **Description**
 ///
-/// Validates if a `ClaimsPrincipal` satisfies a certain condition. If the `policy` returns `true` then it will continue with the `next` function otherwise it will shortcircuit to the `authFailedHandler`.
+/// Validates if a `HttpContext` satisfies a certain condition. If the `policy` returns `true` then it will continue with the `next` function otherwise it will short circuit and execute the `authFailedHandler`.
+///
+/// **Parameters**
+///
+/// - `policy`: One or many conditions which a `HttpContext` must meet. The `policy` function should return `true` on success and `false` on failure.
+/// - `authFailedHandler`: A `HttpHandler` function which will be executed when the `policy` returns `false`.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
+let authorizeRequest (predicate : HttpContext -> bool) (authFailedHandler : HttpHandler) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        (if predicate ctx then next else authFailedHandler finish) ctx
+
+/// **Description**
+///
+/// Validates if a `ClaimsPrincipal` satisfies a certain condition. If the `policy` returns `true` then it will continue with the `next` function otherwise it will short circuit and execute the `authFailedHandler`.
 ///
 /// **Parameters**
 ///
@@ -58,11 +76,26 @@ let signOut (authScheme : string) : HttpHandler =
 ///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
+[<Obsolete("Please use `authorizeUser` as a replacement for `evaluateUserPolicy`. In the next major version this function will be removed.")>]
 let evaluateUserPolicy (policy : ClaimsPrincipal -> bool) (authFailedHandler : HttpHandler) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        if policy ctx.User
-        then next ctx
-        else authFailedHandler finish ctx
+    authorizeRequest
+        (fun ctx -> policy ctx.User)
+        authFailedHandler
+
+/// **Description**
+///
+/// Validates if a `ClaimsPrincipal` satisfies a certain condition. If the `policy` returns `true` then it will continue with the `next` function otherwise it will short circuit and execute the `authFailedHandler`.
+///
+/// **Parameters**
+///
+/// - `policy`: One or many conditions which a `ClaimsPrincipal` must meet. The `policy` function should return `true` on success and `false` on failure.
+/// - `authFailedHandler`: A `HttpHandler` function which will be executed when the `policy` returns `false`.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
+let authorizeUser = evaluateUserPolicy
 
 /// **Description**
 ///
@@ -77,7 +110,7 @@ let evaluateUserPolicy (policy : ClaimsPrincipal -> bool) (authFailedHandler : H
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let requiresAuthentication (authFailedHandler : HttpHandler) : HttpHandler =
-    evaluateUserPolicy
+    authorizeUser
         (fun user -> isNotNull user && user.Identity.IsAuthenticated)
         authFailedHandler
 
@@ -95,7 +128,7 @@ let requiresAuthentication (authFailedHandler : HttpHandler) : HttpHandler =
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let requiresRole (role : string) (authFailedHandler : HttpHandler) : HttpHandler =
-    evaluateUserPolicy
+    authorizeUser
         (fun user -> user.IsInRole role)
         authFailedHandler
 
@@ -113,7 +146,7 @@ let requiresRole (role : string) (authFailedHandler : HttpHandler) : HttpHandler
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) : HttpHandler =
-    evaluateUserPolicy
+    authorizeUser
         (fun user -> List.exists user.IsInRole roles)
         authFailedHandler
 
