@@ -2329,11 +2329,11 @@ Giraffe comes with its own extremely powerful view engine for functional develop
 let indexView =
     html [] [
         head [] [
-            title [] [ rawText "Giraffe" ]
+            title [] [ str "Giraffe" ]
         ]
         body [] [
-            h1 [] [ rawText "Giraffe" ]
-            p [] [ rawText "Hello World." ]
+            h1 [] [ str "Giraffe" ]
+            p [] [ str "Hello World." ]
         ]
     ]
 
@@ -2702,12 +2702,12 @@ HTML elements and attributes are defined as F# objects:
 let indexView =
     html [] [
         head [] [
-            title [] [ rawText "Giraffe Sample" ]
+            title [] [ str "Giraffe Sample" ]
         ]
         body [] [
-            h1 [] [ encodedText "I |> F#" ]
+            h1 [] [ str "I |> F#" ]
             p [ _class "some-css-class"; _id "someId" ] [
-                rawText "Hello World"
+                str "Hello World"
             ]
         ]
     ]
@@ -2726,7 +2726,7 @@ All `ParentNode` elements accept these two parameters:
 ```fsharp
 let someHtml =
     div [ _id "someId"; _class "css-class" ] [
-        a [ _href "https://example.org" ] [ rawText "Some text..." ]
+        a [ _href "https://example.org" ] [ str "Some text..." ]
     ]
 ```
 
@@ -2737,7 +2737,7 @@ let someHtml =
     div [] [
         br []
         hr [ _class "css-class-for-hr" ]
-        p [] [ rawText "bla blah" ]
+        p [] [ str "bla blah" ]
     ]
 ```
 
@@ -2747,7 +2747,7 @@ Attributes are further classified into two different cases. First and most commo
 a [
     _href "http://url.com"
     _target "_blank"
-    _class "class1" ] [ encodedText "Click here" ]
+    _class "class1" ] [ str "Click here" ]
 ```
 
 As the name suggests, they have a key, such as `class` and a value such as the name of a CSS class.
@@ -2771,7 +2771,7 @@ Naturally the most frequent content in any HTML document is pure text:
 </div>
 ```
 
-The Giraffe View Engine lets one create pure text content as a `Text` element. A `Text` element can either be generated via the `rawText` or `encodedText` functions:
+The Giraffe View Engine lets one create pure text content as a `Text` element. A `Text` element can either be generated via the `rawText` or `encodedText` (or the short alias `str`) functions:
 
 ```fsharp
 let someHtml =
@@ -2781,13 +2781,13 @@ let someHtml =
     ]
 ```
 
-The `rawText` function will create an object of type `Text` where the content will be rendered in its original form and the `encodedText` function will output a string where the content has been HTML encoded.
+The `rawText` function will create an object of type `XmlNode` where the content will be rendered in its original form and the `encodedText`/`str` function will output a string where the content has been HTML encoded.
 
 In this example the first `p` element will literally output the string as it is (`<div>Hello World</div>`) while the second `p` element will output the value as HTML encoded string `&lt;div&gt;Hello World&lt;/div&gt;`.
 
 Please be aware that the the usage of `rawText` is mainly designed for edge cases where someone would purposefully want to inject HTML (or JavaScript) code into a rendered view. If not used carefully this could potentially lead to serious security vulnerabilities and therefore should be used only when explicitly required.
 
-Most cases and particularly any user provided content should always be output via the `encodedText` function.
+Most cases and particularly any user provided content should always be output via the `encodedText`/`str` function.
 
 ### Naming Convention
 
@@ -2818,12 +2818,12 @@ module Views =
     let index =
         html [] [
             head [] [
-                title [] [ rawText "Giraffe Sample" ]
+                title [] [ str "Giraffe Sample" ]
             ]
             body [] [
-                h1 [] [ encodedText "I |> F#" ]
+                h1 [] [ str "I |> F#" ]
                 p [ _class "some-css-class"; _id "someId" ] [
-                    rawText "Hello World"
+                    str "Hello World"
                 ]
             ]
         ]
@@ -2948,7 +2948,7 @@ module Views =
     let master (pageTitle : string) (content: XmlNode list) =
         html [] [
             head [] [
-                title [] [ encodedText pageTitle ]
+                title [] [ str pageTitle ]
             ]
             body [] content
         ]
@@ -2956,8 +2956,8 @@ module Views =
     let index =
         let pageTitle = "Giraffe Sample"
         [
-            h1 [] [ encodedText pageTitle ]
-            p [] [ encodedText "Hello world!" ]
+            h1 [] [ str pageTitle ]
+            p [] [ str "Hello world!" ]
         ] |> master pageTitle
 ```
 
@@ -2970,7 +2970,7 @@ module Views =
     let master1 (pageTitle : string) (content: XmlNode list) =
         html [] [
             head [] [
-                title [] [ encodedText pageTitle ]
+                title [] [ str pageTitle ]
             ]
             body [] content
         ]
@@ -2980,7 +2980,7 @@ module Views =
             main [] content
             footer [] [
                 p [] [
-                    encodedText "Copyright ..."
+                    str "Copyright ..."
                 ]
             ]
         ]
@@ -2988,8 +2988,8 @@ module Views =
     let index =
         let pageTitle = "Giraffe Sample"
         [
-            h1 [] [ encodedText pageTitle ]
-            p [] [ encodedText "Hello world!" ]
+            h1 [] [ str pageTitle ]
+            p [] [ str "Hello world!" ]
         ] |> master2 |> master1 pageTitle
 ```
 
@@ -3004,14 +3004,14 @@ module Views =
     let partial =
         footer [] [
             p [] [
-                encodedText "Copyright..."
+                str "Copyright..."
             ]
         ]
 
     let master (pageTitle : string) (content: XmlNode list) =
         html [] [
             head [] [
-                title [] [ encodedText pageTitle ]
+                title [] [ str pageTitle ]
             ]
             body [] content
             partial
@@ -3020,8 +3020,8 @@ module Views =
     let index =
         let pageTitle = "Giraffe Sample"
         [
-            h1 [] [ encodedText pageTitle ]
-            p [] [ encodedText "Hello world!" ]
+            h1 [] [ str pageTitle ]
+            p [] [ str "Hello world!" ]
         ] |> master pageTitle
 ```
 
@@ -3036,14 +3036,14 @@ module Views =
     let partial =
         footer [] [
             p [] [
-                encodedText "Copyright..."
+                str "Copyright..."
             ]
         ]
 
     let master (pageTitle : string) (content: XmlNode list) =
         html [] [
             head [] [
-                title [] [ encodedText pageTitle ]
+                title [] [ str pageTitle ]
             ]
             body [] content
             partial
@@ -3051,8 +3051,8 @@ module Views =
 
     let index (model : IndexViewModel) =
         [
-            h1 [] [ encodedText model.PageTitle ]
-            p [] [ encodedText model.WelcomeText ]
+            h1 [] [ str model.PageTitle ]
+            p [] [ str model.WelcomeText ]
         ] |> master model.PageTitle
 ```
 
@@ -3065,7 +3065,7 @@ let partial (books : Book list) =
     ul [] [
         yield!
             books
-            |> List.map (fun b -> li [] [ encodedText book.Title ])
+            |> List.map (fun b -> li [] [ str book.Title ])
     ]
 ```
 
@@ -3304,6 +3304,17 @@ let someHttpHandler : HttpHandler =
 Short GUIDs and short IDs can also be [automatically resolved from route arguments](#routef).
 
 ### Common Helper Functions
+
+#### Additional useful HttpContext extension methods
+
+The `GetRequestUrl` extension method of the `HttpContext` type can be used to retrieve the entire URL of the HTTP request as a `string` value:
+
+```fsharp
+let someHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let requestUrl = ctx.GetRequestUrl()
+        text (sprintf "The request URL is: %s" requestUrl) next ctx
+```
 
 #### DateTime Extension methods
 

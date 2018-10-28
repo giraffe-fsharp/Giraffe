@@ -60,10 +60,31 @@ let voidTag (tagName    : string)
             (attributes : XmlAttribute list) =
     VoidElement (tagName, Array.ofList attributes)
 
-let encodedText (content : string) = Text (encode content)
+/// **Description**
+///
+/// The `rawText` function will create an object of type `XmlNode` where the content will be rendered in its original form (without encoding).
+///
+/// **Special Notice**
+///
+/// Please be aware that the the usage of `rawText` is mainly designed for edge cases where someone would purposefully want to inject HTML (or JavaScript) code into a rendered view. If not used carefully this could potentially lead to serious security vulnerabilities and therefore should be used only when explicitly required.
+///
+/// Most cases and particularly any user provided content should always be output via the `encodedText` function.
+///
 let rawText     (content : string) = Text content
+
+/// **Description**
+///
+/// The `encodedText` function will output a string where the content has been HTML encoded.
+///
+let encodedText (content : string) = Text (encode content)
 let emptyText                      = rawText ""
 let comment     (content : string) = rawText (sprintf "<!-- %s -->" content)
+
+/// **Description**
+///
+/// An alias for the `encodedText` function.
+///
+let str = encodedText
 
 // ---------------------------
 // Default HTML elements

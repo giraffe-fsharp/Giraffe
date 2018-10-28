@@ -1,9 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net461;netcoreapp2.1</TargetFrameworks>
     <AssemblyName>Giraffe.Tests</AssemblyName>
-    <DebugType>portable</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="TestFiles\*">
+    <Content Include="TestFiles/*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -32,14 +30,12 @@
     <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.1.*" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.1.*" />
     <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.1.*" />
-    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.1.*" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.*" />
     <PackageReference Include="System.Net.Http" Version="4.3.*" />
     <PackageReference Include="xunit" Version="2.4.*" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.*" />
     <PackageReference Include="NSubstitute" Version="3.1.*" />
-    <PackageReference Include="FsCheck" Version="3.0.0-*" />
-    <PackageReference Include="FsCheck.Xunit" Version="3.0.0-*" />
   </ItemGroup>
 
   <ItemGroup>

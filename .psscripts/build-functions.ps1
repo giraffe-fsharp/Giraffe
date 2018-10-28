@@ -15,7 +15,37 @@ function Test-IsWindows
     [environment]::OSVersion.Platform -ne "Unix"
 }
 
-function Invoke-UnsafeCmd ($cmd)
+function Test-IsMonoInstalled
+{
+    <#
+        .DESCRIPTION
+        Checks to see whether the current environment has the Mono framework installed.
+
+        .EXAMPLE
+        if (Test-IsMonoInstalled) { Write-Host "Mono is available." }
+    #>
+
+    $result = Invoke-Cmd "mono --version" -Silent
+    return $result.StartsWith("Mono JIT compiler version")
+}
+
+function Get-UbuntuVersion
+{
+    <#
+        .DESCRIPTION
+        Gets the Ubuntu version.
+
+        .EXAMPLE
+        $ubuntuVersion = Get-UbuntuVersion
+    #>
+
+    $version = Invoke-Cmd "lsb_release -r -s" -Silent
+    return $version
+}
+
+function Invoke-UnsafeCmd (
+    [string] $Cmd,
+    [switch] $Silent)
 {
     <#
         .DESCRIPTION
@@ -31,12 +61,14 @@ function Invoke-UnsafeCmd ($cmd)
         Use this PowerShell command to execute any CLI commands which might not exit with 0 on a success.
     #>
 
-    Write-Host $cmd -ForegroundColor DarkCyan
+    if (!($Silent.IsPresent)) { Write-Host $cmd -ForegroundColor DarkCyan }
     if (Test-IsWindows) { $cmd = "cmd.exe /C $cmd" }
     Invoke-Expression -Command $cmd
 }
 
-function Invoke-Cmd ($Cmd)
+function Invoke-Cmd (
+    [string] $Cmd,
+    [switch] $Silent)
 {
     <#
         .DESCRIPTION
@@ -52,7 +84,7 @@ function Invoke-Cmd ($Cmd)
         Use this PowerShell command to execute any dotnet CLI commands in order to ensure that they behave the same way in the case of an error across different environments (Windows, OSX and Linux).
     #>
 
-    Invoke-UnsafeCmd $cmd
+    if ($Silent.IsPresent) { Invoke-UnsafeCmd $cmd -Silent } else { Invoke-UnsafeCmd $cmd }
     if ($LastExitCode -ne 0) { Write-Error "An error occured when executing '$Cmd'."; return }
 }
 
@@ -117,30 +149,6 @@ function Test-CompareVersions ($version, [string]$gitTag)
 # .NET Core functions
 # ----------------------------------------------
 
-function dotnet-info                      { Invoke-Cmd "dotnet --info" }
-function dotnet-version                   { Invoke-Cmd "dotnet --version" }
-function dotnet-restore ($project, $argv) { Invoke-Cmd "dotnet restore $project $argv" }
-function dotnet-build   ($project, $argv) { Invoke-Cmd "dotnet build $project $argv" }
-function dotnet-run     ($project, $argv) { Invoke-Cmd "dotnet run --project $project $argv" }
-function dotnet-pack    ($project, $argv) { Invoke-Cmd "dotnet pack $project $argv" }
-function dotnet-publish ($project, $argv) { Invoke-Cmd "dotnet publish $project $argv" }
-
-function Get-DotNetRuntimeVersion
-{
-    <#
-        .DESCRIPTION
-        Runs the dotnet --info command and extracts the .NET Core Runtime version number.
-
-        .NOTES
-        The .NET Core Runtime version can sometimes be useful for other dotnet CLI commands (e.g. dotnet xunit -fxversion ".NET Core Runtime version").
-    #>
-
-    $info = dotnet-info
-    [System.Array]::Reverse($info)
-    $version = $info | Where-Object { $_.Contains("Version")  } | Select-Object -First 1
-    $version.Split(":")[1].Trim()
-}
-
 function Get-TargetFrameworks ($projFile)
 {
     <#
@@ -184,20 +192,43 @@ function Get-NetCoreTargetFramework ($projFile)
     Get-TargetFrameworks $projFile | Where-Object { $_ -like "netstandard*" -or $_ -like "netcoreapp*" }
 }
 
-function dotnet-test ($project, $argv)
+function Invoke-DotNetCli ($cmd, $proj, $argv)
 {
     # Currently dotnet test does not work for net461 on Linux/Mac
     # See: https://github.com/Microsoft/vstest/issues/1318
-    #
-    # Previously dotnet-xunit was a working alternative, however
-    # after issues with the maintenance of dotnet xunit it has been
-    # discontinued since xunit 2.4: https://xunit.github.io/releases/2.4
-    if(!(Test-IsWindows))
+
+    if((!(Test-IsWindows) -and !(Test-IsMonoInstalled)) `
+        -or (!(Test-IsWindows) -and ($cmd -eq "test")))
     {
-        $fw = Get-NetCoreTargetFramework $project;
+        $fw = Get-NetCoreTargetFramework($proj)
         $argv = "-f $fw " + $argv
     }
-    Invoke-Cmd "dotnet test $project $argv"
+    Invoke-Cmd "dotnet $cmd $proj $argv"
+}
+
+function dotnet-info                      { Invoke-Cmd "dotnet --info" -Silent }
+function dotnet-version                   { Invoke-Cmd "dotnet --version" -Silent }
+function dotnet-restore ($project, $argv) { Invoke-Cmd "dotnet restore $project $argv" }
+function dotnet-build   ($project, $argv) { Invoke-DotNetCli -Cmd "build" -Proj $project -Argv $argv }
+function dotnet-test    ($project, $argv) { Invoke-DotNetCli -Cmd "test"  -Proj $project -Argv $argv  }
+function dotnet-run     ($project, $argv) { Invoke-Cmd "dotnet run --project $project $argv" }
+function dotnet-pack    ($project, $argv) { Invoke-Cmd "dotnet pack $project $argv" }
+function dotnet-publish ($project, $argv) { Invoke-Cmd "dotnet publish $project $argv" }
+
+function Get-DotNetRuntimeVersion
+{
+    <#
+        .DESCRIPTION
+        Runs the dotnet --info command and extracts the .NET Core Runtime version number.
+
+        .NOTES
+        The .NET Core Runtime version can sometimes be useful for other dotnet CLI commands (e.g. dotnet xunit -fxversion ".NET Core Runtime version").
+    #>
+
+    $info = dotnet-info
+    [System.Array]::Reverse($info)
+    $version = $info | Where-Object { $_.Contains("Version")  } | Select-Object -First 1
+    $version.Split(":")[1].Trim()
 }
 
 function Write-DotnetCoreVersions
@@ -235,7 +266,10 @@ function Get-NetCoreSdkFromWeb ($version)
         The SDK version which should be downloaded.
     #>
 
-    $os = if (Test-IsWindows) { "windows" } else { "linux" }
+    Write-Host "Downloading .NET Core SDK $version..."
+
+    $os  = if (Test-IsWindows) { "windows" } else { "linux" }
+    $ext = if (Test-IsWindows) { ".zip" } else { ".tar.gz" }
 
     $response = Invoke-WebRequest `
                     -Uri "https://www.microsoft.com/net/download/thank-you/dotnet-sdk-$version-$os-x64-binaries" `
@@ -247,13 +281,17 @@ function Get-NetCoreSdkFromWeb ($version)
             | Where-Object { $_.onclick -eq "recordManualDownload()" } `
             | Select-Object -Expand href
 
-    $tempFile  = [System.IO.Path]::GetTempFileName() + ".zip"
+    $tempFile  = [System.IO.Path]::GetTempFileName() + $ext
+
     $webClient = New-Object System.Net.WebClient
     $webClient.DownloadFile($downloadLink, $tempFile)
+
+    Write-Host "Download finished. SDK has been saved to '$tempFile'."
+
     return $tempFile
 }
 
-function Install-NetCoreSdk ($sdkZipPath)
+function Install-NetCoreSdkFromArchive ($sdkArchivePath)
 {
     <#
         .DESCRIPTION
@@ -263,12 +301,35 @@ function Install-NetCoreSdk ($sdkZipPath)
         The zip archive which contains the .NET Core SDK.
     #>
 
+    if (Test-IsWindows)
+    {
+        $env:DOTNET_INSTALL_DIR = [System.IO.Path]::Combine($pwd, ".dotnetsdk")
+        New-Item $env:DOTNET_INSTALL_DIR -ItemType Directory -Force | Out-Null
+        Write-Host "Created folder '$env:DOTNET_INSTALL_DIR'."
+        Expand-Archive -LiteralPath $sdkArchivePath -DestinationPath $env:DOTNET_INSTALL_DIR -Force
+        Write-Host "Extracted '$sdkArchivePath' to folder '$env:DOTNET_INSTALL_DIR'."
+        $env:Path = "$env:DOTNET_INSTALL_DIR;$env:Path"
+        Write-Host "Added '$env:DOTNET_INSTALL_DIR' to the environment variables."
+    }
+    else
+    {
+        $dotnetInstallDir = "$env:HOME/.dotnetsdk"
+        Invoke-Cmd "mkdir -p $dotnetInstallDir"
+        Write-Host "Created folder '$dotnetInstallDir'."
+        Invoke-Cmd "tar -xf $sdkArchivePath -C $dotnetInstallDir"
+        Write-Host "Extracted '$sdkArchivePath' to folder '$dotnetInstallDir'."
+        $env:PATH = "$env:PATH:$dotnetInstallDir"
+        Write-Host "Added '$dotnetInstallDir' to the environment variables."
+    }
+}
 
-    $env:DOTNET_INSTALL_DIR = "$pwd\.dotnetsdk"
-    New-Item $env:DOTNET_INSTALL_DIR -ItemType Directory -Force
-
-    Expand-Archive -Path $sdkZipPath -DestinationPath $env:DOTNET_INSTALL_DIR
-    $env:Path = "$env:DOTNET_INSTALL_DIR;$env:Path"
+function Install-NetCoreSdkForUbuntu ($ubuntuVersion, $sdkVersion)
+{
+    Invoke-Cmd "wget -q https://packages.microsoft.com/config/ubuntu/$ubuntuVersion/packages-microsoft-prod.deb"
+    Invoke-Cmd "sudo dpkg -i packages-microsoft-prod.deb"
+    Invoke-Cmd "sudo apt-get install apt-transport-https"
+    Invoke-Cmd "sudo apt-get update"
+    Invoke-Cmd "sudo apt-get -y install dotnet-sdk-$sdkVersion"
 }
 
 # ----------------------------------------------

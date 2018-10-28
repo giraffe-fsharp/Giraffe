@@ -4,6 +4,7 @@ module Giraffe.Core
 open System
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.Http.Extensions
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
@@ -24,6 +25,17 @@ type MissingDependencyException(dependencyName : string) =
 // ---------------------------
 
 type HttpContext with
+
+    /// **Description**
+    ///
+    /// Returns the entire request URL in a fully escaped form, which is suitable for use in HTTP headers and other operations.
+    ///
+    /// **Output**
+    ///
+    /// Returns a `string` URL.
+    ///
+    member this.GetRequestUrl() =
+        this.Request.GetEncodedUrl()
 
     /// **Description**
     ///

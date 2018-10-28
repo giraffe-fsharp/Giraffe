@@ -4,7 +4,7 @@
 
 function Get-NuGetPackageInfo ($nugetPackageId, $currentVersion)
 {
-    $url = "https://api-v2v3search-0.nuget.org/query?q=$nugetPackageId&prerelease=false"
+    $url    = "https://api-v2v3search-0.nuget.org/query?q=$nugetPackageId&prerelease=false"
     $result = Invoke-RestMethod -Uri $url -Method Get
     $latestVersion = $result.data[0].version
     $upgradeAvailable = !$latestVersion.StartsWith($currentVersion.Replace("*", ""))

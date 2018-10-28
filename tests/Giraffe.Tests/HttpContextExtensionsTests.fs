@@ -13,6 +13,34 @@ open Giraffe
 open Giraffe.GiraffeViewEngine
 
 [<Fact>]
+let ``GetRequestUrl returns entire URL of the HTTP request`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    ctx.Request.Scheme.Returns("http") |> ignore
+    ctx.Request.Host.Returns(new HostString("example.org:81")) |> ignore
+    ctx.Request.PathBase.Returns(new PathString("/something")) |> ignore
+    ctx.Request.Path.Returns(new PathString("/hello")) |> ignore
+    ctx.Request.QueryString.Returns(new QueryString("?a=1&b=2")) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let testHandler =
+        fun (next : HttpFunc) (ctx : HttpContext) ->
+            text (ctx.GetRequestUrl()) next ctx
+
+    let app = route "/hello" >=> testHandler
+
+    let expected = "http://example.org:81/something/hello?a=1&b=2"
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
 let ``TryGetRequestHeader during HTTP GET request with returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 

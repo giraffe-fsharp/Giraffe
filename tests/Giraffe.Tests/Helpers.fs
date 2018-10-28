@@ -14,6 +14,7 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.TestHost
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
+open FSharp.Control.Tasks.V2.ContextInsensitive
 open Xunit
 open NSubstitute
 open Newtonsoft.Json
@@ -164,11 +165,12 @@ let createRequest (method : HttpMethod) (path : string) =
     new HttpRequestMessage(method, url)
 
 let makeRequest configureApp configureServices args (request : HttpRequestMessage) =
-    use server = new TestServer(createHost configureApp configureServices args)
-    use client = server.CreateClient()
-    request
-    |> client.SendAsync
-    |> (fun t -> t.Result)
+    task {
+        use server = new TestServer(createHost configureApp configureServices args)
+        use client = server.CreateClient()
+        let! response = request |> client.SendAsync
+        return response
+    }
 
 let addHeader (key : string) (value : string) (request : HttpRequestMessage) =
     request.Headers.Add(key, value)
@@ -229,11 +231,9 @@ let getBody (ctx : HttpContext) =
 
 let readText (response : HttpResponseMessage) =
     response.Content.ReadAsStringAsync()
-    |> (fun t -> t.Result)
 
 let readBytes (response : HttpResponseMessage) =
     response.Content.ReadAsByteArrayAsync()
-    |> (fun t -> t.Result)
 
 let printBytes (bytes : byte[]) =
     bytes |> Array.fold (

@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+## 3.3.0
+
+#### New features
+
+- Added `str` as an alias for the `encodedText` function from the `GiraffeViewEngine`.
+- Added the `HttpContext.GetRequestUrl()` extension method to retrieve the entire URL string of the incoming HTTP request.
+
 ## 3.2.0
 
 #### Improvements
