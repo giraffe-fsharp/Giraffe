@@ -346,6 +346,16 @@ let someHttpHandler : HttpHandler =
         // Return a Task<HttpContext option>
 ```
 
+If you need to access the configuration when configuring services, you can access it like this:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    let serviceProvider = services.BuildServiceProvider()
+    let settings = serviceProvider.GetService<IConfiguration>()
+    // Configure services using the `settings`...
+    services.AddGiraffe() |> ignore
+```
+
 ### Logging
 
 ASP.NET Core has a built in [Logging API](https://docs.microsoft.com/en-gb/aspnet/core/fundamentals/logging/?tabs=aspnetcore2x) which works out of the box with Giraffe.
