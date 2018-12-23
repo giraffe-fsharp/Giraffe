@@ -568,7 +568,9 @@ Giraffe exposes a set of `HttpHandler` functions which can filter a request base
 - `TRACE`
 - `CONNECT`
 
-This can be useful when implementing a different `HttpHandler` function for the same route, but for different verbs:
+There is an additional `GET_HEAD` handler which can filter a HTTP `GET` and `HEAD` request at the same time.
+
+Filtering requests based on their HTTP verb can be useful when implementing a route which should behave differently based on the verb (e.g. `GET` vs. `POST`):
 
 ```fsharp
 let submitFooHandler : HttpHandler =
@@ -606,6 +608,14 @@ let someHttpHandler : HttpHandler =
         else
             // Do something else
         // Return a Task<HttpContext option>
+```
+
+The `GET_HEAD` handler is a special handler which can be used to enable `GET` and `HEAD` requests on a resource at the same time. This can be very useful when caching is enabled and clients might want to send `HEAD` requests to check the `ETag` or `Last-Modified` HTTP headers before issuing a `GET`.
+
+More combinations can be easily created via the `choose` http handler:
+
+```fsharp
+let POST_HEAD : HttpHandler = choose [ POST; HEAD ]
 ```
 
 ### HTTP Status Codes

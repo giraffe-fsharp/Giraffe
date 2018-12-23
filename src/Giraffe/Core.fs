@@ -383,6 +383,8 @@ let OPTIONS : HttpHandler = httpVerb HttpMethods.IsOptions
 let TRACE   : HttpHandler = httpVerb HttpMethods.IsTrace
 let CONNECT : HttpHandler = httpVerb HttpMethods.IsConnect
 
+let GET_HEAD : HttpHandler = choose [ GET; HEAD ]
+
 /// **Description**
 ///
 /// Clears the current `HttpResponse` object.

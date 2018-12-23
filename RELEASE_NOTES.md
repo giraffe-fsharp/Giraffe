@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 3.5.0
+
+#### New features
+
+- Added a new `GET_HEAD` http handler (see: [#314](https://github.com/giraffe-fsharp/Giraffe/issues/314) for more info)
+
 ## 3.4.0
 
 #### New features
