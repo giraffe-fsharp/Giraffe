@@ -12,7 +12,7 @@ type HtmlUtf8Benchmark() =
             div [ _class "top-bar" ]
                 [ div [ _class "top-bar-left" ]
                     [ ul [ _class "dropdown menu"
-                           _data "dropdown-menu" ]
+                           _data "dropdown-menu" "" ]
                         [ li [ _class "menu-text" ]
                             [ rawText "Site Title" ]
                           li [ ]
