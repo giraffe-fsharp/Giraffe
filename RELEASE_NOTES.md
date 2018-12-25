@@ -1,19 +1,13 @@
 Release Notes
 =============
 
-## 3.6.0
-
-#### New Features
-
-- Added `context` http handler that allows to create another http handler by accessing information from the `HttpContext`.
-- Added `request` http handler that allows to create another http handler by accessing information from the incoming http request.
-
 ## 3.5.0
 
 #### New features
 
 - Updated all packages and framework library dependencies to .NET Core 2.2.
 - Added a new `GET_HEAD` http handler (see: [#314](https://github.com/giraffe-fsharp/Giraffe/issues/314) for more info).
+- Added two new convenience functions, `handleContext` and `handleRequest`, which can be used for creating new `HttpHandler` functions.
 
 #### Bug fixes
 

@@ -296,6 +296,40 @@ let internal abort  : HttpFuncResult = Task.FromResult None
 let internal finish : HttpFunc = Some >> Task.FromResult
 
 // ---------------------------
+// Convenience Handlers
+// ---------------------------
+
+/// **Description**
+///
+/// The `handleContext` function is a convenience function which can be used to create a new `HttpHandler` function which requires access to the `HttpContext` object.
+///
+/// **Parameters**
+///
+/// - `contextMap`: A function which accepts a `HttpContext` object and returns a `HttpHandler` function.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+let handleContext (contextMap : HttpContext -> HttpHandler) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let createdHandler = contextMap ctx
+        createdHandler next ctx
+
+/// **Description**
+///
+/// The `handleRequest` function is a convenience function which can be used to create a new `HttpHandler` function which requires access to the `HttpRequest` object.
+///
+/// **Parameters**
+///
+/// - `requestMap`: A function which accepts a `HttpRequest` object and returns a `HttpHandler` function.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+let handleRequest (requestMap : HttpRequest -> HttpHandler) : HttpHandler =
+    handleContext (fun ctx -> requestMap ctx.Request)
+
+// ---------------------------
 // Default Combinators
 // ---------------------------
 
@@ -476,34 +510,3 @@ let redirectTo (permanent : bool) (location : string) : HttpHandler  =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.Response.Redirect(location, permanent)
         Task.FromResult (Some ctx)
-
-/// **Description**
-/// 
-/// The `context` combinator allows access to data and services within the current HttpContext from which you can create a new HttpHandler.
-/// 
-/// **Parameters**
-/// 
-/// - `contextMap`: a function that creates a `HttpHandler` using the Http context as input.
-/// 
-/// **Output**
-/// 
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-let context (contextMap : HttpContext -> HttpHandler) : HttpHandler =  
-  fun (next : HttpFunc) (ctx : HttpContext)  -> 
-      let createdHandler = contextMap ctx
-      createdHandler next ctx
-
-
-/// **Description**
-/// 
-/// The `context` combinator allows access to incoming HttpRequest from which you can create a new HttpHandler.
-/// 
-/// **Parameters**
-/// 
-/// - `requestMap`: a function that creates a `HttpHandler` using the incoming request as input.
-/// 
-/// **Output**
-/// 
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-let request (requestMap : HttpRequest -> HttpHandler) : HttpHandler =  
-    context (fun ctx -> requestMap ctx.Request)

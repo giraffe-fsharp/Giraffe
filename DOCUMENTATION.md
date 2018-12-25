@@ -37,7 +37,6 @@ An in depth functional reference to all of Giraffe's default features.
     - [Redirection](#redirection)
     - [Response Caching](#response-caching)
     - [Response Compression](#response-compression)
-    - [Accessing HttpContext](#accessing-httpcontext)
 - [Giraffe View Engine](#giraffe-view-engine)
     - [HTML Elements and Attributes](#html-elements-and-attributes)
     - [Text Content](#text-content)
@@ -248,6 +247,30 @@ let sayHelloWorld : HttpHandler =
             let greeting = sprintf "Hello World, from %s" person.Name
             return! text greeting next ctx
         }
+```
+
+#### Convenience functions
+
+With version 3.5.0 and onwards Giraffe exposes additional convenience functions which can be used to create new `HttpHandler` functions which require access to the `HttpContext` or `HttpRequest` object without having to define the full verbose implementation as shown above.
+
+The `handleContext` and `handleRequest` functions can be used like this:
+
+```fsharp
+let handlerWithLogging =
+    handleContext(
+        fun ctx ->
+            let logger = ctx.GetService<ILogger>()
+            logger.Information("From the context")
+            text "Done working")
+
+let echoRequestBody =
+    POST
+    >=> route "/echo"
+    >=> handleRequest(
+        fun req ->
+            use reader = StreamReader(req.Body)
+            requestBody = reader.ReadToEnd()
+            text requestBody)
 ```
 
 #### Deferred execution of Tasks
@@ -2863,28 +2886,6 @@ The third and last parameter is a `string list option` which defines an optional
 ### Response Compression
 
 ASP.NET Core has its own [Response Compression Middleware](https://docs.microsoft.com/en-us/aspnet/core/performance/response-compression?view=aspnetcore-2.1&tabs=aspnetcore2x) which works out of the box with Giraffe. There's no additional functionality or http handlers required in order to make it work with Giraffe web applications.
-
-### Accessing HttpContext
-
-Reading information from the http context or the incoming http reqeust is sometimes needed to create new http handlers, that is why Giraffe has convenience http handlers like `context` and `request`. The former uses the HttpContext as input from which you can create a new http handler and the latter uses just the `HttpRequest` as input:
-
-```fsharp
-let handlerWithLogging = context (fun ctx ->
-    let logger = ctx.GetService<ILogger>()
-    logger.Information("From the context")
-    text "Done working"
-)
-
-let echoRequestBody = 
-    POST 
-    >=> route "/echo"
-    >=> request (fun req -> 
-        use reader = StreamReader(req.Body)
-        requestBody = reader.ReadToEnd()
-        text requestBody
-    )
-```
-
 
 ## Giraffe View Engine
 
