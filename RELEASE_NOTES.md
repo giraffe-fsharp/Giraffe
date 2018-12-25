@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+## 3.6.0
+
+#### New Features
+
+- Added `context` http handler that allows to create another http handler by accessing information from the `HttpContext`.
+- Added `request` http handler that allows to create another http handler by accessing information from the incoming http request.
+
 ## 3.5.0
 
 #### New features
