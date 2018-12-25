@@ -270,14 +270,10 @@ function Get-NetCoreSdkFromWeb ($version)
 
     $os  = if (Test-IsWindows) { "windows" } else { "linux" }
     $ext = if (Test-IsWindows) { ".zip" } else { ".tar.gz" }
-
+    $uri = "https://www.microsoft.com/net/download/thank-you/dotnet-sdk-$version-$os-x64-binaries"
     Write-Host "Finding download link..."
 
-    $response = Invoke-WebRequest `
-                    -Uri "https://www.microsoft.com/net/download/thank-you/dotnet-sdk-$version-$os-x64-binaries" `
-                    -Method Get `
-                    -MaximumRedirection 0 `
-                    -Verbose
+    $response = Invoke-WebRequest -Uri $uri
 
     $downloadLink =
         $response.Links `
