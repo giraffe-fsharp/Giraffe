@@ -285,15 +285,15 @@ let inline warbler f (next : HttpFunc) (ctx : HttpContext) = f (next, ctx) next 
 
 /// **Description**
 ///
-/// Use `abort` to shortcircuit the `HttpHandler` pipeline and return `None` to the surrounding `HttpHandler` or the Giraffe middleware (which would subsequently invoke the `next` middleware as a result of it).
+/// Use `skipPipeline` to shortcircuit the `HttpHandler` pipeline and return `None` to the surrounding `HttpHandler` or the Giraffe middleware (which would subsequently invoke the `next` middleware as a result of it).
 ///
-let internal abort  : HttpFuncResult = Task.FromResult None
+let skipPipeline : HttpFuncResult = Task.FromResult None
 
 /// **Description**
 ///
-/// Use `finish` to shortcircuit the `HttpHandler` pipeline and return `Some HttpContext` to the surrounding `HttpHandler` or the Giraffe middleware (which would subsequently end the pipeline by returning the response back to the client).
+/// Use `earlyReturn` to shortcircuit the `HttpHandler` pipeline and return `Some HttpContext` to the surrounding `HttpHandler` or the Giraffe middleware (which would subsequently end the pipeline by returning the response back to the client).
 ///
-let internal finish : HttpFunc = Some >> Task.FromResult
+let earlyReturn : HttpFunc = Some >> Task.FromResult
 
 // ---------------------------
 // Convenience Handlers
@@ -405,7 +405,7 @@ let private httpVerb (validate : string -> bool) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if validate ctx.Request.Method
         then next ctx
-        else abort
+        else skipPipeline
 
 let GET     : HttpHandler = httpVerb HttpMethods.IsGet
 let POST    : HttpHandler = httpVerb HttpMethods.IsPost
@@ -491,7 +491,7 @@ let mustAccept (mimeTypes : string list) : HttpHandler =
         |> Seq.exists (fun h -> mimeTypes |> Seq.contains h)
         |> function
             | true  -> next ctx
-            | false -> abort
+            | false -> skipPipeline
 
 /// **Description**
 ///

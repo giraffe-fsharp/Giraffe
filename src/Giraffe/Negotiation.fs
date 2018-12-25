@@ -88,7 +88,7 @@ type HttpContext with
         let acceptedMimeTypes = (this.Request.GetTypedHeaders()).Accept
         if isNull acceptedMimeTypes || acceptedMimeTypes.Count = 0 then
             let kv = negotiationRules |> Seq.head
-            kv.Value responseObj finish this
+            kv.Value responseObj earlyReturn this
         else
             let mutable mimeType    = Unchecked.defaultof<_>
             let mutable bestQuality = Double.NegativeInfinity
@@ -104,9 +104,9 @@ type HttpContext with
                         mimeType    <- x
 
             if isNull mimeType then
-                unacceptableHandler finish this
+                unacceptableHandler earlyReturn this
             else
-                negotiationRules.[mimeType.MediaType.Value] responseObj finish this
+                negotiationRules.[mimeType.MediaType.Value] responseObj earlyReturn this
 
     /// **Description**
     ///

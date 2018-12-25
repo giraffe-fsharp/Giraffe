@@ -69,9 +69,8 @@ let routePorts (fns : (int * HttpHandler) list) : HttpHandler =
             if port.HasValue then
                 match portMap.TryGetValue port.Value with
                 | true , func -> func ctx
-                | false, _    -> abort
-            else
-                abort
+                | false, _    -> skipPipeline
+            else skipPipeline
 
 /// **Description**
 ///
@@ -89,7 +88,7 @@ let route (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (SubRouting.getNextPartOfPath ctx).Equals path
         then next ctx
-        else abort
+        else skipPipeline
 
 /// **Description**
 ///
@@ -107,7 +106,7 @@ let routeCi (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if String.Equals(SubRouting.getNextPartOfPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
         then next ctx
-        else abort
+        else skipPipeline
 
 /// **Description**
 ///
@@ -127,8 +126,8 @@ let routex (path : string) : HttpHandler =
         let regex   = Regex(pattern, RegexOptions.Compiled)
         let result  = regex.Match (SubRouting.getNextPartOfPath ctx)
         match result.Success with
-        | true -> next ctx
-        | false -> abort
+        | true  -> next ctx
+        | false -> skipPipeline
 
 /// **Description**
 ///
@@ -148,8 +147,8 @@ let routeCix (path : string) : HttpHandler =
         let regex   = Regex(pattern, RegexOptions.IgnoreCase ||| RegexOptions.Compiled)
         let result  = regex.Match (SubRouting.getNextPartOfPath ctx)
         match result.Success with
-        | true -> next ctx
-        | false -> abort
+        | true  -> next ctx
+        | false -> skipPipeline
 
 /// **Description**
 ///
@@ -181,7 +180,7 @@ let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler)
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (SubRouting.getNextPartOfPath ctx) false
         |> function
-            | None      -> abort
+            | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
 
 /// **Description**
@@ -214,7 +213,7 @@ let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandle
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (SubRouting.getNextPartOfPath ctx) true
         |> function
-            | None      -> abort
+            | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
 
 /// **Description**
@@ -247,9 +246,9 @@ let routeBind<'T> (route : string) (routeHandler : 'T -> HttpHandler) : HttpHand
                 |> dict
                 |> ModelParser.tryParse None
             match result with
-            | Error _  -> abort
+            | Error _  -> skipPipeline
             | Ok model -> routeHandler model next ctx
-        | _ -> abort
+        | _ -> skipPipeline
 
 /// **Description**
 ///
@@ -267,7 +266,7 @@ let routeStartsWith (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (SubRouting.getNextPartOfPath ctx).StartsWith subPath
         then next ctx
-        else abort
+        else skipPipeline
 
 /// **Description**
 ///
@@ -285,7 +284,7 @@ let routeStartsWithCi (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (SubRouting.getNextPartOfPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase)
         then next ctx
-        else abort
+        else skipPipeline
 
 /// **Description**
 ///
@@ -355,7 +354,7 @@ let subRoutef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandl
         fun (next : HttpFunc) (ctx : HttpContext) ->
             let paramCount   = (path.Value.Split '/').Length
             let subPathParts = (SubRouting.getNextPartOfPath ctx).Split '/'
-            if paramCount > subPathParts.Length then abort
+            if paramCount > subPathParts.Length then skipPipeline
             else
                 let subPath =
                     subPathParts
@@ -366,5 +365,5 @@ let subRoutef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandl
                         else sprintf "%s/%s" state elem) ""
                 tryMatchInput path subPath false
                 |> function
-                    | None      -> abort
+                    | None      -> skipPipeline
                     | Some args -> SubRouting.routeWithPartialPath subPath (routeHandler args) next ctx
