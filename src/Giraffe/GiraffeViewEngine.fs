@@ -250,6 +250,8 @@ module Attributes =
     let _coords             = attr "coords"
     let _crossorigin        = attr "crossorigin"
     let _data               = attr "data"
+
+    let _dataCustom (key : string) = attr ("data-" + key)
     let _datetime           = attr "datetime"
     let _dir                = attr "dir"
     let _dirname            = attr "dirname"

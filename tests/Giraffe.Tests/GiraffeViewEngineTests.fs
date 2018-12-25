@@ -20,6 +20,13 @@ let ``Anchor should contain href, target and content`` () =
     Assert.Equal("<a href=\"http://example.org\" target=\"_blank\">Example</a>", html)
 
 [<Fact>]
+let ``dataCustom should provide data custom attributes`` () =
+    let anchor =
+        a [ _dataCustom "mydata" "123456";  attr "target" "_blank" ] [ str "Example" ]
+    let html = renderXmlNode anchor
+    Assert.Equal("<a data-mydata=\"123456\" target=\"_blank\">Example</a>", html)
+
+[<Fact>]
 let ``Script should contain src, lang and async`` () =
     let scriptFile =
         script [ attr "src" "http://example.org/example.js";  attr "lang" "javascript"; flag "async" ] []
