@@ -319,7 +319,7 @@ function Install-NetCoreSdkFromArchive ($sdkArchivePath)
         Write-Host "Created folder '$dotnetInstallDir'."
         Invoke-Cmd "tar -xf $sdkArchivePath -C $dotnetInstallDir"
         Write-Host "Extracted '$sdkArchivePath' to folder '$dotnetInstallDir'."
-        $env:PATH = "$env:PATH:$dotnetInstallDir"
+        $env:PATH = "$dotnetInstallDir:$env:PATH"
         Write-Host "Added '$dotnetInstallDir' to the environment variables."
     }
 }
