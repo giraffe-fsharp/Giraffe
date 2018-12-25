@@ -276,9 +276,9 @@ let echoRequestBodyAsync =
     >=> handleRequestAsync(
         fun request ->
             task {
-                use reader = new StreamReader(req.Body)
+                use reader = new StreamReader(request.Body)
                 let! requestBody = reader.ReadToEndAsync()
-                text requestBody
+                return text requestBody
             })    
 ```
 
