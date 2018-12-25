@@ -13,7 +13,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [Warbler](#warbler)
     - [Tasks](#tasks)
     - [Ways of creating a new HttpHandler](#ways-of-creating-a-new-httphandler)
-    - [Continue vs. Return vs. Abort](#continue-vs-return-vs-abort)
+    - [Continue vs. Return vs. Skip](#continue-vs-return-vs-skip)
 - [Basics](#basics)
     - [Plugging Giraffe into ASP.NET Core](#plugging-giraffe-into-aspnet-core)
     - [Dependency Management](#dependency-management)
@@ -223,10 +223,8 @@ If you need to access the `HttpContext` object then you'll have to explicitly re
 let sayHelloWorld : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let name =
-            "name"
-            |> ctx.TryGetQueryStringValue
-            |> defaultArg
-            <| "Giraffe"
+            ctx.TryGetQueryStringValue "name"
+            |> Option.defaultValue "Giraffe"
         let greeting = sprintf "Hello World, from %s" name
         text greeting next ctx
 ```
@@ -297,13 +295,13 @@ let doSomething handler : HttpHandler =
         }
 ```
 
-### Continue vs. Return vs. Abort
+### Continue vs. Return vs. Skip
 
 In Giraffe there are three scenarios which a given `HttpHandler` can invoke:
 
 - Continue with next handler
 - Return early
-- Abort
+- Skip
 
 #### Continue
 
@@ -331,28 +329,51 @@ let checkUserIsLoggedIn : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if isNotNull ctx.User && ctx.User.Identity.IsAuthenticated
         then next ctx
-        else
-            (setStatusCode 401
-            >=> text "Please sign in.")
-                skipRemainingPipeline ctx
+        else (setStatusCode 401 >=> text "Please sign in.") skipRemainingPipeline ctx
 ```
 
 In the `else` clause the `checkUserIsLoggedIn` handler returns a `401 Unauthorized` HTTP response and skips the remaining `HttpHandler` pipeline by not invoking `next` but an already completed task.
 
-#### Abort
-
-There may be cases where a `HttpHandler` function might conclude that a given `HttpRequest` should not be handled by the handler or the remaining `HttpHandler` pipeline. In such a case a `HttpHandler` can abort the pipeline and defer the handling of the web request to either another `HttpHandler` function (when nested in a `choose` handler) or to another ASP.NET Core middleware altogether.
-
-The `route` handler is a good example of such a scenario. If a web request doesn't match the specified route then the handler will abort the subsequent pipeline and defer to another handler or another ASP.NET Core middleware:
+If you were to have a `HttpHandler` defined with the `task {}` CE then you could alternatively also return `Some HttpContext` in order to return early:
 
 ```fsharp
-let abort  : HttpFuncResult = Task.FromResult None
+let checkUserIsLoggedIn : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            if isNotNull ctx.User && ctx.User.Identity.IsAuthenticated
+            then return! next ctx
+            else
+                ctx.SetStatusCode 401
+                return Some ctx
+        }
+```
+
+#### Skip
+
+There may be cases where a `HttpHandler` function might conclude that a given `HttpRequest` should not be handled by the handler or the remaining `HttpHandler` pipeline. In such a case a `HttpHandler` can skip the pipeline and defer the handling of the web request to either another `HttpHandler` function (when nested in a `choose` handler) or to another ASP.NET Core middleware altogether.
+
+The `route` handler is a good example of such a scenario. If a web request doesn't match the specified route then the handler will skip the subsequent pipeline and defer to another handler or another ASP.NET Core middleware:
+
+```fsharp
+let skip  : HttpFuncResult = Task.FromResult None
 
 let GET : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if HttpMethods.IsGet ctx.Request.Method
         then next ctx
-        else abort
+        else skip
+```
+
+If you were to have a `HttpHandler` defined with the `task {}` CE then you could alternatively also return `None` in order to skip the remaining pipeline:
+
+```fsharp
+let GET : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            if HttpMethods.IsGet ctx.Request.Method
+            then return! next ctx
+            else return None
+        }
 ```
 
 ## Basics
