@@ -317,6 +317,24 @@ let handleContext (contextMap : HttpContext -> HttpHandler) : HttpHandler =
 
 /// **Description**
 ///
+/// The `handleContextAsync` function is a convenience function which can be used to create a new `HttpHandler` function asynchronously which requires access to the `HttpContext` object.
+///
+/// **Parameters**
+///
+/// - `contextMap`: A function which accepts a `HttpContext` object and returns a `HttpHandler` function asynchronously.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+let handleContextAsync (contextMap : HttpContext -> Task<HttpHandler>) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            let! evaluatedHandler = contextMap ctx
+            return! evaluatedHandler next ctx
+        }
+
+/// **Description**
+///
 /// The `handleRequest` function is a convenience function which can be used to create a new `HttpHandler` function which requires access to the `HttpRequest` object.
 ///
 /// **Parameters**
@@ -328,6 +346,20 @@ let handleContext (contextMap : HttpContext -> HttpHandler) : HttpHandler =
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 let handleRequest (requestMap : HttpRequest -> HttpHandler) : HttpHandler =
     handleContext (fun ctx -> requestMap ctx.Request)
+
+/// **Description**
+///
+/// The `handleRequestAsync` function is a convenience function which can be used to create a new `HttpHandler` function asynchronously which requires access to the `HttpRequest` object.
+///
+/// **Parameters**
+///
+/// - `requestMap`: A function which accepts a `HttpRequest` object and returns a `HttpHandler` function asynchronously.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+let handleRequestAsync (requestMap : HttpRequest -> Task<HttpHandler>) : HttpHandler =
+    handleContextAsync (fun ctx -> requestMap ctx.Request)
 
 // ---------------------------
 // Default Combinators
@@ -505,8 +537,8 @@ let mustAccept (mimeTypes : string list) : HttpHandler =
 /// **Output**
 ///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// 
 let redirectTo (permanent : bool) (location : string) : HttpHandler  =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.Response.Redirect(location, permanent)
-        Task.FromResult (Some ctx)
+        Task.FromResult (Some ctx)  

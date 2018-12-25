@@ -251,7 +251,7 @@ let sayHelloWorld : HttpHandler =
 
 With version 3.5.0 and onwards Giraffe exposes additional convenience functions which can be used to create new `HttpHandler` functions which require access to the `HttpContext` or `HttpRequest` object without having to define the full verbose implementation as shown above.
 
-The `handleContext` and `handleRequest` functions can be used like this:
+The `handleContext` and `handleRequest` functions, along with their asynchronous counter parts `handleContextAsync` and `handleRequestAsync` can be used like this:
 
 ```fsharp
 let handlerWithLogging =
@@ -266,9 +266,20 @@ let echoRequestBody =
     >=> route "/echo"
     >=> handleRequest(
         fun req ->
-            use reader = StreamReader(req.Body)
-            requestBody = reader.ReadToEnd()
+            use reader = new StreamReader(req.Body)
+            let requestBody = reader.ReadToEnd()
             text requestBody)
+
+let echoRequestBodyAsync = 
+    POST 
+    >=> route "/echo-async"
+    >=> handleRequestAsync(
+        fun request ->
+            task {
+                use reader = new StreamReader(req.Body)
+                let! requestBody = reader.ReadToEndAsync()
+                text requestBody
+            })    
 ```
 
 #### Deferred execution of Tasks
