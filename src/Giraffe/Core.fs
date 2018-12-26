@@ -70,7 +70,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `categoryName`: The category name for messages produced by this logger.
+    /// `categoryName`: The category name for messages produced by this logger.
     ///
     /// **Output**
     ///
@@ -119,7 +119,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `httpStatusCode`: The status code to be set in the response. For convenience you can use the static `Microsoft.AspNetCore.Http.StatusCodes` class for passing in named status codes instead of using pure `int` values.
+    /// `httpStatusCode`: The status code to be set in the response. For convenience you can use the static `Microsoft.AspNetCore.Http.StatusCodes` class for passing in named status codes instead of using pure `int` values.
     ///
     /// **Output**
     ///
@@ -134,8 +134,8 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `key`: The HTTP header name. For convenience you can use the static `Microsoft.Net.Http.Headers.HeaderNames` class for passing in strongly typed header names instead of using pure `string` values.
-    /// - `value`: The value to be set. Non string values will be converted to a string using the object's `ToString()` method.
+    /// `key`: The HTTP header name. For convenience you can use the static `Microsoft.Net.Http.Headers.HeaderNames` class for passing in strongly typed header names instead of using pure `string` values.
+    /// `value`: The value to be set. Non string values will be converted to a string using the object's `ToString()` method.
     ///
     /// **Output**
     ///
@@ -150,7 +150,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `contentType`: The mime type of the response (e.g.: `application/json` or `text/html`).
+    /// `contentType`: The mime type of the response (e.g.: `application/json` or `text/html`).
     ///
     /// **Output**
     ///
@@ -165,7 +165,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `key`: The name of the HTTP header.
+    /// `key`: The name of the HTTP header.
     ///
     /// **Output**
     ///
@@ -182,7 +182,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `key`: The name of the HTTP header.
+    /// `key`: The name of the HTTP header.
     ///
     /// **Output**
     ///
@@ -199,7 +199,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `key`: The name of the query string parameter.
+    /// `key`: The name of the query string parameter.
     ///
     /// **Output**
     ///
@@ -216,7 +216,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `key`: The name of the query string parameter.
+    /// `key`: The name of the query string parameter.
     ///
     /// **Output**
     ///
@@ -271,7 +271,7 @@ type ErrorHandler = exn -> ILogger -> HttpHandler
 ///
 /// **Parameters**
 ///
-/// - `f`: A function which takes a `HttpFunc * HttpContext` tuple and returns a `HttpHandler` function.
+/// `f`: A function which takes a `HttpFunc * HttpContext` tuple and returns a `HttpHandler` function.
 ///
 /// **Output**
 ///
@@ -305,11 +305,12 @@ let earlyReturn : HttpFunc = Some >> Task.FromResult
 ///
 /// **Parameters**
 ///
-/// - `contextMap`: A function which accepts a `HttpContext` object and returns a `HttpHandler` function.
+/// `contextMap`: A function which accepts a `HttpContext` object and returns a `HttpHandler` function.
 ///
 /// **Output**
 ///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
 let handleContext (contextMap : HttpContext -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let createdHandler = contextMap ctx
@@ -321,11 +322,12 @@ let handleContext (contextMap : HttpContext -> HttpHandler) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `contextMap`: A function which accepts a `HttpContext` object and returns a `HttpHandler` function asynchronously.
+/// `contextMap`: A function which accepts a `HttpContext` object and returns a `HttpHandler` function asynchronously.
 ///
 /// **Output**
 ///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
 let handleContextAsync (contextMap : HttpContext -> Task<HttpHandler>) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
@@ -339,11 +341,12 @@ let handleContextAsync (contextMap : HttpContext -> Task<HttpHandler>) : HttpHan
 ///
 /// **Parameters**
 ///
-/// - `requestMap`: A function which accepts a `HttpRequest` object and returns a `HttpHandler` function.
+/// `requestMap`: A function which accepts a `HttpRequest` object and returns a `HttpHandler` function.
 ///
 /// **Output**
 ///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
 let handleRequest (requestMap : HttpRequest -> HttpHandler) : HttpHandler =
     handleContext (fun ctx -> requestMap ctx.Request)
 
@@ -353,7 +356,7 @@ let handleRequest (requestMap : HttpRequest -> HttpHandler) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `requestMap`: A function which accepts a `HttpRequest` object and returns a `HttpHandler` function asynchronously.
+/// `requestMap`: A function which accepts a `HttpRequest` object and returns a `HttpHandler` function asynchronously.
 ///
 /// **Output**
 ///
@@ -427,7 +430,7 @@ let choose (handlers : HttpHandler list) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `validate`: A validation function which checks for a single HTTP verb.
+/// `validate`: A validation function which checks for a single HTTP verb.
 ///
 /// **Output**
 ///
@@ -472,7 +475,7 @@ let clearResponse : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `statusCode`: The status code to be set in the response. For convenience you can use the static `Microsoft.AspNetCore.Http.StatusCodes` class for passing in named status codes instead of using pure `int` values.
+/// `statusCode`: The status code to be set in the response. For convenience you can use the static `Microsoft.AspNetCore.Http.StatusCodes` class for passing in named status codes instead of using pure `int` values.
 ///
 /// **Output**
 ///
@@ -489,8 +492,8 @@ let setStatusCode (statusCode : int) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `key`: The HTTP header name. For convenience you can use the static `Microsoft.Net.Http.Headers.HeaderNames` class for passing in strongly typed header names instead of using pure `string` values.
-/// - `value`: The value to be set. Non string values will be converted to a string using the object's `ToString()` method.
+/// `key`: The HTTP header name. For convenience you can use the static `Microsoft.Net.Http.Headers.HeaderNames` class for passing in strongly typed header names instead of using pure `string` values.
+/// `value`: The value to be set. Non string values will be converted to a string using the object's `ToString()` method.
 ///
 /// **Output**
 ///
@@ -509,7 +512,7 @@ let setHttpHeader (key : string) (value : obj) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `mimeTypes`: List of mime types of which the client has to accept at least one.
+/// `mimeTypes`: List of mime types of which the client has to accept at least one.
 ///
 /// **Output**
 ///
@@ -531,14 +534,14 @@ let mustAccept (mimeTypes : string list) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `permanent`: If true the redirect is permanent (301), otherwise temporary (302).
-/// - `location`: The URL to redirect the client to.
+/// `permanent`: If true the redirect is permanent (301), otherwise temporary (302).
+/// `location`: The URL to redirect the client to.
 ///
 /// **Output**
 ///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-/// 
+///
 let redirectTo (permanent : bool) (location : string) : HttpHandler  =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.Response.Redirect(location, permanent)
-        Task.FromResult (Some ctx)  
+        Task.FromResult (Some ctx)

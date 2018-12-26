@@ -70,7 +70,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `bytes`: The byte array to be send back to the client.
+    /// `bytes`: The byte array to be send back to the client.
     ///
     /// **Output**
     ///
@@ -90,7 +90,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `str`: The string value to be send back to the client.
+    /// `str`: The string value to be send back to the client.
     ///
     /// **Output**
     ///
@@ -105,7 +105,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `str`: The string value to be send back to the client.
+    /// `str`: The string value to be send back to the client.
     ///
     /// **Output**
     ///
@@ -125,7 +125,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `dataObj`: The object to be send back to the client.
+    /// `dataObj`: The object to be send back to the client.
     ///
     /// **Output**
     ///
@@ -147,7 +147,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `dataObj`: The object to be send back to the client.
+    /// `dataObj`: The object to be send back to the client.
     ///
     /// **Output**
     ///
@@ -173,7 +173,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `dataObj`: The object to be send back to the client.
+    /// `dataObj`: The object to be send back to the client.
     ///
     /// **Output**
     ///
@@ -193,7 +193,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `filePath`: A relative or absolute file path to the HTML file.
+    /// `filePath`: A relative or absolute file path to the HTML file.
     ///
     /// **Output**
     ///
@@ -220,7 +220,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `html`: The HTML string to be send back to the client.
+    /// `html`: The HTML string to be send back to the client.
     ///
     /// **Output**
     ///
@@ -238,7 +238,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `htmlView`: An `XmlNode` object to be send back to the client and which represents a valid HTML view.
+    /// `htmlView`: An `XmlNode` object to be send back to the client and which represents a valid HTML view.
     ///
     /// **Output**
     ///
@@ -259,7 +259,7 @@ type HttpContext with
 ///
 /// **Parameters**
 ///
-/// - `bytes`: The byte array to be send back to the client.
+/// `bytes`: The byte array to be send back to the client.
 ///
 /// **Output**
 ///
@@ -275,7 +275,7 @@ let setBody (bytes : byte array) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `str`: The string value to be send back to the client.
+/// `str`: The string value to be send back to the client.
 ///
 /// **Output**
 ///
@@ -292,7 +292,7 @@ let setBodyFromString (str : string) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `str`: The string value to be send back to the client.
+/// `str`: The string value to be send back to the client.
 ///
 /// **Output**
 ///
@@ -314,7 +314,7 @@ let text (str : string) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `dataObj`: The object to be send back to the client.
+/// `dataObj`: The object to be send back to the client.
 ///
 /// **Output**
 ///
@@ -334,7 +334,7 @@ let json<'T> (dataObj : 'T) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `dataObj`: The object to be send back to the client.
+/// `dataObj`: The object to be send back to the client.
 ///
 /// **Output**
 ///
@@ -354,7 +354,7 @@ let jsonChunked<'T> (dataObj : 'T) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `dataObj`: The object to be send back to the client.
+/// `dataObj`: The object to be send back to the client.
 ///
 /// **Output**
 ///
@@ -372,7 +372,7 @@ let xml (dataObj : obj) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `filePath`: A relative or absolute file path to the HTML file.
+/// `filePath`: A relative or absolute file path to the HTML file.
 ///
 /// **Output**
 ///
@@ -390,7 +390,7 @@ let htmlFile (filePath : string) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `html`: The HTML string to be send back to the client.
+/// `html`: The HTML string to be send back to the client.
 ///
 /// **Output**
 ///
@@ -410,7 +410,7 @@ let htmlString (html : string) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `htmlView`: An `XmlNode` object to be send back to the client and which represents a valid HTML view.
+/// `htmlView`: An `XmlNode` object to be send back to the client and which represents a valid HTML view.
 ///
 /// **Output**
 ///

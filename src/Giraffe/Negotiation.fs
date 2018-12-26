@@ -38,11 +38,11 @@ type INegotiationConfig =
 ///
 /// **Supported mime types**
 ///
-/// - `*/*`: If a client accepts any content type then the server will return a JSON response.
-/// - `application/json`: Server will send a JSON response.
-/// - `application/xml`: Server will send an XML response.
-/// - `text/xml`: Server will send an XML response.
-/// - `text/plain`: Server will send a plain text response (by suing an object's `ToString()` method).
+/// `*/*`: If a client accepts any content type then the server will return a JSON response.
+/// `application/json`: Server will send a JSON response.
+/// `application/xml`: Server will send an XML response.
+/// `text/xml`: Server will send an XML response.
+/// `text/plain`: Server will send a plain text response (by suing an object's `ToString()` method).
 ///
 type DefaultNegotiationConfig() =
     interface INegotiationConfig with
@@ -74,9 +74,9 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `negotiationRules`: A dictionary of mime types and response writing `HttpHandler` functions. Each mime type must be mapped to a function which accepts an `obj` and returns a `HttpHandler` which will send a response in the associated mime type (e.g.: `dict [ "application/json", json; "application/xml" , xml ]`).
-    /// - `unacceptableHandler`: A `HttpHandler` function which will be invoked if none of the accepted mime types can be satisfied. Generally this `HttpHandler` would send a response with a status code of `406 Unacceptable`.
-    /// - `responseObj`: The object to send back to the client.
+    /// `negotiationRules`: A dictionary of mime types and response writing `HttpHandler` functions. Each mime type must be mapped to a function which accepts an `obj` and returns a `HttpHandler` which will send a response in the associated mime type (e.g.: `dict [ "application/json", json; "application/xml" , xml ]`).
+    /// `unacceptableHandler`: A `HttpHandler` function which will be invoked if none of the accepted mime types can be satisfied. Generally this `HttpHandler` would send a response with a status code of `406 Unacceptable`.
+    /// `responseObj`: The object to send back to the client.
     ///
     /// **Output**
     ///
@@ -116,7 +116,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `responseObj`: The object to send back to the client.
+    /// `responseObj`: The object to send back to the client.
     ///
     /// **Output**
     ///
@@ -138,9 +138,9 @@ type HttpContext with
 ///
 /// **Parameters**
 ///
-/// - `negotiationRules`: A dictionary of mime types and response writing `HttpHandler` functions. Each mime type must be mapped to a function which accepts an `obj` and returns a `HttpHandler` which will send a response in the associated mime type (e.g.: `dict [ "application/json", json; "application/xml" , xml ]`).
-/// - `unacceptableHandler`: A `HttpHandler` function which will be invoked if none of the accepted mime types can be satisfied. Generally this `HttpHandler` would send a response with a status code of `406 Unacceptable`.
-/// - `responseObj`: The object to send back to the client.
+/// `negotiationRules`: A dictionary of mime types and response writing `HttpHandler` functions. Each mime type must be mapped to a function which accepts an `obj` and returns a `HttpHandler` which will send a response in the associated mime type (e.g.: `dict [ "application/json", json; "application/xml" , xml ]`).
+/// `unacceptableHandler`: A `HttpHandler` function which will be invoked if none of the accepted mime types can be satisfied. Generally this `HttpHandler` would send a response with a status code of `406 Unacceptable`.
+/// `responseObj`: The object to send back to the client.
 ///
 /// **Output**
 ///
@@ -161,7 +161,7 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
 ///
 /// **Parameters**
 ///
-/// - `responseObj`: The object to send back to the client.
+/// `responseObj`: The object to send back to the client.
 ///
 /// **Output**
 ///

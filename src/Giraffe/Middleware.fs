@@ -85,7 +85,7 @@ type IApplicationBuilder with
     ///
     /// **Parameters**
     ///
-    /// - `handler`: The Giraffe `HttpHandler` pipeline. The handler can be anything from a single handler to an entire web application which has been composed from many smaller handlers.
+    /// `handler`: The Giraffe `HttpHandler` pipeline. The handler can be anything from a single handler to an entire web application which has been composed from many smaller handlers.
     ///
     /// **Output**
     ///
@@ -101,7 +101,7 @@ type IApplicationBuilder with
     ///
     /// **Parameters**
     ///
-    /// - `handler`: The Giraffe `ErrorHandler` pipeline. The handler can be anything from a single handler to a bigger error application which has been composed from many smaller handlers.
+    /// `handler`: The Giraffe `ErrorHandler` pipeline. The handler can be anything from a single handler to a bigger error application which has been composed from many smaller handlers.
     ///
     /// **Output**
     ///
