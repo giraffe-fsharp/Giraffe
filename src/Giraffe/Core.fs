@@ -301,68 +301,26 @@ let earlyReturn : HttpFunc = Some >> Task.FromResult
 
 /// **Description**
 ///
-/// The `handleContext` function is a convenience function which can be used to create a new `HttpHandler` function which requires access to the `HttpContext` object.
+/// The `handleContext` function is a convenience function which can be used to create a new `HttpHandler` function which only requires access to the `HttpContext` object.
 ///
 /// **Parameters**
 ///
-/// `contextMap`: A function which accepts a `HttpContext` object and returns a `HttpHandler` function.
+/// `contextMap`: A function which accepts a `HttpContext` object and returns a `HttpFuncResult` function.
 ///
 /// **Output**
 ///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
-let handleContext (contextMap : HttpContext -> HttpHandler) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        let createdHandler = contextMap ctx
-        createdHandler next ctx
-
-/// **Description**
-///
-/// The `handleContextAsync` function is a convenience function which can be used to create a new `HttpHandler` function asynchronously which requires access to the `HttpContext` object.
-///
-/// **Parameters**
-///
-/// `contextMap`: A function which accepts a `HttpContext` object and returns a `HttpHandler` function asynchronously.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
-let handleContextAsync (contextMap : HttpContext -> Task<HttpHandler>) : HttpHandler =
+let handleContext (contextMap : HttpContext -> HttpFuncResult) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
-            let! evaluatedHandler = contextMap ctx
-            return! evaluatedHandler next ctx
+            match! contextMap ctx with
+            | Some c ->
+                match c.Response.HasStarted with
+                | true  -> return  Some c
+                | false -> return! next c
+            | None      -> return  None
         }
-
-/// **Description**
-///
-/// The `handleRequest` function is a convenience function which can be used to create a new `HttpHandler` function which requires access to the `HttpRequest` object.
-///
-/// **Parameters**
-///
-/// `requestMap`: A function which accepts a `HttpRequest` object and returns a `HttpHandler` function.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
-let handleRequest (requestMap : HttpRequest -> HttpHandler) : HttpHandler =
-    handleContext (fun ctx -> requestMap ctx.Request)
-
-/// **Description**
-///
-/// The `handleRequestAsync` function is a convenience function which can be used to create a new `HttpHandler` function asynchronously which requires access to the `HttpRequest` object.
-///
-/// **Parameters**
-///
-/// `requestMap`: A function which accepts a `HttpRequest` object and returns a `HttpHandler` function asynchronously.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-let handleRequestAsync (requestMap : HttpRequest -> Task<HttpHandler>) : HttpHandler =
-    handleContextAsync (fun ctx -> requestMap ctx.Request)
 
 // ---------------------------
 // Default Combinators
