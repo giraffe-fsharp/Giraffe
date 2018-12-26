@@ -309,8 +309,12 @@ function Install-NetCoreSdkFromArchive ($sdkArchivePath)
         Write-Host "Created folder '$env:DOTNET_INSTALL_DIR'."
         Expand-Archive -LiteralPath $sdkArchivePath -DestinationPath $env:DOTNET_INSTALL_DIR -Force
         Write-Host "Extracted '$sdkArchivePath' to folder '$env:DOTNET_INSTALL_DIR'."
-        $env:Path = "$env:DOTNET_INSTALL_DIR;$env:Path"
-        Write-Host "Added '$env:DOTNET_INSTALL_DIR' to the environment variables."
+        $updatedPath = "$env:DOTNET_INSTALL_DIR;$env:Path"
+        [Environment]::SetEnvironmentVariable("Path", $updatedPath, "Process")
+        [Environment]::SetEnvironmentVariable("Path", $updatedPath, "User")
+        [Environment]::SetEnvironmentVariable("Path", $updatedPath, "Machine")
+        Write-Host "Added '$dotnetInstallDir' to the Path environment variable:"
+        Write-Host $env:Path
     }
     else
     {
@@ -323,7 +327,8 @@ function Install-NetCoreSdkFromArchive ($sdkArchivePath)
         [Environment]::SetEnvironmentVariable("PATH", $updatedPath, "Process")
         [Environment]::SetEnvironmentVariable("PATH", $updatedPath, "User")
         [Environment]::SetEnvironmentVariable("PATH", $updatedPath, "Machine")
-        Write-Host "Added '$dotnetInstallDir' to the environment variables."
+        Write-Host "Added '$dotnetInstallDir' to the PATH environment variable:"
+        Write-Host $env:PATH
     }
 }
 
