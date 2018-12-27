@@ -22,9 +22,6 @@ Import-module "$PSScriptRoot/.psscripts/build-functions.ps1" -Force
 
 Write-BuildHeader "Starting Giraffe build script"
 
-Write-Host "PATH variable:"
-Write-Host $env:PATH
-
 if ($ClearOnly.IsPresent)
 {
     Remove-OldBuildArtifacts

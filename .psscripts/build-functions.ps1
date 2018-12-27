@@ -145,6 +145,24 @@ function Test-CompareVersions ($version, [string]$gitTag)
     }
 }
 
+function Add-ToPathVariable ($path)
+{
+    if (Test-IsWindows)
+    {
+        $updatedPath = "$path;$env:Path"
+        [Environment]::SetEnvironmentVariable("Path", $updatedPath, "Process")
+        [Environment]::SetEnvironmentVariable("Path", $updatedPath, "User")
+        [Environment]::SetEnvironmentVariable("Path", $updatedPath, "Machine")
+    }
+    else
+    {
+        $updatedPath = "$path`:$env:PATH"
+        [Environment]::SetEnvironmentVariable("PATH", $updatedPath, "Process")
+        [Environment]::SetEnvironmentVariable("PATH", $updatedPath, "User")
+        [Environment]::SetEnvironmentVariable("PATH", $updatedPath, "Machine")
+    }
+}
+
 # ----------------------------------------------
 # .NET Core functions
 # ----------------------------------------------
@@ -304,17 +322,11 @@ function Install-NetCoreSdkFromArchive ($sdkArchivePath)
 
     if (Test-IsWindows)
     {
-        $env:DOTNET_INSTALL_DIR = [System.IO.Path]::Combine($pwd, ".dotnetsdk")
-        New-Item $env:DOTNET_INSTALL_DIR -ItemType Directory -Force | Out-Null
-        Write-Host "Created folder '$env:DOTNET_INSTALL_DIR'."
-        Expand-Archive -LiteralPath $sdkArchivePath -DestinationPath $env:DOTNET_INSTALL_DIR -Force
-        Write-Host "Extracted '$sdkArchivePath' to folder '$env:DOTNET_INSTALL_DIR'."
-        $updatedPath = "$env:DOTNET_INSTALL_DIR;$env:Path"
-        [Environment]::SetEnvironmentVariable("Path", $updatedPath, "Process")
-        [Environment]::SetEnvironmentVariable("Path", $updatedPath, "User")
-        [Environment]::SetEnvironmentVariable("Path", $updatedPath, "Machine")
-        Write-Host "Added '$dotnetInstallDir' to the Path environment variable:"
-        Write-Host $env:Path
+        $dotnetInstallDir = [System.IO.Path]::Combine($pwd, ".dotnetsdk")
+        New-Item $dotnetInstallDir -ItemType Directory -Force | Out-Null
+        Write-Host "Created folder '$dotnetInstallDir'."
+        Expand-Archive -LiteralPath $sdkArchivePath -DestinationPath $dotnetInstallDir -Force
+        Write-Host "Extracted '$sdkArchivePath' to folder '$dotnetInstallDir'."
     }
     else
     {
@@ -323,13 +335,14 @@ function Install-NetCoreSdkFromArchive ($sdkArchivePath)
         Write-Host "Created folder '$dotnetInstallDir'."
         Invoke-Cmd "tar -xf $sdkArchivePath -C $dotnetInstallDir"
         Write-Host "Extracted '$sdkArchivePath' to folder '$dotnetInstallDir'."
-        $updatedPath = "$dotnetInstallDir`:$env:PATH"
-        [Environment]::SetEnvironmentVariable("PATH", $updatedPath, "Process")
-        [Environment]::SetEnvironmentVariable("PATH", $updatedPath, "User")
-        [Environment]::SetEnvironmentVariable("PATH", $updatedPath, "Machine")
-        Write-Host "Added '$dotnetInstallDir' to the PATH environment variable:"
-        Write-Host $env:PATH
     }
+
+    Add-ToPathVariable $dotnetInstallDir
+    Write-Host "Added '$dotnetInstallDir' to the PATH environment variable:"
+    Write-Host $env:PATH
+
+    $env:DOTNET_INSTALL_DIR = $dotnetInstallDir
+    Write-Host "Set the DOTNET_INSTALL_DIR variable to '$dotnetInstallDir'."
 }
 
 function Install-NetCoreSdkForUbuntu ($ubuntuVersion, $sdkVersion)
