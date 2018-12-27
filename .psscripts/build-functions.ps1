@@ -150,16 +150,12 @@ function Add-ToPathVariable ($path)
     if (Test-IsWindows)
     {
         $updatedPath = "$path;$env:Path"
-        [Environment]::SetEnvironmentVariable("Path", $updatedPath, "Process")
-        [Environment]::SetEnvironmentVariable("Path", $updatedPath, "User")
-        [Environment]::SetEnvironmentVariable("Path", $updatedPath, "Machine")
+        $env:Path = $updatedPath
     }
     else
     {
         $updatedPath = "$path`:$env:PATH"
-        [Environment]::SetEnvironmentVariable("PATH", $updatedPath, "Process")
-        [Environment]::SetEnvironmentVariable("PATH", $updatedPath, "User")
-        [Environment]::SetEnvironmentVariable("PATH", $updatedPath, "Machine")
+        Invoke-Cmd "export PATH=$updatedPath"
     }
 }
 
@@ -340,9 +336,6 @@ function Install-NetCoreSdkFromArchive ($sdkArchivePath)
     Add-ToPathVariable $dotnetInstallDir
     Write-Host "Added '$dotnetInstallDir' to the PATH environment variable:"
     Write-Host $env:PATH
-
-    $env:DOTNET_INSTALL_DIR = $dotnetInstallDir
-    Write-Host "Set the DOTNET_INSTALL_DIR variable to '$dotnetInstallDir'."
 }
 
 function Install-NetCoreSdkForUbuntu ($ubuntuVersion, $sdkVersion)
