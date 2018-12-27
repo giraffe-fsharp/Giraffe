@@ -147,16 +147,9 @@ function Test-CompareVersions ($version, [string]$gitTag)
 
 function Add-ToPathVariable ($path)
 {
-    if (Test-IsWindows)
-    {
-        $updatedPath = "$path;$env:Path"
-        $env:Path = $updatedPath
-    }
-    else
-    {
-        $updatedPath = "$path`:$env:PATH"
-        Invoke-Cmd "export PATH=$updatedPath"
-    }
+    if (Test-IsWindows) { $updatedPath = "$path;$env:Path" }
+    else { $updatedPath = "$path`:$env:PATH" }
+    $env:Path = $updatedPath
 }
 
 # ----------------------------------------------
