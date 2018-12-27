@@ -115,7 +115,7 @@ type IServiceCollection with
     ///
     /// Adds default Giraffe services to the ASP.NET Core service container.
     ///
-    /// The default services include featurs like `IJsonSerializer`, `IXmlSerializer`, `INegotiationConfig` or more. Please check the official Giraffe documentation for an up to date list of configurable services.
+    /// The default services include features like `IJsonSerializer`, `IXmlSerializer`, `INegotiationConfig` or more. Please check the official Giraffe documentation for an up to date list of configurable services.
     ///
     /// **Output**
     ///
