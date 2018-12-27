@@ -27,7 +27,7 @@
     <PackageLicenseUrl>https://raw.githubusercontent.com/giraffe-fsharp/giraffe/master/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/dustinmoris/giraffe</RepositoryUrl>
+    <RepositoryUrl>https://github.com/giraffe-fsharp/Giraffe</RepositoryUrl>
 
     <!-- SourceLink settings -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
