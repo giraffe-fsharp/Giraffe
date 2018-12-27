@@ -61,7 +61,7 @@ let signOut (authScheme : string) : HttpHandler =
 ///
 let authorizeRequest (predicate : HttpContext -> bool) (authFailedHandler : HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        (if predicate ctx then next else authFailedHandler finish) ctx
+        (if predicate ctx then next else authFailedHandler earlyReturn) ctx
 
 /// **Description**
 ///
@@ -168,7 +168,7 @@ let authorizeByPolicyName (policyName : string) (authFailedHandler : HttpHandler
         task {
             let authService = ctx.GetService<IAuthorizationService>()
             let! result = authService.AuthorizeAsync (ctx.User, policyName)
-            return! (if result.Succeeded then next else authFailedHandler finish) ctx
+            return! (if result.Succeeded then next else authFailedHandler earlyReturn) ctx
         }
 
 /// **Description**
@@ -189,5 +189,5 @@ let authorizeByPolicy (policy : AuthorizationPolicy) (authFailedHandler : HttpHa
         task {
             let authService = ctx.GetService<IAuthorizationService>()
             let! result = authService.AuthorizeAsync (ctx.User, policy)
-            return! (if result.Succeeded then next else authFailedHandler finish) ctx
+            return! (if result.Succeeded then next else authFailedHandler earlyReturn) ctx
         }

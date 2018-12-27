@@ -12,6 +12,8 @@ An in depth functional reference to all of Giraffe's default features.
         - [choose](#choose)
     - [Warbler](#warbler)
     - [Tasks](#tasks)
+    - [Ways of creating a new HttpHandler](#ways-of-creating-a-new-httphandler)
+    - [Continue vs. Return vs. Skip](#continue-vs-return-vs-skip)
 - [Basics](#basics)
     - [Plugging Giraffe into ASP.NET Core](#plugging-giraffe-into-aspnet-core)
     - [Dependency Management](#dependency-management)
@@ -197,6 +199,183 @@ If you have `do!` bindings in your Giraffe web application then you must open th
 open FSharp.Control.Tasks.V2.ContextInsensitive
 ```
 
+### Ways of creating a new HttpHandler
+
+There's multiple ways how one can create a new `HttpHandler` in Giraffe.
+
+The easiest way is to re-use an existing `HttpHandler` function:
+
+```fsharp
+let sayHelloWorld : HttpHandler = text "Hello World, from Giraffe"
+```
+
+You can also add additional parameters before returning an existing `HttpHandler` function:
+
+```fsharp
+let sayHelloWorld (name : string) : HttpHandler =
+    let greeting = sprintf "Hello World, from %s" name
+    text greeting
+```
+
+If you need to access the `HttpContext` object then you'll have to explicitly return a `HttpHandler` function which accepts a `HttpFunc` and `HttpContext` object and returns a `HttpFuncResult`:
+
+```fsharp
+let sayHelloWorld : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let name =
+            ctx.TryGetQueryStringValue "name"
+            |> Option.defaultValue "Giraffe"
+        let greeting = sprintf "Hello World, from %s" name
+        text greeting next ctx
+```
+
+Because a `HttpHandler` is defined as `HttpFunc -> HttpContext -> HttpFuncResult` you will need to apply the `next` and `ctx` parameters to the subsequent handler (in this case `text`).
+
+The most verbose version of defining a new `HttpHandler` function is by explicitly returning a `Task<HttpContext option>`. This is useful when an async operation needs to be called from within a `HttpHandler` function:
+
+```fsharp
+open FSharp.Control.Tasks.V2.ContextInsensitive
+
+type Person = { Name : string }
+
+let sayHelloWorld : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            let! person = ctx.BindJsonAsync<Person>()
+            let greeting = sprintf "Hello World, from %s" person.Name
+            return! text greeting next ctx
+        }
+```
+
+#### Convenience functions
+
+With version 3.5.0 and onwards Giraffe exposes additional convenience functions which can be used to create new `HttpHandler` functions which require access to the `HttpContext` or `HttpRequest` object without having to define the full verbose implementation as shown above.
+
+The `handleContext` and `handleRequest` functions can be used like this:
+
+```fsharp
+let handlerWithLogging =
+    handleContext(
+        fun ctx ->
+            let logger = ctx.GetService<ILogger>()
+            logger.Information("From the context")
+            text "Done working")
+
+let echoRequestBody =
+    POST
+    >=> route "/echo"
+    >=> handleRequest(
+        fun req ->
+            use reader = StreamReader(req.Body)
+            requestBody = reader.ReadToEnd()
+            text requestBody)
+```
+
+#### Deferred execution of Tasks
+
+Please be aware that a `Task<'T>` in .NET is just a promise of `'T` when executed asynchronously. Unless you define a `HttpHandler` function in the most verbose way with the `task {}` CE you are not executing any asynchronous operations until the handler gets invoked by the `GiraffeMiddleware`.
+
+For example, in the example below, an `IDisposable` will get disposed **before** the actual `handler` gets executed:
+
+```fsharp
+let doSomething handler : HttpHandler =
+    fun next ctx ->
+        use __ = somethingToBeDisposedAtTheEndOfTheRequest
+        handler next ctx
+```
+
+However, by explicitly invoking the `handler` from within a `task {}` CE one can ensure that the `handler` gets executed before the `IDisposable` gets disposed:
+
+```fsharp
+let doSomething handler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            use __ = somethingToBeDisposedAtTheEndOfTheRequest
+            return! handler next ctx
+        }
+```
+
+### Continue vs. Return vs. Skip
+
+In Giraffe there are three scenarios which a given `HttpHandler` can invoke:
+
+- Continue with next handler
+- Return early
+- Skip
+
+#### Continue
+
+The continue scenario is pretty much self explanatory. One handlers performs some actions on the `HttpRequest` and/or `HttpResponse` object and then invokes the `next` handler to continue with the pipeline.
+
+A great example is the `setHttpHeader` handler, which sets a given HTTP header and afterwards always calls into the `next` http handler:
+
+```fsharp
+let setHttpHeader key value : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        ctx.SetHttpHeader key value
+        next ctx
+```
+
+#### Return early
+
+Sometimes a `HttpHandler` wants to return early and not continue with the remaining `HttpHandler` pipeline.
+
+A typical example would be an authentication or authorization handler, which would not continue with the remaining pipeline if a user wasn't authenticated. Instead it might want to return a `401 Unauthorized` response:
+
+```fsharp
+let skipRemainingPipeline = Some >> Task.FromResult
+
+let checkUserIsLoggedIn : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        if isNotNull ctx.User && ctx.User.Identity.IsAuthenticated
+        then next ctx
+        else (setStatusCode 401 >=> text "Please sign in.") skipRemainingPipeline ctx
+```
+
+In the `else` clause the `checkUserIsLoggedIn` handler returns a `401 Unauthorized` HTTP response and skips the remaining `HttpHandler` pipeline by not invoking `next` but an already completed task.
+
+If you were to have a `HttpHandler` defined with the `task {}` CE then you could alternatively also return `Some HttpContext` in order to return early:
+
+```fsharp
+let checkUserIsLoggedIn : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            if isNotNull ctx.User && ctx.User.Identity.IsAuthenticated
+            then return! next ctx
+            else
+                ctx.SetStatusCode 401
+                return Some ctx
+        }
+```
+
+#### Skip
+
+There may be cases where a `HttpHandler` function might conclude that a given `HttpRequest` should not be handled by the handler or the remaining `HttpHandler` pipeline. In such a case a `HttpHandler` can skip the pipeline and defer the handling of the web request to either another `HttpHandler` function (when nested in a `choose` handler) or to another ASP.NET Core middleware altogether.
+
+The `route` handler is a good example of such a scenario. If a web request doesn't match the specified route then the handler will skip the subsequent pipeline and defer to another handler or another ASP.NET Core middleware:
+
+```fsharp
+let skip  : HttpFuncResult = Task.FromResult None
+
+let GET : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        if HttpMethods.IsGet ctx.Request.Method
+        then next ctx
+        else skip
+```
+
+If you were to have a `HttpHandler` defined with the `task {}` CE then you could alternatively also return `None` in order to skip the remaining pipeline:
+
+```fsharp
+let GET : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            if HttpMethods.IsGet ctx.Request.Method
+            then return! next ctx
+            else return None
+        }
+```
+
 ## Basics
 
 ### Plugging Giraffe into ASP.NET Core
@@ -344,6 +523,16 @@ let someHttpHandler : HttpHandler =
         let settings = ctx.GetService<IOptions<MySettings>>()
         // Do something with `settings`...
         // Return a Task<HttpContext option>
+```
+
+If you need to access the configuration when configuring services, you can access it like this:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    let serviceProvider = services.BuildServiceProvider()
+    let settings = serviceProvider.GetService<IConfiguration>()
+    // Configure services using the `settings`...
+    services.AddGiraffe() |> ignore
 ```
 
 ### Logging
@@ -558,7 +747,9 @@ Giraffe exposes a set of `HttpHandler` functions which can filter a request base
 - `TRACE`
 - `CONNECT`
 
-This can be useful when implementing a different `HttpHandler` function for the same route, but for different verbs:
+There is an additional `GET_HEAD` handler which can filter a HTTP `GET` and `HEAD` request at the same time.
+
+Filtering requests based on their HTTP verb can be useful when implementing a route which should behave differently based on the verb (e.g. `GET` vs. `POST`):
 
 ```fsharp
 let submitFooHandler : HttpHandler =
@@ -596,6 +787,14 @@ let someHttpHandler : HttpHandler =
         else
             // Do something else
         // Return a Task<HttpContext option>
+```
+
+The `GET_HEAD` handler is a special handler which can be used to enable `GET` and `HEAD` requests on a resource at the same time. This can be very useful when caching is enabled and clients might want to send `HEAD` requests to check the `ETag` or `Last-Modified` HTTP headers before issuing a `GET`.
+
+More combinations can be easily created via the `choose` http handler:
+
+```fsharp
+let POST_HEAD : HttpHandler = choose [ POST; HEAD ]
 ```
 
 ### HTTP Status Codes

@@ -1,6 +1,18 @@
 Release Notes
 =============
 
+## 3.5.0
+
+#### New features
+
+- Updated all packages and framework library dependencies to .NET Core 2.2.
+- Added a new `GET_HEAD` http handler (see: [#314](https://github.com/giraffe-fsharp/Giraffe/issues/314) for more info).
+- Added two new convenience functions, `handleContext` and `handleRequest`, which can be used for creating new `HttpHandler` functions.
+
+#### Bug fixes
+
+- Fixed the `_data` attribute in the `GiraffeViewEngine` to accept a `key` and `value` parameter now.
+
 ## 3.4.0
 
 #### New features

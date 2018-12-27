@@ -285,15 +285,49 @@ let inline warbler f (next : HttpFunc) (ctx : HttpContext) = f (next, ctx) next 
 
 /// **Description**
 ///
-/// Use `abort` to shortcircuit the `HttpHandler` pipeline and return `None` to the surrounding `HttpHandler` or the Giraffe middleware (which would subsequently invoke the `next` middleware as a result of it).
+/// Use `skipPipeline` to shortcircuit the `HttpHandler` pipeline and return `None` to the surrounding `HttpHandler` or the Giraffe middleware (which would subsequently invoke the `next` middleware as a result of it).
 ///
-let internal abort  : HttpFuncResult = Task.FromResult None
+let skipPipeline : HttpFuncResult = Task.FromResult None
 
 /// **Description**
 ///
-/// Use `finish` to shortcircuit the `HttpHandler` pipeline and return `Some HttpContext` to the surrounding `HttpHandler` or the Giraffe middleware (which would subsequently end the pipeline by returning the response back to the client).
+/// Use `earlyReturn` to shortcircuit the `HttpHandler` pipeline and return `Some HttpContext` to the surrounding `HttpHandler` or the Giraffe middleware (which would subsequently end the pipeline by returning the response back to the client).
 ///
-let internal finish : HttpFunc = Some >> Task.FromResult
+let earlyReturn : HttpFunc = Some >> Task.FromResult
+
+// ---------------------------
+// Convenience Handlers
+// ---------------------------
+
+/// **Description**
+///
+/// The `handleContext` function is a convenience function which can be used to create a new `HttpHandler` function which requires access to the `HttpContext` object.
+///
+/// **Parameters**
+///
+/// - `contextMap`: A function which accepts a `HttpContext` object and returns a `HttpHandler` function.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+let handleContext (contextMap : HttpContext -> HttpHandler) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let createdHandler = contextMap ctx
+        createdHandler next ctx
+
+/// **Description**
+///
+/// The `handleRequest` function is a convenience function which can be used to create a new `HttpHandler` function which requires access to the `HttpRequest` object.
+///
+/// **Parameters**
+///
+/// - `requestMap`: A function which accepts a `HttpRequest` object and returns a `HttpHandler` function.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+let handleRequest (requestMap : HttpRequest -> HttpHandler) : HttpHandler =
+    handleContext (fun ctx -> requestMap ctx.Request)
 
 // ---------------------------
 // Default Combinators
@@ -371,7 +405,7 @@ let private httpVerb (validate : string -> bool) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if validate ctx.Request.Method
         then next ctx
-        else abort
+        else skipPipeline
 
 let GET     : HttpHandler = httpVerb HttpMethods.IsGet
 let POST    : HttpHandler = httpVerb HttpMethods.IsPost
@@ -382,6 +416,8 @@ let HEAD    : HttpHandler = httpVerb HttpMethods.IsHead
 let OPTIONS : HttpHandler = httpVerb HttpMethods.IsOptions
 let TRACE   : HttpHandler = httpVerb HttpMethods.IsTrace
 let CONNECT : HttpHandler = httpVerb HttpMethods.IsConnect
+
+let GET_HEAD : HttpHandler = choose [ GET; HEAD ]
 
 /// **Description**
 ///
@@ -455,7 +491,7 @@ let mustAccept (mimeTypes : string list) : HttpHandler =
         |> Seq.exists (fun h -> mimeTypes |> Seq.contains h)
         |> function
             | true  -> next ctx
-            | false -> abort
+            | false -> skipPipeline
 
 /// **Description**
 ///
