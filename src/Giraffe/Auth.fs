@@ -14,7 +14,7 @@ open FSharp.Control.Tasks.V2.ContextInsensitive
 ///
 /// **Parameters**
 ///
-/// - `authScheme`: The name of an authentication scheme from your application.
+/// `authScheme`: The name of an authentication scheme from your application.
 ///
 /// **Output**
 ///
@@ -33,7 +33,7 @@ let challenge (authScheme : string) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `authScheme`: The name of an authentication scheme from your application.
+/// `authScheme`: The name of an authentication scheme from your application.
 ///
 /// **Output**
 ///
@@ -52,8 +52,8 @@ let signOut (authScheme : string) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `policy`: One or many conditions which a `HttpContext` must meet. The `policy` function should return `true` on success and `false` on failure.
-/// - `authFailedHandler`: A `HttpHandler` function which will be executed when the `policy` returns `false`.
+/// `policy`: One or many conditions which a `HttpContext` must meet. The `policy` function should return `true` on success and `false` on failure.
+/// `authFailedHandler`: A `HttpHandler` function which will be executed when the `policy` returns `false`.
 ///
 /// **Output**
 ///
@@ -69,8 +69,8 @@ let authorizeRequest (predicate : HttpContext -> bool) (authFailedHandler : Http
 ///
 /// **Parameters**
 ///
-/// - `policy`: One or many conditions which a `ClaimsPrincipal` must meet. The `policy` function should return `true` on success and `false` on failure.
-/// - `authFailedHandler`: A `HttpHandler` function which will be executed when the `policy` returns `false`.
+/// `policy`: One or many conditions which a `ClaimsPrincipal` must meet. The `policy` function should return `true` on success and `false` on failure.
+/// `authFailedHandler`: A `HttpHandler` function which will be executed when the `policy` returns `false`.
 ///
 /// **Output**
 ///
@@ -88,8 +88,8 @@ let evaluateUserPolicy (policy : ClaimsPrincipal -> bool) (authFailedHandler : H
 ///
 /// **Parameters**
 ///
-/// - `policy`: One or many conditions which a `ClaimsPrincipal` must meet. The `policy` function should return `true` on success and `false` on failure.
-/// - `authFailedHandler`: A `HttpHandler` function which will be executed when the `policy` returns `false`.
+/// `policy`: One or many conditions which a `ClaimsPrincipal` must meet. The `policy` function should return `true` on success and `false` on failure.
+/// `authFailedHandler`: A `HttpHandler` function which will be executed when the `policy` returns `false`.
 ///
 /// **Output**
 ///
@@ -103,7 +103,7 @@ let authorizeUser = evaluateUserPolicy
 ///
 /// **Parameters**
 ///
-/// - `authFailedHandler`: A `HttpHandler` function which will be executed when authentication failed.
+/// `authFailedHandler`: A `HttpHandler` function which will be executed when authentication failed.
 ///
 /// **Output**
 ///
@@ -120,8 +120,8 @@ let requiresAuthentication (authFailedHandler : HttpHandler) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `role`: The required role of which a user must be a member of in order to pass the validation.
-/// - `authFailedHandler`: A `HttpHandler` function which will be executed when validation fails.
+/// `role`: The required role of which a user must be a member of in order to pass the validation.
+/// `authFailedHandler`: A `HttpHandler` function which will be executed when validation fails.
 ///
 /// **Output**
 ///
@@ -138,8 +138,8 @@ let requiresRole (role : string) (authFailedHandler : HttpHandler) : HttpHandler
 ///
 /// **Parameters**
 ///
-/// - `roles`: A list of roles of which a user must be a member of (minimum one) in order to pass the validation.
-/// - `authFailedHandler`: A `HttpHandler` function which will be executed when validation fails.
+/// `roles`: A list of roles of which a user must be a member of (minimum one) in order to pass the validation.
+/// `authFailedHandler`: A `HttpHandler` function which will be executed when validation fails.
 ///
 /// **Output**
 ///
@@ -156,8 +156,8 @@ let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) : Htt
 ///
 /// **Parameters**
 ///
-/// - `policyName`: The name of an `AuthorizationPolicy` which a user must meet in order to pass the validation.
-/// - `authFailedHandler`: A `HttpHandler` function which will be executed when validation fails.
+/// `policyName`: The name of an `AuthorizationPolicy` which a user must meet in order to pass the validation.
+/// `authFailedHandler`: A `HttpHandler` function which will be executed when validation fails.
 ///
 /// **Output**
 ///
@@ -177,8 +177,8 @@ let authorizeByPolicyName (policyName : string) (authFailedHandler : HttpHandler
 ///
 /// **Parameters**
 ///
-/// - `policy`: An `AuthorizationPolicy` which a user must meet in order to pass the validation.
-/// - `authFailedHandler`: A `HttpHandler` function which will be executed when validation fails.
+/// `policy`: An `AuthorizationPolicy` which a user must meet in order to pass the validation.
+/// `authFailedHandler`: A `HttpHandler` function which will be executed when validation fails.
 ///
 /// **Output**
 ///

@@ -11,9 +11,9 @@ open Microsoft.AspNetCore.ResponseCaching
 ///
 /// Specifies the directive for the `Cache-Control` HTTP header:
 ///
-/// - `NoCache`: The resource should not be cached under any circumstances.
-/// - `Public`: Any client and proxy may cache the resource for the given amount of time.
-/// - `Private`: Only the end client may cache the resource for the given amount of time.
+/// `NoCache`: The resource should not be cached under any circumstances.
+/// `Public`: Any client and proxy may cache the resource for the given amount of time.
+/// `Private`: Only the end client may cache the resource for the given amount of time.
 ///
 type CacheDirective =
     | NoCache
@@ -36,9 +36,9 @@ let inline private cacheHeader isPublic duration =
 ///
 /// **Parameters**
 ///
-/// - `directive`: Specifies the cache directive to be set in the response's HTTP headers. Use `NoCache` to suppress caching altogether or use `Public`/`Private` to enable caching for everyone or clients only.
-/// - `vary`: Optionally specify which HTTP headers have to match in order to return a cached response (e.g. `Accept` and/or `Accept-Encoding`).
-/// - `varyByQueryKeys`: An optional list of query keys which will be used by the ASP.NET Core response caching middleware to vary (potentially) cached responses. If this parameter is used then the ASP.NET Core response caching middleware has to be enabled. For more information check the official [VaryByQueryKeys](https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-2.1#varybyquerykeys) documentation.
+/// `directive`: Specifies the cache directive to be set in the response's HTTP headers. Use `NoCache` to suppress caching altogether or use `Public`/`Private` to enable caching for everyone or clients only.
+/// `vary`: Optionally specify which HTTP headers have to match in order to return a cached response (e.g. `Accept` and/or `Accept-Encoding`).
+/// `varyByQueryKeys`: An optional list of query keys which will be used by the ASP.NET Core response caching middleware to vary (potentially) cached responses. If this parameter is used then the ASP.NET Core response caching middleware has to be enabled. For more information check the official [VaryByQueryKeys](https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-2.1#varybyquerykeys) documentation.
 ///
 /// **Output**
 ///
@@ -88,8 +88,8 @@ let noResponseCaching : HttpHandler = responseCaching NoCache None None
 ///
 /// **Parameters**
 ///
-/// - `seconds`: Specifies the duration (in seconds) for which the response may be cached.
-/// - `vary`: Optionally specify which HTTP headers have to match in order to return a cached response (e.g. `Accept` and/or `Accept-Encoding`).
+/// `seconds`: Specifies the duration (in seconds) for which the response may be cached.
+/// `vary`: Optionally specify which HTTP headers have to match in order to return a cached response (e.g. `Accept` and/or `Accept-Encoding`).
 ///
 /// **Output**
 ///
@@ -106,8 +106,8 @@ let privateResponseCaching (seconds : int) (vary : string option) : HttpHandler 
 ///
 /// **Parameters**
 ///
-/// - `seconds`: Specifies the duration (in seconds) for which the response may be cached.
-/// - `vary`: Optionally specify which HTTP headers have to match in order to return a cached response (e.g. `Accept` and/or `Accept-Encoding`).
+/// `seconds`: Specifies the duration (in seconds) for which the response may be cached.
+/// `vary`: Optionally specify which HTTP headers have to match in order to return a cached response (e.g. `Accept` and/or `Accept-Encoding`).
 ///
 /// **Output**
 ///

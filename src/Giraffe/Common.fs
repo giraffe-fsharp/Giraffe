@@ -49,7 +49,7 @@ type DateTimeOffset with
 ///
 /// **Parameters**
 ///
-/// - `x`: The object to validate against `null`.
+/// `x`: The object to validate against `null`.
 ///
 /// **Output**
 ///
@@ -63,7 +63,7 @@ let inline isNotNull x = not (isNull x)
 ///
 /// **Parameters**
 ///
-/// - `str`: The string value to be converted into an option of string.
+/// `str`: The string value to be converted into an option of string.
 ///
 /// **Output**
 ///
@@ -78,7 +78,7 @@ let inline strOption (str : string) =
 ///
 /// **Parameters**
 ///
-/// - `filePath`: The absolute path of the file.
+/// `filePath`: The absolute path of the file.
 ///
 /// **Output**
 ///
@@ -124,7 +124,7 @@ module ShortGuid =
     ///
     /// **Parameters**
     ///
-    /// - `guid`: The `System.Guid` to be converted into a short GUID.
+    /// `guid`: The `System.Guid` to be converted into a short GUID.
     ///
     /// **Output**
     ///
@@ -144,7 +144,7 @@ module ShortGuid =
     ///
     /// **Parameters**
     ///
-    /// - `shortGuid`: The short GUID string to be converted into a `System.Guid`.
+    /// `shortGuid`: The short GUID string to be converted into a `System.Guid`.
     ///
     /// **Output**
     ///
@@ -187,7 +187,7 @@ module ShortId =
     ///
     /// **Parameters**
     ///
-    /// - `id`: The `uint64` to be converted into a short ID.
+    /// `id`: The `uint64` to be converted into a short ID.
     ///
     /// **Output**
     ///
@@ -211,7 +211,7 @@ module ShortId =
     ///
     /// **Parameters**
     ///
-    /// - `shortId`: The short ID string to be converted into a `uint64` value.
+    /// `shortId`: The short ID string to be converted into a `uint64` value.
     ///
     /// **Output**
     ///

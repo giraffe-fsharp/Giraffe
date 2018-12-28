@@ -247,33 +247,40 @@ let sayHelloWorld : HttpHandler =
         }
 ```
 
-#### Convenience functions
+#### handleContext
 
-With version 3.5.0 and onwards Giraffe exposes additional convenience functions which can be used to create new `HttpHandler` functions which require access to the `HttpContext` or `HttpRequest` object without having to define the full verbose implementation as shown above.
+Starting with version 3.5.0 and onwards Giraffe exposes an additional convenience function which can be used to generate new handler functions which only require access to the `HttpContext` object without having to define the full verbose implementation as shown above.
 
-The `handleContext` and `handleRequest` functions can be used like this:
+The `handleContext` function can be used like this:
 
 ```fsharp
-let handlerWithLogging =
+let handlerWithLogging : HttpHandler =
     handleContext(
         fun ctx ->
             let logger = ctx.GetService<ILogger>()
-            logger.Information("From the context")
-            text "Done working")
-
-let echoRequestBody =
-    POST
-    >=> route "/echo"
-    >=> handleRequest(
-        fun req ->
-            use reader = StreamReader(req.Body)
-            requestBody = reader.ReadToEnd()
-            text requestBody)
+            logger.LogInformation("From the context")
+            ctx.WriteTextAsync "")
 ```
+
+Or alternatively if additional asynchronous work needs to be done:
+
+```fsharp
+let handlerWithLogging2 : HttpHandler =
+    handleContext(
+        fun ctx ->
+            task {
+                let logger = ctx.GetService<ILogger>()
+                logger.LogInformation("From the context")
+                // Do more async stuff
+                return! ctx.WriteTextAsync "Done working"
+            })
+```
+
+Please note that the `handleContext` function doesn't have control over the `next` handler and therefore cannot "skip" the handler pipeline like normal `HttpHandler` functions can do (see: [Continue vs. Return vs. Skip](#continue-vs-return-vs-skip)).
 
 #### Deferred execution of Tasks
 
-Please be aware that a `Task<'T>` in .NET is just a promise of `'T` when executed asynchronously. Unless you define a `HttpHandler` function in the most verbose way with the `task {}` CE you are not executing any asynchronous operations until the handler gets invoked by the `GiraffeMiddleware`.
+Please be also aware that a `Task<'T>` in .NET is just a promise of `'T` when executed asynchronously. Unless you define a `HttpHandler` function in the most verbose way with the `task {}` CE you are not executing any asynchronous operations until the handler gets invoked by the `GiraffeMiddleware`.
 
 For example, in the example below, an `IDisposable` will get disposed **before** the actual `handler` gets executed:
 

@@ -54,7 +54,7 @@ module SubRouting =
 ///
 /// **Parameters**
 ///
-/// - `fns`: List of port to `HttpHandler` mappings
+/// `fns`: List of port to `HttpHandler` mappings
 ///
 /// **Output**
 ///
@@ -78,7 +78,7 @@ let routePorts (fns : (int * HttpHandler) list) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `path`: Request path.
+/// `path`: Request path.
 ///
 /// **Output**
 ///
@@ -96,7 +96,7 @@ let route (path : string) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `path`: Request path.
+/// `path`: Request path.
 ///
 /// **Output**
 ///
@@ -114,7 +114,7 @@ let routeCi (path : string) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `path`: Regex path.
+/// `path`: Regex path.
 ///
 /// **Output**
 ///
@@ -135,7 +135,7 @@ let routex (path : string) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `path`: Regex path.
+/// `path`: Regex path.
 ///
 /// **Output**
 ///
@@ -158,18 +158,18 @@ let routeCix (path : string) : HttpHandler =
 ///
 /// **Supported format chars**
 ///
-/// - `%b`: `bool`
-/// - `%c`: `char`
-/// - `%s`: `string`
-/// - `%i`: `int`
-/// - `%d`: `int64`
-/// - `%f`: `float`/`double`
-/// - `%O`: `Guid`
+/// `%b`: `bool`
+/// `%c`: `char`
+/// `%s`: `string`
+/// `%i`: `int`
+/// `%d`: `int64`
+/// `%f`: `float`/`double`
+/// `%O`: `Guid`
 ///
 /// **Parameters**
 ///
-/// - `path`: A format string representing the expected request path.
-/// - `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
+/// `path`: A format string representing the expected request path.
+/// `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
 ///
 /// **Output**
 ///
@@ -191,18 +191,18 @@ let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler)
 ///
 /// **Supported format chars**
 ///
-/// - `%b`: `bool`
-/// - `%c`: `char`
-/// - `%s`: `string`
-/// - `%i`: `int`
-/// - `%d`: `int64`
-/// - `%f`: `float`/`double`
-/// - `%O`: `Guid`
+/// `%b`: `bool`
+/// `%c`: `char`
+/// `%s`: `string`
+/// `%i`: `int`
+/// `%d`: `int64`
+/// `%f`: `float`/`double`
+/// `%O`: `Guid`
 ///
 /// **Parameters**
 ///
-/// - `path`: A format string representing the expected request path.
-/// - `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
+/// `path`: A format string representing the expected request path.
+/// `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
 ///
 /// **Output**
 ///
@@ -224,8 +224,8 @@ let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandle
 ///
 /// **Parameters**
 ///
-/// - `route`: A string representing the expected request path. Use `{propertyName}` for reserved parameter names which should map to the properties of type `'T`. You can also use valid `Regex` within the `route` string.
-/// - `routeHandler`: A function which accepts a tuple `'T` of the parsed parameters and returns a `HttpHandler` function which will subsequently deal with the request.
+/// `route`: A string representing the expected request path. Use `{propertyName}` for reserved parameter names which should map to the properties of type `'T`. You can also use valid `Regex` within the `route` string.
+/// `routeHandler`: A function which accepts a tuple `'T` of the parsed parameters and returns a `HttpHandler` function which will subsequently deal with the request.
 ///
 /// **Output**
 ///
@@ -256,7 +256,7 @@ let routeBind<'T> (route : string) (routeHandler : 'T -> HttpHandler) : HttpHand
 ///
 /// **Parameters**
 ///
-/// - `subPath`: The expected beginning of a request path.
+/// `subPath`: The expected beginning of a request path.
 ///
 /// **Output**
 ///
@@ -274,7 +274,7 @@ let routeStartsWith (subPath : string) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `subPath`: The expected beginning of a request path.
+/// `subPath`: The expected beginning of a request path.
 ///
 /// **Output**
 ///
@@ -294,7 +294,7 @@ let routeStartsWithCi (subPath : string) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `path`: A part of an expected request path.
+/// `path`: A part of an expected request path.
 ///
 /// **Output**
 ///
@@ -312,7 +312,7 @@ let subRoute (path : string) (handler : HttpHandler) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `path`: A part of an expected request path.
+/// `path`: A part of an expected request path.
 ///
 /// **Output**
 ///
@@ -330,20 +330,20 @@ let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
 ///
 /// **Supported format chars**
 ///
-/// - `%b`: `bool`
-/// - `%c`: `char`
-/// - `%s`: `string`
-/// - `%i`: `int`
-/// - `%d`: `int64`
-/// - `%f`: `float`/`double`
-/// - `%O`: `Guid`
+/// `%b`: `bool`
+/// `%c`: `char`
+/// `%s`: `string`
+/// `%i`: `int`
+/// `%d`: `int64`
+/// `%f`: `float`/`double`
+/// `%O`: `Guid`
 ///
 /// Subsequent routing handlers inside the given `handler` function should omit the already validated path.
 ///
 /// **Parameters**
 ///
-/// - `path`: A format string representing the expected request sub path.
-/// - `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
+/// `path`: A format string representing the expected request sub path.
+/// `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
 ///
 /// **Output**
 ///

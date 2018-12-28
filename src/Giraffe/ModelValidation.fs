@@ -22,8 +22,8 @@ type IModelValidation<'T> =
 ///
 /// **Parameters**
 ///
-/// - `f`: A function which accepts the model `'T` and returns a `HttpHandler` function.
-/// - `model`: An instance of type `'T`, where `'T` must implement interface `IModelValidation<'T>`.
+/// `f`: A function which accepts the model `'T` and returns a `HttpHandler` function.
+/// `model`: An instance of type `'T`, where `'T` must implement interface `IModelValidation<'T>`.
 ///
 /// **Output**
 ///
