@@ -71,8 +71,8 @@ let private convertToRegexPatternAndFormatChars (formatString : string) =
 ///
 /// **Parameters**
 ///
-/// - `format`: The format string which shall be used for parsing.
-/// - `input`: The input string from which the parsed arguments shall be extracted.
+/// `format`: The format string which shall be used for parsing.
+/// `input`: The input string from which the parsed arguments shall be extracted.
 ///
 /// **Output**
 ///
@@ -133,7 +133,7 @@ let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreC
 ///
 /// **Parameters**
 ///
-/// - `format`: The format string which shall be used for parsing.
+/// `format`: The format string which shall be used for parsing.
 ///
 /// **Output**
 ///

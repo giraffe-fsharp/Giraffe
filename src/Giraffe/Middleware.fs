@@ -85,7 +85,7 @@ type IApplicationBuilder with
     ///
     /// **Parameters**
     ///
-    /// - `handler`: The Giraffe `HttpHandler` pipeline. The handler can be anything from a single handler to an entire web application which has been composed from many smaller handlers.
+    /// `handler`: The Giraffe `HttpHandler` pipeline. The handler can be anything from a single handler to an entire web application which has been composed from many smaller handlers.
     ///
     /// **Output**
     ///
@@ -101,7 +101,7 @@ type IApplicationBuilder with
     ///
     /// **Parameters**
     ///
-    /// - `handler`: The Giraffe `ErrorHandler` pipeline. The handler can be anything from a single handler to a bigger error application which has been composed from many smaller handlers.
+    /// `handler`: The Giraffe `ErrorHandler` pipeline. The handler can be anything from a single handler to a bigger error application which has been composed from many smaller handlers.
     ///
     /// **Output**
     ///
@@ -115,7 +115,7 @@ type IServiceCollection with
     ///
     /// Adds default Giraffe services to the ASP.NET Core service container.
     ///
-    /// The default services include featurs like `IJsonSerializer`, `IXmlSerializer`, `INegotiationConfig` or more. Please check the official Giraffe documentation for an up to date list of configurable services.
+    /// The default services include features like `IJsonSerializer`, `IXmlSerializer`, `INegotiationConfig` or more. Please check the official Giraffe documentation for an up to date list of configurable services.
     ///
     /// **Output**
     ///
