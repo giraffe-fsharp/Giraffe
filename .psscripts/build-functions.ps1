@@ -147,9 +147,20 @@ function Test-CompareVersions ($version, [string]$gitTag)
 
 function Add-ToPathVariable ($path)
 {
-    if (Test-IsWindows) { $updatedPath = "$path;$env:Path" }
-    else { $updatedPath = "$path`:$env:PATH" }
-    $env:Path = $updatedPath
+    if (Test-IsWindows)
+    {
+        $updatedPath = "$path;$env:Path"
+        [Environment]::SetEnvironmentVariable("Path", $updatedPath, "Process")
+        [Environment]::SetEnvironmentVariable("Path", $updatedPath, "User")
+        [Environment]::SetEnvironmentVariable("Path", $updatedPath, "Machine")
+    }
+    else
+    {
+        $updatedPath = "$path`:$env:PATH"
+        [Environment]::SetEnvironmentVariable("PATH", $updatedPath, "Process")
+        [Environment]::SetEnvironmentVariable("PATH", $updatedPath, "User")
+        [Environment]::SetEnvironmentVariable("PATH", $updatedPath, "Machine")
+    }
 }
 
 # ----------------------------------------------
