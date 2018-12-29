@@ -276,6 +276,58 @@ let handlerWithLogging2 : HttpHandler =
             })
 ```
 
+### resolveService<'t> and mapTask<'t>
+
+> Applies to Giraffe v3.6.0+
+
+Allows to resolve a service of type `'t` registered in the IoC container of ASP.NET Core's dependency injection machanism and maps the resolved service into another `HttpHandler`
+
+Example 1: map the result of a (sync) function to JSON using a dependency:
+```fsharp
+type IAlbumStore = 
+    abstract getAllAlbums : () -> Album list
+
+GET 
+  >=> route "/albums"
+  >=> resolveService<IAlbumStore>(fun albumStore -> json (albumStore.getAllAlbums()))
+```
+Example 2: combine and resolve multiple services: 
+```fsharp
+type IAlbumStore = 
+    abstract getAllAlbums : () -> Album list
+    abstract albumsForUser : User -> Album list
+
+type IUserStore = 
+    abstract getCurrentUser : () -> User 
+
+GET 
+  >=> route "/my-albums"
+  >=> resolveService<IUserStore>(fun userStore ->
+        resolveService<IAlbumStore>(fun albumStore ->
+            let currentUser = userStore.getCurrentUser()
+            let albums = albumStore.albumsForUser currentUser
+            json albums
+        )
+    )
+```
+Example 3: resolve service and maps their async (task-based) functions into a `HttpHandler`
+```fsharp
+type IAlbumStore = 
+    abstract getAllAlbums : () -> Task<Album list>
+    
+GET 
+  >=> route "/albums"
+  >=> resolveService<IAlbumStore>(
+      fun albumStore -> 
+        let albumsTask = albumStore.getAllAlbums() 
+        let albumListToJson (albums: Album list) = json albums 
+        mapTask albumsTask albumListToJson)
+
+// Simplified 
+GET 
+  >=> route "/albums"
+  >=> resolveService<IAlbumStore>(fun store -> mapTask (store.getAllAlbums()) json)
+```
 Please note that the `handleContext` function doesn't have control over the `next` handler and therefore cannot "skip" the handler pipeline like normal `HttpHandler` functions can do (see: [Continue vs. Return vs. Skip](#continue-vs-return-vs-skip)).
 
 #### Deferred execution of Tasks

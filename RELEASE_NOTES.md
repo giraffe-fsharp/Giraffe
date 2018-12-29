@@ -1,6 +1,11 @@
 Release Notes
 =============
 
+## 3.6.0
+
+- Added handler `resolveService<'t>` that resolves a service of type `'t` from the IoC container provided by ASP.NET Core's dependency injection mechanism and lets you map the resolved service to another `HttpHandler`.
+- Added handler `mapTask<'t>` that takes an input `Task<'t>` and maps the `'t` into another `HttpHandler`
+
 ## 3.5.0
 
 #### New features

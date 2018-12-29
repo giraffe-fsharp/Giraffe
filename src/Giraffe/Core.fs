@@ -428,6 +428,27 @@ let clearResponse : HttpHandler =
         next ctx
 
 /// **Description**
+/// 
+/// Transforms the result of the input Task into a `HttpHandler`
+/// 
+/// **Parameter**
+/// 
+/// `inputTask`: the input task
+/// `mapper`: maps the result of the task into a `HttpHandler` 
+/// 
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
+let mapTask<'t> (inputTask: Task<'t>) (mapper: 't -> HttpHandler) : HttpHandler = 
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            let! extracted = inputTask
+            let resultHandler = mapper extracted
+            return! resultHandler next ctx
+        }
+ 
+/// **Description**
 ///
 /// Sets the HTTP status code of the response.
 ///
@@ -503,3 +524,23 @@ let redirectTo (permanent : bool) (location : string) : HttpHandler  =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.Response.Redirect(location, permanent)
         Task.FromResult (Some ctx)
+
+/// **Description**
+/// 
+/// Resolves a service of type `'t` from the IoC container provided by ASP.NET Core's dependency injection mechanism and lets you map the resolved service to another `HttpHandler`.
+/// 
+/// **Parameters**
+/// 
+/// `mapService`: a function that maps the resolved service to a `HttpHandler`.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+/// 
+let resolveService<'t> (mapService : 't -> HttpHandler) : HttpHandler = 
+    fun (next : HttpFunc) (ctx : HttpContext) ->    
+        task {
+            let resolvedService = ctx.GetService<'t>()
+            let resultHandler = mapService resolvedService
+            return! resultHandler next ctx 
+        }
