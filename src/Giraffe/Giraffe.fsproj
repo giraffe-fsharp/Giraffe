@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+  <Import Project="../../ReferenceAssemblies.props" />
   <PropertyGroup>
     <!-- General -->
     <AssemblyName>Giraffe</AssemblyName>
