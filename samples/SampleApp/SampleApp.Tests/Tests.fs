@@ -38,13 +38,9 @@ let addCookiesFromResponse (response : HttpResponseMessage)
     request.Headers.Add("Cookie", response.Headers.GetValues("Set-Cookie"))
     request
 
-let makeRequest (client : HttpClient) (request : HttpRequestMessage) =
-    task {
-        use server = new TestServer(createHost())
-        use client = server.CreateClient()
-        let! response = client.SendAsync request
-        return response
-    }
+let makeRequest (client : HttpClient) request =
+    request
+    |> client.SendAsync
 
 let isStatus (code : HttpStatusCode) (response : HttpResponseMessage) =
     Assert.Equal(code, response.StatusCode)
