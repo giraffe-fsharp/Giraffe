@@ -280,9 +280,9 @@ Please note that the `handleContext` function doesn't have control over the `nex
 
 #### Deferred execution of Tasks
 
-Please be also aware that a `Task<'T>` in .NET is just a promise of `'T` when executed asynchronously. Unless you define an `HttpHandler` function in the most verbose way with the `task {}` CE you are not executing any asynchronous operations until the handler gets invoked by the `GiraffeMiddleware`.
+Please be also aware that a `Task<'T>` in .NET is just a promise of `'T` when a task eventually finishes asynchronously. Unless you define an `HttpHandler` function in the most verbose way (with the `task {}` CE) and actively await a nested result with either `let!` or `return!` then the handler will not wait for the task to complete before returning to the `GiraffeMiddleware`.
 
-For example, in the code below, the `IDisposable` will get disposed **before** the actual `handler` gets executed. This is because a `HttpHandler` is a `HttpFunc -> HttpContext -> Task<HttpContext option>` and therefore `handler next ctx` only returns a `Task<HttpContext option>` which hasn't been executed yet:
+This has important implications if you want to execute code in an `HttpHandler` after invoking the next handler, such as cleaning up resources with the `use` keyword. For example, in the code below, the `IDisposable` will get disposed **before** the actual `handler` gets executed. This is because a `HttpHandler` is a `HttpFunc -> HttpContext -> Task<HttpContext option>` and therefore `handler next ctx` only returns a `Task<HttpContext option>` which hasn't been completed yet:
 
 ```fsharp
 let doSomething handler : HttpHandler =
