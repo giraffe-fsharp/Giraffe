@@ -158,7 +158,7 @@ let webApp =
 
 Another important aspect of Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core only works with tasks out of the box).
 
-For this purpose Giraffe uses the `task {}` computation expression which comes with the [`TaskBuilder.fs` NuGet package](https://www.nuget.org/packages/TaskBuilder.fs/). Syntactically it works identical to F#'s async workflows (after opening the `FSharp.Control.Tasks.V2.ContextInsensitive` module):
+For this purpose Giraffe uses the `task {}` computation expression from the [TaskBuilder.fs](https://www.nuget.org/packages/TaskBuilder.fs/) NuGet package. Syntactically it works identical to F#'s async workflows (after opening the `FSharp.Control.Tasks.V2.ContextInsensitive` module):
 
 ```fsharp
 open FSharp.Control.Tasks.V2.ContextInsensitive
@@ -172,24 +172,7 @@ let personHandler =
         }
 ```
 
-The `task {}` CE is an independent project maintained by [Robert Peele](https://github.com/rspeele) and can be used from any other F# application as well. All you have to do is add a reference to the `TaskBuilder.fs` NuGet library and open the `FSharp.Control.Tasks.V2` module:
-
-```fsharp
-open FSharp.Control.Tasks.V2
-
-let readFileAndDoSomething (filePath : string) =
-    task {
-        use stream = new FileStream(filePath, FileMode.Open)
-        use reader = new StreamReader(stream)
-        let! contents = reader.ReadToEndAsync()
-
-        // do something with contents
-
-        return contents
-    }
-```
-
-For more information please visit the official [TaskBuilder.fs](https://github.com/rspeele/TaskBuilder.fs) GitHub repository.
+The `task {}` CE is an independent project maintained by [Robert Peele](https://github.com/rspeele), for more information please visit the official [TaskBuilder.fs](https://github.com/rspeele/TaskBuilder.fs) GitHub repository.
 
 **IMPORTANT NOTICE**
 
@@ -832,7 +815,7 @@ These `HttpHandler` functions are categorised in four sub modules:
 
 For the majority of status code `HttpHandler` functions (except the `Intermediate` module) there are two versions for each individual status code available - a lower case and an upper case function (e.g. `Successful.ok` and `Successful.OK`).
 
-The lower case version let's you combine the `HttpHandler` function with another `HttpHandler` function:
+The lower case version lets you combine the `HttpHandler` function with another `HttpHandler` function:
 
 ```fsharp
 Successful.ok (text "Hello World")
@@ -1237,7 +1220,7 @@ Please note that the `routeStartsWith` and `routeStartsWithCi` http handlers do 
 
 #### subRoute
 
-In contrast to `routeStartsWith` the `subRoute` http handler let's you categorise routes without having to repeat already pre-filtered parts of the route:
+In contrast to `routeStartsWith` the `subRoute` http handler lets you categorise routes without having to repeat already pre-filtered parts of the route:
 
 ```fsharp
 let webApp =
@@ -1371,7 +1354,7 @@ let someHttpHandler : HttpHandler =
 
 You can also access the query string through the `ctx.Request.Query` object which returns an `IQueryCollection` object which allows you to perform more actions on it.
 
-Last but not least there is also an `HttpContext` extension method called `BindQueryString<'T>` which let's you bind an entire query string to an object of type `'T` (see [Binding Query Strings](#binding-query-strings)).
+Last but not least there is also an `HttpContext` extension method called `BindQueryString<'T>` which lets you bind an entire query string to an object of type `'T` (see [Binding Query Strings](#binding-query-strings)).
 
 ### Model Binding
 
@@ -2472,7 +2455,7 @@ let someHandler (animal : Animal) : HttpHandler =
 
 The underlying JSON serializer can be configured as a dependency during application startup (see [JSON](#json)).
 
-The `WriteJsonChunkedAsync<'T> (dataObj : 'T)` extension method and the `jsonChunked (dataObj : 'T)` http handler write directly to th response stream of the HTTP request without extra buffering into a byte array. They will not set a `Content-Length` header and instead set the `Transfer-Encoding: chunked` header and `Content-Type: application/json`:
+The `WriteJsonChunkedAsync<'T> (dataObj : 'T)` extension method and the `jsonChunked (dataObj : 'T)` http handler write directly to the response stream of the HTTP request without extra buffering into a byte array. They will not set a `Content-Length` header and instead set the `Transfer-Encoding: chunked` header and `Content-Type: application/json`:
 
 ```fsharp
 let someHandler (person : Person) : HttpHandler =
