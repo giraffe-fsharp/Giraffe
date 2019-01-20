@@ -131,7 +131,9 @@ module ModelParser =
         let error =
             // Iterate through all properties of the model
             model.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
-            |> Seq.fold(
+            |> Seq.toList
+            |> List.filter (fun p -> p.CanWrite)
+            |> List.fold(
                 fun (error : string option) (prop : PropertyInfo) ->
                     // If model binding is set to strict and a previous property
                     // failed to parse then short circuit the parsing and return the error.

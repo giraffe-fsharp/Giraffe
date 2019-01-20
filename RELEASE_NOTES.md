@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 3.5.1
+
+#### Bug fixes
+
+- Fixed a bug in Giraffe's model binding to not try to set read only properties anymore.
+
 ## 3.5.0
 
 #### New features
