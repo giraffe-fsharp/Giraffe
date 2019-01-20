@@ -7,7 +7,7 @@ function Get-NuGetPackageInfo ($nugetPackageId, $currentVersion)
     $url    = "https://api-v2v3search-0.nuget.org/query?q=$nugetPackageId&prerelease=false"
     $result = Invoke-RestMethod -Uri $url -Method Get
     $latestVersion = $result.data[0].version
-    $upgradeAvailable = !$latestVersion.StartsWith($currentVersion.Replace("*", ""))
+    $upgradeAvailable = $currentVersion -and !$latestVersion.StartsWith($currentVersion.Replace("*", ""))
 
     [PSCustomObject]@{
         PackageName      = $nugetPackageId;
@@ -31,9 +31,9 @@ filter Highlight-Upgrades
 
 Write-Host ""
 Write-Host ""
-Write-Host "--------------------------------------------------"
-Write-Host " Scanning all projects for NuGet package upgrades "
-Write-Host "--------------------------------------------------"
+Write-Host "--------------------------------------------------" -ForegroundColor DarkYellow
+Write-Host " Scanning all projects for NuGet package upgrades " -ForegroundColor DarkYellow
+Write-Host "--------------------------------------------------" -ForegroundColor DarkYellow
 Write-Host ""
 
 $projects = Get-ChildItem "$PSScriptRoot\..\**\*.*proj" -Recurse | % { $_.FullName }
