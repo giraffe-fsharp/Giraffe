@@ -319,8 +319,12 @@ let subRoute (path : string) (handler : HttpHandler) : HttpHandler =
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
-    routeStartsWithCi path >=>
-    SubRouting.routeWithPartialPath path handler
+    fun (next : HttpFunc) (ctx: HttpContext) ->
+        let nextPartOfPath = SubRouting.getNextPartOfPath ctx
+        if nextPartOfPath.StartsWith(path, StringComparison.CurrentCultureIgnoreCase) then
+            let matchedPathFragment = nextPartOfPath.[0..path.Length-1]
+            SubRouting.routeWithPartialPath matchedPathFragment handler next ctx
+        else skipPipeline
 
 /// **Description**
 ///
