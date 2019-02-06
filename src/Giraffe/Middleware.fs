@@ -105,7 +105,7 @@ type IApplicationBuilder with
     ///
     /// **Output**
     ///
-    /// Returns `unit`.
+    /// Returns an `IApplicationBuilder` builder object.
     ///
     member this.UseGiraffeErrorHandler (handler : ErrorHandler) =
         this.UseMiddleware<GiraffeErrorHandlerMiddleware> handler
