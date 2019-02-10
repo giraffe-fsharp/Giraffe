@@ -5,13 +5,19 @@ Release Notes
 
 #### Bug fixes
 
-- Fixed a bug in Giraffe's model binding to not try to set read only properties anymore.
+- Fixed a bug in the `subRouteCi` http handler, which prevented nested sub routes to be case insensitive.
 
 #### New features
 
 - Added two new `HttpContext` extension methods to retrieve cookie and form values:
     - `GetCookieValue (key : string)`
     - `GetFormValue (key : string)`
+
+## 3.5.1
+
+#### Bug fixes
+
+- Fixed a bug in Giraffe's model binding to not try to set read only properties anymore.
 
 ## 3.5.0
 
