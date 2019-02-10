@@ -227,6 +227,43 @@ type HttpContext with
         | true, value -> Ok (value.ToString())
         | _           -> Error (sprintf "Query string value '%s' is missing." key)
 
+    /// **Description**
+    ///
+    /// Retrieves the `string` value of a cookie from the request.
+    ///
+    /// **Parameters**
+    ///
+    /// `key`: The name of the cookie.
+    ///
+    /// **Output**
+    ///
+    /// Returns `Some string` if the cookie was set, otherwise returns `None`.
+    ///
+    member this.GetCookieValue (key : string) =
+        match this.Request.Cookies.TryGetValue key with
+        | true , cookie -> Some cookie
+        | false, _      -> None
+
+    /// **Description**
+    ///
+    /// Retrieves the `string` value of a form parameter from the request.
+    ///
+    /// **Parameters**
+    ///
+    /// `key`: The name of the form parameter.
+    ///
+    /// **Output**
+    ///
+    /// Returns `Some string` if the form parameter was set, otherwise returns `None`.
+    ///
+    member this.GetFormValue (key : string) =
+        match this.Request.HasFormContentType with
+        | false -> None
+        | true  ->
+            match this.Request.Form.TryGetValue key with
+            | true , value -> Some (value.ToString())
+            | false, _     -> None
+
 // ---------------------------
 // HttpHandler definition
 // ---------------------------
