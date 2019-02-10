@@ -1,11 +1,17 @@
 Release Notes
 =============
 
-## 3.5.1
+## 3.6.0
 
 #### Bug fixes
 
 - Fixed a bug in Giraffe's model binding to not try to set read only properties anymore.
+
+#### New features
+
+- Added two new `HttpContext` extension methods to retrieve cookie and form values:
+    - `GetCookieValue (key : string)`
+    - `GetFormValue (key : string)`
 
 ## 3.5.0
 
