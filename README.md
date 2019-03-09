@@ -77,8 +77,8 @@ PM> Install-Package Microsoft.AspNetCore.App
 Alternatively you can also use the .NET CLI to add the packages:
 
 ```
-dotnet add [PROJECT] package Microsoft.AspNetCore.App --package-directory [PACKAGE_CIRECTORY]
-dotnet add [PROJECT] package Giraffe --package-directory [PACKAGE_CIRECTORY]
+dotnet add package Microsoft.AspNetCore.App
+dotnet add package Giraffe
 ```
 
 Next create a web application and plug it into the ASP.NET Core middleware:
