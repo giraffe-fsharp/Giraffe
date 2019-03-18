@@ -3311,7 +3311,7 @@ let configureServices (services : IServiceCollection) =
 
 #### Customizing JsonSerializerSettings
 
-You can change the default `JsonSerializerSettings` of the `NewtonsoftJsonSerializer` by registering a new instance of `NewtonsoftJsonSerializer` during application startup:
+You can change the default `JsonSerializerSettings` of the `NewtonsoftJsonSerializer` by registering a new instance of `NewtonsoftJsonSerializer` during application startup. For example, the [`Microsoft.FSharpLu` project](https://github.com/Microsoft/fsharplu/wiki/fsharplu.json) provides a JSON.NET converter (`CompactUnionJsonConverter`) that serializes and deserializes `Option`s and discriminated unions much more succinctly. If you wanted to use it, and set the culture to German, your configuration would look something like:
 
 ```fsharp
 let configureServices (services : IServiceCollection) =
@@ -3322,6 +3322,7 @@ let configureServices (services : IServiceCollection) =
     // object of JsonSerializerSettings
     let customSettings = JsonSerializerSettings(
         Culture = CultureInfo("de-DE"))
+    customSettings.Converters.Add(CompactUnionJsonConverter(true))
 
     services.AddSingleton<IJsonSerializer>(
         NewtonsoftJsonSerializer(customSettings)) |> ignore
