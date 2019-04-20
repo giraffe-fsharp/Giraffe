@@ -25,8 +25,12 @@ function Test-IsMonoInstalled
         if (Test-IsMonoInstalled) { Write-Host "Mono is available." }
     #>
 
-    $result = Invoke-Cmd "mono --version" -Silent
-    return $result.StartsWith("Mono JIT compiler version")
+    try
+    {
+        $result = Invoke-Cmd "mono --version" -Silent
+        return $result.StartsWith("Mono JIT compiler version")
+    }
+    catch { return false }
 }
 
 function Get-UbuntuVersion
