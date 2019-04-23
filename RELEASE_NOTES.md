@@ -29,6 +29,7 @@ For more information please see [issue #347](https://github.com/giraffe-fsharp/G
 
 - Fixed `routef` to not match more than one URL path segment.
 - Fixed the `_ariaLabelledBy` attribute in the `GiraffeViewEngine`
+- Fixed case insensitive route handlers on Ubuntu
 
 ## 3.6.0
 

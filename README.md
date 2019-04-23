@@ -8,10 +8,11 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 [![NuGet Info](https://buildstats.info/nuget/Giraffe?includePreReleases=true)](https://www.nuget.org/packages/Giraffe/)
 
-| Windows | Linux |
-| :------ | :---- |
-| [![Build status](https://ci.appveyor.com/api/projects/status/bcst827ht2tcuhwo/branch/develop?svg=true)](https://ci.appveyor.com/project/dustinmoris/giraffe/branch/develop) | [![Linux Build status](https://travis-ci.org/giraffe-fsharp/Giraffe.svg?branch=develop)](https://travis-ci.org/giraffe-fsharp/Giraffe/builds?branch=develop) |
-| [![Windows Build history](https://buildstats.info/appveyor/chart/dustinmoris/giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/giraffe/history?branch=develop) | [![Linux Build history](https://buildstats.info/travisci/chart/giraffe-fsharp/Giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://travis-ci.org/giraffe-fsharp/Giraffe/builds?branch=develop) |
+### Windows and Linux Builds
+
+[![Build status](https://ci.appveyor.com/api/projects/status/bcst827ht2tcuhwo/branch/develop?svg=true)](https://ci.appveyor.com/project/dustinmoris/giraffe/branch/develop)
+
+[![Windows Build history](https://buildstats.info/appveyor/chart/dustinmoris/giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/giraffe/history?branch=develop)
 
 
 ## Table of contents
