@@ -45,7 +45,14 @@ let private formatStringMap =
         'u', (shortIdPattern,           ShortId.toUInt64     >> box)  // uint64
     ]
 
-let private convertToRegexPatternAndFormatChars (formatString : string) =
+
+type RegexMatchMode = 
+    | Exact
+    | FromStart
+    | ToEnd
+    | Partial
+
+let private convertToRegexPatternAndFormatChars (mode : RegexMatchMode) (formatString : string) =
     let rec convert (chars : char list) =
         match chars with
         | '%' :: '%' :: tail ->
@@ -60,33 +67,35 @@ let private convertToRegexPatternAndFormatChars (formatString : string) =
             c.ToString() + pattern, formatChars
         | [] -> "", []
 
-    formatString.ToCharArray()
-    |> Array.toList
-    |> convert
-    |> (fun (pattern, formatChars) -> sprintf "^%s$" pattern, formatChars)
+    let formatRegexMode mode pattern = 
+        match mode with
+        | Exact -> sprintf "^%s$" pattern
+        | FromStart -> sprintf "^%s" pattern
+        | ToEnd -> sprintf "%s$" pattern
+        | Partial -> pattern
 
-/// **Description**
-///
-/// Tries to parse an input string based on a given format string and return a tuple of all parsed arguments.
-///
-/// **Parameters**
-///
-/// `format`: The format string which shall be used for parsing.
-/// `input`: The input string from which the parsed arguments shall be extracted.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
-let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreCase : bool) =
+    formatString
+    |> List.ofSeq
+    |> convert
+    |> (fun (pattern, formatChars) -> formatRegexMode mode pattern, formatChars)
+
+[<Struct>]
+type TryMatchOptions = {
+    IgnoreCase: bool;
+    MatchMode: RegexMatchMode;
+} with 
+    static member IgnoreCaseExact = { IgnoreCase = true; MatchMode = Exact }
+    static member Exact = { IgnoreCase = false; MatchMode = Exact }
+
+let tryMatchInputOptions (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (options : TryMatchOptions) = 
     try
         let pattern, formatChars =
             format.Value
             |> Regex.Escape
-            |> convertToRegexPatternAndFormatChars
+            |> convertToRegexPatternAndFormatChars options.MatchMode
 
         let options =
-            match ignoreCase with
+            match options.IgnoreCase with
             | true  -> RegexOptions.IgnoreCase
             | false -> RegexOptions.None
 
@@ -122,6 +131,24 @@ let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreC
             |> Some
     with
     | _ -> None
+
+
+/// **Description**
+///
+/// Tries to parse an input string based on a given format string and return a tuple of all parsed arguments.
+///
+/// **Parameters**
+///
+/// `format`: The format string which shall be used for parsing.
+/// `input`: The input string from which the parsed arguments shall be extracted.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
+let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreCase : bool) =
+    tryMatchInputOptions format input { IgnoreCase = ignoreCase; MatchMode = RegexMatchMode.Exact }
+
 
 // ---------------------------
 // Validation helper functions
