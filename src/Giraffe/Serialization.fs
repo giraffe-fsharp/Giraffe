@@ -108,7 +108,7 @@ module Json =
                 JsonConvert.DeserializeObject<'T>(json, settings)
 
             member __.DeserializeAsync<'T> (stream : Stream) = task {
-                let memoryStream = new MemoryStream(stream.Length |> int)
+                let memoryStream = new MemoryStream()
                 do! stream.CopyToAsync(memoryStream)
                 memoryStream.Seek(0L, SeekOrigin.Begin) |> ignore
                 let streamReader = new StreamReader(memoryStream)
