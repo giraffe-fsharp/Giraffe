@@ -287,10 +287,35 @@ let routeStartsWithCi (subPath : string) : HttpHandler =
         else skipPipeline
 
 
+/// **Description**
+///
+/// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
+///
+/// If the route matches the incoming HTTP request then the arguments from the `PrintfFormat<...>` will be automatically resolved and passed into the supplied `routeHandler`.
+///
+/// **Supported format chars**
+///
+/// `%b`: `bool`
+/// `%c`: `char`
+/// `%s`: `string`
+/// `%i`: `int`
+/// `%d`: `int64`
+/// `%f`: `float`/`double`
+/// `%O`: `Guid`
+///
+/// **Parameters**
+///
+/// `path`: A format string representing the expected request path.
+/// `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
 let routeStartsWithf (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
 
-    let options = { IgnoreCase = false; MatchMode = FromStart }
+    let options = { TryMatchOptions.IgnoreCase = false; MatchMode = StartsWith }
 
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInputOptions path (SubRouting.getNextPartOfPath ctx) options
@@ -298,11 +323,35 @@ let routeStartsWithf (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> Ht
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
 
-
+/// **Description**
+///
+/// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
+///
+/// If the route matches the incoming HTTP request then the arguments from the `PrintfFormat<...>` will be automatically resolved and passed into the supplied `routeHandler`.
+///
+/// **Supported format chars**
+///
+/// `%b`: `bool`
+/// `%c`: `char`
+/// `%s`: `string`
+/// `%i`: `int`
+/// `%d`: `int64`
+/// `%f`: `float`/`double`
+/// `%O`: `Guid`
+///
+/// **Parameters**
+///
+/// `path`: A format string representing the expected request path.
+/// `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
 let routeStartsWithCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
 
-    let options = { IgnoreCase = true; MatchMode = FromStart }
+    let options = { TryMatchOptions.IgnoreCase = true; MatchMode = StartsWith }
 
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInputOptions path (SubRouting.getNextPartOfPath ctx) options

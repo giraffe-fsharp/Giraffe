@@ -45,14 +45,19 @@ let private formatStringMap =
         'u', (shortIdPattern,           ShortId.toUInt64     >> box)  // uint64
     ]
 
+type MatchMode =        
+    | Exact                // Will try to match entire string from start to end.
+    | StartsWith           // Will try to match a substring. Subject string should start with test case.
+    | EndsWith             // Will try to match a substring. Subject string should end with test case.
+    | Contains             // Will try to match a substring. Subject string should contain test case.
 
-type RegexMatchMode = 
-    | Exact
-    | FromStart
-    | ToEnd
-    | Partial
+type TryMatchOptions = { IgnoreCase: bool; MatchMode: MatchMode; } 
+with 
+    static member Exact = { IgnoreCase = false; MatchMode = Exact }
+    static member Default = TryMatchOptions.Exact
+    static member IgnoreCaseExact = { IgnoreCase = true; MatchMode = Exact }
 
-let private convertToRegexPatternAndFormatChars (mode : RegexMatchMode) (formatString : string) =
+let private convertToRegexPatternAndFormatChars (mode : MatchMode) (formatString : string) =
     let rec convert (chars : char list) =
         match chars with
         | '%' :: '%' :: tail ->
@@ -70,23 +75,29 @@ let private convertToRegexPatternAndFormatChars (mode : RegexMatchMode) (formatS
     let formatRegexMode mode pattern = 
         match mode with
         | Exact -> sprintf "^%s$" pattern
-        | FromStart -> sprintf "^%s" pattern
-        | ToEnd -> sprintf "%s$" pattern
-        | Partial -> pattern
+        | StartsWith -> sprintf "^%s" pattern
+        | EndsWith -> sprintf "%s$" pattern
+        | Contains -> pattern
 
     formatString
     |> List.ofSeq
     |> convert
     |> (fun (pattern, formatChars) -> formatRegexMode mode pattern, formatChars)
 
-[<Struct>]
-type TryMatchOptions = {
-    IgnoreCase: bool;
-    MatchMode: RegexMatchMode;
-} with 
-    static member IgnoreCaseExact = { IgnoreCase = true; MatchMode = Exact }
-    static member Exact = { IgnoreCase = false; MatchMode = Exact }
-
+/// **Description**
+///
+/// Tries to parse an input string based on a given format string and return a tuple of all parsed arguments.
+///
+/// **Parameters**
+///
+/// `format`: The format string which shall be used for parsing.
+/// `input`: The input string from which the parsed arguments shall be extracted.
+/// `options`: The options record with specifications on how the matching should behave.
+///
+/// **Output**
+///
+/// Matched value as an option of 'T
+///
 let tryMatchInputOptions (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (options : TryMatchOptions) = 
     try
         let pattern, formatChars =
@@ -141,13 +152,14 @@ let tryMatchInputOptions (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (
 ///
 /// `format`: The format string which shall be used for parsing.
 /// `input`: The input string from which the parsed arguments shall be extracted.
+/// `ignoreCase`: The flag to make matching case insenstive.
 ///
 /// **Output**
 ///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+/// Matched value as an option of 'T
 ///
 let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreCase : bool) =
-    tryMatchInputOptions format input { IgnoreCase = ignoreCase; MatchMode = RegexMatchMode.Exact }
+    tryMatchInputOptions format input { IgnoreCase = ignoreCase; MatchMode = MatchMode.Exact }
 
 
 // ---------------------------
@@ -176,7 +188,7 @@ let validateFormat (format : PrintfFormat<_,_,_,_, 'T>) =
         'd' , typeof<int64>          // int64
         'f' , typeof<float>          // float
         'O' , typeof<System.Guid>    // guid
-        'u' , typeof<uint64>    // guid
+        'u' , typeof<uint64>         // guid
     ]
 
     let tuplePrint pos last name =
