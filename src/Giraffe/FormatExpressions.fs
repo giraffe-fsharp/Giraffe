@@ -71,7 +71,7 @@ let private convertToRegexPatternAndFormatChars (mode : MatchMode) (formatString
             c.ToString() + pattern, formatChars
         | [] -> "", []
 
-    let formatRegexMode mode pattern = 
+    let inline formatRegex mode pattern = 
         match mode with
         | Exact -> "^" + pattern + "$"
         | StartsWith -> "^" + pattern
@@ -81,7 +81,7 @@ let private convertToRegexPatternAndFormatChars (mode : MatchMode) (formatString
     formatString
     |> List.ofSeq
     |> convert
-    |> (fun (pattern, formatChars) -> formatRegexMode mode pattern, formatChars)
+    |> (fun (pattern, formatChars) -> formatRegex mode pattern, formatChars)
 
 /// **Description**
 ///
