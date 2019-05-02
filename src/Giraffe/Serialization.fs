@@ -1,7 +1,5 @@
 namespace Giraffe.Serialization
 
-open FSharp.Control.Tasks.V2
-
 // ---------------------------
 // JSON
 // ---------------------------
@@ -14,6 +12,7 @@ module Json =
     open System.Threading.Tasks
     open Newtonsoft.Json
     open Newtonsoft.Json.Serialization
+    open FSharp.Control.Tasks.V2.ContextInsensitive
     open Utf8Json
 
     /// **Description**
@@ -93,12 +92,14 @@ module Json =
                 JsonConvert.SerializeObject(x, settings)
                 |> Encoding.UTF8.GetBytes
 
-            member __.SerializeToStreamAsync (x : 'T) (stream : Stream) =
-                let memoryStream = new MemoryStream()
-                let streamWriter = new StreamWriter(memoryStream, Utf8EncodingWithoutBom)
-                let jsonTextWriter = new JsonTextWriter(streamWriter)
-                serializer.Serialize(jsonTextWriter, x)
-                memoryStream.CopyToAsync(stream)
+            member __.SerializeToStreamAsync (x : 'T) (stream : Stream) = 
+                task {
+                    use memoryStream = new MemoryStream()
+                    use streamWriter = new StreamWriter(memoryStream, Utf8EncodingWithoutBom)
+                    use jsonTextWriter = new JsonTextWriter(streamWriter)
+                    serializer.Serialize(jsonTextWriter, x)
+                    do! memoryStream.CopyToAsync(stream) 
+                } :> Task
 
             member __.Deserialize<'T> (json : string) =
                 JsonConvert.DeserializeObject<'T>(json, settings)
@@ -108,11 +109,11 @@ module Json =
                 JsonConvert.DeserializeObject<'T>(json, settings)
 
             member __.DeserializeAsync<'T> (stream : Stream) = task {
-                let memoryStream = new MemoryStream()
+                use memoryStream = new MemoryStream()
                 do! stream.CopyToAsync(memoryStream)
                 memoryStream.Seek(0L, SeekOrigin.Begin) |> ignore
-                let streamReader = new StreamReader(memoryStream)
-                let jsonTextReader = new JsonTextReader(streamReader)
+                use streamReader = new StreamReader(memoryStream)
+                use jsonTextReader = new JsonTextReader(streamReader)
                 return serializer.Deserialize<'T>(jsonTextReader)
             }
 // ---------------------------
