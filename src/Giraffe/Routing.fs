@@ -178,7 +178,7 @@ let routeCix (path : string) : HttpHandler =
 let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        tryMatchInputOptions path (SubRouting.getNextPartOfPath ctx) TryMatchOptions.Exact
+        tryMatchInputO path (SubRouting.getNextPartOfPath ctx) MatchOptions.Exact
         |> function
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
@@ -211,7 +211,7 @@ let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler)
 let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        tryMatchInputOptions path (SubRouting.getNextPartOfPath ctx) TryMatchOptions.IgnoreCaseExact
+        tryMatchInputO path (SubRouting.getNextPartOfPath ctx) MatchOptions.IgnoreCaseExact
         |> function
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
@@ -315,10 +315,10 @@ let routeStartsWithCi (subPath : string) : HttpHandler =
 let routeStartsWithf (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
 
-    let options = { TryMatchOptions.IgnoreCase = false; MatchMode = StartsWith }
+    let options = { MatchOptions.IgnoreCase = false; MatchMode = StartsWith }
 
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        tryMatchInputOptions path (SubRouting.getNextPartOfPath ctx) options
+        tryMatchInputO path (SubRouting.getNextPartOfPath ctx) options
         |> function
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
@@ -351,10 +351,10 @@ let routeStartsWithf (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> Ht
 let routeStartsWithCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
 
-    let options = { TryMatchOptions.IgnoreCase = true; MatchMode = StartsWith }
+    let options = { MatchOptions.IgnoreCase = true; MatchMode = StartsWith }
 
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        tryMatchInputOptions path (SubRouting.getNextPartOfPath ctx) options
+        tryMatchInputO path (SubRouting.getNextPartOfPath ctx) options
         |> function
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
@@ -440,7 +440,7 @@ let subRoutef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandl
                         if String.IsNullOrEmpty elem
                         then state
                         else sprintf "%s/%s" state elem) ""
-                tryMatchInputOptions path subPath TryMatchOptions.Exact
+                tryMatchInputO path subPath MatchOptions.Exact
                 |> function
                     | None      -> skipPipeline
                     | Some args -> SubRouting.routeWithPartialPath subPath (routeHandler args) next ctx

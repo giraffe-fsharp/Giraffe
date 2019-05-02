@@ -51,10 +51,9 @@ type MatchMode =
     | EndsWith             // Will try to match a substring. Subject string should end with test case.
     | Contains             // Will try to match a substring. Subject string should contain test case.
 
-type TryMatchOptions = { IgnoreCase: bool; MatchMode: MatchMode; } 
+type MatchOptions = { IgnoreCase: bool; MatchMode: MatchMode; } 
 with 
     static member Exact = { IgnoreCase = false; MatchMode = Exact }
-    static member Default = TryMatchOptions.Exact
     static member IgnoreCaseExact = { IgnoreCase = true; MatchMode = Exact }
 
 let private convertToRegexPatternAndFormatChars (mode : MatchMode) (formatString : string) =
@@ -74,9 +73,9 @@ let private convertToRegexPatternAndFormatChars (mode : MatchMode) (formatString
 
     let formatRegexMode mode pattern = 
         match mode with
-        | Exact -> sprintf "^%s$" pattern
-        | StartsWith -> sprintf "^%s" pattern
-        | EndsWith -> sprintf "%s$" pattern
+        | Exact -> "^" + pattern + "$"
+        | StartsWith -> "^" + pattern
+        | EndsWith -> pattern + "$" 
         | Contains -> pattern
 
     formatString
@@ -98,7 +97,7 @@ let private convertToRegexPatternAndFormatChars (mode : MatchMode) (formatString
 ///
 /// Matched value as an option of 'T
 ///
-let tryMatchInputOptions (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (options : TryMatchOptions) = 
+let tryMatchInputO (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (options : MatchOptions) = 
     try
         let pattern, formatChars =
             format.Value
@@ -143,7 +142,6 @@ let tryMatchInputOptions (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (
     with
     | _ -> None
 
-
 /// **Description**
 ///
 /// Tries to parse an input string based on a given format string and return a tuple of all parsed arguments.
@@ -159,7 +157,10 @@ let tryMatchInputOptions (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (
 /// Matched value as an option of 'T
 ///
 let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreCase : bool) =
-    tryMatchInputOptions format input { IgnoreCase = ignoreCase; MatchMode = MatchMode.Exact }
+    let options = match ignoreCase with
+                  | true -> MatchOptions.IgnoreCaseExact
+                  | false -> MatchOptions.Exact
+    tryMatchInputO format input options
 
 
 // ---------------------------
