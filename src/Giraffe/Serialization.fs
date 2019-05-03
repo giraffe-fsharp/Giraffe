@@ -100,7 +100,6 @@ module Json =
                     jsonTextWriter.Flush()
                     memoryStream.Seek(0L, SeekOrigin.Begin) |> ignore
                     do! memoryStream.CopyToAsync(stream) 
-
                 } :> Task
 
             member __.Deserialize<'T> (json : string) =
