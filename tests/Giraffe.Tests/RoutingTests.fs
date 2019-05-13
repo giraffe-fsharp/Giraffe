@@ -404,6 +404,30 @@ let ``routef: GET "/foo/%u/bar/%u" returns "Id1: ..., Id2: ..."`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
+[<Fact>]
+let ``routef: GET "/foo/bar/baz/qux" returns 404 "Not found"`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            routef "/foo/%s/%s" (fun (s1, s2) -> text (sprintf "%s,%s" s1 s2))
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/bar/baz/qux")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "Not found"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal(404, ctx.Response.StatusCode)
+    }
+
 // ---------------------------------
 // routeCif Tests
 // ---------------------------------
@@ -1067,6 +1091,108 @@ let ``subRoutef: GET "/en/10/api/Julia" returns "Hello Julia! Lang: en, Version:
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/en/10/api/Julia")) |> ignore
     ctx.Response.Body <- new MemoryStream()
     let expected = "Hello Julia! Lang: en, Version: 10"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+// ---------------------------------
+// subRouteCi Tests
+// ---------------------------------
+
+[<Fact>]
+let ``subRouteCi: Non-filtering handler after subRouteCi is called`` () =
+    let ctx = Substitute.For<HttpContext>()
+    mockJson ctx (Newtonsoft None)
+    let app =
+        GET >=> choose [
+            subRouteCi "/foo" (text "subroute /foo")
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/FOO")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "subroute /foo"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``subRouteCi: Nested route after subRouteCi is called`` () =
+    let ctx = Substitute.For<HttpContext>()
+    mockJson ctx (Newtonsoft None)
+    let app =
+        GET >=> choose [
+            subRouteCi "/foo" (
+                route "/bar" >=> text "subroute /foo/bar")
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/FOO/bar")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "subroute /foo/bar"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``subRouteCi: Nested route after subRouteCi is still case sensitive`` () =
+    let ctx = Substitute.For<HttpContext>()
+    mockJson ctx (Newtonsoft None)
+    let app =
+        GET >=> choose [
+            subRouteCi "/foo" (
+                choose [
+                    route "/bar" >=> text "subroute /foo/bar"
+                    setStatusCode 404 >=> text "Not found - nested"
+                ])
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/FOO/BAR")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "Not found - nested"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``subRouteCi: Nested routeCi after subRouteCi is called`` () =
+    let ctx = Substitute.For<HttpContext>()
+    mockJson ctx (Newtonsoft None)
+    let app =
+        GET >=> choose [
+            subRouteCi "/foo" (
+                routeCi "/bar" >=> text "subroute /foo/bar")
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/FOO/BAR")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "subroute /foo/bar"
 
     task {
         let! result = app next ctx

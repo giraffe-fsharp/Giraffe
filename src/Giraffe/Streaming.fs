@@ -158,10 +158,10 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
-    /// - `stream`: The stream to be send to the client.
-    /// - `eTag`: An optional entity tag which identifies the exact version of the data.
-    /// - `lastModified`: An optional parameter denoting the last modifed date time of the data.
+    /// `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
+    /// `stream`: The stream to be send to the client.
+    /// `eTag`: An optional entity tag which identifies the exact version of the data.
+    /// `lastModified`: An optional parameter denoting the last modifed date time of the data.
     ///
     /// **Output**
     ///
@@ -208,10 +208,10 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
-    /// - `filePath`: The absolute or relative path (to `ContentRoot`) of the file.
-    /// - `eTag`: An optional entity tag which identifies the exact version of the file.
-    /// - `lastModified`: An optional parameter denoting the last modifed date time of the file.
+    /// `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
+    /// `filePath`: The absolute or relative path (to `ContentRoot`) of the file.
+    /// `eTag`: An optional entity tag which identifies the exact version of the file.
+    /// `lastModified`: An optional parameter denoting the last modifed date time of the file.
     ///
     /// **Output**
     ///
@@ -244,10 +244,10 @@ type HttpContext with
 ///
 /// **Parameters**
 ///
-/// - `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
-/// - `stream`: The stream to be send to the client.
-/// - `eTag`: An optional entity tag which identifies the exact version of the data.
-/// - `lastModified`: An optional parameter denoting the last modifed date time of the file.
+/// `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
+/// `stream`: The stream to be send to the client.
+/// `eTag`: An optional entity tag which identifies the exact version of the data.
+/// `lastModified`: An optional parameter denoting the last modifed date time of the file.
 ///
 /// **Output**
 ///
@@ -269,10 +269,10 @@ let streamData (enableRangeProcessing : bool)
 ///
 /// **Parameters**
 ///
-/// - `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
-/// - `filePath`: The absolute or relative path (to `ContentRoot`) of the file.
-/// - `eTag`: An optional entity tag which identifies the exact version of the file.
-/// - `lastModified`: An optional parameter denoting the last modifed date time of the file.
+/// `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
+/// `filePath`: The absolute or relative path (to `ContentRoot`) of the file.
+/// `eTag`: An optional entity tag which identifies the exact version of the file.
+/// `lastModified`: An optional parameter denoting the last modifed date time of the file.
 ///
 /// **Output**
 ///

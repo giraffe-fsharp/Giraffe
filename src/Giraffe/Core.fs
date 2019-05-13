@@ -4,6 +4,7 @@ module Giraffe.Core
 open System
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.Http.Extensions
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Primitives
 open Microsoft.Extensions.Logging
@@ -24,6 +25,17 @@ type MissingDependencyException(dependencyName : string) =
 // ---------------------------
 
 type HttpContext with
+
+    /// **Description**
+    ///
+    /// Returns the entire request URL in a fully escaped form, which is suitable for use in HTTP headers and other operations.
+    ///
+    /// **Output**
+    ///
+    /// Returns a `string` URL.
+    ///
+    member this.GetRequestUrl() =
+        this.Request.GetEncodedUrl()
 
     /// **Description**
     ///
@@ -58,7 +70,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `categoryName`: The category name for messages produced by this logger.
+    /// `categoryName`: The category name for messages produced by this logger.
     ///
     /// **Output**
     ///
@@ -107,7 +119,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `httpStatusCode`: The status code to be set in the response. For convenience you can use the static `Microsoft.AspNetCore.Http.StatusCodes` class for passing in named status codes instead of using pure `int` values.
+    /// `httpStatusCode`: The status code to be set in the response. For convenience you can use the static `Microsoft.AspNetCore.Http.StatusCodes` class for passing in named status codes instead of using pure `int` values.
     ///
     /// **Output**
     ///
@@ -122,8 +134,8 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `key`: The HTTP header name. For convenience you can use the static `Microsoft.Net.Http.Headers.HeaderNames` class for passing in strongly typed header names instead of using pure `string` values.
-    /// - `value`: The value to be set. Non string values will be converted to a string using the object's `ToString()` method.
+    /// `key`: The HTTP header name. For convenience you can use the static `Microsoft.Net.Http.Headers.HeaderNames` class for passing in strongly typed header names instead of using pure `string` values.
+    /// `value`: The value to be set. Non string values will be converted to a string using the object's `ToString()` method.
     ///
     /// **Output**
     ///
@@ -138,7 +150,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `contentType`: The mime type of the response (e.g.: `application/json` or `text/html`).
+    /// `contentType`: The mime type of the response (e.g.: `application/json` or `text/html`).
     ///
     /// **Output**
     ///
@@ -153,7 +165,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `key`: The name of the HTTP header.
+    /// `key`: The name of the HTTP header.
     ///
     /// **Output**
     ///
@@ -170,7 +182,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `key`: The name of the HTTP header.
+    /// `key`: The name of the HTTP header.
     ///
     /// **Output**
     ///
@@ -187,7 +199,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `key`: The name of the query string parameter.
+    /// `key`: The name of the query string parameter.
     ///
     /// **Output**
     ///
@@ -204,7 +216,7 @@ type HttpContext with
     ///
     /// **Parameters**
     ///
-    /// - `key`: The name of the query string parameter.
+    /// `key`: The name of the query string parameter.
     ///
     /// **Output**
     ///
@@ -214,6 +226,43 @@ type HttpContext with
         match this.Request.Query.TryGetValue key with
         | true, value -> Ok (value.ToString())
         | _           -> Error (sprintf "Query string value '%s' is missing." key)
+
+    /// **Description**
+    ///
+    /// Retrieves the `string` value of a cookie from the request.
+    ///
+    /// **Parameters**
+    ///
+    /// `key`: The name of the cookie.
+    ///
+    /// **Output**
+    ///
+    /// Returns `Some string` if the cookie was set, otherwise returns `None`.
+    ///
+    member this.GetCookieValue (key : string) =
+        match this.Request.Cookies.TryGetValue key with
+        | true , cookie -> Some cookie
+        | false, _      -> None
+
+    /// **Description**
+    ///
+    /// Retrieves the `string` value of a form parameter from the request.
+    ///
+    /// **Parameters**
+    ///
+    /// `key`: The name of the form parameter.
+    ///
+    /// **Output**
+    ///
+    /// Returns `Some string` if the form parameter was set, otherwise returns `None`.
+    ///
+    member this.GetFormValue (key : string) =
+        match this.Request.HasFormContentType with
+        | false -> None
+        | true  ->
+            match this.Request.Form.TryGetValue key with
+            | true , value -> Some (value.ToString())
+            | false, _     -> None
 
 // ---------------------------
 // HttpHandler definition
@@ -259,7 +308,7 @@ type ErrorHandler = exn -> ILogger -> HttpHandler
 ///
 /// **Parameters**
 ///
-/// - `f`: A function which takes a `HttpFunc * HttpContext` tuple and returns a `HttpHandler` function.
+/// `f`: A function which takes a `HttpFunc * HttpContext` tuple and returns a `HttpHandler` function.
 ///
 /// **Output**
 ///
@@ -273,15 +322,42 @@ let inline warbler f (next : HttpFunc) (ctx : HttpContext) = f (next, ctx) next 
 
 /// **Description**
 ///
-/// Use `abort` to shortcircuit the `HttpHandler` pipeline and return `None` to the surrounding `HttpHandler` or the Giraffe middleware (which would subsequently invoke the `next` middleware as a result of it).
+/// Use `skipPipeline` to shortcircuit the `HttpHandler` pipeline and return `None` to the surrounding `HttpHandler` or the Giraffe middleware (which would subsequently invoke the `next` middleware as a result of it).
 ///
-let internal abort  : HttpFuncResult = Task.FromResult None
+let skipPipeline : HttpFuncResult = Task.FromResult None
 
 /// **Description**
 ///
-/// Use `finish` to shortcircuit the `HttpHandler` pipeline and return `Some HttpContext` to the surrounding `HttpHandler` or the Giraffe middleware (which would subsequently end the pipeline by returning the response back to the client).
+/// Use `earlyReturn` to shortcircuit the `HttpHandler` pipeline and return `Some HttpContext` to the surrounding `HttpHandler` or the Giraffe middleware (which would subsequently end the pipeline by returning the response back to the client).
 ///
-let internal finish : HttpFunc = Some >> Task.FromResult
+let earlyReturn : HttpFunc = Some >> Task.FromResult
+
+// ---------------------------
+// Convenience Handlers
+// ---------------------------
+
+/// **Description**
+///
+/// The `handleContext` function is a convenience function which can be used to create a new `HttpHandler` function which only requires access to the `HttpContext` object.
+///
+/// **Parameters**
+///
+/// `contextMap`: A function which accepts a `HttpContext` object and returns a `HttpFuncResult` function.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
+let handleContext (contextMap : HttpContext -> HttpFuncResult) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            match! contextMap ctx with
+            | Some c ->
+                match c.Response.HasStarted with
+                | true  -> return  Some c
+                | false -> return! next c
+            | None      -> return  None
+        }
 
 // ---------------------------
 // Default Combinators
@@ -349,7 +425,7 @@ let choose (handlers : HttpHandler list) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `validate`: A validation function which checks for a single HTTP verb.
+/// `validate`: A validation function which checks for a single HTTP verb.
 ///
 /// **Output**
 ///
@@ -359,7 +435,7 @@ let private httpVerb (validate : string -> bool) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if validate ctx.Request.Method
         then next ctx
-        else abort
+        else skipPipeline
 
 let GET     : HttpHandler = httpVerb HttpMethods.IsGet
 let POST    : HttpHandler = httpVerb HttpMethods.IsPost
@@ -370,6 +446,8 @@ let HEAD    : HttpHandler = httpVerb HttpMethods.IsHead
 let OPTIONS : HttpHandler = httpVerb HttpMethods.IsOptions
 let TRACE   : HttpHandler = httpVerb HttpMethods.IsTrace
 let CONNECT : HttpHandler = httpVerb HttpMethods.IsConnect
+
+let GET_HEAD : HttpHandler = choose [ GET; HEAD ]
 
 /// **Description**
 ///
@@ -392,7 +470,7 @@ let clearResponse : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `statusCode`: The status code to be set in the response. For convenience you can use the static `Microsoft.AspNetCore.Http.StatusCodes` class for passing in named status codes instead of using pure `int` values.
+/// `statusCode`: The status code to be set in the response. For convenience you can use the static `Microsoft.AspNetCore.Http.StatusCodes` class for passing in named status codes instead of using pure `int` values.
 ///
 /// **Output**
 ///
@@ -409,8 +487,8 @@ let setStatusCode (statusCode : int) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `key`: The HTTP header name. For convenience you can use the static `Microsoft.Net.Http.Headers.HeaderNames` class for passing in strongly typed header names instead of using pure `string` values.
-/// - `value`: The value to be set. Non string values will be converted to a string using the object's `ToString()` method.
+/// `key`: The HTTP header name. For convenience you can use the static `Microsoft.Net.Http.Headers.HeaderNames` class for passing in strongly typed header names instead of using pure `string` values.
+/// `value`: The value to be set. Non string values will be converted to a string using the object's `ToString()` method.
 ///
 /// **Output**
 ///
@@ -429,7 +507,7 @@ let setHttpHeader (key : string) (value : obj) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `mimeTypes`: List of mime types of which the client has to accept at least one.
+/// `mimeTypes`: List of mime types of which the client has to accept at least one.
 ///
 /// **Output**
 ///
@@ -443,7 +521,7 @@ let mustAccept (mimeTypes : string list) : HttpHandler =
         |> Seq.exists (fun h -> mimeTypes |> Seq.contains h)
         |> function
             | true  -> next ctx
-            | false -> abort
+            | false -> skipPipeline
 
 /// **Description**
 ///
@@ -451,8 +529,8 @@ let mustAccept (mimeTypes : string list) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `permanent`: If true the redirect is permanent (301), otherwise temporary (302).
-/// - `location`: The URL to redirect the client to.
+/// `permanent`: If true the redirect is permanent (301), otherwise temporary (302).
+/// `location`: The URL to redirect the client to.
 ///
 /// **Output**
 ///

@@ -1,6 +1,86 @@
 Release Notes
 =============
 
+## 4.0.0
+
+#### ATTENTION:
+
+This release of Giraffe fixes a bug in the `routef` handler which would have previously matched a route too eagerly.
+
+##### Before:
+
+```
+Route: /foo/bar/hello/world
+routef: /foo/bar/%s
+Match: true
+```
+
+##### Now:
+
+```
+Route: /foo/bar/hello/world
+routef: /foo/bar/%s
+Match: false
+```
+
+For more information please see [issue #347](https://github.com/giraffe-fsharp/Giraffe/issues/347).
+
+#### Bug fixes and breaking changes
+
+- Fixed `routef` to not match more than one URL path segment.
+- Fixed the `_ariaLabelledBy` attribute in the `GiraffeViewEngine`
+- Fixed case insensitive route handlers on Ubuntu
+
+## 3.6.0
+
+#### Bug fixes
+
+- Fixed a bug in the `subRouteCi` http handler, which prevented nested sub routes to be case insensitive.
+
+#### New features
+
+- Added two new `HttpContext` extension methods to retrieve cookie and form values:
+    - `GetCookieValue (key : string)`
+    - `GetFormValue (key : string)`
+
+## 3.5.1
+
+#### Bug fixes
+
+- Fixed a bug in Giraffe's model binding to not try to set read only properties anymore.
+
+## 3.5.0
+
+#### New features
+
+- Updated all packages and framework library dependencies to .NET Core 2.2.
+- Added a new `GET_HEAD` http handler (see: [#314](https://github.com/giraffe-fsharp/Giraffe/issues/314) for more info).
+- Added a new convenience function called `handleContext`, which can be used for creating new `HttpHandler` functions.
+
+#### Bug fixes
+
+- Fixed the `_data` attribute in the `GiraffeViewEngine` to accept a `key` and `value` parameter now.
+
+## 3.4.0
+
+#### New features
+
+- Added a new http handler called `authorizeRequest` to authorize a request based on a `HttpContext -> bool` predicate.
+- Added a new http handler called `authorizeUser` which is an alias for `evaluateUserPolicy`. The `evaluateUserPolicy` handler will be removed in the next major release.
+
+## 3.3.0
+
+#### New features
+
+- Added `str` as an alias for the `encodedText` function from the `GiraffeViewEngine`.
+- Added the `HttpContext.GetRequestUrl()` extension method to retrieve the entire URL string of the incoming HTTP request.
+
+## 3.2.0
+
+#### Improvements
+
+- Adding the `charset` parameter in the HTTP `Content-Type` response header when returning a text response (text/plain, text/html) or a JSON or XML response (application/json, application/xml). By default Giraffe is using UTF8 encoding for all its responses.
+
 ## 3.1.0
 
 #### New features

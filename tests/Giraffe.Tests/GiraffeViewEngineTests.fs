@@ -15,7 +15,7 @@ let ``Single html root should compile`` () =
 [<Fact>]
 let ``Anchor should contain href, target and content`` () =
     let anchor =
-        a [ attr "href" "http://example.org";  attr "target" "_blank" ] [ encodedText "Example" ]
+        a [ attr "href" "http://example.org";  attr "target" "_blank" ] [ str "Example" ]
     let html = renderXmlNode anchor
     Assert.Equal("<a href=\"http://example.org\" target=\"_blank\">Example</a>", html)
 
@@ -31,11 +31,11 @@ let ``Nested content should render correctly`` () =
     let nested =
         div [] [
             comment "this is a test"
-            h1 [] [ encodedText "Header" ]
+            h1 [] [ str "Header" ]
             p [] [
                 rawText "Lorem "
-                strong [] [ encodedText "Ipsum" ]
-                encodedText " dollar"
+                strong [] [ str "Ipsum" ]
+                str " dollar"
         ] ]
     let html =
         nested

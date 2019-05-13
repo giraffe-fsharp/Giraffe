@@ -4,16 +4,41 @@ open System
 open System.IO
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http.Internal
 open Microsoft.Extensions.Primitives
-open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.TestHost
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Xunit
 open NSubstitute
 open Giraffe
 open Giraffe.GiraffeViewEngine
+
+[<Fact>]
+let ``GetRequestUrl returns entire URL of the HTTP request`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    ctx.Request.Scheme.Returns("http") |> ignore
+    ctx.Request.Host.Returns(new HostString("example.org:81")) |> ignore
+    ctx.Request.PathBase.Returns(new PathString("/something")) |> ignore
+    ctx.Request.Path.Returns(new PathString("/hello")) |> ignore
+    ctx.Request.QueryString.Returns(new QueryString("?a=1&b=2")) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let testHandler =
+        fun (next : HttpFunc) (ctx : HttpContext) ->
+            text (ctx.GetRequestUrl()) next ctx
+
+    let app = route "/hello" >=> testHandler
+
+    let expected = "http://example.org:81/something/hello?a=1&b=2"
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
 
 [<Fact>]
 let ``TryGetRequestHeader during HTTP GET request with returns correct result`` () =
@@ -106,36 +131,79 @@ let ``WriteHtmlViewAsync should add html to the context`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-let resultOfTask<'T> (task:Task<'T>) =
-    task.Result
-
 [<Fact>]
-let ``WriteHtmlFileAsync should return html from content folder`` () =
+let ``WriteHtmlFileAsync should return html from physical folder`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let filePath =
+        Path.Combine(
+            Path.GetFullPath("TestFiles"),
+            "index.html")
+
     let testHandler : HttpHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
-            ctx.WriteHtmlFileAsync "index.html"
+            ctx.WriteHtmlFileAsync filePath
 
-    let webApp = route "/" >=> testHandler
+    let app = route "/" >=> testHandler
 
-    let configureApp (app : IApplicationBuilder) =
-        app
-           .UseStaticFiles()
-           .UseGiraffe webApp
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
 
-    let host =
-        WebHostBuilder()
-            .UseContentRoot(Path.GetFullPath("TestFiles"))
-            .Configure(Action<IApplicationBuilder> configureApp)
+    let expected = File.ReadAllText filePath
 
-    use server = new TestServer(host)
-    use client = server.CreateClient()
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
 
-    let expectedContent =
-        Path.Combine("TestFiles", "index.html")
-        |> File.ReadAllText
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
 
-    let actualContent =
-        client.GetStringAsync "/"
-        |> resultOfTask
+[<Fact>]
+let ``WriteTextAsync with HTTP GET should return text in body`` () =
+    let ctx = Substitute.For<HttpContext>()
 
-    Assert.Equal(expectedContent, actualContent)
+    let testHandler =
+        fun (next : HttpFunc) (ctx : HttpContext) ->
+            ctx.WriteTextAsync "Hello World Giraffe"
+
+    let app = route "/" >=> testHandler
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let expected = "Hello World Giraffe"
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``WriteTextAsync with HTTP HEAD should not return text in body`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let testHandler =
+        fun (next : HttpFunc) (ctx : HttpContext) ->
+            ctx.WriteTextAsync "Hello World Giraffe"
+
+    let app = route "/" >=> testHandler
+
+    ctx.Request.Method.ReturnsForAnyArgs "HEAD" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let expected = ""
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }

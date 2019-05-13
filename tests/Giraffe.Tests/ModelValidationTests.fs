@@ -5,9 +5,10 @@ open System.Net
 open System.Net.Http
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
+open Microsoft.Extensions.Logging
+open FSharp.Control.Tasks.V2.ContextInsensitive
 open Xunit
 open Giraffe
-open Microsoft.Extensions.Logging
 
 // ---------------------------------
 // Model Validation App
@@ -78,18 +79,30 @@ let makeRequest req = makeRequest WebApp.configureApp WebApp.configureServices r
 
 [<Fact>]
 let ``validateModel with valid model`` () =
-    let url = sprintf "%s?firstName=John&lastName=Doe&age=35" Urls.person
-    createRequest HttpMethod.Get url
-    |> makeRequest (None, None)
-    |> isStatus HttpStatusCode.OK
-    |> readText
-    |> shouldEqual "Name: John Doe, Age: 35"
+    task {
+        let url = sprintf "%s?firstName=John&lastName=Doe&age=35" Urls.person
+        let! response =
+            createRequest HttpMethod.Get url
+            |> makeRequest (None, None)
+        let! content =
+            response
+            |> isStatus HttpStatusCode.OK
+            |> readText
+        content
+        |> shouldEqual "Name: John Doe, Age: 35"
+    }
 
 [<Fact>]
 let ``validateModel with invalid model`` () =
-    let url = sprintf "%s?firstName=John&lastName=Doe&age=17" Urls.person
-    createRequest HttpMethod.Get url
-    |> makeRequest (None, None)
-    |> isStatus HttpStatusCode.BadRequest
-    |> readText
-    |> shouldEqual "Person must be an adult (age >= 18)."
+    task {
+        let url = sprintf "%s?firstName=John&lastName=Doe&age=17" Urls.person
+        let! response =
+            createRequest HttpMethod.Get url
+            |> makeRequest (None, None)
+        let! content =
+            response
+            |> isStatus HttpStatusCode.BadRequest
+            |> readText
+        content
+        |> shouldEqual "Person must be an adult (age >= 18)."
+    }

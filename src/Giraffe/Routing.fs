@@ -54,7 +54,7 @@ module SubRouting =
 ///
 /// **Parameters**
 ///
-/// - `fns`: List of port to `HttpHandler` mappings
+/// `fns`: List of port to `HttpHandler` mappings
 ///
 /// **Output**
 ///
@@ -69,9 +69,8 @@ let routePorts (fns : (int * HttpHandler) list) : HttpHandler =
             if port.HasValue then
                 match portMap.TryGetValue port.Value with
                 | true , func -> func ctx
-                | false, _    -> abort
-            else
-                abort
+                | false, _    -> skipPipeline
+            else skipPipeline
 
 /// **Description**
 ///
@@ -79,7 +78,7 @@ let routePorts (fns : (int * HttpHandler) list) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `path`: Request path.
+/// `path`: Request path.
 ///
 /// **Output**
 ///
@@ -89,7 +88,7 @@ let route (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (SubRouting.getNextPartOfPath ctx).Equals path
         then next ctx
-        else abort
+        else skipPipeline
 
 /// **Description**
 ///
@@ -97,7 +96,7 @@ let route (path : string) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `path`: Request path.
+/// `path`: Request path.
 ///
 /// **Output**
 ///
@@ -105,9 +104,9 @@ let route (path : string) : HttpHandler =
 ///
 let routeCi (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        if String.Equals(SubRouting.getNextPartOfPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
+        if String.Equals(SubRouting.getNextPartOfPath ctx, path, StringComparison.OrdinalIgnoreCase)
         then next ctx
-        else abort
+        else skipPipeline
 
 /// **Description**
 ///
@@ -115,7 +114,7 @@ let routeCi (path : string) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `path`: Regex path.
+/// `path`: Regex path.
 ///
 /// **Output**
 ///
@@ -127,8 +126,8 @@ let routex (path : string) : HttpHandler =
         let regex   = Regex(pattern, RegexOptions.Compiled)
         let result  = regex.Match (SubRouting.getNextPartOfPath ctx)
         match result.Success with
-        | true -> next ctx
-        | false -> abort
+        | true  -> next ctx
+        | false -> skipPipeline
 
 /// **Description**
 ///
@@ -136,7 +135,7 @@ let routex (path : string) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `path`: Regex path.
+/// `path`: Regex path.
 ///
 /// **Output**
 ///
@@ -148,8 +147,8 @@ let routeCix (path : string) : HttpHandler =
         let regex   = Regex(pattern, RegexOptions.IgnoreCase ||| RegexOptions.Compiled)
         let result  = regex.Match (SubRouting.getNextPartOfPath ctx)
         match result.Success with
-        | true -> next ctx
-        | false -> abort
+        | true  -> next ctx
+        | false -> skipPipeline
 
 /// **Description**
 ///
@@ -159,18 +158,18 @@ let routeCix (path : string) : HttpHandler =
 ///
 /// **Supported format chars**
 ///
-/// - `%b`: `bool`
-/// - `%c`: `char`
-/// - `%s`: `string`
-/// - `%i`: `int`
-/// - `%d`: `int64`
-/// - `%f`: `float`/`double`
-/// - `%O`: `Guid`
+/// `%b`: `bool`
+/// `%c`: `char`
+/// `%s`: `string`
+/// `%i`: `int`
+/// `%d`: `int64`
+/// `%f`: `float`/`double`
+/// `%O`: `Guid`
 ///
 /// **Parameters**
 ///
-/// - `path`: A format string representing the expected request path.
-/// - `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
+/// `path`: A format string representing the expected request path.
+/// `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
 ///
 /// **Output**
 ///
@@ -181,7 +180,7 @@ let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler)
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (SubRouting.getNextPartOfPath ctx) false
         |> function
-            | None      -> abort
+            | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
 
 /// **Description**
@@ -192,18 +191,18 @@ let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler)
 ///
 /// **Supported format chars**
 ///
-/// - `%b`: `bool`
-/// - `%c`: `char`
-/// - `%s`: `string`
-/// - `%i`: `int`
-/// - `%d`: `int64`
-/// - `%f`: `float`/`double`
-/// - `%O`: `Guid`
+/// `%b`: `bool`
+/// `%c`: `char`
+/// `%s`: `string`
+/// `%i`: `int`
+/// `%d`: `int64`
+/// `%f`: `float`/`double`
+/// `%O`: `Guid`
 ///
 /// **Parameters**
 ///
-/// - `path`: A format string representing the expected request path.
-/// - `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
+/// `path`: A format string representing the expected request path.
+/// `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
 ///
 /// **Output**
 ///
@@ -214,7 +213,7 @@ let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandle
     fun (next : HttpFunc) (ctx : HttpContext) ->
         tryMatchInput path (SubRouting.getNextPartOfPath ctx) true
         |> function
-            | None      -> abort
+            | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
 
 /// **Description**
@@ -225,8 +224,8 @@ let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandle
 ///
 /// **Parameters**
 ///
-/// - `route`: A string representing the expected request path. Use `{propertyName}` for reserved parameter names which should map to the properties of type `'T`. You can also use valid `Regex` within the `route` string.
-/// - `routeHandler`: A function which accepts a tuple `'T` of the parsed parameters and returns a `HttpHandler` function which will subsequently deal with the request.
+/// `route`: A string representing the expected request path. Use `{propertyName}` for reserved parameter names which should map to the properties of type `'T`. You can also use valid `Regex` within the `route` string.
+/// `routeHandler`: A function which accepts a tuple `'T` of the parsed parameters and returns a `HttpHandler` function which will subsequently deal with the request.
 ///
 /// **Output**
 ///
@@ -247,9 +246,9 @@ let routeBind<'T> (route : string) (routeHandler : 'T -> HttpHandler) : HttpHand
                 |> dict
                 |> ModelParser.tryParse None
             match result with
-            | Error _  -> abort
+            | Error _  -> skipPipeline
             | Ok model -> routeHandler model next ctx
-        | _ -> abort
+        | _ -> skipPipeline
 
 /// **Description**
 ///
@@ -257,7 +256,7 @@ let routeBind<'T> (route : string) (routeHandler : 'T -> HttpHandler) : HttpHand
 ///
 /// **Parameters**
 ///
-/// - `subPath`: The expected beginning of a request path.
+/// `subPath`: The expected beginning of a request path.
 ///
 /// **Output**
 ///
@@ -267,7 +266,7 @@ let routeStartsWith (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (SubRouting.getNextPartOfPath ctx).StartsWith subPath
         then next ctx
-        else abort
+        else skipPipeline
 
 /// **Description**
 ///
@@ -275,7 +274,7 @@ let routeStartsWith (subPath : string) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `subPath`: The expected beginning of a request path.
+/// `subPath`: The expected beginning of a request path.
 ///
 /// **Output**
 ///
@@ -283,9 +282,9 @@ let routeStartsWith (subPath : string) : HttpHandler =
 ///
 let routeStartsWithCi (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        if (SubRouting.getNextPartOfPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase)
+        if (SubRouting.getNextPartOfPath ctx).StartsWith(subPath, StringComparison.OrdinalIgnoreCase)
         then next ctx
-        else abort
+        else skipPipeline
 
 /// **Description**
 ///
@@ -295,7 +294,7 @@ let routeStartsWithCi (subPath : string) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `path`: A part of an expected request path.
+/// `path`: A part of an expected request path.
 ///
 /// **Output**
 ///
@@ -313,15 +312,19 @@ let subRoute (path : string) (handler : HttpHandler) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `path`: A part of an expected request path.
+/// `path`: A part of an expected request path.
 ///
 /// **Output**
 ///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
-    routeStartsWithCi path >=>
-    SubRouting.routeWithPartialPath path handler
+    fun (next : HttpFunc) (ctx: HttpContext) ->
+        let nextPartOfPath = SubRouting.getNextPartOfPath ctx
+        if nextPartOfPath.StartsWith(path, StringComparison.OrdinalIgnoreCase) then
+            let matchedPathFragment = nextPartOfPath.[0..path.Length-1]
+            SubRouting.routeWithPartialPath matchedPathFragment handler next ctx
+        else skipPipeline
 
 /// **Description**
 ///
@@ -331,20 +334,20 @@ let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
 ///
 /// **Supported format chars**
 ///
-/// - `%b`: `bool`
-/// - `%c`: `char`
-/// - `%s`: `string`
-/// - `%i`: `int`
-/// - `%d`: `int64`
-/// - `%f`: `float`/`double`
-/// - `%O`: `Guid`
+/// `%b`: `bool`
+/// `%c`: `char`
+/// `%s`: `string`
+/// `%i`: `int`
+/// `%d`: `int64`
+/// `%f`: `float`/`double`
+/// `%O`: `Guid`
 ///
 /// Subsequent routing handlers inside the given `handler` function should omit the already validated path.
 ///
 /// **Parameters**
 ///
-/// - `path`: A format string representing the expected request sub path.
-/// - `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
+/// `path`: A format string representing the expected request sub path.
+/// `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
 ///
 /// **Output**
 ///
@@ -355,7 +358,7 @@ let subRoutef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandl
         fun (next : HttpFunc) (ctx : HttpContext) ->
             let paramCount   = (path.Value.Split '/').Length
             let subPathParts = (SubRouting.getNextPartOfPath ctx).Split '/'
-            if paramCount > subPathParts.Length then abort
+            if paramCount > subPathParts.Length then skipPipeline
             else
                 let subPath =
                     subPathParts
@@ -366,5 +369,5 @@ let subRoutef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandl
                         else sprintf "%s/%s" state elem) ""
                 tryMatchInput path subPath false
                 |> function
-                    | None      -> abort
+                    | None      -> skipPipeline
                     | Some args -> SubRouting.routeWithPartialPath subPath (routeHandler args) next ctx

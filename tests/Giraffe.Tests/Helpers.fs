@@ -14,6 +14,7 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.TestHost
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
+open FSharp.Control.Tasks.V2.ContextInsensitive
 open Xunit
 open NSubstitute
 open Newtonsoft.Json
@@ -42,11 +43,6 @@ let waitForDebuggerToAttach() =
 
 let removeNewLines (html : string) : string =
     html.Replace(Environment.NewLine, String.Empty)
-
-let runTask task =
-    task
-    |> Async.AwaitTask
-    |> Async.RunSynchronously
 
 let createETag (eTag : string) =
     Some (Microsoft.Net.Http.Headers.EntityTagHeaderValue.FromString false eTag)
@@ -103,8 +99,8 @@ let next : HttpFunc = Some >> Task.FromResult
 let createHost (configureApp      : 'Tuple -> IApplicationBuilder -> unit)
                (configureServices : IServiceCollection -> unit)
                (args              : 'Tuple) =
-    WebHostBuilder()
-        .UseContentRoot(Directory.GetCurrentDirectory())
+    (new WebHostBuilder())
+        .UseContentRoot(Path.GetFullPath("TestFiles"))
         .Configure(Action<IApplicationBuilder> (configureApp args))
         .ConfigureServices(Action<IServiceCollection> configureServices)
 
@@ -169,11 +165,12 @@ let createRequest (method : HttpMethod) (path : string) =
     new HttpRequestMessage(method, url)
 
 let makeRequest configureApp configureServices args (request : HttpRequestMessage) =
-    use server = new TestServer(createHost configureApp configureServices args)
-    use client = server.CreateClient()
-    request
-    |> client.SendAsync
-    |> runTask
+    task {
+        use server = new TestServer(createHost configureApp configureServices args)
+        use client = server.CreateClient()
+        let! response = request |> client.SendAsync
+        return response
+    }
 
 let addHeader (key : string) (value : string) (request : HttpRequestMessage) =
     request.Headers.Add(key, value)
@@ -234,11 +231,9 @@ let getBody (ctx : HttpContext) =
 
 let readText (response : HttpResponseMessage) =
     response.Content.ReadAsStringAsync()
-    |> runTask
 
 let readBytes (response : HttpResponseMessage) =
     response.Content.ReadAsByteArrayAsync()
-    |> runTask
 
 let printBytes (bytes : byte[]) =
     bytes |> Array.fold (

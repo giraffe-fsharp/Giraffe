@@ -1,6 +1,7 @@
 [<AutoOpen>]
 module Giraffe.Auth
 
+open System
 open System.Security.Claims
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Authentication
@@ -13,7 +14,7 @@ open FSharp.Control.Tasks.V2.ContextInsensitive
 ///
 /// **Parameters**
 ///
-/// - `authScheme`: The name of an authentication scheme from your application.
+/// `authScheme`: The name of an authentication scheme from your application.
 ///
 /// **Output**
 ///
@@ -32,7 +33,7 @@ let challenge (authScheme : string) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `authScheme`: The name of an authentication scheme from your application.
+/// `authScheme`: The name of an authentication scheme from your application.
 ///
 /// **Output**
 ///
@@ -47,22 +48,54 @@ let signOut (authScheme : string) : HttpHandler =
 
 /// **Description**
 ///
-/// Validates if a `ClaimsPrincipal` satisfies a certain condition. If the `policy` returns `true` then it will continue with the `next` function otherwise it will shortcircuit to the `authFailedHandler`.
+/// Validates if a `HttpContext` satisfies a certain condition. If the `policy` returns `true` then it will continue with the `next` function otherwise it will short circuit and execute the `authFailedHandler`.
 ///
 /// **Parameters**
 ///
-/// - `policy`: One or many conditions which a `ClaimsPrincipal` must meet. The `policy` function should return `true` on success and `false` on failure.
-/// - `authFailedHandler`: A `HttpHandler` function which will be executed when the `policy` returns `false`.
+/// `policy`: One or many conditions which a `HttpContext` must meet. The `policy` function should return `true` on success and `false` on failure.
+/// `authFailedHandler`: A `HttpHandler` function which will be executed when the `policy` returns `false`.
 ///
 /// **Output**
 ///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
-let evaluateUserPolicy (policy : ClaimsPrincipal -> bool) (authFailedHandler : HttpHandler) : HttpHandler =
+let authorizeRequest (predicate : HttpContext -> bool) (authFailedHandler : HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        if policy ctx.User
-        then next ctx
-        else authFailedHandler finish ctx
+        (if predicate ctx then next else authFailedHandler earlyReturn) ctx
+
+/// **Description**
+///
+/// Validates if a `ClaimsPrincipal` satisfies a certain condition. If the `policy` returns `true` then it will continue with the `next` function otherwise it will short circuit and execute the `authFailedHandler`.
+///
+/// **Parameters**
+///
+/// `policy`: One or many conditions which a `ClaimsPrincipal` must meet. The `policy` function should return `true` on success and `false` on failure.
+/// `authFailedHandler`: A `HttpHandler` function which will be executed when the `policy` returns `false`.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
+[<Obsolete("Please use `authorizeUser` as a replacement for `evaluateUserPolicy`. In the next major version this function will be removed.")>]
+let evaluateUserPolicy (policy : ClaimsPrincipal -> bool) (authFailedHandler : HttpHandler) : HttpHandler =
+    authorizeRequest
+        (fun ctx -> policy ctx.User)
+        authFailedHandler
+
+/// **Description**
+///
+/// Validates if a `ClaimsPrincipal` satisfies a certain condition. If the `policy` returns `true` then it will continue with the `next` function otherwise it will short circuit and execute the `authFailedHandler`.
+///
+/// **Parameters**
+///
+/// `policy`: One or many conditions which a `ClaimsPrincipal` must meet. The `policy` function should return `true` on success and `false` on failure.
+/// `authFailedHandler`: A `HttpHandler` function which will be executed when the `policy` returns `false`.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
+let authorizeUser = evaluateUserPolicy
 
 /// **Description**
 ///
@@ -70,14 +103,14 @@ let evaluateUserPolicy (policy : ClaimsPrincipal -> bool) (authFailedHandler : H
 ///
 /// **Parameters**
 ///
-/// - `authFailedHandler`: A `HttpHandler` function which will be executed when authentication failed.
+/// `authFailedHandler`: A `HttpHandler` function which will be executed when authentication failed.
 ///
 /// **Output**
 ///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let requiresAuthentication (authFailedHandler : HttpHandler) : HttpHandler =
-    evaluateUserPolicy
+    authorizeUser
         (fun user -> isNotNull user && user.Identity.IsAuthenticated)
         authFailedHandler
 
@@ -87,15 +120,15 @@ let requiresAuthentication (authFailedHandler : HttpHandler) : HttpHandler =
 ///
 /// **Parameters**
 ///
-/// - `role`: The required role of which a user must be a member of in order to pass the validation.
-/// - `authFailedHandler`: A `HttpHandler` function which will be executed when validation fails.
+/// `role`: The required role of which a user must be a member of in order to pass the validation.
+/// `authFailedHandler`: A `HttpHandler` function which will be executed when validation fails.
 ///
 /// **Output**
 ///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let requiresRole (role : string) (authFailedHandler : HttpHandler) : HttpHandler =
-    evaluateUserPolicy
+    authorizeUser
         (fun user -> user.IsInRole role)
         authFailedHandler
 
@@ -105,15 +138,15 @@ let requiresRole (role : string) (authFailedHandler : HttpHandler) : HttpHandler
 ///
 /// **Parameters**
 ///
-/// - `roles`: A list of roles of which a user must be a member of (minimum one) in order to pass the validation.
-/// - `authFailedHandler`: A `HttpHandler` function which will be executed when validation fails.
+/// `roles`: A list of roles of which a user must be a member of (minimum one) in order to pass the validation.
+/// `authFailedHandler`: A `HttpHandler` function which will be executed when validation fails.
 ///
 /// **Output**
 ///
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) : HttpHandler =
-    evaluateUserPolicy
+    authorizeUser
         (fun user -> List.exists user.IsInRole roles)
         authFailedHandler
 
@@ -123,8 +156,8 @@ let requiresRoleOf (roles : string list) (authFailedHandler : HttpHandler) : Htt
 ///
 /// **Parameters**
 ///
-/// - `policyName`: The name of an `AuthorizationPolicy` which a user must meet in order to pass the validation.
-/// - `authFailedHandler`: A `HttpHandler` function which will be executed when validation fails.
+/// `policyName`: The name of an `AuthorizationPolicy` which a user must meet in order to pass the validation.
+/// `authFailedHandler`: A `HttpHandler` function which will be executed when validation fails.
 ///
 /// **Output**
 ///
@@ -135,7 +168,7 @@ let authorizeByPolicyName (policyName : string) (authFailedHandler : HttpHandler
         task {
             let authService = ctx.GetService<IAuthorizationService>()
             let! result = authService.AuthorizeAsync (ctx.User, policyName)
-            return! (if result.Succeeded then next else authFailedHandler finish) ctx
+            return! (if result.Succeeded then next else authFailedHandler earlyReturn) ctx
         }
 
 /// **Description**
@@ -144,8 +177,8 @@ let authorizeByPolicyName (policyName : string) (authFailedHandler : HttpHandler
 ///
 /// **Parameters**
 ///
-/// - `policy`: An `AuthorizationPolicy` which a user must meet in order to pass the validation.
-/// - `authFailedHandler`: A `HttpHandler` function which will be executed when validation fails.
+/// `policy`: An `AuthorizationPolicy` which a user must meet in order to pass the validation.
+/// `authFailedHandler`: A `HttpHandler` function which will be executed when validation fails.
 ///
 /// **Output**
 ///
@@ -156,5 +189,5 @@ let authorizeByPolicy (policy : AuthorizationPolicy) (authFailedHandler : HttpHa
         task {
             let authService = ctx.GetService<IAuthorizationService>()
             let! result = authService.AuthorizeAsync (ctx.User, policy)
-            return! (if result.Succeeded then next else authFailedHandler finish) ctx
+            return! (if result.Succeeded then next else authFailedHandler earlyReturn) ctx
         }
