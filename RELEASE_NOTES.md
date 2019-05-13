@@ -1,6 +1,36 @@
 Release Notes
 =============
 
+## 4.0.0
+
+#### ATTENTION:
+
+This release of Giraffe fixes a bug in the `routef` handler which would have previously matched a route too eagerly.
+
+##### Before:
+
+```
+Route: /foo/bar/hello/world
+routef: /foo/bar/%s
+Match: true
+```
+
+##### Now:
+
+```
+Route: /foo/bar/hello/world
+routef: /foo/bar/%s
+Match: false
+```
+
+For more information please see [issue #347](https://github.com/giraffe-fsharp/Giraffe/issues/347).
+
+#### Bug fixes and breaking changes
+
+- Fixed `routef` to not match more than one URL path segment.
+- Fixed the `_ariaLabelledBy` attribute in the `GiraffeViewEngine`
+- Fixed case insensitive route handlers on Ubuntu
+
 ## 3.6.0
 
 #### Bug fixes

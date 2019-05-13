@@ -404,6 +404,30 @@ let ``routef: GET "/foo/%u/bar/%u" returns "Id1: ..., Id2: ..."`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
+[<Fact>]
+let ``routef: GET "/foo/bar/baz/qux" returns 404 "Not found"`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            routef "/foo/%s/%s" (fun (s1, s2) -> text (sprintf "%s,%s" s1 s2))
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/foo/bar/baz/qux")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "Not found"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal(404, ctx.Response.StatusCode)
+    }
+
 // ---------------------------------
 // routeCif Tests
 // ---------------------------------

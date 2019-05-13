@@ -104,7 +104,7 @@ let route (path : string) : HttpHandler =
 ///
 let routeCi (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        if String.Equals(SubRouting.getNextPartOfPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
+        if String.Equals(SubRouting.getNextPartOfPath ctx, path, StringComparison.OrdinalIgnoreCase)
         then next ctx
         else skipPipeline
 
@@ -282,7 +282,7 @@ let routeStartsWith (subPath : string) : HttpHandler =
 ///
 let routeStartsWithCi (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        if (SubRouting.getNextPartOfPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase)
+        if (SubRouting.getNextPartOfPath ctx).StartsWith(subPath, StringComparison.OrdinalIgnoreCase)
         then next ctx
         else skipPipeline
 
@@ -321,7 +321,7 @@ let subRoute (path : string) (handler : HttpHandler) : HttpHandler =
 let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx: HttpContext) ->
         let nextPartOfPath = SubRouting.getNextPartOfPath ctx
-        if nextPartOfPath.StartsWith(path, StringComparison.CurrentCultureIgnoreCase) then
+        if nextPartOfPath.StartsWith(path, StringComparison.OrdinalIgnoreCase) then
             let matchedPathFragment = nextPartOfPath.[0..path.Length-1]
             SubRouting.routeWithPartialPath matchedPathFragment handler next ctx
         else skipPipeline

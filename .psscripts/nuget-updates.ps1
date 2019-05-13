@@ -6,8 +6,12 @@ function Get-NuGetPackageInfo ($nugetPackageId, $currentVersion)
 {
     $url    = "https://api-v2v3search-0.nuget.org/query?q=$nugetPackageId&prerelease=false"
     $result = Invoke-RestMethod -Uri $url -Method Get
-    $latestVersion = $result.data[0].version
-    $upgradeAvailable = $currentVersion -and !$latestVersion.StartsWith($currentVersion.Replace("*", ""))
+    $packageInfo = $result.data | Where-Object { $_.id -eq $nugetPackageId }
+    $latestVersion = $packageInfo.version
+    $upgradeAvailable =
+        $currentVersion `
+        -and $latestVersion `
+        -and !$latestVersion.StartsWith($currentVersion.Replace("*", ""))
 
     [PSCustomObject]@{
         PackageName      = $nugetPackageId;

@@ -36,8 +36,8 @@ let private formatStringMap =
     // Char    Regex                    Parser
     // -------------------------------------------------------------
         'b', ("(?i:(true|false)){1}",   bool.Parse           >> box)  // bool
-        'c', ("(.{1})",                 char                 >> box)  // char
-        's', ("(.+)",                   decodeSlashes        >> box)  // string
+        'c', ("([^/]{1})",              char                 >> box)  // char
+        's', ("([^/]+)",                decodeSlashes        >> box)  // string
         'i', ("(-?\d+)",                int32                >> box)  // int
         'd', ("(-?\d+)",                int64                >> box)  // int64
         'f', ("(-?\d+\.{1}\d+)",        float                >> box)  // float
