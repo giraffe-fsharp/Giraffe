@@ -30,6 +30,18 @@ For more information please see [issue #347](https://github.com/giraffe-fsharp/G
 - Fixed `routef` to not match more than one URL path segment.
 - Fixed the `_ariaLabelledBy` attribute in the `GiraffeViewEngine`
 - Fixed case insensitive route handlers on Ubuntu
+- Renamed `tryMatchInput` to `tryMatchInputExact`
+- Added new version of `tryMatchInput` which accepts `MatchSettings` record:
+
+    ```fsharp
+    type MatchMode =
+        | Exact                // Will try to match entire string from start to end.
+        | StartsWith           // Will try to match a substring. Subject string should start with test case.
+        | EndsWith             // Will try to match a substring. Subject string should end with test case.
+        | Contains             // Will try to match a substring. Subject string should contain test case.
+
+    type MatchOptions = { IgnoreCase: bool; MatchMode: MatchMode; } 
+    ```
 
 ## 3.6.0
 
