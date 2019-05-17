@@ -97,7 +97,7 @@ let private convertToRegexPatternAndFormatChars (mode : MatchMode) (formatString
 ///
 /// Matched value as an option of 'T
 ///
-let tryMatchInputO (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (options : MatchOptions) = 
+let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (options : MatchOptions) = 
     try
         let pattern, formatChars =
             format.Value
@@ -156,11 +156,11 @@ let tryMatchInputO (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (option
 ///
 /// Matched value as an option of 'T
 ///
-let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreCase : bool) =
+let tryMatchInputExact (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreCase : bool) =
     let options = match ignoreCase with
                   | true -> MatchOptions.IgnoreCaseExact
                   | false -> MatchOptions.Exact
-    tryMatchInputO format input options
+    tryMatchInput format input options
 
 
 // ---------------------------

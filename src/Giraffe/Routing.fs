@@ -178,7 +178,7 @@ let routeCix (path : string) : HttpHandler =
 let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        tryMatchInputO path (SubRouting.getNextPartOfPath ctx) MatchOptions.Exact
+        tryMatchInput path (SubRouting.getNextPartOfPath ctx) MatchOptions.Exact
         |> function
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
@@ -211,7 +211,7 @@ let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler)
 let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        tryMatchInputO path (SubRouting.getNextPartOfPath ctx) MatchOptions.IgnoreCaseExact
+        tryMatchInput path (SubRouting.getNextPartOfPath ctx) MatchOptions.IgnoreCaseExact
         |> function
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
@@ -318,7 +318,7 @@ let routeStartsWithf (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> Ht
     let options = { MatchOptions.IgnoreCase = false; MatchMode = StartsWith }
 
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        tryMatchInputO path (SubRouting.getNextPartOfPath ctx) options
+        tryMatchInput path (SubRouting.getNextPartOfPath ctx) options
         |> function
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
@@ -354,7 +354,7 @@ let routeStartsWithCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> 
     let options = { MatchOptions.IgnoreCase = true; MatchMode = StartsWith }
 
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        tryMatchInputO path (SubRouting.getNextPartOfPath ctx) options
+        tryMatchInput path (SubRouting.getNextPartOfPath ctx) options
         |> function
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
@@ -440,7 +440,7 @@ let subRoutef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandl
                         if String.IsNullOrEmpty elem
                         then state
                         else sprintf "%s/%s" state elem) ""
-                tryMatchInputO path subPath MatchOptions.Exact
+                tryMatchInput path subPath MatchOptions.Exact
                 |> function
                     | None      -> skipPipeline
                     | Some args -> SubRouting.routeWithPartialPath subPath (routeHandler args) next ctx
