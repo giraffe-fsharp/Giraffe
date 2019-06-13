@@ -198,11 +198,12 @@ module ModelParser =
                     
                     index, key, value
                 )
-                |> Seq.groupBy (fun (index, _, _) -> index)
+                |> Seq.groupBy (fun (index, _, _) -> index |> int)
+                |> Seq.sortBy (fun (index, _) -> index)
                 |> Seq.choose (fun (index, values) ->
                     let dictData =
                         values
-                        |> Seq.fold(fun (state : Map<string, StringValues>) (index, key, value) ->
+                        |> Seq.fold(fun (state : Map<string, StringValues>) (_, key, value) ->
                             state.Add(key, value)
                         ) Map.empty
                     
@@ -211,7 +212,7 @@ module ModelParser =
                                         
                     match res with
                     | Ok o ->
-                        Some(index |> int, o)
+                        Some(index, o)
                     | Error _ -> None
                 )
             

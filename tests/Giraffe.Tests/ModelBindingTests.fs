@@ -221,6 +221,46 @@ let ``ModelParser.tryParse with complete model data but mixed casing`` () =
     | Error err -> assertFailf "Model didn't bind successfully: %s." err
 
 [<Fact>]
+let ``ModelParser.tryParse with complete model data but with different order for array of child`` () =
+    let id = Guid.NewGuid()
+    let modelData =
+        dict [
+            "id"        , StringValues (id.ToString())
+            "firstName" , StringValues "Susan"
+            "MiddleName", StringValues "Elisabeth"
+            "lastname"  , StringValues "Doe"
+            "Sex"       , StringValues "female"
+            "BirthDate" , StringValues "1986-12-29"
+            "NickNames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "Children[2].Name" , StringValues "Gholi"
+            "Children[0].Name" , StringValues "Hamed"
+            "Children[1].Age"  , StringValues "22"
+            "Children[2].Age"  , StringValues "44"
+            "Children[1].Name" , StringValues "Ali"
+            "Children[0].Age"  , StringValues "32"
+        ]
+    let expected =
+        {
+            Id         = id
+            FirstName  = "Susan"
+            MiddleName = Some "Elisabeth"
+            LastName   = "Doe"
+            Sex        = Female
+            BirthDate  = DateTime(1986, 12, 29)
+            Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
+            Children   = [|
+                { Name = "Hamed"; Age = 32 }
+                { Name = "Ali";   Age = 22 }
+                { Name = "Gholi"; Age = 44 }
+            |]
+        }
+    let culture = None
+    let result = ModelParser.tryParse<Model> culture modelData
+    match result with
+    | Ok model  -> Assert.Equal(expected, model)
+    | Error err -> assertFailf "Model didn't bind successfully: %s." err
+
+[<Fact>]
 let ``ModelParser.tryParse with incomplete model data`` () =
     let modelData =
         dict [
@@ -238,6 +278,24 @@ let ``ModelParser.tryParse with incomplete model data`` () =
     | Ok _      -> assertFail "Model had incomplete data and should have not bound successfully."
     | Error err -> Assert.Equal("Missing value for required property Id.", err)
 
+[<Fact>]
+let ``ModelParser.tryParse with incomplete model data and different order for array of child`` () =
+    let modelData =
+        dict [
+            "FirstName" , StringValues "Susan"
+            "MiddleName", StringValues "Elisabeth"
+            "Sex"       , StringValues "Female"
+            "BirthDate" , StringValues "1986-12-29"
+            "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "Children[2].Age"  , StringValues "44"
+            "Children[0].Name" , StringValues "Hamed"
+        ]
+    let culture = None
+    let result = ModelParser.tryParse<Model> culture modelData
+    match result with
+    | Ok _      -> assertFail "Model had incomplete data and should have not bound successfully."
+    | Error err -> Assert.Equal("Missing value for required property Id.", err)
+    
 [<Fact>]
 let ``ModelParser.tryParse with complete model data but wrong union case`` () =
     let id = Guid.NewGuid()
@@ -403,6 +461,44 @@ let ``ModelParser.parse with complete model data but mixed casing`` () =
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected, result)
+    
+[<Fact>]
+let ``ModelParser.parse with complete model data but with different order for array of child`` () =
+    let id = Guid.NewGuid()
+    let modelData =
+        dict [
+            "id"        , StringValues (id.ToString())
+            "firstName" , StringValues "Susan"
+            "MiddleName", StringValues "Elisabeth"
+            "lastname"  , StringValues "Doe"
+            "Sex"       , StringValues "female"
+            "BirthDate" , StringValues "1986-12-29"
+            "NickNames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "Children[2].Name" , StringValues "Gholi"
+            "Children[0].Name" , StringValues "Hamed"
+            "Children[1].Age"  , StringValues "22"
+            "Children[2].Age"  , StringValues "44"
+            "Children[1].Name" , StringValues "Ali"
+            "Children[0].Age"  , StringValues "32"
+        ]
+    let expected =
+        {
+            Id         = id
+            FirstName  = "Susan"
+            MiddleName = Some "Elisabeth"
+            LastName   = "Doe"
+            Sex        = Female
+            BirthDate  = DateTime(1986, 12, 29)
+            Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
+            Children   = [|
+                { Name = "Hamed"; Age = 32 }
+                { Name = "Ali";   Age = 22 }
+                { Name = "Gholi"; Age = 44 }
+            |]
+        }
+    let culture = None
+    let result = ModelParser.parse<Model> culture modelData
+    Assert.Equal(expected, result)
 
 [<Fact>]
 let ``ModelParser.parse with incomplete model data`` () =
@@ -436,6 +532,38 @@ let ``ModelParser.parse with incomplete model data`` () =
     let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected, result)
 
+[<Fact>]
+let ``ModelParser.parse with incomplete model data and with different order for array of child`` () =
+    let modelData =
+        dict [
+            "FirstName" , StringValues "Susan"
+            "MiddleName", StringValues "Elisabeth"
+            "Sex"       , StringValues "Female"
+            "BirthDate" , StringValues "1986-12-29"
+            "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "Children[2].Age"  , StringValues "44"
+            "Children[0].Name" , StringValues "Hamed"
+        ]
+    
+    let arrayOfChildren = Array.CreateInstance(typeof<Child>, 3)
+    arrayOfChildren.SetValue({ Name = "Hamed"; Age = 0 }, 0)
+    arrayOfChildren.SetValue({ Name = null; Age = 44 }, 2)
+
+    let expected =
+        {
+            Id         = Guid.Empty
+            FirstName  = "Susan"
+            MiddleName = Some "Elisabeth"
+            LastName   = null
+            Sex        = Female
+            BirthDate  = DateTime(1986, 12, 29)
+            Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
+            Children   = arrayOfChildren :?> Child[]
+        }
+    let culture = None
+    let result = ModelParser.parse<Model> culture modelData
+    Assert.Equal(expected, result)
+    
 [<Fact>]
 let ``ModelParser.parse with incomplete model data and wrong union case`` () =
     let modelData =
