@@ -15,7 +15,6 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
 
     <!-- NuGet settings -->
     <PackageId>Giraffe</PackageId>
@@ -31,10 +30,8 @@
     <!-- SourceLink settings -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <!-- disable sourcelink on mono, to workaround https://github.com/dotnet/sourcelink/issues/155 -->
-    <EnableSourceLink Condition=" '$(OS)' != 'Windows_NT' AND '$(MSBuildRuntimeType)' != 'Core' ">false</EnableSourceLink>
-    <EnableSourceControlManagerQueries>$(EnableSourceLink)</EnableSourceControlManagerQueries>
-    <AllowedOutputExtensionsInPackageBuildOutputFolder Condition=" '$(EnableSourceLink)' == 'true' ">$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <NoWarn>FS2003;FS0044</NoWarn>
   </PropertyGroup>
 
@@ -72,10 +69,6 @@
     <Compile Include="Negotiation.fs" />
     <Compile Include="HttpStatusCodeHandlers.fs" />
     <Compile Include="Middleware.fs" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(IsWindows)' != 'true' AND '$(TargetFramework)' == 'net461'">
-    <Reference Include="netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
   </ItemGroup>
 
 </Project>
