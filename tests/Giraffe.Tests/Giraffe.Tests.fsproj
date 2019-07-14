@@ -23,6 +23,9 @@
     <Content Include="TestFiles/*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="xunit.runner.json" Condition=" '$(OS)' != 'Windows_NT' ">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
