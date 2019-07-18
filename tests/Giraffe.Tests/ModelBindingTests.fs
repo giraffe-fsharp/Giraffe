@@ -12,7 +12,6 @@ open Microsoft.Extensions.Primitives
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Xunit
 open NSubstitute
-open Newtonsoft.Json
 open Giraffe
 
 [<CLIMutable>]
@@ -513,10 +512,6 @@ let ``ModelParser.parse with incomplete model data`` () =
             "Children[2].Age"  , StringValues "44"
         ]
     
-    let arrayOfChildren = Array.CreateInstance(typeof<Child>, 3)
-    arrayOfChildren.SetValue({ Name = "Hamed"; Age = 0 }, 0)
-    arrayOfChildren.SetValue({ Name = null; Age = 44 }, 2)
-
     let expected =
         {
             Id         = Guid.Empty
@@ -526,7 +521,11 @@ let ``ModelParser.parse with incomplete model data`` () =
             Sex        = Female
             BirthDate  = DateTime(1986, 12, 29)
             Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
-            Children   = arrayOfChildren :?> Child[]
+            Children   = [|
+                { Name = "Hamed"; Age = 0 }
+                Unchecked.defaultof<_>
+                { Name = null; Age = 44 }
+            |]
         }
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
@@ -544,10 +543,6 @@ let ``ModelParser.parse with incomplete model data and with different order for 
             "Children[2].Age"  , StringValues "44"
             "Children[0].Name" , StringValues "Hamed"
         ]
-    
-    let arrayOfChildren = Array.CreateInstance(typeof<Child>, 3)
-    arrayOfChildren.SetValue({ Name = "Hamed"; Age = 0 }, 0)
-    arrayOfChildren.SetValue({ Name = null; Age = 44 }, 2)
 
     let expected =
         {
@@ -558,7 +553,11 @@ let ``ModelParser.parse with incomplete model data and with different order for 
             Sex        = Female
             BirthDate  = DateTime(1986, 12, 29)
             Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
-            Children   = arrayOfChildren :?> Child[]
+            Children   = [|
+                { Name = "Hamed"; Age = 0 }
+                Unchecked.defaultof<_>
+                { Name = null; Age = 44 }
+            |]
         }
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
@@ -576,11 +575,7 @@ let ``ModelParser.parse with incomplete model data and wrong union case`` () =
             "Children[0].Name" , StringValues "Hamed"
             "Children[2].Age"  , StringValues "44"
         ]
-    
-    let arrayOfChildren = Array.CreateInstance(typeof<Child>, 3)
-    arrayOfChildren.SetValue({ Name = "Hamed"; Age = 0 }, 0)
-    arrayOfChildren.SetValue({ Name = null; Age = 44 }, 2)
-        
+
     let expected =
         {
             Id         = Guid.Empty
@@ -590,7 +585,11 @@ let ``ModelParser.parse with incomplete model data and wrong union case`` () =
             Sex        = Unchecked.defaultof<Sex>
             BirthDate  = DateTime(1986, 12, 29)
             Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
-            Children   = arrayOfChildren :?> Child[]
+            Children   = [|
+                { Name = "Hamed"; Age = 0 }
+                Unchecked.defaultof<_>
+                { Name = null; Age = 44 }
+            |]
         }
         
     let culture = None
