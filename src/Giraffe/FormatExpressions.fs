@@ -45,7 +45,18 @@ let private formatStringMap =
         'u', (shortIdPattern,           ShortId.toUInt64     >> box)  // uint64
     ]
 
-let private convertToRegexPatternAndFormatChars (formatString : string) =
+type MatchMode =        
+    | Exact                // Will try to match entire string from start to end.
+    | StartsWith           // Will try to match a substring. Subject string should start with test case.
+    | EndsWith             // Will try to match a substring. Subject string should end with test case.
+    | Contains             // Will try to match a substring. Subject string should contain test case.
+
+type MatchOptions = { IgnoreCase: bool; MatchMode: MatchMode; } 
+with 
+    static member Exact = { IgnoreCase = false; MatchMode = Exact }
+    static member IgnoreCaseExact = { IgnoreCase = true; MatchMode = Exact }
+
+let private convertToRegexPatternAndFormatChars (mode : MatchMode) (formatString : string) =
     let rec convert (chars : char list) =
         match chars with
         | '%' :: '%' :: tail ->
@@ -60,10 +71,17 @@ let private convertToRegexPatternAndFormatChars (formatString : string) =
             c.ToString() + pattern, formatChars
         | [] -> "", []
 
-    formatString.ToCharArray()
-    |> Array.toList
+    let inline formatRegex mode pattern = 
+        match mode with
+        | Exact -> "^" + pattern + "$"
+        | StartsWith -> "^" + pattern
+        | EndsWith -> pattern + "$" 
+        | Contains -> pattern
+
+    formatString
+    |> List.ofSeq
     |> convert
-    |> (fun (pattern, formatChars) -> sprintf "^%s$" pattern, formatChars)
+    |> (fun (pattern, formatChars) -> formatRegex mode pattern, formatChars)
 
 /// **Description**
 ///
@@ -73,20 +91,21 @@ let private convertToRegexPatternAndFormatChars (formatString : string) =
 ///
 /// `format`: The format string which shall be used for parsing.
 /// `input`: The input string from which the parsed arguments shall be extracted.
+/// `options`: The options record with specifications on how the matching should behave.
 ///
 /// **Output**
 ///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+/// Matched value as an option of 'T
 ///
-let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreCase : bool) =
+let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (options : MatchOptions) = 
     try
         let pattern, formatChars =
             format.Value
             |> Regex.Escape
-            |> convertToRegexPatternAndFormatChars
+            |> convertToRegexPatternAndFormatChars options.MatchMode
 
         let options =
-            match ignoreCase with
+            match options.IgnoreCase with
             | true  -> RegexOptions.IgnoreCase
             | false -> RegexOptions.None
 
@@ -123,6 +142,27 @@ let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreC
     with
     | _ -> None
 
+/// **Description**
+///
+/// Tries to parse an input string based on a given format string and return a tuple of all parsed arguments.
+///
+/// **Parameters**
+///
+/// `format`: The format string which shall be used for parsing.
+/// `input`: The input string from which the parsed arguments shall be extracted.
+/// `ignoreCase`: The flag to make matching case insenstive.
+///
+/// **Output**
+///
+/// Matched value as an option of 'T
+///
+let tryMatchInputExact (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreCase : bool) =
+    let options = match ignoreCase with
+                  | true -> MatchOptions.IgnoreCaseExact
+                  | false -> MatchOptions.Exact
+    tryMatchInput format input options
+
+
 // ---------------------------
 // Validation helper functions
 // ---------------------------
@@ -149,7 +189,7 @@ let validateFormat (format : PrintfFormat<_,_,_,_, 'T>) =
         'd' , typeof<int64>          // int64
         'f' , typeof<float>          // float
         'O' , typeof<System.Guid>    // guid
-        'u' , typeof<uint64>    // guid
+        'u' , typeof<uint64>         // guid
     ]
 
     let tuplePrint pos last name =
