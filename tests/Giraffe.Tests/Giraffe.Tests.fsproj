@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="DateTimeTests.fs" />
     <Compile Include="Helpers.fs" />
     <Compile Include="GuidAndIdTests.fs" />
     <Compile Include="FormatExpressionTests.fs" />

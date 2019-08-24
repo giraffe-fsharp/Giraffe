@@ -12,6 +12,20 @@ open FSharp.Control.Tasks.V2.ContextInsensitive
 type DateTime with
     /// **Description**
     ///
+    /// Converts a `DateTime` object into an RFC822 formatted `string`.
+    ///
+    /// **Specification**
+    ///
+    /// https://www.ietf.org/rfc/rfc822.txt
+    ///
+    /// **Output**
+    ///
+    /// Formatted string value.
+    ///
+    member this.ToHtmlString() = this.ToString("r")
+    
+    /// **Description**
+    ///
     /// Converts a `DateTime` object into an RFC3339 formatted `string`.
     ///
     /// **Specification**
@@ -22,12 +36,26 @@ type DateTime with
     ///
     /// Formatted string value.
     ///
-    member this.ToHtmlString() = this.ToString("r")
+    member this.ToIsoString() = this.ToString("o")
 
 type DateTimeOffset with
     /// **Description**
     ///
-    /// Converts a `DateTimeOffset` object into an RFC3339 formatted `string`.
+    /// Converts a `DateTimeOffset` object into an RFC822 formatted `string`.
+    ///
+    /// **Specification**
+    ///
+    /// https://www.ietf.org/rfc/rfc822.txt
+    ///
+    /// **Output**
+    ///
+    /// Formatted string value.
+    ///
+    member this.ToHtmlString() = this.ToString("r")
+    
+    /// **Description**
+    ///
+    /// Converts a `DateTime` object into an RFC3339 formatted `string`.
     ///
     /// **Specification**
     ///
@@ -37,7 +65,7 @@ type DateTimeOffset with
     ///
     /// Formatted string value.
     ///
-    member this.ToHtmlString() = this.ToString("r")
+    member this.ToIsoString() = this.ToString("o")
 
 // ---------------------------
 // Common helper functions
