@@ -25,6 +25,10 @@ Match: false
 
 For more information please see [issue #347](https://github.com/giraffe-fsharp/Giraffe/issues/347).
 
+#### New features
+
+- Support array of 'T as a child in form binding
+
 #### Bug fixes and breaking changes
 
 - Fixed `routef` to not match more than one URL path segment.
