@@ -45,14 +45,14 @@ let private formatStringMap =
         'u', (shortIdPattern,           ShortId.toUInt64     >> box)  // uint64
     ]
 
-type MatchMode =        
+type MatchMode =
     | Exact                // Will try to match entire string from start to end.
     | StartsWith           // Will try to match a substring. Subject string should start with test case.
     | EndsWith             // Will try to match a substring. Subject string should end with test case.
     | Contains             // Will try to match a substring. Subject string should contain test case.
 
-type MatchOptions = { IgnoreCase: bool; MatchMode: MatchMode; } 
-with 
+type MatchOptions = { IgnoreCase: bool; MatchMode: MatchMode; }
+with
     static member Exact = { IgnoreCase = false; MatchMode = Exact }
     static member IgnoreCaseExact = { IgnoreCase = true; MatchMode = Exact }
 
@@ -71,11 +71,11 @@ let private convertToRegexPatternAndFormatChars (mode : MatchMode) (formatString
             c.ToString() + pattern, formatChars
         | [] -> "", []
 
-    let inline formatRegex mode pattern = 
+    let inline formatRegex mode pattern =
         match mode with
         | Exact -> "^" + pattern + "$"
         | StartsWith -> "^" + pattern
-        | EndsWith -> pattern + "$" 
+        | EndsWith -> pattern + "$"
         | Contains -> pattern
 
     formatString
@@ -97,7 +97,7 @@ let private convertToRegexPatternAndFormatChars (mode : MatchMode) (formatString
 ///
 /// Matched value as an option of 'T
 ///
-let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (options : MatchOptions) = 
+let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (options : MatchOptions) (input : string) =
     try
         let pattern, formatChars =
             format.Value
@@ -156,11 +156,11 @@ let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (options
 ///
 /// Matched value as an option of 'T
 ///
-let tryMatchInputExact (format : PrintfFormat<_,_,_,_, 'T>) (input : string) (ignoreCase : bool) =
+let tryMatchInputExact (format : PrintfFormat<_,_,_,_, 'T>) (ignoreCase : bool) (input : string) =
     let options = match ignoreCase with
                   | true -> MatchOptions.IgnoreCaseExact
                   | false -> MatchOptions.Exact
-    tryMatchInput format input options
+    tryMatchInput format options input
 
 
 // ---------------------------
