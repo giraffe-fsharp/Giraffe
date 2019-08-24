@@ -28,17 +28,14 @@ For more information please see [issue #347](https://github.com/giraffe-fsharp/G
 #### New features
 
 - Support array of 'T as a child in form binding
+- Added a new `DateTime` extension method `ToIsoString` which produces a RFC3339 formatted string, and corrected the docs on the existing `ToHtmlString` extension method which actually produces a RFC822 formatted string.
 
 #### Bug fixes and breaking changes
 
 - Fixed `routef` to not match more than one URL path segment.
 - Fixed the `_ariaLabelledBy` attribute in the `GiraffeViewEngine`
 - Fixed case insensitive route handlers on Ubuntu
-- Changed minimum version of `Newtonsoft.Json` to `11.0.2`. This allows Giraffe to be compatable with Azure Functions.  
-
-#### New features
-
-- Added a new `DateTime` extension method `ToIsoString` which produces a RFC3339 formatted string, and corrected the docs on the existing `ToHtmlString` extension method which actually produces a RFC822 formatted string.
+- Changed minimum version of `Newtonsoft.Json` to `11.0.2`. This allows Giraffe to be compatable with Azure Functions.
 
 ## 3.6.0
 
