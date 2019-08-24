@@ -331,3 +331,9 @@ ASALocalRun/
 
 # macOS
 .DS_Store
+
+# Ionide
+.ionide/
+
+# Visual Studio Code
+.vscode

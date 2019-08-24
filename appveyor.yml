@@ -7,7 +7,6 @@ environment:
 init:
   - git config --global core.autocrlf true
 install:
-  - sh: export FrameworkPathOverride=$(dirname $(which mono))/../lib/mono/4.5/
   - ps: .\.psscripts\install-dotnet.ps1
 build: off
 build_script:

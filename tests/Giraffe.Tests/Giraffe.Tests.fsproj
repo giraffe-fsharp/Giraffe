@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="../../ReferenceAssemblies.props" />
   <PropertyGroup>
     <TargetFrameworks>netcoreapp2.1;net461</TargetFrameworks>
     <AssemblyName>Giraffe.Tests</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="DateTimeTests.fs" />
     <Compile Include="Helpers.fs" />
     <Compile Include="GuidAndIdTests.fs" />
     <Compile Include="FormatExpressionTests.fs" />
@@ -24,19 +24,23 @@
     <Content Include="TestFiles/*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="xunit.runner.json" Condition=" '$(OS)' != 'Windows_NT' ">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.*" />
-    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.2.*" />
-    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.2.*" />
-    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.*" />
-    <PackageReference Include="System.Net.Http" Version="4.3.*" />
-    <PackageReference Include="xunit" Version="2.4.*" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.*" />
-    <PackageReference Include="NSubstitute" Version="4.*" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
+    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.2.0" />
+    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="xunit" Version="2.4.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1" />
+    <PackageReference Include="NSubstitute" Version="4.2.0" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0-preview.2" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
