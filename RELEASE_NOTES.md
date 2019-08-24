@@ -25,16 +25,29 @@ Match: false
 
 For more information please see [issue #347](https://github.com/giraffe-fsharp/Giraffe/issues/347).
 
+#### New features
+
+- Support array of 'T as a child in form binding
+- Added a new `DateTime` extension method `ToIsoString` which produces a RFC3339 formatted string, and corrected the docs on the existing `ToHtmlString` extension method which actually produces a RFC822 formatted string.
+
 #### Bug fixes and breaking changes
 
 - Fixed `routef` to not match more than one URL path segment.
 - Fixed the `_ariaLabelledBy` attribute in the `GiraffeViewEngine`
 - Fixed case insensitive route handlers on Ubuntu
-- Changed minimum version of `Newtonsoft.Json` to `11.0.2`. This allows Giraffe to be compatable with Azure Functions.  
+- Changed minimum version of `Newtonsoft.Json` to `11.0.2`. This allows Giraffe to be compatable with Azure Functions.
+- Renamed `tryMatchInput` to `tryMatchInputExact`
+- Added new version of `tryMatchInput` which accepts `MatchSettings` record:
 
-#### New features
+    ```fsharp
+    type MatchMode =
+        | Exact                // Will try to match entire string from start to end.
+        | StartsWith           // Will try to match a substring. Subject string should start with test case.
+        | EndsWith             // Will try to match a substring. Subject string should end with test case.
+        | Contains             // Will try to match a substring. Subject string should contain test case.
 
-- Added a new `DateTime` extension method `ToIsoString` which produces a RFC3339 formatted string, and corrected the docs on the existing `ToHtmlString` extension method which actually produces a RFC822 formatted string.
+    type MatchOptions = { IgnoreCase: bool; MatchMode: MatchMode; } 
+    ```
 
 ## 3.6.0
 

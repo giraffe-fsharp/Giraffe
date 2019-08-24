@@ -354,6 +354,36 @@ let ``routef: GET "/foo/a%2Fb%2Bc.d%2Ce/bar" returns "a%2Fb%2Bc.d%2Ce"`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
+[<Theory>]
+[<InlineData( "/API/hello/", "routeStartsWithf:hello" )>]
+[<InlineData( "/API/hello/more", "routeStartsWithf:hello" )>]
+[<InlineData( "/aPi/hello/", "routeStartsWithCif:hello" )>]
+[<InlineData( "/APi/hello/more/", "routeStartsWithCif:hello" )>]
+[<InlineData( "/aPI/hello/more", "routeStartsWithCif:hello" )>]
+[<InlineData( "/test/hello/more", "Not found" )>]
+[<InlineData( "/TEST/hello/more", "Not found" )>]
+let ``routeStartsWith(f|Cif)`` (uri:string, expected:string) =
+    
+    let app =
+        GET >=> choose [
+            routeStartsWithf "/API/%s/" (fun capture -> text ("routeStartsWithf:" + capture))
+            routeStartsWithCif "/api/%s/" (fun capture -> text ("routeStartsWithCif:" + capture))
+            setStatusCode 404 >=> text "Not found"
+        ]
+
+    let ctx = Substitute.For<HttpContext>()
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString(uri)) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s"  expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
 [<Fact>]
 let ``routef: GET "/foo/%O/bar/%O" returns "Guid1: ..., Guid2: ..."`` () =
     let ctx = Substitute.For<HttpContext>()
