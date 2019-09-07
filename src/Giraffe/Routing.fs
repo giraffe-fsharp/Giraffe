@@ -13,6 +13,9 @@ open Giraffe.FormatExpressions
 // Sub Routing Feature
 // ---------------------------
 
+[<Literal>]
+let private RouteKey = "giraffe_route"
+
 type ISubRoutingFeature =
     abstract member GetResolvedPath   : unit   -> string option
     abstract member SetResolvedPath   : string -> unit
@@ -28,12 +31,10 @@ type SubRoutingFeature() =
 
 type HttpContext with
 
-    member __.GiraffeRouteKey = "giraffe_route"
-
     [<Obsolete("This method has been deprecated. Please use 'GetResolvedPath' instead which is a more memory efficient implementation based on the HttpContext.Features API.")>]
     member this.GetResolvedPathFromItems() =
-        if this.Items.ContainsKey this.GiraffeRouteKey
-        then this.Items.Item this.GiraffeRouteKey |> string |> strOption
+        if this.Items.ContainsKey RouteKey
+        then this.Items.Item RouteKey |> string |> strOption
         else None
 
     /// **Description**
@@ -65,7 +66,7 @@ type HttpContext with
         let subRoutingFeature = this.Features.Get<ISubRoutingFeature>()
         subRoutingFeature.SetResolvedPath path
         // Keep this as a fallback for Saturn, etc?
-        this.Items.[this.GiraffeRouteKey] <- path
+        this.Items.[RouteKey] <- path
 
     /// **Description**
     ///
@@ -75,7 +76,7 @@ type HttpContext with
         let subRoutingFeature = this.Features.Get<ISubRoutingFeature>()
         subRoutingFeature.ClearResolvedPath()
         // Keep this as a fallback for Saturn, etc?
-        this.Items.Remove this.GiraffeRouteKey
+        this.Items.Remove RouteKey
 
 [<RequireQualifiedAccess>]
 module SubRoutingHandlers =

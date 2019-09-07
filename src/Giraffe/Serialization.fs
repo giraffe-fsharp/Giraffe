@@ -1,5 +1,4 @@
 namespace Giraffe.Serialization
-open Microsoft.IO
 
 // ---------------------------
 // JSON
@@ -7,15 +6,17 @@ open Microsoft.IO
 
 [<AutoOpen>]
 module Json =
-    open System
     open System.IO
     open System.Text
     open System.Threading.Tasks
+    open Microsoft.IO
     open Newtonsoft.Json
     open Newtonsoft.Json.Serialization
     open FSharp.Control.Tasks.V2.ContextInsensitive
     open Utf8Json
+
     let recyclableMemoryStreamManager = RecyclableMemoryStreamManager()
+
     /// **Description**
     ///
     /// Interface defining JSON serialization methods. Use this interface to customize JSON serialization in Giraffe.
@@ -95,11 +96,12 @@ module Json =
             member __.SerializeToStreamAsync (x : 'T) (stream : Stream) =
                 task {
                     use memoryStream = recyclableMemoryStreamManager.GetStream()
+                    use streamWriter = new StreamWriter(memoryStream, utf8EncodingWithoutBom)
                     use jsonTextWriter = new JsonTextWriter(streamWriter)
                     serializer.Serialize(jsonTextWriter, x)
                     jsonTextWriter.Flush()
                     memoryStream.Seek(0L, SeekOrigin.Begin) |> ignore
-                    do! memoryStream.CopyToAsync(stream, 65536) 
+                    do! memoryStream.CopyToAsync(stream, 65536)
                 } :> Task
 
             member __.Deserialize<'T> (json : string) =

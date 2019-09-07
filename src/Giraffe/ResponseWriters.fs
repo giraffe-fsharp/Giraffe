@@ -14,9 +14,9 @@ open Giraffe.GiraffeViewEngine
 // Helper functions
 // ---------------------------
 
-let private MinimumCapacity = 5000
-let private MaximumCapacity = 40000
-let private MaximumLifetime = TimeSpan.FromMinutes 10.0
+let private minimumCapacity = 5000
+let private maximumCapacity = 40000
+let private maximumLifetime = TimeSpan.FromMinutes 10.0
 
 type public StringBuilderPool =
     [<DefaultValue(true); ThreadStatic>]
@@ -34,18 +34,18 @@ type public StringBuilderPool =
 
     static member internal Rent () =
         match StringBuilderPool.IsEnabled with
-        | false -> new StringBuilder(MinimumCapacity)
+        | false -> StringBuilder(minimumCapacity)
         | true  ->
             let lifetime = DateTimeOffset.Now - StringBuilderPool.created
-            let expired  = lifetime > MaximumLifetime
+            let expired  = lifetime > maximumLifetime
             let sb       = StringBuilderPool.instance
-            if not expired && sb <> null then
+            if not expired && (not (isNull sb)) then
                 StringBuilderPool.instance <- null
                 sb.Clear()
-            else new StringBuilder(MinimumCapacity)
+            else StringBuilder(minimumCapacity)
 
     static member internal Release (sb : StringBuilder) =
-        if sb.Capacity <= MaximumCapacity then
+        if sb.Capacity <= maximumCapacity then
             StringBuilderPool.instance <- sb
             StringBuilderPool.created  <- DateTimeOffset.Now
 
@@ -156,7 +156,7 @@ type HttpContext with
     member this.WriteJsonChunkedAsync<'T> (dataObj : 'T) =
         task {
             // Don't set the Transfer-Encoding to chunked manually.  If we do, we'll have to do the chunking manually
-            // ourselves rather than rely on asp.net to do it for us.  
+            // ourselves rather than rely on asp.net to do it for us.
             // Example : https://github.com/aspnet/AspNetCore/blame/728110ec9ee1b98b2d9c9ff247ba2955d6c05846/src/Servers/Kestrel/test/InMemory.FunctionalTests/ChunkedResponseTests.cs#L494
             this.SetContentType "application/json; charset=utf-8"
             if this.Request.Method <> HttpMethods.Head then
