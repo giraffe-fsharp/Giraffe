@@ -155,8 +155,10 @@ type HttpContext with
     ///
     member this.WriteJsonChunkedAsync<'T> (dataObj : 'T) =
         task {
+            // Don't set the Transfer-Encoding to chunked manually.  If we do, we'll have to do the chunking manually
+            // ourselves rather than rely on asp.net to do it for us.  
+            // Example : https://github.com/aspnet/AspNetCore/blame/728110ec9ee1b98b2d9c9ff247ba2955d6c05846/src/Servers/Kestrel/test/InMemory.FunctionalTests/ChunkedResponseTests.cs#L494
             this.SetContentType "application/json; charset=utf-8"
-            this.SetHttpHeader "Transfer-Encoding" "chunked"
             if this.Request.Method <> HttpMethods.Head then
                 let serializer = this.GetJsonSerializer()
                 do! serializer.SerializeToStreamAsync dataObj this.Response.Body
