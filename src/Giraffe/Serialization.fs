@@ -77,7 +77,7 @@ module Json =
     ///
     type NewtonsoftJsonSerializer (settings : JsonSerializerSettings) =
         let serializer = JsonSerializer.Create settings
-        let Utf8EncodingWithoutBom = new UTF8Encoding(false)
+        let utf8EncodingWithoutBom = UTF8Encoding(false)
 
         static member DefaultSettings =
             JsonSerializerSettings(
@@ -91,15 +91,15 @@ module Json =
                 JsonConvert.SerializeObject(x, settings)
                 |> Encoding.UTF8.GetBytes
 
-            member __.SerializeToStreamAsync (x : 'T) (stream : Stream) = 
+            member __.SerializeToStreamAsync (x : 'T) (stream : Stream) =
                 task {
                     use memoryStream = new MemoryStream()
-                    use streamWriter = new StreamWriter(memoryStream, Utf8EncodingWithoutBom)
+                    use streamWriter = new StreamWriter(memoryStream, utf8EncodingWithoutBom)
                     use jsonTextWriter = new JsonTextWriter(streamWriter)
                     serializer.Serialize(jsonTextWriter, x)
                     jsonTextWriter.Flush()
                     memoryStream.Seek(0L, SeekOrigin.Begin) |> ignore
-                    do! memoryStream.CopyToAsync(stream) 
+                    do! memoryStream.CopyToAsync(stream)
                 } :> Task
 
             member __.Deserialize<'T> (json : string) =
@@ -109,9 +109,9 @@ module Json =
                 let json = Encoding.UTF8.GetString bytes
                 JsonConvert.DeserializeObject<'T>(json, settings)
 
-            member __.DeserializeAsync<'T> (stream : Stream) = 
+            member __.DeserializeAsync<'T> (stream : Stream) =
                 task {
-                    use memoryStream = new MemoryStream()         
+                    use memoryStream = new MemoryStream()
                     do! stream.CopyToAsync(memoryStream)
                     memoryStream.Seek(0L, SeekOrigin.Begin) |> ignore
                     use streamReader = new StreamReader(memoryStream)

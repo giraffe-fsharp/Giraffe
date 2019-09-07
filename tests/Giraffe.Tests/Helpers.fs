@@ -99,7 +99,7 @@ let next : HttpFunc = Some >> Task.FromResult
 let createHost (configureApp      : 'Tuple -> IApplicationBuilder -> unit)
                (configureServices : IServiceCollection -> unit)
                (args              : 'Tuple) =
-    (new WebHostBuilder())
+    (WebHostBuilder())
         .UseContentRoot(Path.GetFullPath("TestFiles"))
         .Configure(Action<IApplicationBuilder> (configureApp args))
         .ConfigureServices(Action<IServiceCollection> configureServices)

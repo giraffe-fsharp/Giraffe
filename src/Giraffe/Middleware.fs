@@ -26,26 +26,30 @@ type GiraffeMiddleware (next          : RequestDelegate,
 
     member __.Invoke (ctx : HttpContext) =
         task {
-            let start = System.Diagnostics.Stopwatch.GetTimestamp();
+            let subRoutingFeature = SubRoutingFeature()
+            ctx.Features.Set<ISubRoutingFeature>(subRoutingFeature)
+            try
+                let start = Diagnostics.Stopwatch.GetTimestamp()
+                let! result = func ctx
+                let  logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
 
-            let! result = func ctx
-            let  logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
+                if logger.IsEnabled LogLevel.Debug then
+                    let freq = double Diagnostics.Stopwatch.Frequency
+                    let stop = Diagnostics.Stopwatch.GetTimestamp()
+                    let elapsedMs = (double (stop - start)) * 1000.0 / freq
 
-            if logger.IsEnabled LogLevel.Debug then
-                let freq = double System.Diagnostics.Stopwatch.Frequency
-                let stop = System.Diagnostics.Stopwatch.GetTimestamp()
-                let elapsedMs = (double (stop - start)) * 1000.0 / freq
+                    logger.LogDebug(
+                        "Giraffe returned {SomeNoneResult} for {HttpProtocol} {HttpMethod} at {Path} in {ElapsedMs}",
+                        (if result.IsSome then "Some" else "None"),
+                        ctx.Request.Protocol,
+                        ctx.Request.Method,
+                        ctx.Request.Path.ToString(),
+                        elapsedMs)
 
-                logger.LogDebug(
-                    "Giraffe returned {SomeNoneResult} for {HttpProtocol} {HttpMethod} at {Path} in {ElapsedMs}",
-                    (if result.IsSome then "Some" else "None"),
-                    ctx.Request.Protocol,
-                    ctx.Request.Method,
-                    ctx.Request.Path.ToString(),
-                    elapsedMs)
-
-            if (result.IsNone) then
-                return! next.Invoke ctx
+                if (result.IsNone) then
+                    return! next.Invoke ctx
+            finally
+                ctx.Features.Set<ISubRoutingFeature>(Unchecked.defaultof<ISubRoutingFeature>)
         }
 
 // ---------------------------
