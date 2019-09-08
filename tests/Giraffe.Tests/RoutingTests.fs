@@ -1075,9 +1075,8 @@ let ``subRoutef (compatMode 36): GET "/en/10/api/Julia" returns "Hello Julia! La
 // subRouteCi Tests
 // ---------------------------------
 
-[<Fact>]
-let ``subRouteCi: Non-filtering handler after subRouteCi is called`` () =
-    let ctx = mockHttpContext Version40
+let subRouteCiTest compatMode requestPath expected =
+    let ctx = mockHttpContext compatMode
     mockJson ctx (Newtonsoft None)
     let app =
         GET >=> choose [
@@ -1086,9 +1085,8 @@ let ``subRouteCi: Non-filtering handler after subRouteCi is called`` () =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/FOO")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "subroute /foo"
 
     task {
         let! result = app next ctx
@@ -1098,9 +1096,8 @@ let ``subRouteCi: Non-filtering handler after subRouteCi is called`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-[<Fact>]
-let ``subRouteCi: Nested route after subRouteCi is called`` () =
-    let ctx = mockHttpContext Version40
+let nestedRouteAfterSubRouteCiTest compatMode requestPath expected =
+    let ctx = mockHttpContext compatMode
     mockJson ctx (Newtonsoft None)
     let app =
         GET >=> choose [
@@ -1110,9 +1107,8 @@ let ``subRouteCi: Nested route after subRouteCi is called`` () =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/FOO/bar")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "subroute /foo/bar"
 
     task {
         let! result = app next ctx
@@ -1122,9 +1118,8 @@ let ``subRouteCi: Nested route after subRouteCi is called`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-[<Fact>]
-let ``subRouteCi: Nested route after subRouteCi is still case sensitive`` () =
-    let ctx = mockHttpContext Version40
+let nestedRouteAfterSubRouteCiIsStillCaseSensitiveTest compatMode requestPath expected =
+    let ctx = mockHttpContext compatMode
     mockJson ctx (Newtonsoft None)
     let app =
         GET >=> choose [
@@ -1137,9 +1132,30 @@ let ``subRouteCi: Nested route after subRouteCi is still case sensitive`` () =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/FOO/BAR")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "Not found - nested"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+let nestedRouteCiAfterSubRouteCiTest compatMode requestPath expected =
+    let ctx = mockHttpContext compatMode
+    mockJson ctx (Newtonsoft None)
+    let app =
+        GET >=> choose [
+            subRouteCi "/foo" (
+                routeCi "/bar" >=> text "subroute /foo/bar")
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
+    ctx.Response.Body <- new MemoryStream()
 
     task {
         let! result = app next ctx
@@ -1150,25 +1166,33 @@ let ``subRouteCi: Nested route after subRouteCi is still case sensitive`` () =
     }
 
 [<Fact>]
-let ``subRouteCi: Nested routeCi after subRouteCi is called`` () =
-    let ctx = mockHttpContext Version40
-    mockJson ctx (Newtonsoft None)
-    let app =
-        GET >=> choose [
-            subRouteCi "/foo" (
-                routeCi "/bar" >=> text "subroute /foo/bar")
-            setStatusCode 404 >=> text "Not found" ]
+let ``subRouteCi (compatMode 40): Non-filtering handler after subRouteCi is called`` () =
+    subRouteCiTest Version40 "/FOO" "subroute /foo"
 
-    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/FOO/BAR")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "subroute /foo/bar"
+[<Fact>]
+let ``subRouteCi (compatMode 36): Non-filtering handler after subRouteCi is called`` () =
+    subRouteCiTest Version36 "/FOO" "subroute /foo"
 
-    task {
-        let! result = app next ctx
+[<Fact>]
+let ``subRouteCi (compatMode 40): Nested route after subRouteCi is called`` () =
+    nestedRouteAfterSubRouteCiTest Version40 "/FOO/bar" "subroute /foo/bar"
 
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
+[<Fact>]
+let ``subRouteCi (compatMode 36): Nested route after subRouteCi is called`` () =
+    nestedRouteAfterSubRouteCiTest Version36 "/FOO/bar" "subroute /foo/bar"
+
+[<Fact>]
+let ``subRouteCi (compatMode 40): Nested route after subRouteCi is still case sensitive`` () =
+    nestedRouteAfterSubRouteCiIsStillCaseSensitiveTest Version40 "/FOO/BAR" "Not found - nested"
+
+[<Fact>]
+let ``subRouteCi (compatMode 36): Nested route after subRouteCi is still case sensitive`` () =
+    nestedRouteAfterSubRouteCiIsStillCaseSensitiveTest Version36 "/FOO/BAR" "Not found - nested"
+
+[<Fact>]
+let ``subRouteCi (compatMode 40): Nested routeCi after subRouteCi is called`` () =
+    nestedRouteCiAfterSubRouteCiTest Version40 "/FOO/BAR" "subroute /foo/bar"
+
+[<Fact>]
+let ``subRouteCi (compatMode 36): Nested routeCi after subRouteCi is called`` () =
+    nestedRouteCiAfterSubRouteCiTest Version36 "/FOO/BAR" "subroute /foo/bar"
