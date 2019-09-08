@@ -15,7 +15,7 @@ open Giraffe
 
 [<Fact>]
 let ``route: GET "/" returns "Hello World"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -37,7 +37,7 @@ let ``route: GET "/" returns "Hello World"`` () =
 
 [<Fact>]
 let ``route: GET "/foo" returns "bar"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -59,7 +59,7 @@ let ``route: GET "/foo" returns "bar"`` () =
 
 [<Fact>]
 let ``route: GET "/FOO" returns 404 "Not found"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -88,7 +88,7 @@ let ``route: GET "/FOO" returns 404 "Not found"`` () =
 
 [<Fact>]
 let ``GET "/JSON" returns "BaR"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     mockJson ctx (Newtonsoft None)
     let app =
         GET >=> choose [
@@ -117,7 +117,7 @@ let ``GET "/JSON" returns "BaR"`` () =
 
 [<Fact>]
 let ``routex: GET "/" returns "Hello World"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             routex "/"    >=> text "Hello World"
@@ -139,7 +139,7 @@ let ``routex: GET "/" returns "Hello World"`` () =
 
 [<Fact>]
 let ``routex: GET "/foo" returns "bar"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             routex "/"    >=> text "Hello World"
@@ -161,7 +161,7 @@ let ``routex: GET "/foo" returns "bar"`` () =
 
 [<Fact>]
 let ``routex: GET "/FOO" returns 404 "Not found"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             routex "/"    >=> text "Hello World"
@@ -186,7 +186,7 @@ let ``routex: GET "/FOO" returns 404 "Not found"`` () =
 
 [<Fact>]
 let ``routex: GET "/foo///" returns "bar"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             routex "/"        >=> text "Hello World"
@@ -208,7 +208,7 @@ let ``routex: GET "/foo///" returns "bar"`` () =
 
 [<Fact>]
 let ``routex: GET "/foo2" returns "bar"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             routex "/"         >=> text "Hello World"
@@ -234,7 +234,7 @@ let ``routex: GET "/foo2" returns "bar"`` () =
 
 [<Fact>]
 let ``routeCix: GET "/CaSe///" returns "right"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             routex   "/case(/*)" >=> text "wrong"
@@ -260,7 +260,7 @@ let ``routeCix: GET "/CaSe///" returns "right"`` () =
 
 [<Fact>]
 let ``routef: GET "/foo/blah blah/bar" returns "blah blah"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             route   "/"       >=> text "Hello World"
@@ -284,7 +284,7 @@ let ``routef: GET "/foo/blah blah/bar" returns "blah blah"`` () =
 
 [<Fact>]
 let ``routef: GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             route   "/"       >=> text "Hello World"
@@ -308,7 +308,7 @@ let ``routef: GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
 
 [<Fact>]
 let ``routef: GET "/foo/b%2Fc/bar" returns "b%2Fc"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             route  "/"       >=> text "Hello World"
@@ -332,7 +332,7 @@ let ``routef: GET "/foo/b%2Fc/bar" returns "b%2Fc"`` () =
 
 [<Fact>]
 let ``routef: GET "/foo/a%2Fb%2Bc.d%2Ce/bar" returns "a%2Fb%2Bc.d%2Ce"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             route  "/"       >=> text "Hello World"
@@ -363,7 +363,7 @@ let ``routef: GET "/foo/a%2Fb%2Bc.d%2Ce/bar" returns "a%2Fb%2Bc.d%2Ce"`` () =
 [<InlineData( "/test/hello/more", "Not found" )>]
 [<InlineData( "/TEST/hello/more", "Not found" )>]
 let ``routeStartsWith(f|Cif)`` (uri:string, expected:string) =
-    
+
     let app =
         GET >=> choose [
             routeStartsWithf "/API/%s/" (fun capture -> text ("routeStartsWithf:" + capture))
@@ -371,7 +371,7 @@ let ``routeStartsWith(f|Cif)`` (uri:string, expected:string) =
             setStatusCode 404 >=> text "Not found"
         ]
 
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString(uri)) |> ignore
     ctx.Response.Body <- new MemoryStream()
@@ -386,7 +386,7 @@ let ``routeStartsWith(f|Cif)`` (uri:string, expected:string) =
 
 [<Fact>]
 let ``routef: GET "/foo/%O/bar/%O" returns "Guid1: ..., Guid2: ..."`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             route  "/"       >=> text "Hello World"
@@ -411,7 +411,7 @@ let ``routef: GET "/foo/%O/bar/%O" returns "Guid1: ..., Guid2: ..."`` () =
 
 [<Fact>]
 let ``routef: GET "/foo/%u/bar/%u" returns "Id1: ..., Id2: ..."`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             route  "/"       >=> text "Hello World"
@@ -436,7 +436,7 @@ let ``routef: GET "/foo/%u/bar/%u" returns "Id1: ..., Id2: ..."`` () =
 
 [<Fact>]
 let ``routef: GET "/foo/bar/baz/qux" returns 404 "Not found"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             routef "/foo/%s/%s" (fun (s1, s2) -> text (sprintf "%s,%s" s1 s2))
@@ -464,7 +464,7 @@ let ``routef: GET "/foo/bar/baz/qux" returns 404 "Not found"`` () =
 
 [<Fact>]
 let ``POST "/POsT/1" returns "1"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     mockJson ctx (Newtonsoft None)
     let app =
         choose [
@@ -490,7 +490,7 @@ let ``POST "/POsT/1" returns "1"`` () =
 
 [<Fact>]
 let ``POST "/POsT/523" returns "523"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     mockJson ctx (Newtonsoft None)
     let app =
         choose [
@@ -533,7 +533,7 @@ type Purchase = { PaymentMethod : PaymentMethod }
 
 [<Fact>]
 let ``routeBind: Route has matching union type``() =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             routeBind<Purchase> "/{paymentMethod}"
@@ -553,7 +553,7 @@ let ``routeBind: Route has matching union type``() =
 
 [<Fact>]
 let ``routeBind: Route doesn't match union type``() =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             routeBind<Purchase> "/{paymentMethod}"
@@ -573,7 +573,7 @@ let ``routeBind: Route doesn't match union type``() =
 
 [<Fact>]
 let ``routeBind: Normal route``() =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
@@ -590,7 +590,7 @@ let ``routeBind: Normal route``() =
 
 [<Fact>]
 let ``routeBind: Normal route with trailing slash``() =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}/" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d/")) |> ignore
@@ -607,7 +607,7 @@ let ``routeBind: Normal route with trailing slash``() =
 
 [<Fact>]
 let ``routeBind: Route with (/*) matches mutliple trailing slashes``() =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}(/*)" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d///")) |> ignore
@@ -624,7 +624,7 @@ let ``routeBind: Route with (/*) matches mutliple trailing slashes``() =
 
 [<Fact>]
 let ``routeBind: Route with (/*) matches no trailing slash``() =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}(/*)" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/2/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
@@ -641,7 +641,7 @@ let ``routeBind: Route with (/*) matches no trailing slash``() =
 
 [<Fact>]
 let ``routeBind: Route with (/?) matches single trailing slash``() =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}(/?)" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/3/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d/")) |> ignore
@@ -658,7 +658,7 @@ let ``routeBind: Route with (/?) matches single trailing slash``() =
 
 [<Fact>]
 let ``routeBind: Route with (/?) matches no trailing slash``() =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}(/?)" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/4/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
@@ -675,7 +675,7 @@ let ``routeBind: Route with (/?) matches no trailing slash``() =
 
 [<Fact>]
 let ``routeBind: Route with non parameterised part``() =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app = GET >=> routeBind<RouteBind> "/api/{foo}/{bar}/{id}" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
@@ -692,7 +692,7 @@ let ``routeBind: Route with non parameterised part``() =
 
 [<Fact>]
 let ``routeBind: Route with non parameterised part and with Guid binding``() =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app = GET >=> routeBind<RouteBindId> "/api/{id}" (fun m -> sprintf "%O" m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
@@ -709,7 +709,7 @@ let ``routeBind: Route with non parameterised part and with Guid binding``() =
 
 [<Fact>]
 let ``routeBind: Route with non parameterised part and with (/?)``() =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app = GET >=> routeBind<RouteBindId> "/api/{id}(/?)" (fun m -> sprintf "%O" m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d/")) |> ignore
@@ -726,7 +726,7 @@ let ``routeBind: Route with non parameterised part and with (/?)``() =
 
 [<Fact>]
 let ``routeBind: Route nested after subRoute``() =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app = GET >=> subRoute "/test" (routeBind<RouteBindId> "/api/{id}(/?)" (fun m -> sprintf "%O" m.Id |> text))
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -748,7 +748,7 @@ let ``routeBind: Route nested after subRoute``() =
 
 [<Fact>]
 let ``subRoute: Route with empty route`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -777,7 +777,7 @@ let ``subRoute: Route with empty route`` () =
 
 [<Fact>]
 let ``subRoute: Normal nested route after subRoute`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -808,7 +808,7 @@ let ``subRoute: Normal nested route after subRoute`` () =
 let ``subRoute: Route after subRoute has same beginning of path`` () =
 
     task {
-        let ctx = Substitute.For<HttpContext>()
+        let ctx = mockHttpContext Version40
 
         let app =
             GET >=> choose [
@@ -837,7 +837,7 @@ let ``subRoute: Route after subRoute has same beginning of path`` () =
 
 [<Fact>]
 let ``subRoute: Nested sub routes`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -875,7 +875,7 @@ let ``subRoute: Nested sub routes`` () =
 
 [<Fact>]
 let ``subRoute: Multiple nested sub routes`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -914,7 +914,7 @@ let ``subRoute: Multiple nested sub routes`` () =
 
 [<Fact>]
 let ``subRoute: Route after nested sub routes has same beginning of path`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -954,7 +954,7 @@ let ``subRoute: Route after nested sub routes has same beginning of path`` () =
 
 [<Fact>]
 let ``subRoute: routef inside subRoute`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -997,7 +997,7 @@ let ``routef: Validation`` () =
 
 [<Fact>]
 let ``subRoutef: GET "/" returns "Not found"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             subRoutef "/%s/%i" (fun (lang, version) ->
@@ -1024,7 +1024,7 @@ let ``subRoutef: GET "/" returns "Not found"`` () =
 
 [<Fact>]
 let ``subRoutef: GET "/bar" returns "foo"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             subRoutef "/%s/%i" (fun (lang, version) ->
@@ -1051,7 +1051,7 @@ let ``subRoutef: GET "/bar" returns "foo"`` () =
 
 [<Fact>]
 let ``subRoutef: GET "/John/5/foo" returns "bar"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             subRoutef "/%s/%i" (fun (lang, version) ->
@@ -1078,7 +1078,7 @@ let ``subRoutef: GET "/John/5/foo" returns "bar"`` () =
 
 [<Fact>]
 let ``subRoutef: GET "/en/10/Julia" returns "Hello Julia! Lang: en, Version: 10"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             subRoutef "/%s/%i" (fun (lang, version) ->
@@ -1105,7 +1105,7 @@ let ``subRoutef: GET "/en/10/Julia" returns "Hello Julia! Lang: en, Version: 10"
 
 [<Fact>]
 let ``subRoutef: GET "/en/10/api/Julia" returns "Hello Julia! Lang: en, Version: 10"`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     let app =
         GET >=> choose [
             subRoutef "/%s/%i/api" (fun (lang, version) ->
@@ -1136,7 +1136,7 @@ let ``subRoutef: GET "/en/10/api/Julia" returns "Hello Julia! Lang: en, Version:
 
 [<Fact>]
 let ``subRouteCi: Non-filtering handler after subRouteCi is called`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     mockJson ctx (Newtonsoft None)
     let app =
         GET >=> choose [
@@ -1159,7 +1159,7 @@ let ``subRouteCi: Non-filtering handler after subRouteCi is called`` () =
 
 [<Fact>]
 let ``subRouteCi: Nested route after subRouteCi is called`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     mockJson ctx (Newtonsoft None)
     let app =
         GET >=> choose [
@@ -1183,7 +1183,7 @@ let ``subRouteCi: Nested route after subRouteCi is called`` () =
 
 [<Fact>]
 let ``subRouteCi: Nested route after subRouteCi is still case sensitive`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     mockJson ctx (Newtonsoft None)
     let app =
         GET >=> choose [
@@ -1210,7 +1210,7 @@ let ``subRouteCi: Nested route after subRouteCi is still case sensitive`` () =
 
 [<Fact>]
 let ``subRouteCi: Nested routeCi after subRouteCi is called`` () =
-    let ctx = Substitute.For<HttpContext>()
+    let ctx = mockHttpContext Version40
     mockJson ctx (Newtonsoft None)
     let app =
         GET >=> choose [

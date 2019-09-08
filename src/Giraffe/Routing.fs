@@ -17,14 +17,18 @@ open Giraffe.FormatExpressions
 let private RouteKey = "giraffe_route"
 
 type ISubRoutingFeature =
+    abstract member CompatibilityMode : GiraffeCompatibilityMode with get
+
     abstract member GetResolvedPath   : unit   -> string option
     abstract member SetResolvedPath   : string -> unit
     abstract member ClearResolvedPath : unit   -> unit
 
-type SubRoutingFeature() =
+type SubRoutingFeature (compatibilityMode : GiraffeCompatibilityMode) =
     let mutable resolvedPath = None
 
     interface ISubRoutingFeature with
+        member val CompatibilityMode = compatibilityMode with get
+
         member __.GetResolvedPath()             = resolvedPath
         member __.SetResolvedPath (p : string)  = resolvedPath <- Some p
         member __.ClearResolvedPath()           = resolvedPath <- None
@@ -45,7 +49,10 @@ type HttpContext with
         let subRoutingFeature = this.Features.Get<ISubRoutingFeature>()
         match subRoutingFeature.GetResolvedPath() with
         | Some p -> Some p
-        | None   -> this.GetResolvedPathFromItems()
+        | None   ->
+            match subRoutingFeature.CompatibilityMode with
+            | Version36 -> this.GetResolvedPathFromItems()
+            | Version40 -> None
 
     /// **Description**
     ///
@@ -54,8 +61,7 @@ type HttpContext with
     member this.GetNextPartOfPath() =
         let requestPath = this.Request.Path.Value
         match this.GetResolvedPath() with
-        // Should this be a StartsWith?
-        | Some p when requestPath.Contains p -> requestPath.[p.Length..]
+        | Some p when requestPath.StartsWith p -> requestPath.[p.Length..]
         | _ -> requestPath
 
     /// **Description**
@@ -65,8 +71,9 @@ type HttpContext with
     member this.SetResolvedPath (path : string) =
         let subRoutingFeature = this.Features.Get<ISubRoutingFeature>()
         subRoutingFeature.SetResolvedPath path
-        // Keep this as a fallback for Saturn, etc?
-        this.Items.[RouteKey] <- path
+
+        if subRoutingFeature.CompatibilityMode = Version36 then
+            this.Items.[RouteKey] <- path
 
     /// **Description**
     ///
@@ -75,8 +82,9 @@ type HttpContext with
     member this.ClearResolvedPath () =
         let subRoutingFeature = this.Features.Get<ISubRoutingFeature>()
         subRoutingFeature.ClearResolvedPath()
-        // Keep this as a fallback for Saturn, etc?
-        this.Items.Remove RouteKey
+
+        if subRoutingFeature.CompatibilityMode = Version36 then
+            this.Items.Remove RouteKey |> ignore
 
 [<RequireQualifiedAccess>]
 module SubRoutingHandlers =

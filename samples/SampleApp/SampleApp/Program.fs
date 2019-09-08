@@ -173,7 +173,7 @@ let configureApp (app : IApplicationBuilder) =
        .UseStaticFiles()
        .UseAuthentication()
        .UseResponseCaching()
-       .UseGiraffe webApp
+       .UseGiraffe(webApp, Version40)
 
 let configureServices (services : IServiceCollection) =
     services

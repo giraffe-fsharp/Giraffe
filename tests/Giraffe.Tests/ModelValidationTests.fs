@@ -66,7 +66,7 @@ module WebApp =
 
     let configureApp args (app : IApplicationBuilder) =
         app.UseGiraffeErrorHandler(errorHandler)
-           .UseGiraffe(webApp args)
+           .UseGiraffe(webApp args, Version40)
 
     let configureServices (services : IServiceCollection) =
         services.AddGiraffe() |> ignore

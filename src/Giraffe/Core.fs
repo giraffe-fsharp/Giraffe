@@ -13,6 +13,14 @@ open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe.Serialization
 
 // ---------------------------
+// Compatibility Settings
+// ---------------------------
+
+type GiraffeCompatibilityMode =
+    | Version36
+    | Version40
+
+// ---------------------------
 // Giraffe exception types
 // ---------------------------
 

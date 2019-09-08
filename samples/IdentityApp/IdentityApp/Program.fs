@@ -200,7 +200,7 @@ let configureApp (app : IApplicationBuilder) =
     app.UseCors(configureCors)
        .UseGiraffeErrorHandler(errorHandler)
        .UseAuthentication()
-       .UseGiraffe webApp
+       .UseGiraffe(webApp, Version40)
 
 let configureServices (services : IServiceCollection) =
     // Configure InMemory Db for sample application

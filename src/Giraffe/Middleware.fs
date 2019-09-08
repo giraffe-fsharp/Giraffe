@@ -15,9 +15,10 @@ open Giraffe.Serialization
 // Default middleware
 // ---------------------------
 
-type GiraffeMiddleware (next          : RequestDelegate,
-                        handler       : HttpHandler,
-                        loggerFactory : ILoggerFactory) =
+type GiraffeMiddleware (next                : RequestDelegate,
+                        handler             : HttpHandler,
+                        compatibilityMode   : GiraffeCompatibilityMode,
+                        loggerFactory       : ILoggerFactory) =
 
     do if isNull next then raise (ArgumentNullException("next"))
 
@@ -26,7 +27,7 @@ type GiraffeMiddleware (next          : RequestDelegate,
 
     member __.Invoke (ctx : HttpContext) =
         task {
-            let subRoutingFeature = SubRoutingFeature()
+            let subRoutingFeature = SubRoutingFeature compatibilityMode
             ctx.Features.Set<ISubRoutingFeature>(subRoutingFeature)
             try
                 let start = Diagnostics.Stopwatch.GetTimestamp()
@@ -96,7 +97,26 @@ type IApplicationBuilder with
     /// Returns `unit`.
     ///
     member this.UseGiraffe (handler : HttpHandler) =
-        this.UseMiddleware<GiraffeMiddleware> handler
+        this.UseMiddleware<GiraffeMiddleware> (handler, Version36)
+        |> ignore
+
+    /// **Description**
+    ///
+    /// Adds the `GiraffeMiddleware` into the ASP.NET Core pipeline. Any web request which doesn't get handled by a surrounding middleware can be picked up by the Giraffe `HttpHandler` pipeline.
+    ///
+    /// It is generally recommended to add the `GiraffeMiddleware` after the error handling-, static file- and any authentiation middleware.
+    ///
+    /// **Parameters**
+    ///
+    /// - `handler`: The Giraffe `HttpHandler` pipeline. The handler can be anything from a single handler to an entire web application which has been composed from many smaller handlers.
+    /// - `compatibilityMode`: Defines the compatibility mode of the Giraffe routing handlers. It is recommended to use `Version40` if backwards compatibility with the older `SubRouting` module is not required.
+    ///
+    /// **Output**
+    ///
+    /// Returns `unit`.
+    ///
+    member this.UseGiraffe (handler : HttpHandler, compatibilityMode : GiraffeCompatibilityMode) =
+        this.UseMiddleware<GiraffeMiddleware> (handler, compatibilityMode)
         |> ignore
 
     /// **Description**

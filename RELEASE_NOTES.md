@@ -48,6 +48,18 @@ For more information please see [issue #347](https://github.com/giraffe-fsharp/G
 
     type MatchOptions = { IgnoreCase: bool; MatchMode: MatchMode; }
     ```
+- Changed the sub routing feature to use an ASP.NET Core `HttpContext.Features` module for resolving and storing (sub)paths. The previous `SubRouting` module has been deprecated and replaced with the `ISubRoutingFeature` interface and `SubRoutingFeature` class. Additionally there have been added new `HttpContext` extension methods which make it easier to interact with the new sub routing feature:
+
+    - `HttpContext.GetResolvedPath()` replaces `SubRouting.getSavedPartialPath ctx`
+    - `HttpContext.GetNextPartOfPath()` replaces `SubRouting.getNextPartOfPath ctx`
+    - `HttpContext.SetResolvedPath(path)` replaces the manual setting of the `HttpContext.Items` key-value pair
+- The new `ISubRoutingFeature` implementation doesn't use the `HttpContext.Items` collection anymore. For compatibility reasons Giraffe still falls back and populates this key-value pair if run in `Version36` compatibility mode (= default). If compatibility with the `HttpContext.Items` collection is not required then it is recommended to register the Giraffe middleware with `Version40` compatibility:
+
+    ```fsharp
+    let configureApp _ (app : IApplicationBuilder) =
+        app.UseGiraffeErrorHandler(errorHandler)
+            .UseGiraffe(webApp, Version40)
+    ```
 
 ## 3.6.0
 

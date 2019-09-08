@@ -145,7 +145,7 @@ module Handlers =
 let configureApp (app : IApplicationBuilder) =
     app.UseGiraffeErrorHandler(Handlers.error)
        .UseAuthentication()
-       .UseGiraffe Handlers.webApp
+       .UseGiraffe(Handlers.webApp, Version40)
 
 let configureServices (services : IServiceCollection) =
     // Enable Authentication providers
