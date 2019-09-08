@@ -746,9 +746,8 @@ let ``routeBind: Route nested after subRoute``() =
 // subRoute Tests
 // ---------------------------------
 
-[<Fact>]
-let ``subRoute: Route with empty route`` () =
-    let ctx = mockHttpContext Version40
+let subRouteTest compatMode requestPath expected =
+    let ctx = mockHttpContext compatMode
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -763,9 +762,8 @@ let ``subRoute: Route with empty route`` () =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "api root"
 
     task {
         let! result = app next ctx
@@ -775,69 +773,8 @@ let ``subRoute: Route with empty route`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-[<Fact>]
-let ``subRoute: Normal nested route after subRoute`` () =
-    let ctx = mockHttpContext Version40
-    let app =
-        GET >=> choose [
-            route "/"    >=> text "Hello World"
-            route "/foo" >=> text "bar"
-            subRoute "/api" (
-                choose [
-                    route ""       >=> text "api root"
-                    route "/admin" >=> text "admin"
-                    route "/users" >=> text "users" ] )
-            route "/api/test" >=> text "test"
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/users")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "users"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``subRoute: Route after subRoute has same beginning of path`` () =
-
-    task {
-        let ctx = mockHttpContext Version40
-
-        let app =
-            GET >=> choose [
-                route "/"    >=> text "Hello World"
-                route "/foo" >=> text "bar"
-                subRoute "/api" (
-                    choose [
-                        route ""       >=> text "api root"
-                        route "/admin" >=> text "admin"
-                        route "/users" >=> text "users" ] )
-                route "/api/test" >=> text "test"
-                setStatusCode 404 >=> text "Not found" ]
-
-        ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
-        ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-        ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/test")) |> ignore
-        ctx.Response.Body <- new MemoryStream()
-        let expected = "test"
-
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``subRoute: Nested sub routes`` () =
-    let ctx = mockHttpContext Version40
+let nestedSubRouteTest compatMode requestPath expected =
+    let ctx = mockHttpContext compatMode
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -861,9 +798,8 @@ let ``subRoute: Nested sub routes`` () =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/v2/users")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "users v2"
 
     task {
         let! result = app next ctx
@@ -873,9 +809,8 @@ let ``subRoute: Nested sub routes`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-[<Fact>]
-let ``subRoute: Multiple nested sub routes`` () =
-    let ctx = mockHttpContext Version40
+let multipleNestedSubRouteTest compatMode requestPath expected =
+    let ctx = mockHttpContext compatMode
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -900,9 +835,8 @@ let ``subRoute: Multiple nested sub routes`` () =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/v2/admin2")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "correct admin2"
 
     task {
         let! result = app next ctx
@@ -912,9 +846,8 @@ let ``subRoute: Multiple nested sub routes`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-[<Fact>]
-let ``subRoute: Route after nested sub routes has same beginning of path`` () =
-    let ctx = mockHttpContext Version40
+let routeAfterSubRoutesWithSimilarPath compatMode requestPath expected =
+    let ctx = mockHttpContext compatMode
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -940,9 +873,8 @@ let ``subRoute: Route after nested sub routes has same beginning of path`` () =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/v2/else")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "else"
 
     task {
         let! result = app next ctx
@@ -952,9 +884,8 @@ let ``subRoute: Route after nested sub routes has same beginning of path`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-[<Fact>]
-let ``subRoute: routef inside subRoute`` () =
-    let ctx = mockHttpContext Version40
+let routefInsideSubRouteTest compatMode requestPath expected =
+    let ctx = mockHttpContext compatMode
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -968,9 +899,8 @@ let ``subRoute: routef inside subRoute`` () =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/foo/bar/yadayada")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "yadayada"
 
     task {
         let! result = app next ctx
@@ -979,6 +909,62 @@ let ``subRoute: routef inside subRoute`` () =
         | None     -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
+
+[<Fact>]
+let ``subRoute (compatMode 40): Route with empty route`` () =
+    subRouteTest Version40 "/api" "api root"
+
+[<Fact>]
+let ``subRoute (compatMode 36): Route with empty route`` () =
+    subRouteTest Version36 "/api" "api root"
+
+[<Fact>]
+let ``subRoute (compatMode 40): Normal nested route after subRoute`` () =
+    subRouteTest Version40 "/api/users" "users"
+
+[<Fact>]
+let ``subRoute (compatMode 36): Normal nested route after subRoute`` () =
+    subRouteTest Version36 "/api/users" "users"
+
+[<Fact>]
+let ``subRoute (compatMode 40): Route after subRoute has same beginning of path`` () =
+    subRouteTest Version40 "/api/test" "test"
+
+[<Fact>]
+let ``subRoute (compatMode 36): Route after subRoute has same beginning of path`` () =
+    subRouteTest Version36 "/api/test" "test"
+
+[<Fact>]
+let ``subRoute (compatMode 40): Nested sub routes`` () =
+    nestedSubRouteTest Version40 "/api/v2/users" "users v2"
+
+[<Fact>]
+let ``subRoute (compatMode 36): Nested sub routes`` () =
+    nestedSubRouteTest Version36 "/api/v2/users" "users v2"
+
+[<Fact>]
+let ``subRoute (compatMode 40): Multiple nested sub routes`` () =
+    multipleNestedSubRouteTest Version40 "/api/v2/admin2" "correct admin2"
+
+[<Fact>]
+let ``subRoute (compatMode 36): Multiple nested sub routes`` () =
+    multipleNestedSubRouteTest Version36 "/api/v2/admin2" "correct admin2"
+
+[<Fact>]
+let ``subRoute (compatMode 40): Route after nested sub routes has same beginning of path`` () =
+    routeAfterSubRoutesWithSimilarPath Version40 "/api/v2/else" "else"
+
+[<Fact>]
+let ``subRoute (compatMode 36): Route after nested sub routes has same beginning of path`` () =
+    routeAfterSubRoutesWithSimilarPath Version36 "/api/v2/else" "else"
+
+[<Fact>]
+let ``subRoute (compatMode 40): routef inside subRoute`` () =
+    routefInsideSubRouteTest Version40 "/api/foo/bar/yadayada" "yadayada"
+
+[<Fact>]
+let ``subRoute (compatMode 36): routef inside subRoute`` () =
+    routefInsideSubRouteTest Version36 "/api/foo/bar/yadayada" "yadayada"
 
 // ---------------------------------
 // subRoutef Tests
