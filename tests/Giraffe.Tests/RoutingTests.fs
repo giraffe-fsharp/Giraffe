@@ -259,6 +259,17 @@ let ``routeCix: GET "/CaSe///" returns "right"`` () =
 // ---------------------------------
 
 [<Fact>]
+let ``routef: Validation`` () =
+    Assert.Throws( fun () ->
+        GET >=> choose [
+            route   "/"       >=> text "Hello World"
+            route   "/foo"    >=> text "bar"
+            routef "/foo/%s/%d" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
+            setStatusCode 404 >=> text "Not found" ]
+        |> ignore
+    ) |> ignore
+
+[<Fact>]
 let ``routef: GET "/foo/blah blah/bar" returns "blah blah"`` () =
     let ctx = mockHttpContext Version40
     let app =
@@ -970,20 +981,8 @@ let ``subRoute (compatMode 36): routef inside subRoute`` () =
 // subRoutef Tests
 // ---------------------------------
 
-[<Fact>]
-let ``routef: Validation`` () =
-    Assert.Throws( fun () ->
-        GET >=> choose [
-            route   "/"       >=> text "Hello World"
-            route   "/foo"    >=> text "bar"
-            routef "/foo/%s/%d" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
-            setStatusCode 404 >=> text "Not found" ]
-        |> ignore
-    ) |> ignore
-
-[<Fact>]
-let ``subRoutef: GET "/" returns "Not found"`` () =
-    let ctx = mockHttpContext Version40
+let subRoutefTest compatMode requestPath expected =
+    let ctx = mockHttpContext compatMode
     let app =
         GET >=> choose [
             subRoutef "/%s/%i" (fun (lang, version) ->
@@ -996,9 +995,8 @@ let ``subRoutef: GET "/" returns "Not found"`` () =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "Not found"
 
     task {
         let! result = app next ctx
@@ -1008,90 +1006,8 @@ let ``subRoutef: GET "/" returns "Not found"`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-[<Fact>]
-let ``subRoutef: GET "/bar" returns "foo"`` () =
-    let ctx = mockHttpContext Version40
-    let app =
-        GET >=> choose [
-            subRoutef "/%s/%i" (fun (lang, version) ->
-                choose [
-                    route  "/foo" >=> text "bar"
-                    routef "/%s" (fun name -> text (sprintf "Hello %s! Lang: %s, Version: %i" name lang version))
-                ])
-            route "/bar" >=> text "foo"
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/bar")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "foo"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``subRoutef: GET "/John/5/foo" returns "bar"`` () =
-    let ctx = mockHttpContext Version40
-    let app =
-        GET >=> choose [
-            subRoutef "/%s/%i" (fun (lang, version) ->
-                choose [
-                    route  "/foo" >=> text "bar"
-                    routef "/%s" (fun name -> text (sprintf "Hello %s! Lang: %s, Version: %i" name lang version))
-                ])
-            route "/bar" >=> text "foo"
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/John/5/foo")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "bar"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``subRoutef: GET "/en/10/Julia" returns "Hello Julia! Lang: en, Version: 10"`` () =
-    let ctx = mockHttpContext Version40
-    let app =
-        GET >=> choose [
-            subRoutef "/%s/%i" (fun (lang, version) ->
-                choose [
-                    route  "/foo" >=> text "bar"
-                    routef "/%s" (fun name -> text (sprintf "Hello %s! Lang: %s, Version: %i" name lang version))
-                ])
-            route "/bar" >=> text "foo"
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/en/10/Julia")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "Hello Julia! Lang: en, Version: 10"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``subRoutef: GET "/en/10/api/Julia" returns "Hello Julia! Lang: en, Version: 10"`` () =
-    let ctx = mockHttpContext Version40
+let subRoutefTest2 compatMode requestPath expected =
+    let ctx = mockHttpContext compatMode
     let app =
         GET >=> choose [
             subRoutef "/%s/%i/api" (fun (lang, version) ->
@@ -1104,9 +1020,8 @@ let ``subRoutef: GET "/en/10/api/Julia" returns "Hello Julia! Lang: en, Version:
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/en/10/api/Julia")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "Hello Julia! Lang: en, Version: 10"
 
     task {
         let! result = app next ctx
@@ -1115,6 +1030,46 @@ let ``subRoutef: GET "/en/10/api/Julia" returns "Hello Julia! Lang: en, Version:
         | None     -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
+
+[<Fact>]
+let ``subRoutef (compatMode 40): GET "/" returns "Not found"`` () =
+    subRoutefTest Version40 "/" "Not found"
+
+[<Fact>]
+let ``subRoutef (compatMode 36): GET "/" returns "Not found"`` () =
+    subRoutefTest Version36 "/" "Not found"
+
+[<Fact>]
+let ``subRoutef (compatMode 40): GET "/bar" returns "foo"`` () =
+    subRoutefTest Version40 "/bar" "foo"
+
+[<Fact>]
+let ``subRoutef (compatMode 36): GET "/bar" returns "foo"`` () =
+    subRoutefTest Version36 "/bar" "foo"
+
+[<Fact>]
+let ``subRoutef (compatMode 40): GET "/John/5/foo" returns "bar"`` () =
+    subRoutefTest Version40 "/John/5/foo" "bar"
+
+[<Fact>]
+let ``subRoutef (compatMode 36): GET "/John/5/foo" returns "bar"`` () =
+    subRoutefTest Version36 "/John/5/foo" "bar"
+
+[<Fact>]
+let ``subRoutef (compatMode 40): GET "/en/10/Julia" returns "Hello Julia! Lang: en, Version: 10"`` () =
+    subRoutefTest Version40 "/en/10/Julia" "Hello Julia! Lang: en, Version: 10"
+
+[<Fact>]
+let ``subRoutef (compatMode 36): GET "/en/10/Julia" returns "Hello Julia! Lang: en, Version: 10"`` () =
+    subRoutefTest Version36 "/en/10/Julia" "Hello Julia! Lang: en, Version: 10"
+
+[<Fact>]
+let ``subRoutef (compatMode 40): GET "/en/10/api/Julia" returns "Hello Julia! Lang: en, Version: 10"`` () =
+    subRoutefTest2 Version40 "/en/10/api/Julia" "Hello Julia! Lang: en, Version: 10"
+
+[<Fact>]
+let ``subRoutef (compatMode 36): GET "/en/10/api/Julia" returns "Hello Julia! Lang: en, Version: 10"`` () =
+    subRoutefTest2 Version36 "/en/10/api/Julia" "Hello Julia! Lang: en, Version: 10"
 
 // ---------------------------------
 // subRouteCi Tests
