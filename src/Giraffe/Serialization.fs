@@ -41,7 +41,7 @@ module Json =
     ///
     type Utf8JsonSerializer (resolver : IJsonFormatterResolver) =
 
-        static member DefaultResolver = Utf8Json.Resolvers.StandardResolver.CamelCase
+        static member DefaultResolver = Resolvers.StandardResolver.CamelCase
 
         interface IJsonSerializer with
             member __.SerializeToString (x : 'T) =

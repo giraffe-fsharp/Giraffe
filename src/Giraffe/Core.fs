@@ -20,6 +20,13 @@ type GiraffeCompatibilityMode =
     | Version36
     | Version40
 
+type IGiraffeOptions =
+    abstract member CompatibilityMode : GiraffeCompatibilityMode with get, set
+
+type GiraffeOptions() =
+    interface IGiraffeOptions with
+        member val CompatibilityMode = Version36 with get, set
+
 // ---------------------------
 // Giraffe exception types
 // ---------------------------

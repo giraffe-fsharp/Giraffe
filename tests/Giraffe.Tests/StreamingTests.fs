@@ -65,10 +65,12 @@ module WebApp =
 
     let configureApp _ (app : IApplicationBuilder) =
         app.UseGiraffeErrorHandler(errorHandler)
-           .UseGiraffe(webApp, Version40)
+           .UseGiraffe(webApp)
 
     let configureServices (services : IServiceCollection) =
-        services.AddGiraffe() |> ignore
+        services.AddGiraffe(
+            fun cfg -> cfg.CompatibilityMode <- Version40
+        ) |> ignore
 
 let makeRequest = makeRequest WebApp.configureApp WebApp.configureServices ()
 

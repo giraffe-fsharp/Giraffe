@@ -60,7 +60,7 @@ let configureApp (app : IApplicationBuilder) =
     app.UseAuthentication()
        .UseGiraffeErrorHandler(errorHandler)
        .UseStaticFiles()
-       .UseGiraffe(webApp, Version40)
+       .UseGiraffe(webApp)
 
 let authenticationOptions (o : AuthenticationOptions) =
     o.DefaultAuthenticateScheme <- JwtBearerDefaults.AuthenticationScheme
@@ -77,7 +77,8 @@ let jwtBearerOptions (cfg : JwtBearerOptions) =
 
 let configureServices (services : IServiceCollection) =
     services
-        .AddGiraffe()
+        .AddGiraffe(
+            fun o -> o.CompatibilityMode <- Version40)
         .AddAuthentication(authenticationOptions)
         .AddJwtBearer(Action<JwtBearerOptions> jwtBearerOptions) |> ignore
 
