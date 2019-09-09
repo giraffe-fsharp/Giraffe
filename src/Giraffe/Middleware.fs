@@ -17,7 +17,7 @@ open Giraffe.Serialization
 
 type GiraffeMiddleware (next            : RequestDelegate,
                         handler         : HttpHandler,
-                        options         : IGiraffeOptions,
+                        options         : GiraffeOptions,
                         loggerFactory   : ILoggerFactory) =
 
     do if isNull next then raise (ArgumentNullException("next"))
@@ -130,14 +130,14 @@ type IServiceCollection with
         this.TryAddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer(NewtonsoftJsonSerializer.DefaultSettings))
         this.TryAddSingleton<IXmlSerializer>(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
         this.TryAddSingleton<INegotiationConfig, DefaultNegotiationConfig>()
-        this.TryAddTransient<IGiraffeOptions, GiraffeOptions>()
+        this.TryAddTransient<GiraffeOptions, GiraffeOptions>()
         this
 
     member this.AddGiraffe (configureOptions) =
-        let giraffeOptions = GiraffeOptions() :> IGiraffeOptions
+        let giraffeOptions  = GiraffeOptions()
         configureOptions giraffeOptions
         this.TryAddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer(NewtonsoftJsonSerializer.DefaultSettings))
         this.TryAddSingleton<IXmlSerializer>(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
         this.TryAddSingleton<INegotiationConfig, DefaultNegotiationConfig>()
-        this.TryAddTransient<IGiraffeOptions>(fun _ -> giraffeOptions)
+        this.TryAddTransient<GiraffeOptions>(fun _ -> giraffeOptions)
         this

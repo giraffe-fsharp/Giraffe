@@ -161,8 +161,7 @@ let configureServices (services : IServiceCollection) =
         |> ignore
 
     // Add Giraffe dependencies
-    services.AddGiraffe(
-        fun cfg -> cfg.CompatibilityMode <- Version40)
+    services.AddGiraffe(fun cfg -> cfg.CompatibilityMode <- Version40)
     |> ignore
 
 let configureLogging (builder : ILoggingBuilder) =
