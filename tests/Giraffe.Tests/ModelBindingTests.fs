@@ -55,7 +55,7 @@ type Child =
         Name : string
         Age  : int
     }
-
+    
 [<CLIMutable>]
 type Model =
     {
@@ -135,7 +135,7 @@ let ``ModelParser.tryParse with complete model data`` () =
             |]
         }
     let culture = None
-
+    
     let result = ModelParser.tryParse<Model> culture modelData
     match result with
     | Ok model  -> Assert.Equal(expected, model)
@@ -294,7 +294,7 @@ let ``ModelParser.tryParse with incomplete model data and different order for ar
     match result with
     | Ok _      -> assertFail "Model had incomplete data and should have not bound successfully."
     | Error err -> Assert.Equal("Missing value for required property Id.", err)
-
+    
 [<Fact>]
 let ``ModelParser.tryParse with complete model data but wrong union case`` () =
     let id = Guid.NewGuid()
@@ -460,7 +460,7 @@ let ``ModelParser.parse with complete model data but mixed casing`` () =
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected, result)
-
+    
 [<Fact>]
 let ``ModelParser.parse with complete model data but with different order for array of child`` () =
     let id = Guid.NewGuid()
@@ -511,7 +511,7 @@ let ``ModelParser.parse with incomplete model data`` () =
             "Children[0].Name" , StringValues "Hamed"
             "Children[2].Age"  , StringValues "44"
         ]
-
+    
     let expected =
         {
             Id         = Guid.Empty
@@ -562,7 +562,7 @@ let ``ModelParser.parse with incomplete model data and with different order for 
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected, result)
-
+    
 [<Fact>]
 let ``ModelParser.parse with incomplete model data and wrong union case`` () =
     let modelData =
@@ -591,10 +591,10 @@ let ``ModelParser.parse with incomplete model data and wrong union case`` () =
                 { Name = null; Age = 44 }
             |]
         }
-
+        
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
-
+    
     Assert.Equal(expected.Id, result.Id)
     Assert.Equal(expected.FirstName, result.FirstName)
     Assert.Equal(expected.MiddleName, result.MiddleName)
@@ -652,7 +652,7 @@ let ``ModelParser.parse with complete model data but wrong data`` () =
 
 [<Fact>]
 let ``tryBindQuery with complete data and list items with []`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let parsingErrorHandler err = RequestErrors.badRequest (text err)
     let bindQuery = tryBindQuery<QueryModel> parsingErrorHandler None
@@ -680,7 +680,7 @@ let ``tryBindQuery with complete data and list items with []`` () =
 
 [<Fact>]
 let ``tryBindQuery with complete data and list items without []`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let parsingErrorHandler err = RequestErrors.badRequest (text err)
     let bindQuery = tryBindQuery<QueryModel> parsingErrorHandler None
@@ -708,7 +708,7 @@ let ``tryBindQuery with complete data and list items without []`` () =
 
 [<Fact>]
 let ``tryBindQuery without optional data`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let parsingErrorHandler err = RequestErrors.badRequest (text err)
     let bindQuery = tryBindQuery<QueryModel> parsingErrorHandler None
@@ -736,7 +736,7 @@ let ``tryBindQuery without optional data`` () =
 
 [<Fact>]
 let ``tryBindQuery with incomplete data`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let parsingErrorHandler err = RequestErrors.badRequest (text err)
     let bindQuery = tryBindQuery<QueryModel> parsingErrorHandler None
@@ -764,7 +764,7 @@ let ``tryBindQuery with incomplete data`` () =
 
 [<Fact>]
 let ``tryBindQuery with complete data but baldy formated list items`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let parsingErrorHandler err = RequestErrors.badRequest (text err)
     let bindQuery = tryBindQuery<QueryModel> parsingErrorHandler None
@@ -797,7 +797,7 @@ let ``tryBindQuery with complete data but baldy formated list items`` () =
 [<Theory>]
 [<MemberData("PreserveCaseData", MemberType = typedefof<JsonSerializersData>)>]
 let ``BindJsonAsync test`` (settings) =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
 
     let outputCustomer (c : Customer) = text (c.ToString())
@@ -834,7 +834,7 @@ let ``BindJsonAsync test`` (settings) =
 
 [<Fact>]
 let ``BindXmlAsync test`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockXml ctx
 
     let outputCustomer (c : Customer) = text (c.ToString())
@@ -871,7 +871,7 @@ let ``BindXmlAsync test`` () =
 
 [<Fact>]
 let ``BindFormAsync test`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
@@ -909,7 +909,7 @@ let ``BindFormAsync test`` () =
 
 [<Fact>]
 let ``BindQueryString test`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let queryHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -937,7 +937,7 @@ let ``BindQueryString test`` () =
 
 [<Fact>]
 let ``BindQueryString culture specific test`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let queryHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -975,7 +975,7 @@ let ``BindQueryString with option property test`` () =
 
         let app = GET >=> route "/" >=> queryHandlerWithSome
 
-        let ctx = mockHttpContext Version40
+        let ctx = Substitute.For<HttpContext>()
         let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
         ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
         ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -1002,7 +1002,7 @@ let ``BindQueryString with nullable property test`` () =
 
         let app = GET >=> route "/" >=> queryHandlerWithSome
 
-        let ctx = mockHttpContext Version40
+        let ctx = Substitute.For<HttpContext>()
         let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
         ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
         ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -1020,7 +1020,7 @@ let ``BindQueryString with nullable property test`` () =
 [<Theory>]
 [<MemberData("DefaultData", MemberType = typedefof<JsonSerializersData>)>]
 let ``BindModelAsync with JSON content returns correct result`` (settings) =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
 
     let outputCustomer (c : Customer) = text (c.ToString())
@@ -1059,7 +1059,7 @@ let ``BindModelAsync with JSON content returns correct result`` (settings) =
 [<Theory>]
 [<MemberData("PreserveCaseData", MemberType = typedefof<JsonSerializersData>)>]
 let ``BindModelAsync with JSON content that uses custom serialization settings returns correct result`` (settings) =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
 
     let outputCustomer (c : Customer) = text (c.ToString())
@@ -1097,7 +1097,7 @@ let ``BindModelAsync with JSON content that uses custom serialization settings r
 
 [<Fact>]
 let ``BindModelAsync with XML content returns correct result`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockXml ctx
 
     let outputCustomer (c : Customer) = text (c.ToString())
@@ -1135,7 +1135,7 @@ let ``BindModelAsync with XML content returns correct result`` () =
 
 [<Fact>]
 let ``BindModelAsync with FORM content returns correct result`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
@@ -1174,7 +1174,7 @@ let ``BindModelAsync with FORM content returns correct result`` () =
 
 [<Fact>]
 let ``BindModelAsync with culture aware form content returns correct result`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let english = CultureInfo.CreateSpecificCulture("en-GB")
@@ -1215,7 +1215,7 @@ let ``BindModelAsync with culture aware form content returns correct result`` ()
 [<Theory>]
 [<MemberData("PreserveCaseData", MemberType = typedefof<JsonSerializersData>)>]
 let ``BindModelAsync with JSON content and a specific charset returns correct result`` (settings) =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
 
     let outputCustomer (c : Customer) = text (c.ToString())
@@ -1253,7 +1253,7 @@ let ``BindModelAsync with JSON content and a specific charset returns correct re
 
 [<Fact>]
 let ``BindModelAsync during HTTP GET request with query string returns correct result`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
@@ -1279,7 +1279,7 @@ let ``BindModelAsync during HTTP GET request with query string returns correct r
 
 [<Fact>]
 let ``BindModelAsync during HTTP GET request with culture aware query string returns correct result`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let english = CultureInfo.CreateSpecificCulture("en-GB")

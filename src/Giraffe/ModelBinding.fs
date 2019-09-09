@@ -25,8 +25,8 @@ open System.Text.RegularExpressions
 ///
 module ModelParser =
 
-    type private FSharpOption<'T> = Core.Option<'T>
-    type private FSharpList<'T>   = Collections.List<'T>
+    type private FSharpOption<'T> = Microsoft.FSharp.Core.Option<'T>
+    type private FSharpList<'T>   = Microsoft.FSharp.Collections.List<'T>
 
     /// Returns a value (the None union case) if the type is `Option<'T>` otherwise `None`.
     let private getValueForMissingProperty (t : Type) =
@@ -128,7 +128,7 @@ module ModelParser =
 
         // Create culture and model objects
         let culture = defaultArg cultureInfo CultureInfo.InvariantCulture
-
+        
         let error =
             // Iterate through all properties of the model
             model.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
@@ -173,7 +173,7 @@ module ModelParser =
         match strict, error with
         | true, Some err -> Error err
         | _   , _        -> Ok model
-
+        
     and getValueForArrayOfGenericType (cultureInfo : CultureInfo option)
                                       (data        : IDictionary<string, StringValues>)
                                       (strict      : bool)
@@ -183,19 +183,19 @@ module ModelParser =
         if prop.PropertyType.IsArray then
             let lowerCasedPropName = prop.Name.ToLowerInvariant()
             let pattern = lowerCasedPropName |> Regex.Escape |> sprintf @"%s\[(\d+)\]\.(\w+)"
-
+            
             let innerType = prop.PropertyType.GetElementType()
-
-            let seqOfObjects =
+                        
+            let seqOfObjects = 
                 data
                 |> Seq.filter (fun item -> Regex.IsMatch(item.Key, pattern))
                 |> Seq.map (fun item ->
                     let matchedData = Regex.Match(item.Key, pattern)
-
+                    
                     let index = matchedData.Groups.[1].Value
                     let key = matchedData.Groups.[2].Value
                     let value = item.Value
-
+                    
                     index, key, value
                 )
                 |> Seq.groupBy (fun (index, _, _) -> index |> int)
@@ -206,28 +206,28 @@ module ModelParser =
                         |> Seq.fold(fun (state : Map<string, StringValues>) (_, key, value) ->
                             state.Add(key, value)
                         ) Map.empty
-
+                    
                     let model = Activator.CreateInstance(innerType)
                     let res = parseModel model cultureInfo dictData strict
-
+                                        
                     match res with
                     | Ok o ->
                         Some(index, o)
                     | Error _ -> None
                 )
-
+            
             let arrayOfObjects =
-                if (seqOfObjects |> Seq.length > 0) then
+                if (seqOfObjects |> Seq.length > 0) then    
                     let arraySize = (seqOfObjects |> Seq.last |> fst) + 1
                     let arrayOfObjects = Array.CreateInstance(innerType, arraySize)
-
+                                 
                     seqOfObjects
                     |> Seq.iter (fun (index, item) -> arrayOfObjects.SetValue(item, index))
-
+                    
                     arrayOfObjects
                 else
                     Array.CreateInstance(innerType, 0)
-
+            
             arrayOfObjects |> box |> Some
         else
             None
@@ -271,7 +271,7 @@ module ModelParser =
     let parse<'T> (culture : CultureInfo option)
                   (data    : IDictionary<string, StringValues>) =
         let model = Activator.CreateInstance<'T>()
-
+        
         let result = parseModel<'T> model culture data false
         match result with
         | Ok model  -> model

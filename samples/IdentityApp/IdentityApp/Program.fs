@@ -200,7 +200,7 @@ let configureApp (app : IApplicationBuilder) =
     app.UseCors(configureCors)
        .UseGiraffeErrorHandler(errorHandler)
        .UseAuthentication()
-       .UseGiraffe(webApp)
+       .UseGiraffe webApp
 
 let configureServices (services : IServiceCollection) =
     // Configure InMemory Db for sample application
@@ -242,10 +242,7 @@ let configureServices (services : IServiceCollection) =
     services.AddCors() |> ignore
 
     // Configure Giraffe dependencies
-    services.AddGiraffe(
-        fun options ->
-            options.CompatibilityMode <- Version40
-        ) |> ignore
+    services.AddGiraffe() |> ignore
 
 let configureLogging (builder : ILoggingBuilder) =
     let filter (l : LogLevel) = l.Equals LogLevel.Error

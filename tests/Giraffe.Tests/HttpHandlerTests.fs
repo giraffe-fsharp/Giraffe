@@ -46,7 +46,7 @@ type Person =
 [<Theory>]
 [<MemberData("DefaultData", MemberType = typedefof<JsonSerializersData>)>]
 let ``GET "/json" returns json object`` (settings) =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
     let app =
         GET >=> choose [
@@ -72,7 +72,7 @@ let ``GET "/json" returns json object`` (settings) =
 [<MemberData("PreserveCaseData", MemberType = typedefof<JsonSerializersData>)>]
 let ``GET "/json" with custom json settings returns json object`` (settings) =
 
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
     let app =
         GET >=> choose [
@@ -105,7 +105,7 @@ let DefaultMocksWithSize =
 [<Theory>]
 [<MemberData("DefaultMocksWithSize")>]
 let ``GET "/jsonChunked" returns json object`` (size: int, settings) =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
     let app =
         GET >=> choose [
@@ -142,7 +142,7 @@ let CamelCasedMocksWithSize =
 [<Theory>]
 [<MemberData("CamelCasedMocksWithSize")>]
 let ``GET "/jsonChunked" with custom json settings returns json object`` (size: int, settings) =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
     let app =
         GET >=> choose [
@@ -170,7 +170,7 @@ let ``GET "/jsonChunked" with custom json settings returns json object`` (size: 
 
 [<Fact>]
 let ``POST "/post/1" returns "1"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         choose [
             GET >=> choose [
@@ -196,7 +196,7 @@ let ``POST "/post/1" returns "1"`` () =
 
 [<Fact>]
 let ``POST "/post/2" returns "2"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         choose [
             GET >=> choose [
@@ -222,7 +222,7 @@ let ``POST "/post/2" returns "2"`` () =
 
 [<Fact>]
 let ``PUT "/post/2" returns 404 "Not found"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         choose [
             GET >=> choose [
@@ -251,7 +251,7 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
 
 [<Fact>]
 let ``POST "/text" with supported Accept header returns "text"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         choose [
             GET >=> choose [
@@ -284,7 +284,7 @@ let ``POST "/text" with supported Accept header returns "text"`` () =
 
 [<Fact>]
 let ``POST "/json" with supported Accept header returns "json"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx ( Newtonsoft None )
     let app =
         choose [
@@ -318,7 +318,7 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
 
 [<Fact>]
 let ``POST "/either" with supported Accept header returns "either"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         choose [
             GET >=> choose [
@@ -351,7 +351,7 @@ let ``POST "/either" with supported Accept header returns "either"`` () =
 
 [<Fact>]
 let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         choose [
             GET >=> choose [
@@ -384,7 +384,7 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
 
 [<Fact>]
 let ``GET "/person" returns rendered HTML view`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let personView model =
         html [] [
@@ -434,7 +434,7 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
             Piercings = [| "left ear"; "nose" |]
         }
 
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx (Newtonsoft None)
     mockNegotiation ctx
     let app =
@@ -476,7 +476,7 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
             Piercings = [| "left ear"; "nose" |]
         }
 
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx (Newtonsoft None)
     mockNegotiation ctx
     let app =
@@ -518,7 +518,7 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
             Piercings = [| "ear"; "nose" |]
         }
 
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockXml ctx
     mockNegotiation ctx
     let app =
@@ -570,7 +570,7 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
             Piercings = [| "ear"; "nose" |]
         }
 
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockXml ctx
     mockNegotiation ctx
     let app =
@@ -622,7 +622,7 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
             Piercings = [| "ear"; "nose" |]
         }
 
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx (Newtonsoft None)
     mockNegotiation ctx
     let app =
@@ -664,7 +664,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
             Piercings = [| "ear"; "nose" |]
         }
 
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockXml ctx
     mockNegotiation ctx
     let app =
@@ -716,7 +716,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
             Piercings = [| "ear"; "nose" |]
         }
 
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockXml ctx
     mockNegotiation ctx
     let app =
@@ -768,7 +768,7 @@ let ``Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0
             Piercings = [| "ear"; "nose" |]
         }
 
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockNegotiation ctx
     let app =
         GET >=> choose [
@@ -809,7 +809,7 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
             Piercings = [| "ear"; "nose" |]
         }
 
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockNegotiation ctx
     let app =
         GET >=> choose [
@@ -851,7 +851,7 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
             Piercings = [| "ear"; "nose" |]
         }
 
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx (Newtonsoft None)
     mockNegotiation ctx
     let app =
@@ -883,7 +883,7 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
 
 [<Fact>]
 let ``Warbler function should execute inner function each time`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let inner() = Guid.NewGuid().ToString()
     let app =
         GET >=> choose [
@@ -922,7 +922,7 @@ let ``Warbler function should execute inner function each time`` () =
 
 [<Fact>]
 let ``GET "/redirect" redirect to "/" `` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             route "/"         >=> text "Hello World"
@@ -943,7 +943,7 @@ let ``GET "/redirect" redirect to "/" `` () =
 
 [<Fact>]
 let ``POST "/redirect" redirect to "/" `` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         POST >=> choose [
             route "/"         >=> text "Hello World"

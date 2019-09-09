@@ -13,17 +13,6 @@ open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe.Serialization
 
 // ---------------------------
-// Compatibility Settings
-// ---------------------------
-
-type GiraffeCompatibilityMode =
-    | Version36
-    | Version40
-
-type GiraffeOptions() =
-    member val CompatibilityMode = Version36 with get, set
-
-// ---------------------------
 // Giraffe exception types
 // ---------------------------
 

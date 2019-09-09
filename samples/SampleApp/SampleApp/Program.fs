@@ -173,12 +173,12 @@ let configureApp (app : IApplicationBuilder) =
        .UseStaticFiles()
        .UseAuthentication()
        .UseResponseCaching()
-       .UseGiraffe(webApp)
+       .UseGiraffe webApp
 
 let configureServices (services : IServiceCollection) =
     services
         .AddResponseCaching()
-        .AddGiraffe(fun o -> o.CompatibilityMode <- Version40)
+        .AddGiraffe()
         .AddAuthentication(authScheme)
         .AddCookie(cookieAuth)   |> ignore
     services.AddDataProtection() |> ignore

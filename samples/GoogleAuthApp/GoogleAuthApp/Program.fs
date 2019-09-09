@@ -145,24 +145,23 @@ module Handlers =
 let configureApp (app : IApplicationBuilder) =
     app.UseGiraffeErrorHandler(Handlers.error)
        .UseAuthentication()
-       .UseGiraffe(Handlers.webApp)
+       .UseGiraffe Handlers.webApp
 
 let configureServices (services : IServiceCollection) =
     // Enable Authentication providers
     services.AddAuthentication(fun o -> o.DefaultScheme <- AuthSchemes.cookie)
-        .AddCookie(
-            AuthSchemes.cookie, fun o ->
-                o.LoginPath  <- PathString Urls.login
-                o.LogoutPath <- PathString Urls.logout)
-        .AddGoogle(
-            AuthSchemes.google, fun o ->
-                o.ClientId     <- "<google client id>"
-                o.ClientSecret <- "<google client secret>")
-        |> ignore
+            .AddCookie(
+                AuthSchemes.cookie, fun o ->
+                    o.LoginPath  <- PathString Urls.login
+                    o.LogoutPath <- PathString Urls.logout)
+            .AddGoogle(
+                AuthSchemes.google, fun o ->
+                    o.ClientId     <- "<google client id>"
+                    o.ClientSecret <- "<google client secret>")
+            |> ignore
 
     // Add Giraffe dependencies
-    services.AddGiraffe(fun cfg -> cfg.CompatibilityMode <- Version40)
-    |> ignore
+    services.AddGiraffe() |> ignore
 
 let configureLogging (builder : ILoggingBuilder) =
     let filter (l : LogLevel) = l.Equals LogLevel.Error

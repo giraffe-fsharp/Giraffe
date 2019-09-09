@@ -14,13 +14,13 @@ open Giraffe.GiraffeViewEngine
 
 [<Fact>]
 let ``GetRequestUrl returns entire URL of the HTTP request`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     ctx.Request.Scheme.Returns("http") |> ignore
-    ctx.Request.Host.Returns(HostString("example.org:81")) |> ignore
-    ctx.Request.PathBase.Returns(PathString("/something")) |> ignore
-    ctx.Request.Path.Returns(PathString("/hello")) |> ignore
-    ctx.Request.QueryString.Returns(QueryString("?a=1&b=2")) |> ignore
+    ctx.Request.Host.Returns(new HostString("example.org:81")) |> ignore
+    ctx.Request.PathBase.Returns(new PathString("/something")) |> ignore
+    ctx.Request.Path.Returns(new PathString("/hello")) |> ignore
+    ctx.Request.QueryString.Returns(new QueryString("?a=1&b=2")) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Response.Body <- new MemoryStream()
 
@@ -42,7 +42,7 @@ let ``GetRequestUrl returns entire URL of the HTTP request`` () =
 
 [<Fact>]
 let ``TryGetRequestHeader during HTTP GET request with returns correct result`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -72,7 +72,7 @@ let ``TryGetRequestHeader during HTTP GET request with returns correct result`` 
 
 [<Fact>]
 let ``TryGetQueryStringValue during HTTP GET request with query string returns correct result`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -102,7 +102,7 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
 
 [<Fact>]
 let ``WriteHtmlViewAsync should add html to the context`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -133,7 +133,7 @@ let ``WriteHtmlViewAsync should add html to the context`` () =
 
 [<Fact>]
 let ``WriteHtmlFileAsync should return html from physical folder`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let filePath =
         Path.Combine(
@@ -162,7 +162,7 @@ let ``WriteHtmlFileAsync should return html from physical folder`` () =
 
 [<Fact>]
 let ``WriteTextAsync with HTTP GET should return text in body`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -186,7 +186,7 @@ let ``WriteTextAsync with HTTP GET should return text in body`` () =
 
 [<Fact>]
 let ``WriteTextAsync with HTTP HEAD should not return text in body`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->

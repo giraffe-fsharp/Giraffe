@@ -15,10 +15,9 @@ open Giraffe.Serialization
 // Default middleware
 // ---------------------------
 
-type GiraffeMiddleware (next            : RequestDelegate,
-                        handler         : HttpHandler,
-                        options         : GiraffeOptions,
-                        loggerFactory   : ILoggerFactory) =
+type GiraffeMiddleware (next          : RequestDelegate,
+                        handler       : HttpHandler,
+                        loggerFactory : ILoggerFactory) =
 
     do if isNull next then raise (ArgumentNullException("next"))
 
@@ -27,30 +26,26 @@ type GiraffeMiddleware (next            : RequestDelegate,
 
     member __.Invoke (ctx : HttpContext) =
         task {
-            let subRoutingFeature = SubRoutingFeature options.CompatibilityMode
-            ctx.Features.Set<ISubRoutingFeature>(subRoutingFeature)
-            try
-                let start = Diagnostics.Stopwatch.GetTimestamp()
-                let! result = func ctx
-                let  logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
+            let start = System.Diagnostics.Stopwatch.GetTimestamp();
 
-                if logger.IsEnabled LogLevel.Debug then
-                    let freq = double Diagnostics.Stopwatch.Frequency
-                    let stop = Diagnostics.Stopwatch.GetTimestamp()
-                    let elapsedMs = (double (stop - start)) * 1000.0 / freq
+            let! result = func ctx
+            let  logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
 
-                    logger.LogDebug(
-                        "Giraffe returned {SomeNoneResult} for {HttpProtocol} {HttpMethod} at {Path} in {ElapsedMs}",
-                        (if result.IsSome then "Some" else "None"),
-                        ctx.Request.Protocol,
-                        ctx.Request.Method,
-                        ctx.Request.Path.ToString(),
-                        elapsedMs)
+            if logger.IsEnabled LogLevel.Debug then
+                let freq = double System.Diagnostics.Stopwatch.Frequency
+                let stop = System.Diagnostics.Stopwatch.GetTimestamp()
+                let elapsedMs = (double (stop - start)) * 1000.0 / freq
 
-                if (result.IsNone) then
-                    return! next.Invoke ctx
-            finally
-                ctx.Features.Set<ISubRoutingFeature>(Unchecked.defaultof<ISubRoutingFeature>)
+                logger.LogDebug(
+                    "Giraffe returned {SomeNoneResult} for {HttpProtocol} {HttpMethod} at {Path} in {ElapsedMs}",
+                    (if result.IsSome then "Some" else "None"),
+                    ctx.Request.Protocol,
+                    ctx.Request.Method,
+                    ctx.Request.Path.ToString(),
+                    elapsedMs)
+
+            if (result.IsNone) then
+                return! next.Invoke ctx
         }
 
 // ---------------------------
@@ -130,14 +125,4 @@ type IServiceCollection with
         this.TryAddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer(NewtonsoftJsonSerializer.DefaultSettings))
         this.TryAddSingleton<IXmlSerializer>(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
         this.TryAddSingleton<INegotiationConfig, DefaultNegotiationConfig>()
-        this.TryAddTransient<GiraffeOptions, GiraffeOptions>()
-        this
-
-    member this.AddGiraffe (configureOptions) =
-        let giraffeOptions  = GiraffeOptions()
-        configureOptions giraffeOptions
-        this.TryAddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer(NewtonsoftJsonSerializer.DefaultSettings))
-        this.TryAddSingleton<IXmlSerializer>(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
-        this.TryAddSingleton<INegotiationConfig, DefaultNegotiationConfig>()
-        this.TryAddTransient<GiraffeOptions>(fun _ -> giraffeOptions)
         this

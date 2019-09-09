@@ -15,7 +15,7 @@ open Giraffe
 
 [<Fact>]
 let ``route: GET "/" returns "Hello World"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -37,7 +37,7 @@ let ``route: GET "/" returns "Hello World"`` () =
 
 [<Fact>]
 let ``route: GET "/foo" returns "bar"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -59,7 +59,7 @@ let ``route: GET "/foo" returns "bar"`` () =
 
 [<Fact>]
 let ``route: GET "/FOO" returns 404 "Not found"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -88,7 +88,7 @@ let ``route: GET "/FOO" returns 404 "Not found"`` () =
 
 [<Fact>]
 let ``GET "/JSON" returns "BaR"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx (Newtonsoft None)
     let app =
         GET >=> choose [
@@ -117,7 +117,7 @@ let ``GET "/JSON" returns "BaR"`` () =
 
 [<Fact>]
 let ``routex: GET "/" returns "Hello World"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             routex "/"    >=> text "Hello World"
@@ -139,7 +139,7 @@ let ``routex: GET "/" returns "Hello World"`` () =
 
 [<Fact>]
 let ``routex: GET "/foo" returns "bar"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             routex "/"    >=> text "Hello World"
@@ -161,7 +161,7 @@ let ``routex: GET "/foo" returns "bar"`` () =
 
 [<Fact>]
 let ``routex: GET "/FOO" returns 404 "Not found"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             routex "/"    >=> text "Hello World"
@@ -186,7 +186,7 @@ let ``routex: GET "/FOO" returns 404 "Not found"`` () =
 
 [<Fact>]
 let ``routex: GET "/foo///" returns "bar"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             routex "/"        >=> text "Hello World"
@@ -208,7 +208,7 @@ let ``routex: GET "/foo///" returns "bar"`` () =
 
 [<Fact>]
 let ``routex: GET "/foo2" returns "bar"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             routex "/"         >=> text "Hello World"
@@ -234,7 +234,7 @@ let ``routex: GET "/foo2" returns "bar"`` () =
 
 [<Fact>]
 let ``routeCix: GET "/CaSe///" returns "right"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             routex   "/case(/*)" >=> text "wrong"
@@ -259,19 +259,8 @@ let ``routeCix: GET "/CaSe///" returns "right"`` () =
 // ---------------------------------
 
 [<Fact>]
-let ``routef: Validation`` () =
-    Assert.Throws( fun () ->
-        GET >=> choose [
-            route   "/"       >=> text "Hello World"
-            route   "/foo"    >=> text "bar"
-            routef "/foo/%s/%d" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
-            setStatusCode 404 >=> text "Not found" ]
-        |> ignore
-    ) |> ignore
-
-[<Fact>]
 let ``routef: GET "/foo/blah blah/bar" returns "blah blah"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             route   "/"       >=> text "Hello World"
@@ -295,7 +284,7 @@ let ``routef: GET "/foo/blah blah/bar" returns "blah blah"`` () =
 
 [<Fact>]
 let ``routef: GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             route   "/"       >=> text "Hello World"
@@ -319,7 +308,7 @@ let ``routef: GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
 
 [<Fact>]
 let ``routef: GET "/foo/b%2Fc/bar" returns "b%2Fc"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             route  "/"       >=> text "Hello World"
@@ -343,7 +332,7 @@ let ``routef: GET "/foo/b%2Fc/bar" returns "b%2Fc"`` () =
 
 [<Fact>]
 let ``routef: GET "/foo/a%2Fb%2Bc.d%2Ce/bar" returns "a%2Fb%2Bc.d%2Ce"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             route  "/"       >=> text "Hello World"
@@ -374,7 +363,7 @@ let ``routef: GET "/foo/a%2Fb%2Bc.d%2Ce/bar" returns "a%2Fb%2Bc.d%2Ce"`` () =
 [<InlineData( "/test/hello/more", "Not found" )>]
 [<InlineData( "/TEST/hello/more", "Not found" )>]
 let ``routeStartsWith(f|Cif)`` (uri:string, expected:string) =
-
+    
     let app =
         GET >=> choose [
             routeStartsWithf "/API/%s/" (fun capture -> text ("routeStartsWithf:" + capture))
@@ -382,7 +371,7 @@ let ``routeStartsWith(f|Cif)`` (uri:string, expected:string) =
             setStatusCode 404 >=> text "Not found"
         ]
 
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString(uri)) |> ignore
     ctx.Response.Body <- new MemoryStream()
@@ -397,7 +386,7 @@ let ``routeStartsWith(f|Cif)`` (uri:string, expected:string) =
 
 [<Fact>]
 let ``routef: GET "/foo/%O/bar/%O" returns "Guid1: ..., Guid2: ..."`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             route  "/"       >=> text "Hello World"
@@ -422,7 +411,7 @@ let ``routef: GET "/foo/%O/bar/%O" returns "Guid1: ..., Guid2: ..."`` () =
 
 [<Fact>]
 let ``routef: GET "/foo/%u/bar/%u" returns "Id1: ..., Id2: ..."`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             route  "/"       >=> text "Hello World"
@@ -447,7 +436,7 @@ let ``routef: GET "/foo/%u/bar/%u" returns "Id1: ..., Id2: ..."`` () =
 
 [<Fact>]
 let ``routef: GET "/foo/bar/baz/qux" returns 404 "Not found"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             routef "/foo/%s/%s" (fun (s1, s2) -> text (sprintf "%s,%s" s1 s2))
@@ -475,7 +464,7 @@ let ``routef: GET "/foo/bar/baz/qux" returns 404 "Not found"`` () =
 
 [<Fact>]
 let ``POST "/POsT/1" returns "1"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx (Newtonsoft None)
     let app =
         choose [
@@ -501,7 +490,7 @@ let ``POST "/POsT/1" returns "1"`` () =
 
 [<Fact>]
 let ``POST "/POsT/523" returns "523"`` () =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx (Newtonsoft None)
     let app =
         choose [
@@ -544,7 +533,7 @@ type Purchase = { PaymentMethod : PaymentMethod }
 
 [<Fact>]
 let ``routeBind: Route has matching union type``() =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             routeBind<Purchase> "/{paymentMethod}"
@@ -564,7 +553,7 @@ let ``routeBind: Route has matching union type``() =
 
 [<Fact>]
 let ``routeBind: Route doesn't match union type``() =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             routeBind<Purchase> "/{paymentMethod}"
@@ -584,7 +573,7 @@ let ``routeBind: Route doesn't match union type``() =
 
 [<Fact>]
 let ``routeBind: Normal route``() =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
@@ -601,7 +590,7 @@ let ``routeBind: Normal route``() =
 
 [<Fact>]
 let ``routeBind: Normal route with trailing slash``() =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}/" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d/")) |> ignore
@@ -618,7 +607,7 @@ let ``routeBind: Normal route with trailing slash``() =
 
 [<Fact>]
 let ``routeBind: Route with (/*) matches mutliple trailing slashes``() =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}(/*)" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d///")) |> ignore
@@ -635,7 +624,7 @@ let ``routeBind: Route with (/*) matches mutliple trailing slashes``() =
 
 [<Fact>]
 let ``routeBind: Route with (/*) matches no trailing slash``() =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}(/*)" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/2/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
@@ -652,7 +641,7 @@ let ``routeBind: Route with (/*) matches no trailing slash``() =
 
 [<Fact>]
 let ``routeBind: Route with (/?) matches single trailing slash``() =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}(/?)" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/3/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d/")) |> ignore
@@ -669,7 +658,7 @@ let ``routeBind: Route with (/?) matches single trailing slash``() =
 
 [<Fact>]
 let ``routeBind: Route with (/?) matches no trailing slash``() =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app = GET >=> routeBind<RouteBind> "/{foo}/{bar}/{id}(/?)" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/Hello/4/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
@@ -686,7 +675,7 @@ let ``routeBind: Route with (/?) matches no trailing slash``() =
 
 [<Fact>]
 let ``routeBind: Route with non parameterised part``() =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app = GET >=> routeBind<RouteBind> "/api/{foo}/{bar}/{id}" (fun m -> sprintf "%s %i %O" m.Foo m.Bar m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/Hello/1/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
@@ -703,7 +692,7 @@ let ``routeBind: Route with non parameterised part``() =
 
 [<Fact>]
 let ``routeBind: Route with non parameterised part and with Guid binding``() =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app = GET >=> routeBind<RouteBindId> "/api/{id}" (fun m -> sprintf "%O" m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d")) |> ignore
@@ -720,7 +709,7 @@ let ``routeBind: Route with non parameterised part and with Guid binding``() =
 
 [<Fact>]
 let ``routeBind: Route with non parameterised part and with (/?)``() =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app = GET >=> routeBind<RouteBindId> "/api/{id}(/?)" (fun m -> sprintf "%O" m.Id |> text)
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/f40580b1-d55b-4fe2-b6fb-ca4f90749a9d/")) |> ignore
@@ -737,7 +726,7 @@ let ``routeBind: Route with non parameterised part and with (/?)``() =
 
 [<Fact>]
 let ``routeBind: Route nested after subRoute``() =
-    let ctx = mockHttpContext Version40
+    let ctx = Substitute.For<HttpContext>()
     let app = GET >=> subRoute "/test" (routeBind<RouteBindId> "/api/{id}(/?)" (fun m -> sprintf "%O" m.Id |> text))
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -757,8 +746,9 @@ let ``routeBind: Route nested after subRoute``() =
 // subRoute Tests
 // ---------------------------------
 
-let subRouteTest compatMode requestPath expected =
-    let ctx = mockHttpContext compatMode
+[<Fact>]
+let ``subRoute: Route with empty route`` () =
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -773,8 +763,9 @@ let subRouteTest compatMode requestPath expected =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api")) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    let expected = "api root"
 
     task {
         let! result = app next ctx
@@ -784,8 +775,69 @@ let subRouteTest compatMode requestPath expected =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-let nestedSubRouteTest compatMode requestPath expected =
-    let ctx = mockHttpContext compatMode
+[<Fact>]
+let ``subRoute: Normal nested route after subRoute`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            route "/"    >=> text "Hello World"
+            route "/foo" >=> text "bar"
+            subRoute "/api" (
+                choose [
+                    route ""       >=> text "api root"
+                    route "/admin" >=> text "admin"
+                    route "/users" >=> text "users" ] )
+            route "/api/test" >=> text "test"
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/users")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "users"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``subRoute: Route after subRoute has same beginning of path`` () =
+
+    task {
+        let ctx = Substitute.For<HttpContext>()
+
+        let app =
+            GET >=> choose [
+                route "/"    >=> text "Hello World"
+                route "/foo" >=> text "bar"
+                subRoute "/api" (
+                    choose [
+                        route ""       >=> text "api root"
+                        route "/admin" >=> text "admin"
+                        route "/users" >=> text "users" ] )
+                route "/api/test" >=> text "test"
+                setStatusCode 404 >=> text "Not found" ]
+
+        ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+        ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+        ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/test")) |> ignore
+        ctx.Response.Body <- new MemoryStream()
+        let expected = "test"
+
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``subRoute: Nested sub routes`` () =
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -809,8 +861,9 @@ let nestedSubRouteTest compatMode requestPath expected =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/v2/users")) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    let expected = "users v2"
 
     task {
         let! result = app next ctx
@@ -820,8 +873,9 @@ let nestedSubRouteTest compatMode requestPath expected =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-let multipleNestedSubRouteTest compatMode requestPath expected =
-    let ctx = mockHttpContext compatMode
+[<Fact>]
+let ``subRoute: Multiple nested sub routes`` () =
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -846,8 +900,9 @@ let multipleNestedSubRouteTest compatMode requestPath expected =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/v2/admin2")) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    let expected = "correct admin2"
 
     task {
         let! result = app next ctx
@@ -857,8 +912,9 @@ let multipleNestedSubRouteTest compatMode requestPath expected =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-let routeAfterSubRoutesWithSimilarPath compatMode requestPath expected =
-    let ctx = mockHttpContext compatMode
+[<Fact>]
+let ``subRoute: Route after nested sub routes has same beginning of path`` () =
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -884,8 +940,9 @@ let routeAfterSubRoutesWithSimilarPath compatMode requestPath expected =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/v2/else")) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    let expected = "else"
 
     task {
         let! result = app next ctx
@@ -895,8 +952,9 @@ let routeAfterSubRoutesWithSimilarPath compatMode requestPath expected =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-let routefInsideSubRouteTest compatMode requestPath expected =
-    let ctx = mockHttpContext compatMode
+[<Fact>]
+let ``subRoute: routef inside subRoute`` () =
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             route "/"    >=> text "Hello World"
@@ -910,8 +968,9 @@ let routefInsideSubRouteTest compatMode requestPath expected =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/api/foo/bar/yadayada")) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    let expected = "yadayada"
 
     task {
         let! result = app next ctx
@@ -921,68 +980,24 @@ let routefInsideSubRouteTest compatMode requestPath expected =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-[<Fact>]
-let ``subRoute (compatMode 40): Route with empty route`` () =
-    subRouteTest Version40 "/api" "api root"
-
-[<Fact>]
-let ``subRoute (compatMode 36): Route with empty route`` () =
-    subRouteTest Version36 "/api" "api root"
-
-[<Fact>]
-let ``subRoute (compatMode 40): Normal nested route after subRoute`` () =
-    subRouteTest Version40 "/api/users" "users"
-
-[<Fact>]
-let ``subRoute (compatMode 36): Normal nested route after subRoute`` () =
-    subRouteTest Version36 "/api/users" "users"
-
-[<Fact>]
-let ``subRoute (compatMode 40): Route after subRoute has same beginning of path`` () =
-    subRouteTest Version40 "/api/test" "test"
-
-[<Fact>]
-let ``subRoute (compatMode 36): Route after subRoute has same beginning of path`` () =
-    subRouteTest Version36 "/api/test" "test"
-
-[<Fact>]
-let ``subRoute (compatMode 40): Nested sub routes`` () =
-    nestedSubRouteTest Version40 "/api/v2/users" "users v2"
-
-[<Fact>]
-let ``subRoute (compatMode 36): Nested sub routes`` () =
-    nestedSubRouteTest Version36 "/api/v2/users" "users v2"
-
-[<Fact>]
-let ``subRoute (compatMode 40): Multiple nested sub routes`` () =
-    multipleNestedSubRouteTest Version40 "/api/v2/admin2" "correct admin2"
-
-[<Fact>]
-let ``subRoute (compatMode 36): Multiple nested sub routes`` () =
-    multipleNestedSubRouteTest Version36 "/api/v2/admin2" "correct admin2"
-
-[<Fact>]
-let ``subRoute (compatMode 40): Route after nested sub routes has same beginning of path`` () =
-    routeAfterSubRoutesWithSimilarPath Version40 "/api/v2/else" "else"
-
-[<Fact>]
-let ``subRoute (compatMode 36): Route after nested sub routes has same beginning of path`` () =
-    routeAfterSubRoutesWithSimilarPath Version36 "/api/v2/else" "else"
-
-[<Fact>]
-let ``subRoute (compatMode 40): routef inside subRoute`` () =
-    routefInsideSubRouteTest Version40 "/api/foo/bar/yadayada" "yadayada"
-
-[<Fact>]
-let ``subRoute (compatMode 36): routef inside subRoute`` () =
-    routefInsideSubRouteTest Version36 "/api/foo/bar/yadayada" "yadayada"
-
 // ---------------------------------
 // subRoutef Tests
 // ---------------------------------
 
-let subRoutefTest compatMode requestPath expected =
-    let ctx = mockHttpContext compatMode
+[<Fact>]
+let ``routef: Validation`` () =
+    Assert.Throws( fun () ->
+        GET >=> choose [
+            route   "/"       >=> text "Hello World"
+            route   "/foo"    >=> text "bar"
+            routef "/foo/%s/%d" (fun (name, age) -> text (sprintf "Name: %s, Age: %d" name age))
+            setStatusCode 404 >=> text "Not found" ]
+        |> ignore
+    ) |> ignore
+
+[<Fact>]
+let ``subRoutef: GET "/" returns "Not found"`` () =
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             subRoutef "/%s/%i" (fun (lang, version) ->
@@ -995,8 +1010,9 @@ let subRoutefTest compatMode requestPath expected =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    let expected = "Not found"
 
     task {
         let! result = app next ctx
@@ -1006,8 +1022,90 @@ let subRoutefTest compatMode requestPath expected =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-let subRoutefTest2 compatMode requestPath expected =
-    let ctx = mockHttpContext compatMode
+[<Fact>]
+let ``subRoutef: GET "/bar" returns "foo"`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            subRoutef "/%s/%i" (fun (lang, version) ->
+                choose [
+                    route  "/foo" >=> text "bar"
+                    routef "/%s" (fun name -> text (sprintf "Hello %s! Lang: %s, Version: %i" name lang version))
+                ])
+            route "/bar" >=> text "foo"
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/bar")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "foo"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``subRoutef: GET "/John/5/foo" returns "bar"`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            subRoutef "/%s/%i" (fun (lang, version) ->
+                choose [
+                    route  "/foo" >=> text "bar"
+                    routef "/%s" (fun name -> text (sprintf "Hello %s! Lang: %s, Version: %i" name lang version))
+                ])
+            route "/bar" >=> text "foo"
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/John/5/foo")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "bar"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``subRoutef: GET "/en/10/Julia" returns "Hello Julia! Lang: en, Version: 10"`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        GET >=> choose [
+            subRoutef "/%s/%i" (fun (lang, version) ->
+                choose [
+                    route  "/foo" >=> text "bar"
+                    routef "/%s" (fun name -> text (sprintf "Hello %s! Lang: %s, Version: %i" name lang version))
+                ])
+            route "/bar" >=> text "foo"
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/en/10/Julia")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "Hello Julia! Lang: en, Version: 10"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``subRoutef: GET "/en/10/api/Julia" returns "Hello Julia! Lang: en, Version: 10"`` () =
+    let ctx = Substitute.For<HttpContext>()
     let app =
         GET >=> choose [
             subRoutef "/%s/%i/api" (fun (lang, version) ->
@@ -1020,8 +1118,9 @@ let subRoutefTest2 compatMode requestPath expected =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/en/10/api/Julia")) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    let expected = "Hello Julia! Lang: en, Version: 10"
 
     task {
         let! result = app next ctx
@@ -1031,52 +1130,13 @@ let subRoutefTest2 compatMode requestPath expected =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-[<Fact>]
-let ``subRoutef (compatMode 40): GET "/" returns "Not found"`` () =
-    subRoutefTest Version40 "/" "Not found"
-
-[<Fact>]
-let ``subRoutef (compatMode 36): GET "/" returns "Not found"`` () =
-    subRoutefTest Version36 "/" "Not found"
-
-[<Fact>]
-let ``subRoutef (compatMode 40): GET "/bar" returns "foo"`` () =
-    subRoutefTest Version40 "/bar" "foo"
-
-[<Fact>]
-let ``subRoutef (compatMode 36): GET "/bar" returns "foo"`` () =
-    subRoutefTest Version36 "/bar" "foo"
-
-[<Fact>]
-let ``subRoutef (compatMode 40): GET "/John/5/foo" returns "bar"`` () =
-    subRoutefTest Version40 "/John/5/foo" "bar"
-
-[<Fact>]
-let ``subRoutef (compatMode 36): GET "/John/5/foo" returns "bar"`` () =
-    subRoutefTest Version36 "/John/5/foo" "bar"
-
-[<Fact>]
-let ``subRoutef (compatMode 40): GET "/en/10/Julia" returns "Hello Julia! Lang: en, Version: 10"`` () =
-    subRoutefTest Version40 "/en/10/Julia" "Hello Julia! Lang: en, Version: 10"
-
-[<Fact>]
-let ``subRoutef (compatMode 36): GET "/en/10/Julia" returns "Hello Julia! Lang: en, Version: 10"`` () =
-    subRoutefTest Version36 "/en/10/Julia" "Hello Julia! Lang: en, Version: 10"
-
-[<Fact>]
-let ``subRoutef (compatMode 40): GET "/en/10/api/Julia" returns "Hello Julia! Lang: en, Version: 10"`` () =
-    subRoutefTest2 Version40 "/en/10/api/Julia" "Hello Julia! Lang: en, Version: 10"
-
-[<Fact>]
-let ``subRoutef (compatMode 36): GET "/en/10/api/Julia" returns "Hello Julia! Lang: en, Version: 10"`` () =
-    subRoutefTest2 Version36 "/en/10/api/Julia" "Hello Julia! Lang: en, Version: 10"
-
 // ---------------------------------
 // subRouteCi Tests
 // ---------------------------------
 
-let subRouteCiTest compatMode requestPath expected =
-    let ctx = mockHttpContext compatMode
+[<Fact>]
+let ``subRouteCi: Non-filtering handler after subRouteCi is called`` () =
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx (Newtonsoft None)
     let app =
         GET >=> choose [
@@ -1085,8 +1145,9 @@ let subRouteCiTest compatMode requestPath expected =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/FOO")) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    let expected = "subroute /foo"
 
     task {
         let! result = app next ctx
@@ -1096,8 +1157,9 @@ let subRouteCiTest compatMode requestPath expected =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-let nestedRouteAfterSubRouteCiTest compatMode requestPath expected =
-    let ctx = mockHttpContext compatMode
+[<Fact>]
+let ``subRouteCi: Nested route after subRouteCi is called`` () =
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx (Newtonsoft None)
     let app =
         GET >=> choose [
@@ -1107,8 +1169,9 @@ let nestedRouteAfterSubRouteCiTest compatMode requestPath expected =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/FOO/bar")) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    let expected = "subroute /foo/bar"
 
     task {
         let! result = app next ctx
@@ -1118,8 +1181,9 @@ let nestedRouteAfterSubRouteCiTest compatMode requestPath expected =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-let nestedRouteAfterSubRouteCiIsStillCaseSensitiveTest compatMode requestPath expected =
-    let ctx = mockHttpContext compatMode
+[<Fact>]
+let ``subRouteCi: Nested route after subRouteCi is still case sensitive`` () =
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx (Newtonsoft None)
     let app =
         GET >=> choose [
@@ -1132,8 +1196,9 @@ let nestedRouteAfterSubRouteCiIsStillCaseSensitiveTest compatMode requestPath ex
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/FOO/BAR")) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    let expected = "Not found - nested"
 
     task {
         let! result = app next ctx
@@ -1143,8 +1208,9 @@ let nestedRouteAfterSubRouteCiIsStillCaseSensitiveTest compatMode requestPath ex
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-let nestedRouteCiAfterSubRouteCiTest compatMode requestPath expected =
-    let ctx = mockHttpContext compatMode
+[<Fact>]
+let ``subRouteCi: Nested routeCi after subRouteCi is called`` () =
+    let ctx = Substitute.For<HttpContext>()
     mockJson ctx (Newtonsoft None)
     let app =
         GET >=> choose [
@@ -1154,8 +1220,9 @@ let nestedRouteCiAfterSubRouteCiTest compatMode requestPath expected =
 
     ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString(requestPath)) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/FOO/BAR")) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    let expected = "subroute /foo/bar"
 
     task {
         let! result = app next ctx
@@ -1164,35 +1231,3 @@ let nestedRouteCiAfterSubRouteCiTest compatMode requestPath expected =
         | None     -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
-
-[<Fact>]
-let ``subRouteCi (compatMode 40): Non-filtering handler after subRouteCi is called`` () =
-    subRouteCiTest Version40 "/FOO" "subroute /foo"
-
-[<Fact>]
-let ``subRouteCi (compatMode 36): Non-filtering handler after subRouteCi is called`` () =
-    subRouteCiTest Version36 "/FOO" "subroute /foo"
-
-[<Fact>]
-let ``subRouteCi (compatMode 40): Nested route after subRouteCi is called`` () =
-    nestedRouteAfterSubRouteCiTest Version40 "/FOO/bar" "subroute /foo/bar"
-
-[<Fact>]
-let ``subRouteCi (compatMode 36): Nested route after subRouteCi is called`` () =
-    nestedRouteAfterSubRouteCiTest Version36 "/FOO/bar" "subroute /foo/bar"
-
-[<Fact>]
-let ``subRouteCi (compatMode 40): Nested route after subRouteCi is still case sensitive`` () =
-    nestedRouteAfterSubRouteCiIsStillCaseSensitiveTest Version40 "/FOO/BAR" "Not found - nested"
-
-[<Fact>]
-let ``subRouteCi (compatMode 36): Nested route after subRouteCi is still case sensitive`` () =
-    nestedRouteAfterSubRouteCiIsStillCaseSensitiveTest Version36 "/FOO/BAR" "Not found - nested"
-
-[<Fact>]
-let ``subRouteCi (compatMode 40): Nested routeCi after subRouteCi is called`` () =
-    nestedRouteCiAfterSubRouteCiTest Version40 "/FOO/BAR" "subroute /foo/bar"
-
-[<Fact>]
-let ``subRouteCi (compatMode 36): Nested routeCi after subRouteCi is called`` () =
-    nestedRouteCiAfterSubRouteCiTest Version36 "/FOO/BAR" "subroute /foo/bar"
