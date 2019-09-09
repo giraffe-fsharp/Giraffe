@@ -69,7 +69,9 @@ module WebApp =
            .UseGiraffe(webApp args)
 
     let configureServices (services : IServiceCollection) =
-        services.AddGiraffe() |> ignore
+        services.AddGiraffe(
+            fun cfg -> cfg.CompatibilityMode <- Version40
+        ) |> ignore
 
 let makeRequest req = makeRequest WebApp.configureApp WebApp.configureServices req
 

@@ -81,7 +81,7 @@ module TestData =
 
 let testAuthentication (givenUser : User) givenRoute expected =
     task {
-        let ctx = Substitute.For<HttpContext>()
+        let ctx = mockHttpContext Version40
         ctx.Response.Body <- new MemoryStream ()
         ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
         ctx.Request.Path.ReturnsForAnyArgs (PathString (givenRoute)) |> ignore

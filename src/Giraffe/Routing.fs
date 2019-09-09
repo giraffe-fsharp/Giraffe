@@ -10,37 +10,97 @@ open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe.FormatExpressions
 
 // ---------------------------
-// Private sub route helper functions
+// Sub Routing Feature
 // ---------------------------
 
-[<RequireQualifiedAccess>]
-module SubRouting =
+[<Literal>]
+let private RouteKey = "giraffe_route"
 
-    [<Literal>]
-    let private RouteKey = "giraffe_route"
+type ISubRoutingFeature =
+    abstract member CompatibilityMode : GiraffeCompatibilityMode with get
 
-    let getSavedPartialPath (ctx : HttpContext) =
-        if ctx.Items.ContainsKey RouteKey
-        then ctx.Items.Item RouteKey |> string |> strOption
+    abstract member GetResolvedPath   : unit   -> string option
+    abstract member SetResolvedPath   : string -> unit
+    abstract member ClearResolvedPath : unit   -> unit
+
+type SubRoutingFeature (compatibilityMode : GiraffeCompatibilityMode) =
+    let mutable resolvedPath = None
+
+    interface ISubRoutingFeature with
+        member val CompatibilityMode = compatibilityMode with get
+
+        member __.GetResolvedPath()             = resolvedPath
+        member __.SetResolvedPath (p : string)  = resolvedPath <- Some p
+        member __.ClearResolvedPath()           = resolvedPath <- None
+
+type HttpContext with
+
+    [<Obsolete("This method has been deprecated. Please use 'GetResolvedPath' instead which is a more memory efficient implementation based on the HttpContext.Features API.")>]
+    member this.GetResolvedPathFromItems() =
+        if this.Items.ContainsKey RouteKey
+        then this.Items.Item RouteKey |> string |> strOption
         else None
 
-    let getNextPartOfPath (ctx : HttpContext) =
-        match getSavedPartialPath ctx with
-        | Some p when ctx.Request.Path.Value.Contains p -> ctx.Request.Path.Value.[p.Length..]
-        | _   -> ctx.Request.Path.Value
+    /// **Description**
+    ///
+    /// Returns a partially (or fully) resolved request path during routing decisions when working with the SubRoutingFeature.
+    ///
+    member this.GetResolvedPath() =
+        let subRoutingFeature = this.Features.Get<ISubRoutingFeature>()
+        match subRoutingFeature.GetResolvedPath() with
+        | Some p -> Some p
+        | None   ->
+            match subRoutingFeature.CompatibilityMode with
+            | Version36 -> this.GetResolvedPathFromItems()
+            | Version40 -> None
+
+    /// **Description**
+    ///
+    /// Returns the next part of the request path, which hasn't been resolved by a routing handler yet.
+    ///
+    member this.GetNextPartOfPath() =
+        let requestPath = this.Request.Path.Value
+        match this.GetResolvedPath() with
+        | Some p when requestPath.StartsWith p -> requestPath.[p.Length..]
+        | _ -> requestPath
+
+    /// **Description**
+    ///
+    /// Memorises a partially resolved path between different routing handlers by making use of the SubRoutingFeature.
+    ///
+    member this.SetResolvedPath (path : string) =
+        let subRoutingFeature = this.Features.Get<ISubRoutingFeature>()
+        subRoutingFeature.SetResolvedPath path
+
+        if subRoutingFeature.CompatibilityMode = Version36 then
+            this.Items.[RouteKey] <- path
+
+    /// **Description**
+    ///
+    /// Clears the currently saved path in the SubRoutingFeature.
+    ///
+    member this.ClearResolvedPath () =
+        let subRoutingFeature = this.Features.Get<ISubRoutingFeature>()
+        subRoutingFeature.ClearResolvedPath()
+
+        if subRoutingFeature.CompatibilityMode = Version36 then
+            this.Items.Remove RouteKey |> ignore
+
+[<RequireQualifiedAccess>]
+module SubRoutingHandlers =
 
     let routeWithPartialPath (path : string) (handler : HttpHandler) : HttpHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
             task {
-                let savedPartialPath = getSavedPartialPath ctx
-                ctx.Items.Item RouteKey <- ((savedPartialPath |> Option.defaultValue "") + path)
+                let savedPartialPath = ctx.GetResolvedPath()
+                ctx.SetResolvedPath ((savedPartialPath |> Option.defaultValue "") + path)
                 let! result = handler next ctx
                 match result with
                 | Some _ -> ()
                 | None ->
                     match savedPartialPath with
-                    | Some subPath -> ctx.Items.Item   RouteKey <- subPath
-                    | None         -> ctx.Items.Remove RouteKey |> ignore
+                    | Some subPath -> ctx.SetResolvedPath subPath
+                    | None         -> ctx.ClearResolvedPath() |> ignore
                 return result
             }
 
@@ -86,7 +146,7 @@ let routePorts (fns : (int * HttpHandler) list) : HttpHandler =
 ///
 let route (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        if (SubRouting.getNextPartOfPath ctx).Equals path
+        if ctx.GetNextPartOfPath().Equals path
         then next ctx
         else skipPipeline
 
@@ -104,7 +164,7 @@ let route (path : string) : HttpHandler =
 ///
 let routeCi (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        if String.Equals(SubRouting.getNextPartOfPath ctx, path, StringComparison.OrdinalIgnoreCase)
+        if ctx.GetNextPartOfPath().Equals(path, StringComparison.OrdinalIgnoreCase)
         then next ctx
         else skipPipeline
 
@@ -124,7 +184,7 @@ let routex (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let pattern = sprintf "^%s$" path
         let regex   = Regex(pattern, RegexOptions.Compiled)
-        let result  = regex.Match (SubRouting.getNextPartOfPath ctx)
+        let result  = regex.Match (ctx.GetNextPartOfPath())
         match result.Success with
         | true  -> next ctx
         | false -> skipPipeline
@@ -145,7 +205,7 @@ let routeCix (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let pattern = sprintf "^%s$" path
         let regex   = Regex(pattern, RegexOptions.IgnoreCase ||| RegexOptions.Compiled)
-        let result  = regex.Match (SubRouting.getNextPartOfPath ctx)
+        let result  = regex.Match (ctx.GetNextPartOfPath())
         match result.Success with
         | true  -> next ctx
         | false -> skipPipeline
@@ -178,7 +238,7 @@ let routeCix (path : string) : HttpHandler =
 let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        tryMatchInput path MatchOptions.Exact (SubRouting.getNextPartOfPath ctx)
+        tryMatchInput path MatchOptions.Exact (ctx.GetNextPartOfPath())
         |> function
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
@@ -211,7 +271,7 @@ let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler)
 let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        tryMatchInput path MatchOptions.IgnoreCaseExact (SubRouting.getNextPartOfPath ctx)
+        tryMatchInput path MatchOptions.IgnoreCaseExact (ctx.GetNextPartOfPath())
         |> function
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
@@ -235,7 +295,7 @@ let routeBind<'T> (route : string) (routeHandler : 'T -> HttpHandler) : HttpHand
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let pattern = route.Replace("{", "(?<").Replace("}", ">[^/\n]+)") |> sprintf "^%s$"
         let regex   = Regex(pattern, RegexOptions.IgnoreCase)
-        let result  = regex.Match (SubRouting.getNextPartOfPath ctx)
+        let result  = regex.Match (ctx.GetNextPartOfPath())
         match result.Success with
         | true ->
             let groups = result.Groups
@@ -264,7 +324,7 @@ let routeBind<'T> (route : string) (routeHandler : 'T -> HttpHandler) : HttpHand
 ///
 let routeStartsWith (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        if (SubRouting.getNextPartOfPath ctx).StartsWith subPath
+        if ctx.GetNextPartOfPath().StartsWith subPath
         then next ctx
         else skipPipeline
 
@@ -282,7 +342,7 @@ let routeStartsWith (subPath : string) : HttpHandler =
 ///
 let routeStartsWithCi (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        if (SubRouting.getNextPartOfPath ctx).StartsWith(subPath, StringComparison.OrdinalIgnoreCase)
+        if ctx.GetNextPartOfPath().StartsWith(subPath, StringComparison.OrdinalIgnoreCase)
         then next ctx
         else skipPipeline
 
@@ -318,7 +378,7 @@ let routeStartsWithf (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> Ht
     let options = { MatchOptions.IgnoreCase = false; MatchMode = StartsWith }
 
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        tryMatchInput path options (SubRouting.getNextPartOfPath ctx)
+        tryMatchInput path options (ctx.GetNextPartOfPath())
         |> function
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
@@ -354,7 +414,7 @@ let routeStartsWithCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> 
     let options = { MatchOptions.IgnoreCase = true; MatchMode = StartsWith }
 
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        tryMatchInput path options (SubRouting.getNextPartOfPath ctx)
+        tryMatchInput path options (ctx.GetNextPartOfPath())
         |> function
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
@@ -375,7 +435,7 @@ let routeStartsWithCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> 
 ///
 let subRoute (path : string) (handler : HttpHandler) : HttpHandler =
     routeStartsWith path >=>
-    SubRouting.routeWithPartialPath path handler
+    SubRoutingHandlers.routeWithPartialPath path handler
 
 /// **Description**
 ///
@@ -393,10 +453,10 @@ let subRoute (path : string) (handler : HttpHandler) : HttpHandler =
 ///
 let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx: HttpContext) ->
-        let nextPartOfPath = SubRouting.getNextPartOfPath ctx
+        let nextPartOfPath = ctx.GetNextPartOfPath()
         if nextPartOfPath.StartsWith(path, StringComparison.OrdinalIgnoreCase) then
             let matchedPathFragment = nextPartOfPath.[0..path.Length-1]
-            SubRouting.routeWithPartialPath matchedPathFragment handler next ctx
+            SubRoutingHandlers.routeWithPartialPath matchedPathFragment handler next ctx
         else skipPipeline
 
 /// **Description**
@@ -427,20 +487,20 @@ let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let subRoutef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
-        validateFormat path
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            let paramCount   = (path.Value.Split '/').Length
-            let subPathParts = (SubRouting.getNextPartOfPath ctx).Split '/'
-            if paramCount > subPathParts.Length then skipPipeline
-            else
-                let subPath =
-                    subPathParts
-                    |> Array.take paramCount
-                    |> Array.fold (fun state elem ->
-                        if String.IsNullOrEmpty elem
-                        then state
-                        else sprintf "%s/%s" state elem) ""
-                tryMatchInput path MatchOptions.Exact subPath
-                |> function
-                    | None      -> skipPipeline
-                    | Some args -> SubRouting.routeWithPartialPath subPath (routeHandler args) next ctx
+    validateFormat path
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let paramCount   = (path.Value.Split '/').Length
+        let subPathParts = ctx.GetNextPartOfPath().Split '/'
+        if paramCount > subPathParts.Length then skipPipeline
+        else
+            let subPath =
+                subPathParts
+                |> Array.take paramCount
+                |> Array.fold (fun state elem ->
+                    if String.IsNullOrEmpty elem
+                    then state
+                    else sprintf "%s/%s" state elem) ""
+            tryMatchInput path MatchOptions.Exact subPath
+            |> function
+                | None      -> skipPipeline
+                | Some args -> SubRoutingHandlers.routeWithPartialPath subPath (routeHandler args) next ctx
