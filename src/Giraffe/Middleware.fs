@@ -17,7 +17,6 @@ open Giraffe.Serialization
 
 type GiraffeMiddleware (next            : RequestDelegate,
                         handler         : HttpHandler,
-                        options         : GiraffeOptions,
                         loggerFactory   : ILoggerFactory) =
 
     do if isNull next then raise (ArgumentNullException("next"))
@@ -27,7 +26,7 @@ type GiraffeMiddleware (next            : RequestDelegate,
 
     member __.Invoke (ctx : HttpContext) =
         task {
-            let subRoutingFeature = SubRoutingFeature options.CompatibilityMode
+            let subRoutingFeature = SubRoutingFeature()
             ctx.Features.Set<ISubRoutingFeature>(subRoutingFeature)
             try
                 let start = Diagnostics.Stopwatch.GetTimestamp()

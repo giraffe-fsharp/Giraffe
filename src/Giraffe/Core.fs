@@ -64,6 +64,17 @@ type HttpContext with
 
     /// **Description**
     ///
+    /// Gets an instance of `GiraffeOptions` from the request's service container.
+    ///
+    /// **Output**
+    ///
+    /// Returns an instance of `GiraffeOptions`.
+    ///
+    member this.GetGiraffeOptions() =
+        this.GetService<GiraffeOptions>()
+
+    /// **Description**
+    ///
     /// Gets an instance of `ILogger<'T>` from the request's service container.
     ///
     /// The type `'T` should represent the class or module from where the logger gets instantiated.

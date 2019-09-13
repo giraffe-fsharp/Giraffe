@@ -157,11 +157,16 @@ let mockNegotiation (ctx : HttpContext) =
     |> ignore
 
 let mockHttpContext (compatMode : GiraffeCompatibilityMode) =
-    let subRoutingFeature = SubRoutingFeature compatMode
+    let giraffeOptions = GiraffeOptions()
+    giraffeOptions.CompatibilityMode <- compatMode
+    let subRoutingFeature = SubRoutingFeature()
     let features = Substitute.For<Features.IFeatureCollection>()
     features.Get<ISubRoutingFeature>().Returns(subRoutingFeature) |> ignore
     let ctx = Substitute.For<HttpContext>()
     ctx.Features.Returns(features) |> ignore
+    ctx.RequestServices
+       .GetService(typeof<GiraffeOptions>)
+       .Returns(giraffeOptions) |> ignore
     ctx
 
 // ---------------------------------

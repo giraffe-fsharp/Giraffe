@@ -23,7 +23,7 @@ type DateTime with
     /// Formatted string value.
     ///
     member this.ToHtmlString() = this.ToString("r")
-    
+
     /// **Description**
     ///
     /// Converts a `DateTime` object into an RFC3339 formatted `string`.
@@ -52,7 +52,7 @@ type DateTimeOffset with
     /// Formatted string value.
     ///
     member this.ToHtmlString() = this.ToString("r")
-    
+
     /// **Description**
     ///
     /// Converts a `DateTime` object into an RFC3339 formatted `string`.
@@ -99,6 +99,21 @@ let inline isNotNull x = not (isNull x)
 ///
 let inline strOption (str : string) =
     if String.IsNullOrEmpty str then None else Some str
+
+/// **Description**
+///
+/// Converts a `string` into a `string voption` where `null` or an empty string will be converted to `ValueNone` and everything else to `ValueSome string`.
+///
+/// **Parameters**
+///
+/// `str`: The string value to be converted into an option of string.
+///
+/// **Output**
+///
+/// Returns `ValueNone` if the string was `null` or empty otherwise `ValueSome string`.
+///
+let inline strValueOption (str : string) =
+    if String.IsNullOrEmpty str then ValueNone else ValueSome str
 
 /// **Description**
 ///
