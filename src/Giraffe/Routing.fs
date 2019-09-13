@@ -35,24 +35,48 @@ type ISubRoutingFeature =
     abstract member RouteWithSubPath  : string -> HttpHandler -> HttpHandler
 
 type SubRoutingFeature() =
-    [<Literal>]
-    let RouteKey = "giraffe_route"
 
     let mutable subPath = ValueNone
 
-    let getSubPathFromItems (ctx : HttpContext) =
+    let setSubPath _ path = subPath <- ValueSome path
+    let clearSubPath _    = subPath <- ValueNone
+    let getSubPath _      = subPath
+
+    let getNextPartOfPath (ctx : HttpContext) =
+        let requestPath = ctx.Request.Path.Value
+        match subPath with
+        | ValueSome p when requestPath.StartsWith p -> requestPath.[p.Length..]
+        | _ -> requestPath
+
+    let routeWithSubPath (path : string) (handler : HttpHandler) : HttpHandler =
+        fun (next : HttpFunc) (ctx : HttpContext) ->
+            task {
+                let tempSubPath = getSubPath ctx
+                setSubPath
+                    ctx
+                    ((tempSubPath |> ValueOption.defaultValue "") + path)
+                let! result = handler next ctx
+                match result with
+                | Some _ -> ()
+                | None ->
+                    match tempSubPath with
+                    | ValueSome p -> setSubPath ctx p
+                    | ValueNone   -> clearSubPath ctx |> ignore
+                return result
+            }
+
+    interface ISubRoutingFeature with
+        member __.GetNextPartOfPath ctx         = getNextPartOfPath ctx
+        member __.RouteWithSubPath path handler = routeWithSubPath path handler
+
+type SubRoutingFeatureV36() =
+    [<Literal>]
+    let RouteKey = "giraffe_route"
+
+    let getSubPath (ctx : HttpContext) =
         if ctx.Items.ContainsKey RouteKey
         then ctx.Items.Item RouteKey |> string |> strValueOption
         else ValueNone
-
-    let getSubPath (ctx : HttpContext) =
-        match subPath with
-        | ValueSome p -> ValueSome p
-        | ValueNone   ->
-            let giraffeOptions = ctx.GetGiraffeOptions()
-            match giraffeOptions.CompatibilityMode with
-            | Version36 -> getSubPathFromItems ctx
-            | Version40 -> ValueNone
 
     let getNextPartOfPath (ctx : HttpContext) =
         let requestPath = ctx.Request.Path.Value
@@ -61,16 +85,10 @@ type SubRoutingFeature() =
         | _ -> requestPath
 
     let setSubPath (ctx : HttpContext) (path : string) =
-        subPath <- ValueSome path
-        let giraffeOptions = ctx.GetGiraffeOptions()
-        if giraffeOptions.CompatibilityMode = Version36 then
-            ctx.Items.[RouteKey] <- path
+        ctx.Items.[RouteKey] <- path
 
     let clearSubPath (ctx : HttpContext) =
-        subPath <- ValueNone
-        let giraffeOptions = ctx.GetGiraffeOptions()
-        if giraffeOptions.CompatibilityMode = Version36 then
-            ctx.Items.Remove RouteKey |> ignore
+        ctx.Items.Remove RouteKey |> ignore
 
     let routeWithSubPath (path : string) (handler : HttpHandler) : HttpHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
