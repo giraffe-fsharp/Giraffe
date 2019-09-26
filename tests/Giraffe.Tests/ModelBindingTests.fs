@@ -7,12 +7,15 @@ open System.IO
 open System.Text
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Http.Internal
 open Microsoft.Extensions.Primitives
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Xunit
 open NSubstitute
 open Giraffe
+
+#if NETCOREAPP2_2 || NET461
+open Microsoft.AspNetCore.Http.Internal
+#endif
 
 [<CLIMutable>]
 type ModelWithOption =
@@ -55,7 +58,7 @@ type Child =
         Name : string
         Age  : int
     }
-    
+
 [<CLIMutable>]
 type Model =
     {
@@ -135,7 +138,7 @@ let ``ModelParser.tryParse with complete model data`` () =
             |]
         }
     let culture = None
-    
+
     let result = ModelParser.tryParse<Model> culture modelData
     match result with
     | Ok model  -> Assert.Equal(expected, model)
@@ -294,7 +297,7 @@ let ``ModelParser.tryParse with incomplete model data and different order for ar
     match result with
     | Ok _      -> assertFail "Model had incomplete data and should have not bound successfully."
     | Error err -> Assert.Equal("Missing value for required property Id.", err)
-    
+
 [<Fact>]
 let ``ModelParser.tryParse with complete model data but wrong union case`` () =
     let id = Guid.NewGuid()
@@ -460,7 +463,7 @@ let ``ModelParser.parse with complete model data but mixed casing`` () =
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected, result)
-    
+
 [<Fact>]
 let ``ModelParser.parse with complete model data but with different order for array of child`` () =
     let id = Guid.NewGuid()
@@ -511,7 +514,7 @@ let ``ModelParser.parse with incomplete model data`` () =
             "Children[0].Name" , StringValues "Hamed"
             "Children[2].Age"  , StringValues "44"
         ]
-    
+
     let expected =
         {
             Id         = Guid.Empty
@@ -562,7 +565,7 @@ let ``ModelParser.parse with incomplete model data and with different order for 
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected, result)
-    
+
 [<Fact>]
 let ``ModelParser.parse with incomplete model data and wrong union case`` () =
     let modelData =
@@ -591,10 +594,10 @@ let ``ModelParser.parse with incomplete model data and wrong union case`` () =
                 { Name = null; Age = 44 }
             |]
         }
-        
+
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
-    
+
     Assert.Equal(expected.Id, result.Id)
     Assert.Equal(expected.FirstName, result.FirstName)
     Assert.Equal(expected.MiddleName, result.MiddleName)

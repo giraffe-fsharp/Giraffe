@@ -4,13 +4,16 @@ open System
 open System.IO
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Http.Internal
 open Microsoft.Extensions.Primitives
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Xunit
 open NSubstitute
 open Giraffe
 open Giraffe.GiraffeViewEngine
+
+#if NETCOREAPP2_2 || NET461
+open Microsoft.AspNetCore.Http.Internal
+#endif
 
 [<Fact>]
 let ``GetRequestUrl returns entire URL of the HTTP request`` () =
