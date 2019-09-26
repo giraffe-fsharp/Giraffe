@@ -7,7 +7,7 @@ environment:
 init:
   - git config --global core.autocrlf true
 install:
-  - ps: .\.psscripts\install-dotnet.ps1
+  - ps: .\.psscripts\install-dotnet.ps1 -SdkVersions "3.0.100, 2.2.402"
 build: off
 build_script:
   - ps: .\build.ps1 -Release -Pack
