@@ -23,7 +23,7 @@ type DateTime with
     /// Formatted string value.
     ///
     member this.ToHtmlString() = this.ToString("r")
-    
+
     /// **Description**
     ///
     /// Converts a `DateTime` object into an RFC3339 formatted `string`.
@@ -52,7 +52,7 @@ type DateTimeOffset with
     /// Formatted string value.
     ///
     member this.ToHtmlString() = this.ToString("r")
-    
+
     /// **Description**
     ///
     /// Converts a `DateTime` object into an RFC3339 formatted `string`.
@@ -136,7 +136,7 @@ let readFileAsStringAsync (filePath : string) =
 /// before using of it in a URL query parameter.
 ///
 /// All Short GUID strings map directly to a `System.Guid`
-/// objet and the `ShortGuid` module can be used to convert
+/// object and the `ShortGuid` module can be used to convert
 /// a `System.Guid` into a short GUID `string` and vice versa.
 ///
 /// For more information please check:
@@ -188,7 +188,7 @@ module ShortGuid =
 /// **Description**
 ///
 /// Short IDs are a shorter, URL-friendlier version
-/// of an unisgned 64-bit integer value (`uint64` in F# and `ulong` in C#).
+/// of an unsigned 64-bit integer value (`uint64` in F# and `ulong` in C#).
 ///
 /// Short IDs are always 11 characters long, which let's
 /// one save a total of 9 characters in comparison to using
@@ -200,7 +200,7 @@ module ShortGuid =
 ///
 /// All Short ID strings map directly to a `uint64` object
 /// and the `ShortId` module can be used to convert an
-/// `unint64` value into a short ID `string` and vice versa.
+/// `uint64` value into a short ID `string` and vice versa.
 ///
 /// For more information please check:
 /// https://webapps.stackexchange.com/questions/54443/format-for-id-of-youtube-video
