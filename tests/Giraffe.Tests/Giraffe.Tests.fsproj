@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.0;netcoreapp2.2;net461</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.0;netcoreapp2.1;net461</TargetFrameworks>
     <AssemblyName>Giraffe.Tests</AssemblyName>
   </PropertyGroup>
 
