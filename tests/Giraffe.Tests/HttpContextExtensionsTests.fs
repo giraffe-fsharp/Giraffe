@@ -11,7 +11,7 @@ open NSubstitute
 open Giraffe
 open Giraffe.GiraffeViewEngine
 
-#if NETCOREAPP2_2 || NET461
+#if NETCOREAPP2_1 || NET461
 open Microsoft.AspNetCore.Http.Internal
 #endif
 

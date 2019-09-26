@@ -13,7 +13,7 @@ open Xunit
 open NSubstitute
 open Giraffe
 
-#if NETCOREAPP2_2 || NET461
+#if NETCOREAPP2_1 || NET461
 open Microsoft.AspNetCore.Http.Internal
 #endif
 
