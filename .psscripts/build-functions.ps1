@@ -195,7 +195,7 @@ function Get-TargetFrameworks ($projFile)
     else { @($proj.Project.PropertyGroup.TargetFramework) }
 }
 
-function Get-NetCoreTargetFramework ($projFile)
+function Get-NetCoreTargetFrameworks ($projFile)
 {
     <#
         .DESCRIPTION
@@ -205,7 +205,7 @@ function Get-NetCoreTargetFramework ($projFile)
         The full or relative path to a .NET Core project file (*.csproj, *.fsproj, *.vbproj).
 
         .EXAMPLE
-        Get-NetCoreTargetFramework "MyProject.csproj"
+        Get-NetCoreTargetFrameworks "MyProject.csproj"
 
         .NOTES
         This function will always return the only netstandard*/netcoreapp* target framework which is set up as a target framework.
@@ -222,7 +222,7 @@ function Invoke-DotNetCli ($cmd, $proj, $argv)
     if((!(Test-IsWindows) -and !(Test-IsMonoInstalled)) `
         -or (!(Test-IsWindows) -and ($cmd -eq "test")))
     {
-        $fws = Get-NetCoreTargetFramework($proj)
+        $fws = Get-NetCoreTargetFrameworks($proj)
 
         foreach($fw in $fws) {
             $tempArgv = "-f $fw " + $argv
