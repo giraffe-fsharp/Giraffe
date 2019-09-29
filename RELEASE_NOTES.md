@@ -3,6 +3,8 @@ Release Notes
 
 ## 4.0.0
 
+Giraffe 4.0.0 has been tested against `netcoreapp3.0` alongside `netcoreapp2.1` and `net461`. All sample code has been upgraded to .NET Core 3.0 as well.
+
 #### ATTENTION:
 
 This release of Giraffe fixes a bug in the `routef` handler which would have previously matched a route too eagerly.
@@ -35,7 +37,7 @@ For more information please see [issue #347](https://github.com/giraffe-fsharp/G
 - Fixed `routef` to not match more than one URL path segment.
 - Fixed the `_ariaLabelledBy` attribute in the `GiraffeViewEngine`
 - Fixed case insensitive route handlers on Ubuntu
-- Changed minimum version of `Newtonsoft.Json` to `11.0.2`. This allows Giraffe to be compatable with Azure Functions.
+- Changed minimum version of `Newtonsoft.Json` to `11.0.2`. This allows Giraffe to be compatible with Azure Functions.
 - Renamed `tryMatchInput` to `tryMatchInputExact` and swapped the order of arguments so that the string value comes last
 - Added new version of `tryMatchInput` which accepts `MatchSettings` record:
 

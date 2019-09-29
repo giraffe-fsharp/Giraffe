@@ -161,7 +161,7 @@ type HttpContext with
     /// `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
     /// `stream`: The stream to be send to the client.
     /// `eTag`: An optional entity tag which identifies the exact version of the data.
-    /// `lastModified`: An optional parameter denoting the last modifed date time of the data.
+    /// `lastModified`: An optional parameter denoting the last modified date time of the data.
     ///
     /// **Output**
     ///
@@ -211,7 +211,7 @@ type HttpContext with
     /// `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
     /// `filePath`: The absolute or relative path (to `ContentRoot`) of the file.
     /// `eTag`: An optional entity tag which identifies the exact version of the file.
-    /// `lastModified`: An optional parameter denoting the last modifed date time of the file.
+    /// `lastModified`: An optional parameter denoting the last modified date time of the file.
     ///
     /// **Output**
     ///
@@ -247,7 +247,7 @@ type HttpContext with
 /// `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
 /// `stream`: The stream to be send to the client.
 /// `eTag`: An optional entity tag which identifies the exact version of the data.
-/// `lastModified`: An optional parameter denoting the last modifed date time of the file.
+/// `lastModified`: An optional parameter denoting the last modified date time of the file.
 ///
 /// **Output**
 ///
@@ -258,7 +258,7 @@ let streamData (enableRangeProcessing : bool)
                (eTag                  : EntityTagHeaderValue option)
                (lastModified          : DateTimeOffset option)
                : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
+    fun (_ : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteStreamAsync enableRangeProcessing stream eTag lastModified
 
 /// **Description**
@@ -272,7 +272,7 @@ let streamData (enableRangeProcessing : bool)
 /// `enableRangeProcessing`: If enabled then the handler will respect the `Range` and `If-Range` HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.
 /// `filePath`: The absolute or relative path (to `ContentRoot`) of the file.
 /// `eTag`: An optional entity tag which identifies the exact version of the file.
-/// `lastModified`: An optional parameter denoting the last modifed date time of the file.
+/// `lastModified`: An optional parameter denoting the last modified date time of the file.
 ///
 /// **Output**
 ///
@@ -283,5 +283,5 @@ let streamFile (enableRangeProcessing : bool)
                (eTag                  : EntityTagHeaderValue option)
                (lastModified          : DateTimeOffset option)
                : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
+    fun (_ : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteFileStreamAsync enableRangeProcessing filePath eTag lastModified

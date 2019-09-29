@@ -150,7 +150,7 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
                   (unacceptableHandler : HttpHandler)
                   (responseObj         : obj)
                   : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
+    fun (_ : HttpFunc) (ctx : HttpContext) ->
         ctx.NegotiateWithAsync negotiationRules unacceptableHandler responseObj
 
 /// **Description**
@@ -168,5 +168,5 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let negotiate (responseObj : obj) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
+    fun (_ : HttpFunc) (ctx : HttpContext) ->
         ctx.NegotiateAsync responseObj
