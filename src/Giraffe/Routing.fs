@@ -104,7 +104,7 @@ let route (path : string) : HttpHandler =
 ///
 let routeCi (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        if String.Equals(SubRouting.getNextPartOfPath ctx, path, StringComparison.CurrentCultureIgnoreCase)
+        if String.Equals(SubRouting.getNextPartOfPath ctx, path, StringComparison.OrdinalIgnoreCase)
         then next ctx
         else skipPipeline
 
@@ -178,7 +178,7 @@ let routeCix (path : string) : HttpHandler =
 let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        tryMatchInput path (SubRouting.getNextPartOfPath ctx) false
+        tryMatchInput path MatchOptions.Exact (SubRouting.getNextPartOfPath ctx)
         |> function
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
@@ -211,7 +211,7 @@ let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler)
 let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        tryMatchInput path (SubRouting.getNextPartOfPath ctx) true
+        tryMatchInput path MatchOptions.IgnoreCaseExact (SubRouting.getNextPartOfPath ctx)
         |> function
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
@@ -282,9 +282,82 @@ let routeStartsWith (subPath : string) : HttpHandler =
 ///
 let routeStartsWithCi (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        if (SubRouting.getNextPartOfPath ctx).StartsWith(subPath, StringComparison.CurrentCultureIgnoreCase)
+        if (SubRouting.getNextPartOfPath ctx).StartsWith(subPath, StringComparison.OrdinalIgnoreCase)
         then next ctx
         else skipPipeline
+
+
+/// **Description**
+///
+/// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
+///
+/// If the route matches the incoming HTTP request then the arguments from the `PrintfFormat<...>` will be automatically resolved and passed into the supplied `routeHandler`.
+///
+/// **Supported format chars**
+///
+/// `%b`: `bool`
+/// `%c`: `char`
+/// `%s`: `string`
+/// `%i`: `int`
+/// `%d`: `int64`
+/// `%f`: `float`/`double`
+/// `%O`: `Guid`
+///
+/// **Parameters**
+///
+/// `path`: A format string representing the expected request path.
+/// `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
+let routeStartsWithf (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
+    validateFormat path
+
+    let options = { MatchOptions.IgnoreCase = false; MatchMode = StartsWith }
+
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        tryMatchInput path options (SubRouting.getNextPartOfPath ctx)
+        |> function
+            | None      -> skipPipeline
+            | Some args -> routeHandler args next ctx
+
+/// **Description**
+///
+/// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
+///
+/// If the route matches the incoming HTTP request then the arguments from the `PrintfFormat<...>` will be automatically resolved and passed into the supplied `routeHandler`.
+///
+/// **Supported format chars**
+///
+/// `%b`: `bool`
+/// `%c`: `char`
+/// `%s`: `string`
+/// `%i`: `int`
+/// `%d`: `int64`
+/// `%f`: `float`/`double`
+/// `%O`: `Guid`
+///
+/// **Parameters**
+///
+/// `path`: A format string representing the expected request path.
+/// `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
+let routeStartsWithCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
+    validateFormat path
+
+    let options = { MatchOptions.IgnoreCase = true; MatchMode = StartsWith }
+
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        tryMatchInput path options (SubRouting.getNextPartOfPath ctx)
+        |> function
+            | None      -> skipPipeline
+            | Some args -> routeHandler args next ctx
 
 /// **Description**
 ///
@@ -321,7 +394,7 @@ let subRoute (path : string) (handler : HttpHandler) : HttpHandler =
 let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx: HttpContext) ->
         let nextPartOfPath = SubRouting.getNextPartOfPath ctx
-        if nextPartOfPath.StartsWith(path, StringComparison.CurrentCultureIgnoreCase) then
+        if nextPartOfPath.StartsWith(path, StringComparison.OrdinalIgnoreCase) then
             let matchedPathFragment = nextPartOfPath.[0..path.Length-1]
             SubRouting.routeWithPartialPath matchedPathFragment handler next ctx
         else skipPipeline
@@ -367,7 +440,7 @@ let subRoutef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandl
                         if String.IsNullOrEmpty elem
                         then state
                         else sprintf "%s/%s" state elem) ""
-                tryMatchInput path subPath false
+                tryMatchInput path MatchOptions.Exact subPath
                 |> function
                     | None      -> skipPipeline
                     | Some args -> SubRouting.routeWithPartialPath subPath (routeHandler args) next ctx

@@ -6,6 +6,7 @@ open System.Security.Cryptography.X509Certificates
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Server.Kestrel.Core
 open Microsoft.Extensions.DependencyInjection
+open Microsoft.Extensions.Hosting
 
 // Follow the following instructions to set up
 // a self signed certificate for localhost:
@@ -39,7 +40,7 @@ type EndpointConfiguration =
 let loadCertificateFromStore (storeName : string)
                              (location  : string)
                              (cfg       : EndpointConfiguration)
-                             (env       : IHostingEnvironment) =
+                             (env       : IWebHostEnvironment) =
     use store = new X509Store(storeName, Enum.Parse<StoreLocation> location)
     store.Open OpenFlags.ReadOnly
     let cert =
@@ -51,7 +52,7 @@ let loadCertificateFromStore (storeName : string)
     | 0 -> raise(InvalidOperationException(sprintf "Certificate not found for %s." cfg.Host))
     | _ -> cert.[0]
 
-let loadCertificate (cfg : EndpointConfiguration) (env : IHostingEnvironment) =
+let loadCertificate (cfg : EndpointConfiguration) (env : IWebHostEnvironment) =
     match cfg.StoreName, cfg.StoreLocation, cfg.FilePath, cfg.Password with
     | Some n, Some l,      _,      _ -> loadCertificateFromStore n l cfg env
     |      _,      _, Some f, Some p -> new X509Certificate2(f, p)
@@ -60,7 +61,7 @@ let loadCertificate (cfg : EndpointConfiguration) (env : IHostingEnvironment) =
 
 type KestrelServerOptions with
     member this.ConfigureEndpoints (endpoints : EndpointConfiguration list) =
-        let env    = this.ApplicationServices.GetRequiredService<IHostingEnvironment>()
+        let env    = this.ApplicationServices.GetRequiredService<IWebHostEnvironment>()
         endpoints
         |> List.iter (fun endpoint ->
             let port =

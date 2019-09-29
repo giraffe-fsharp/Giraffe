@@ -3001,6 +3001,69 @@ Please be aware that the the usage of `rawText` is mainly designed for edge case
 
 Most cases and particularly any user provided content should always be output via the `encodedText`/`str` function.
 
+### Javascript event handlers
+
+It is possible to add JavaScript event handlers to HTML elements using the Giraffe View Engine.  These event handlers (all prefixed with names starting with `_on`, for example `_onclick`, `_onmouseover`) can either execute inline JavaScript code or can invoke functions that are part of the `window` scope.
+
+This example illustrates how inline JavaScript could be used to log to the console when a button is clicked:
+
+```fsharp
+let inlineJSButton = 
+    button [_id "inline-js"
+            _onclick "console.log(\"Hello from the 'inline-js' button!\");"] [str "Say Hello" ]
+```
+
+There are some caveats with this approach, namely that 
+* it is not very scalable to write JavaScript inline in this manner, and more pressing
+* the Giraffe View Engine HTML-encodes the text provided to the `_onX` attributes.
+
+To get around this, you can write dedicated scripts in your HTML and reference the functions from your event handlers:
+
+```fsharp
+let page =
+    div [] [
+        script [_type "application/javascript"] [
+            rawText """
+            window.greet = function () {
+                console.log("ping from the greet method");
+            }
+            """
+        ]
+        button [_id "script-tag-js"
+                _onclick "greet();"] [str "Say Hello"]
+    ]
+```
+
+Here it's important to note that we've included the text of our script using the `rawText` tag.  This ensures that our text is not encoded by Giraffe so that it remains as we have written it.
+
+However, writing large quantities of JavaScript in this manner can be difficult, because you don't have access to the large ecosystem of javascript editor tooling.  In this case you should write your functions in another script and use a `script` tag element to reference your script, then add the desired function to your HTML element's event handler.
+
+Say you had a JavaScript file named `greet.js` and had configured Giraffe to serve that script from the WebRoot. Let us also say that the content of that script was:
+
+```javascript
+function greet() {
+    console.log("Hello from the greet function of greet.js!");
+}
+```
+
+Then, you could reference that javascript via a script element, and use `greet` in your event handler like so:
+
+```fsharp
+let page = 
+    html [] [
+        head [] [
+            script [_type "application/javascript"
+                    _src "/greet.js"] [] // include our `greet.js` function dynamically
+        ]
+        body [] [
+            button [_id "greet-btn"
+                    _onclick "greet()"] [] // use the `greet()` function from `greet.js` to say hello 
+        ]
+    ]
+```
+
+In this way, you can write `greet.js` with all of your expected tooling, and still hook up the event handlers all in one place in Giraffe.
+
 ### Naming Convention
 
 The Giraffe View Engine has a naming convention which lets you easily determine the correct function name without having to know anything about the view engine's implementation.
@@ -3311,7 +3374,7 @@ let configureServices (services : IServiceCollection) =
 
 #### Customizing JsonSerializerSettings
 
-You can change the default `JsonSerializerSettings` of the `NewtonsoftJsonSerializer` by registering a new instance of `NewtonsoftJsonSerializer` during application startup:
+You can change the default `JsonSerializerSettings` of the `NewtonsoftJsonSerializer` by registering a new instance of `NewtonsoftJsonSerializer` during application startup. For example, the [`Microsoft.FSharpLu` project](https://github.com/Microsoft/fsharplu/wiki/fsharplu.json) provides a JSON.NET converter (`CompactUnionJsonConverter`) that serializes and deserializes `Option`s and discriminated unions much more succinctly. If you wanted to use it, and set the culture to German, your configuration would look something like:
 
 ```fsharp
 let configureServices (services : IServiceCollection) =
@@ -3322,6 +3385,7 @@ let configureServices (services : IServiceCollection) =
     // object of JsonSerializerSettings
     let customSettings = JsonSerializerSettings(
         Culture = CultureInfo("de-DE"))
+    customSettings.Converters.Add(CompactUnionJsonConverter(true))
 
     services.AddSingleton<IJsonSerializer>(
         NewtonsoftJsonSerializer(customSettings)) |> ignore

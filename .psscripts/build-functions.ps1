@@ -2,19 +2,6 @@
 # Generic functions
 # ----------------------------------------------
 
-function Test-IsWindows
-{
-    <#
-        .DESCRIPTION
-        Checks to see whether the current environment is Windows or not.
-
-        .EXAMPLE
-        if (Test-IsWindows) { Write-Host "Hello Windows" }
-    #>
-
-    [environment]::OSVersion.Platform -ne "Unix"
-}
-
 function Test-IsMonoInstalled
 {
     <#
@@ -25,8 +12,12 @@ function Test-IsMonoInstalled
         if (Test-IsMonoInstalled) { Write-Host "Mono is available." }
     #>
 
-    $result = Invoke-Cmd "mono --version" -Silent
-    return $result.StartsWith("Mono JIT compiler version")
+    try
+    {
+        $result = Invoke-Cmd "mono --version" -Silent
+        return $result.StartsWith("Mono JIT compiler version")
+    }
+    catch { return false }
 }
 
 function Get-UbuntuVersion
@@ -62,7 +53,7 @@ function Invoke-UnsafeCmd (
     #>
 
     if (!($Silent.IsPresent)) { Write-Host $cmd -ForegroundColor DarkCyan }
-    if (Test-IsWindows) { $cmd = "cmd.exe /C $cmd" }
+    if ($IsWindows) { $cmd = "cmd.exe /C $cmd" }
     Invoke-Expression -Command $cmd
 }
 
@@ -85,7 +76,11 @@ function Invoke-Cmd (
     #>
 
     if ($Silent.IsPresent) { Invoke-UnsafeCmd $cmd -Silent } else { Invoke-UnsafeCmd $cmd }
-    if ($LastExitCode -ne 0) { Write-Error "An error occured when executing '$Cmd'."; return }
+    if ($LastExitCode -ne 0) {
+        Write-Host "An error occured when executing '$Cmd'."
+        Write-Error "An error occured when executing '$Cmd'."
+        return
+    }
 }
 
 function Remove-OldBuildArtifacts
@@ -147,7 +142,7 @@ function Test-CompareVersions ($version, [string]$gitTag)
 
 function Add-ToPathVariable ($path)
 {
-    if (Test-IsWindows)
+    if ($IsWindows)
     {
         $updatedPath = "$path;$env:Path"
         [Environment]::SetEnvironmentVariable("Path", $updatedPath, "Process")
@@ -161,6 +156,11 @@ function Add-ToPathVariable ($path)
         [Environment]::SetEnvironmentVariable("PATH", $updatedPath, "User")
         [Environment]::SetEnvironmentVariable("PATH", $updatedPath, "Machine")
     }
+}
+
+function Get-ProjectName ($proj)
+{
+	[System.IO.Path]::GetFileNameWithoutExtension($proj)
 }
 
 # ----------------------------------------------
@@ -191,7 +191,7 @@ function Get-TargetFrameworks ($projFile)
     else { @($proj.Project.PropertyGroup.TargetFramework) }
 }
 
-function Get-NetCoreTargetFramework ($projFile)
+function Get-NetCoreTargetFrameworks ($projFile)
 {
     <#
         .DESCRIPTION
@@ -201,7 +201,7 @@ function Get-NetCoreTargetFramework ($projFile)
         The full or relative path to a .NET Core project file (*.csproj, *.fsproj, *.vbproj).
 
         .EXAMPLE
-        Get-NetCoreTargetFramework "MyProject.csproj"
+        Get-NetCoreTargetFrameworks "MyProject.csproj"
 
         .NOTES
         This function will always return the only netstandard*/netcoreapp* target framework which is set up as a target framework.
@@ -215,13 +215,20 @@ function Invoke-DotNetCli ($cmd, $proj, $argv)
     # Currently dotnet test does not work for net461 on Linux/Mac
     # See: https://github.com/Microsoft/vstest/issues/1318
 
-    if((!(Test-IsWindows) -and !(Test-IsMonoInstalled)) `
-        -or (!(Test-IsWindows) -and ($cmd -eq "test")))
+    if((!($IsWindows) -and !(Test-IsMonoInstalled)) `
+        -or (!($IsWindows) -and ($cmd -eq "test")))
     {
-        $fw = Get-NetCoreTargetFramework($proj)
-        $argv = "-f $fw " + $argv
+        $netCoreFrameworks = Get-NetCoreTargetFrameworks($proj)
+
+        foreach($fw in $netCoreFrameworks) {
+            $fwArgv = "-f $fw " + $argv
+            Invoke-Cmd "dotnet $cmd $proj $fwArgv"
+        }
     }
-    Invoke-Cmd "dotnet $cmd $proj $argv"
+    else
+    {
+        Invoke-Cmd "dotnet $cmd $proj $argv"
+    }
 }
 
 function dotnet-info                      { Invoke-Cmd "dotnet --info" -Silent }
@@ -286,8 +293,14 @@ function Get-NetCoreSdkFromWeb ($version)
 
     Write-Host "Downloading .NET Core SDK $version..."
 
-    $os  = if (Test-IsWindows) { "windows" } else { "linux" }
-    $ext = if (Test-IsWindows) { ".zip" } else { ".tar.gz" }
+    $os  =
+        if ($IsWindows) { "windows" }
+        elseif ($IsLinux) { "linux" }
+        elseif ($IsMacOS) { "macos" }
+        else { Write-Error "Unknown OS, which is not supported by .NET Core." }
+
+    $ext = if ($IsWindows) { ".zip" } else { ".tar.gz" }
+
     $uri = "https://www.microsoft.com/net/download/thank-you/dotnet-sdk-$version-$os-x64-binaries"
     Write-Host "Finding download link..."
 
@@ -310,7 +323,7 @@ function Get-NetCoreSdkFromWeb ($version)
     return $tempFile
 }
 
-function Install-NetCoreSdkFromArchive ($sdkArchivePath)
+function Install-NetCoreSdkFromArchive ($sdkPackagePath)
 {
     <#
         .DESCRIPTION
@@ -320,21 +333,34 @@ function Install-NetCoreSdkFromArchive ($sdkArchivePath)
         The zip archive which contains the .NET Core SDK.
     #>
 
-    if (Test-IsWindows)
+    if ($IsWindows)
     {
         $dotnetInstallDir = [System.IO.Path]::Combine($pwd, ".dotnetsdk")
-        New-Item $dotnetInstallDir -ItemType Directory -Force | Out-Null
-        Write-Host "Created folder '$dotnetInstallDir'."
-        Expand-Archive -LiteralPath $sdkArchivePath -DestinationPath $dotnetInstallDir -Force
-        Write-Host "Extracted '$sdkArchivePath' to folder '$dotnetInstallDir'."
+
+        if (!(Test-Path $dotnetInstallDir))
+        {
+            New-Item $dotnetInstallDir -ItemType Directory -Force | Out-Null
+            Write-Host "Created folder '$dotnetInstallDir'."
+        }
+
+        Expand-Archive -LiteralPath $sdkPackagePath -DestinationPath $dotnetInstallDir -Force
+        Write-Host "Extracted '$sdkPackagePath' to folder '$dotnetInstallDir'."
+
+        [Environment]::SetEnvironmentVariable("DOTNET_ROOT", $dotnetInstallDir, "Process")
+        Write-Host "DOTNET_ROOT environment variable has been set to $dotnetInstallDir."
     }
     else
     {
         $dotnetInstallDir = "$env:HOME/.dotnetsdk"
-        Invoke-Cmd "mkdir -p $dotnetInstallDir"
-        Write-Host "Created folder '$dotnetInstallDir'."
-        Invoke-Cmd "tar -xf $sdkArchivePath -C $dotnetInstallDir"
-        Write-Host "Extracted '$sdkArchivePath' to folder '$dotnetInstallDir'."
+
+        if (!(Test-Path $dotnetInstallDir))
+        {
+            Invoke-Cmd "mkdir -p $dotnetInstallDir"
+            Write-Host "Created folder '$dotnetInstallDir'."
+        }
+
+        Invoke-Cmd "tar -xf $sdkPackagePath -C $dotnetInstallDir"
+        Write-Host "Extracted '$sdkPackagePath' to folder '$dotnetInstallDir'."
     }
 
     Add-ToPathVariable $dotnetInstallDir

@@ -288,7 +288,7 @@ type HttpFunc = HttpContext -> HttpFuncResult
 
 /// **Description**
 ///
-/// A HTTP handler is the core building block of a Giraffe web application. It works similarily to ASP.NET Core's middleware where it is self responsible for invoking the next `HttpFunc` function of the pipeline or shortcircuit the execution by directly returning a `Task` of `HttpContext option`.
+/// A HTTP handler is the core building block of a Giraffe web application. It works similarly to ASP.NET Core's middleware where it is self responsible for invoking the next `HttpFunc` function of the pipeline or shortcircuit the execution by directly returning a `Task` of `HttpContext option`.
 ///
 type HttpHandler = HttpFunc -> HttpFunc
 
