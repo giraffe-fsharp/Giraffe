@@ -21,7 +21,7 @@
     <PackageTags>Giraffe;ASP.NET Core;Lambda;FSharp;Functional;Http;Web;Framework;Micro;Service</PackageTags>
     <PackageReleaseNotes>https://raw.githubusercontent.com/giraffe-fsharp/giraffe/master/RELEASE_NOTES.md</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/giraffe-fsharp/giraffe</PackageProjectUrl>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageIcon>giraffe-64x64.png</PackageIcon>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
@@ -36,13 +36,9 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <None Include="../../LICENSE">
-      <Pack>true</Pack>
-      <PackagePath>LICENSE</PackagePath>
-    </None>
     <None Include="../../giraffe-64x64.png">
       <Pack>true</Pack>
-      <PackagePath>giraffe-64x64.png</PackagePath>
+      <PackagePath>$(PackageIconUrl)</PackagePath>
     </None>
   </ItemGroup>
   

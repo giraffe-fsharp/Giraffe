@@ -218,10 +218,17 @@ function Invoke-DotNetCli ($cmd, $proj, $argv)
     if((!($IsWindows) -and !(Test-IsMonoInstalled)) `
         -or (!($IsWindows) -and ($cmd -eq "test")))
     {
-        $fw = Get-NetCoreTargetFrameworks($proj)
-        $argv = "-f $fw " + $argv
+        $netCoreFrameworks = Get-NetCoreTargetFrameworks($proj)
+
+        foreach($fw in $netCoreFrameworks) {
+            $fwArgv = "-f $fw " + $argv
+            Invoke-Cmd "dotnet $cmd $proj $fwArgv"
+        }
     }
-    Invoke-Cmd "dotnet $cmd $proj $argv"
+    else
+    {
+        Invoke-Cmd "dotnet $cmd $proj $argv"
+    }
 }
 
 function dotnet-info                      { Invoke-Cmd "dotnet --info" -Silent }
