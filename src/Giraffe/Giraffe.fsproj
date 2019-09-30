@@ -50,7 +50,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.2.*" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.2.*" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="3.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="2.2.*" />
     <PackageReference Include="Microsoft.AspNetCore.ResponseCaching" Version="2.2.*" />
   </ItemGroup>
   
