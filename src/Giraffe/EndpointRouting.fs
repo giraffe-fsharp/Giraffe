@@ -13,7 +13,10 @@ let private convertToHttpFunc (handler : HttpHandler) =
 let private convertToRequestDelegate (func : HttpFunc) =
     fun (ctx : HttpContext) ->
         task {
-            let! _ = func ctx
+            let! result = func ctx
+            match result with
+            | None   -> () // Shall we return here a HTTP 422 Unprocessable Entity?
+            | Some _ -> ()
             return ()
         } :> Task
 
