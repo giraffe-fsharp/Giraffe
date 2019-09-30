@@ -9,7 +9,7 @@
     <NeutralLanguage>en-GB</NeutralLanguage>
 
     <!-- Build settings -->
-    <TargetFrameworks>netcoreapp3.0;netstandard2.0;net461</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.0</TargetFrameworks>
     <DebugType>portable</DebugType>
     <OutputType>Library</OutputType>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -82,6 +82,7 @@
     <Compile Include="Negotiation.fs" />
     <Compile Include="HttpStatusCodeHandlers.fs" />
     <Compile Include="Middleware.fs" />
+    <Compile Include="EndpointRouting.fs" />
   </ItemGroup>
 
 </Project>
