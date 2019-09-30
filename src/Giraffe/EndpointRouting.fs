@@ -26,7 +26,7 @@ type IRouteBuilder with
         this.MapGet(path, requestDelegate)
         |> ignore
 
-    member this.MapGiraffe (routes : (string * HttpHandler) list) (handler : HttpHandler) =
+    member this.MapGiraffe (routes : (string * HttpHandler) list) =
         routes
         |> List.map(fun (p, h) -> (p, convertToHttpFunc h))
         |> List.iter(this.MapGiraffeGetRoute)
