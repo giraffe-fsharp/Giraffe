@@ -15,6 +15,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
 
     <!-- NuGet settings -->
     <PackageId>Giraffe</PackageId>
@@ -30,11 +31,11 @@
     <!-- SourceLink settings -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    
+
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <NoWarn>FS2003;FS0044</NoWarn>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <None Include="../../giraffe-64x64.png">
       <Pack>true</Pack>
@@ -53,7 +54,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="2.2.*" />
     <PackageReference Include="Microsoft.AspNetCore.ResponseCaching" Version="2.2.*" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="All" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
