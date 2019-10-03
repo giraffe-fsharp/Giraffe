@@ -37,7 +37,7 @@ module RequestErrors =
     ///
     /// Sends a `401 Unauthorized` HTTP status code response back to the client.
     ///
-    /// Use the `unauthorized` status code handler when a user could not be authenticated by the server (either missing or wrong authentication data). By returnign a `401 Unauthorized` HTTP response the server tells the client that it must know **who** is making the request before it can return a successful response. As such the server must also include which authentiation scheme the client must use in order to successfully authenticate.
+    /// Use the `unauthorized` status code handler when a user could not be authenticated by the server (either missing or wrong authentication data). By returning a `401 Unauthorized` HTTP response the server tells the client that it must know **who** is making the request before it can return a successful response. As such the server must also include which authentication scheme the client must use in order to successfully authenticate.
     ///
     /// **More information**
     ///

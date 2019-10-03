@@ -13,6 +13,7 @@ open Microsoft.Extensions.Primitives
 open Microsoft.Net.Http.Headers
 open Microsoft.FSharp.Reflection
 open FSharp.Control.Tasks.V2.ContextInsensitive
+open System.Text.RegularExpressions
 
 // ---------------------------
 // Model parsing functions
@@ -112,10 +113,11 @@ module ModelParser =
                 sprintf "Could not parse value '%s' to type %s." rawValue (t.ToString())
                 |> Error
 
-    let private parseModel<'T> (cultureInfo : CultureInfo option)
-                               (data        : IDictionary<string, StringValues>)
-                               (strict      : bool)
-                               : Result<'T, string> =
+    let rec private parseModel<'T> (model       : 'T)
+                                   (cultureInfo : CultureInfo option)
+                                   (data        : IDictionary<string, StringValues>)
+                                   (strict      : bool)
+                                   : Result<'T, string> =
         // Normalize data
         let normalizeKey (key : string) =
             key.ToLowerInvariant().TrimEnd([| '['; ']' |])
@@ -126,7 +128,6 @@ module ModelParser =
 
         // Create culture and model objects
         let culture = defaultArg cultureInfo CultureInfo.InvariantCulture
-        let model   = Activator.CreateInstance<'T>()
 
         let error =
             // Iterate through all properties of the model
@@ -146,9 +147,12 @@ module ModelParser =
                             // If there was an entry then try to parse the raw value.
                             match data.TryGetValue (prop.Name.ToLowerInvariant()) with
                             | false, _        ->
-                                match getValueForMissingProperty prop.PropertyType with
+                                match getValueForArrayOfGenericType cultureInfo data strict prop with
                                 | Some v -> Ok v
-                                | None   -> Error (sprintf "Missing value for required property %s." prop.Name)
+                                | None ->
+                                    match getValueForMissingProperty prop.PropertyType with
+                                    | Some v -> Ok v
+                                    | None   -> Error (sprintf "Missing value for required property %s." prop.Name)
                             | true , rawValue -> parseValue prop.PropertyType rawValue culture
 
                         // Check if a value was able to get successfully parsed.
@@ -170,6 +174,64 @@ module ModelParser =
         | true, Some err -> Error err
         | _   , _        -> Ok model
 
+    and getValueForArrayOfGenericType (cultureInfo : CultureInfo option)
+                                      (data        : IDictionary<string, StringValues>)
+                                      (strict      : bool)
+                                      (prop        : PropertyInfo)
+                                      : (obj option) =
+
+        if prop.PropertyType.IsArray then
+            let lowerCasedPropName = prop.Name.ToLowerInvariant()
+            let pattern = lowerCasedPropName |> Regex.Escape |> sprintf @"%s\[(\d+)\]\.(\w+)"
+
+            let innerType = prop.PropertyType.GetElementType()
+
+            let seqOfObjects =
+                data
+                |> Seq.filter (fun item -> Regex.IsMatch(item.Key, pattern))
+                |> Seq.map (fun item ->
+                    let matchedData = Regex.Match(item.Key, pattern)
+
+                    let index = matchedData.Groups.[1].Value
+                    let key = matchedData.Groups.[2].Value
+                    let value = item.Value
+
+                    index, key, value
+                )
+                |> Seq.groupBy (fun (index, _, _) -> index |> int)
+                |> Seq.sortBy (fun (index, _) -> index)
+                |> Seq.choose (fun (index, values) ->
+                    let dictData =
+                        values
+                        |> Seq.fold(fun (state : Map<string, StringValues>) (_, key, value) ->
+                            state.Add(key, value)
+                        ) Map.empty
+
+                    let model = Activator.CreateInstance(innerType)
+                    let res = parseModel model cultureInfo dictData strict
+
+                    match res with
+                    | Ok o ->
+                        Some(index, o)
+                    | Error _ -> None
+                )
+
+            let arrayOfObjects =
+                if (seqOfObjects |> Seq.length > 0) then
+                    let arraySize = (seqOfObjects |> Seq.last |> fst) + 1
+                    let arrayOfObjects = Array.CreateInstance(innerType, arraySize)
+
+                    seqOfObjects
+                    |> Seq.iter (fun (index, item) -> arrayOfObjects.SetValue(item, index))
+
+                    arrayOfObjects
+                else
+                    Array.CreateInstance(innerType, 0)
+
+            arrayOfObjects |> box |> Some
+        else
+            None
+
     /// **Description**
     ///
     /// Tries to create an instance of type `'T` from a given set of `data`.
@@ -187,7 +249,9 @@ module ModelParser =
     ///
     let tryParse<'T> (culture : CultureInfo option)
                      (data    : IDictionary<string, StringValues>) =
-        parseModel<'T> culture data true
+        let model = Activator.CreateInstance<'T>()
+
+        parseModel<'T> model culture data true
 
     /// **Description**
     ///
@@ -206,7 +270,9 @@ module ModelParser =
     ///
     let parse<'T> (culture : CultureInfo option)
                   (data    : IDictionary<string, StringValues>) =
-        let result = parseModel<'T> culture data false
+        let model = Activator.CreateInstance<'T>()
+
+        let result = parseModel<'T> model culture data false
         match result with
         | Ok model  -> model
         | Error msg -> failwithf "Unexpected error during non-strict model parsing: %s" msg
@@ -444,7 +510,7 @@ let bindForm<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHa
 ///
 /// `parsingErrorHandler`: A `string -> HttpHandler` function which will get invoked when the model parsing fails. The `string` parameter holds the parsing error message.
 /// `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
-/// `successhandler`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
+/// `successHandler`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
 ///
 /// **Output**
 ///
@@ -452,7 +518,7 @@ let bindForm<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHa
 ///
 let tryBindForm<'T> (parsingErrorHandler : string -> HttpHandler)
                     (culture             : CultureInfo option)
-                    (successhandler      : 'T -> HttpHandler) : HttpHandler =
+                    (successHandler      : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             let! result =
@@ -462,7 +528,7 @@ let tryBindForm<'T> (parsingErrorHandler : string -> HttpHandler)
             return!
                 (match result with
                 | Error msg -> parsingErrorHandler msg
-                | Ok model  -> successhandler model) next ctx
+                | Ok model  -> successHandler model) next ctx
         }
 
 /// **Description**
@@ -496,7 +562,7 @@ let bindQuery<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpH
 ///
 /// `parsingErrorHandler`: A `HttpHandler` function which will get invoked when the model parsing fails. The `string` input parameter holds the parsing error message.
 /// `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
-/// `successhandler`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
+/// `successHandler`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
 ///
 /// **Output**
 ///
@@ -504,7 +570,7 @@ let bindQuery<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpH
 ///
 let tryBindQuery<'T> (parsingErrorHandler : string -> HttpHandler)
                      (culture             : CultureInfo option)
-                     (successhandler      : 'T -> HttpHandler) : HttpHandler =
+                     (successHandler      : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let result =
             match culture with
@@ -512,7 +578,7 @@ let tryBindQuery<'T> (parsingErrorHandler : string -> HttpHandler)
             | None   -> ctx.TryBindQueryString<'T>()
         (match result with
         | Error msg -> parsingErrorHandler msg
-        | Ok model  -> successhandler model) next ctx
+        | Ok model  -> successHandler model) next ctx
 
 /// **Description**
 ///

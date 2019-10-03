@@ -7,13 +7,15 @@ open System.IO
 open System.Text
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Http.Internal
 open Microsoft.Extensions.Primitives
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Xunit
 open NSubstitute
-open Newtonsoft.Json
 open Giraffe
+
+#if NETCOREAPP2_1 || NET461
+open Microsoft.AspNetCore.Http.Internal
+#endif
 
 [<CLIMutable>]
 type ModelWithOption =
@@ -51,6 +53,13 @@ type Sex =
     | Female
 
 [<CLIMutable>]
+type Child =
+    {
+        Name : string
+        Age  : int
+    }
+
+[<CLIMutable>]
 type Model =
     {
         Id         : Guid
@@ -60,6 +69,7 @@ type Model =
         Sex        : Sex
         BirthDate  : DateTime
         Nicknames  : string list option
+        Children   : Child[]
     }
 
 [<CLIMutable>]
@@ -98,13 +108,19 @@ let ``ModelParser.tryParse with complete model data`` () =
     let id = Guid.NewGuid()
     let modelData =
         dict [
-            "Id"        , StringValues (id.ToString())
-            "FirstName" , StringValues "Susan"
-            "MiddleName", StringValues "Elisabeth"
-            "LastName"  , StringValues "Doe"
-            "Sex"       , StringValues "Female"
-            "BirthDate" , StringValues "1986-12-29"
-            "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "Id"               , StringValues (id.ToString())
+            "FirstName"        , StringValues "Susan"
+            "MiddleName"       , StringValues "Elisabeth"
+            "LastName"         , StringValues "Doe"
+            "Sex"              , StringValues "Female"
+            "BirthDate"        , StringValues "1986-12-29"
+            "Nicknames"        , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "Children[0].Name" , StringValues "Hamed"
+            "Children[0].Age"  , StringValues "32"
+            "Children[1].Name" , StringValues "Ali"
+            "Children[1].Age"  , StringValues "22"
+            "Children[2].Name" , StringValues "Gholi"
+            "Children[2].Age"  , StringValues "44"
         ]
     let expected =
         {
@@ -115,8 +131,14 @@ let ``ModelParser.tryParse with complete model data`` () =
             Sex        = Female
             BirthDate  = DateTime(1986, 12, 29)
             Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
+            Children   = [|
+                { Name = "Hamed"; Age = 32 }
+                { Name = "Ali";   Age = 22 }
+                { Name = "Gholi"; Age = 44 }
+            |]
         }
     let culture = None
+
     let result = ModelParser.tryParse<Model> culture modelData
     match result with
     | Ok model  -> Assert.Equal(expected, model)
@@ -132,6 +154,12 @@ let ``ModelParser.tryParse with model data without optional parameters`` () =
             "LastName"  , StringValues "Doe"
             "Sex"       , StringValues "Female"
             "BirthDate" , StringValues "1986-12-29"
+            "Children[0].Name" , StringValues "Hamed"
+            "Children[0].Age"  , StringValues "32"
+            "Children[1].Name" , StringValues "Ali"
+            "Children[1].Age"  , StringValues "22"
+            "Children[2].Name" , StringValues "Gholi"
+            "Children[2].Age"  , StringValues "44"
         ]
     let expected =
         {
@@ -142,6 +170,11 @@ let ``ModelParser.tryParse with model data without optional parameters`` () =
             Sex        = Female
             BirthDate  = DateTime(1986, 12, 29)
             Nicknames  = None
+            Children   = [|
+                { Name = "Hamed"; Age = 32 }
+                { Name = "Ali";   Age = 22 }
+                { Name = "Gholi"; Age = 44 }
+            |]
         }
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
@@ -161,6 +194,12 @@ let ``ModelParser.tryParse with complete model data but mixed casing`` () =
             "Sex"       , StringValues "female"
             "BirthDate" , StringValues "1986-12-29"
             "NickNames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "children[0].Name" , StringValues "Hamed"
+            "Children[0].Age"  , StringValues "32"
+            "Children[1].name" , StringValues "Ali"
+            "children[1].Age"  , StringValues "22"
+            "children[2].Name" , StringValues "Gholi"
+            "children[2].age"  , StringValues "44"
         ]
     let expected =
         {
@@ -171,6 +210,51 @@ let ``ModelParser.tryParse with complete model data but mixed casing`` () =
             Sex        = Female
             BirthDate  = DateTime(1986, 12, 29)
             Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
+            Children   = [|
+                { Name = "Hamed"; Age = 32 }
+                { Name = "Ali";   Age = 22 }
+                { Name = "Gholi"; Age = 44 }
+            |]
+        }
+    let culture = None
+    let result = ModelParser.tryParse<Model> culture modelData
+    match result with
+    | Ok model  -> Assert.Equal(expected, model)
+    | Error err -> assertFailf "Model didn't bind successfully: %s." err
+
+[<Fact>]
+let ``ModelParser.tryParse with complete model data but with different order for array of child`` () =
+    let id = Guid.NewGuid()
+    let modelData =
+        dict [
+            "id"        , StringValues (id.ToString())
+            "firstName" , StringValues "Susan"
+            "MiddleName", StringValues "Elisabeth"
+            "lastname"  , StringValues "Doe"
+            "Sex"       , StringValues "female"
+            "BirthDate" , StringValues "1986-12-29"
+            "NickNames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "Children[2].Name" , StringValues "Gholi"
+            "Children[0].Name" , StringValues "Hamed"
+            "Children[1].Age"  , StringValues "22"
+            "Children[2].Age"  , StringValues "44"
+            "Children[1].Name" , StringValues "Ali"
+            "Children[0].Age"  , StringValues "32"
+        ]
+    let expected =
+        {
+            Id         = id
+            FirstName  = "Susan"
+            MiddleName = Some "Elisabeth"
+            LastName   = "Doe"
+            Sex        = Female
+            BirthDate  = DateTime(1986, 12, 29)
+            Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
+            Children   = [|
+                { Name = "Hamed"; Age = 32 }
+                { Name = "Ali";   Age = 22 }
+                { Name = "Gholi"; Age = 44 }
+            |]
         }
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
@@ -187,6 +271,26 @@ let ``ModelParser.tryParse with incomplete model data`` () =
             "Sex"       , StringValues "Female"
             "BirthDate" , StringValues "1986-12-29"
             "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "Children[0].Name" , StringValues "Hamed"
+            "Children[2].Age"  , StringValues "44"
+        ]
+    let culture = None
+    let result = ModelParser.tryParse<Model> culture modelData
+    match result with
+    | Ok _      -> assertFail "Model had incomplete data and should have not bound successfully."
+    | Error err -> Assert.Equal("Missing value for required property Id.", err)
+
+[<Fact>]
+let ``ModelParser.tryParse with incomplete model data and different order for array of child`` () =
+    let modelData =
+        dict [
+            "FirstName" , StringValues "Susan"
+            "MiddleName", StringValues "Elisabeth"
+            "Sex"       , StringValues "Female"
+            "BirthDate" , StringValues "1986-12-29"
+            "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "Children[2].Age"  , StringValues "44"
+            "Children[0].Name" , StringValues "Hamed"
         ]
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
@@ -206,6 +310,12 @@ let ``ModelParser.tryParse with complete model data but wrong union case`` () =
             "Sex"       , StringValues "wrong"
             "BirthDate" , StringValues "1986-12-29"
             "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "Children[0].Name" , StringValues "Hamed"
+            "Children[0].Age"  , StringValues "32"
+            "Children[1].Name" , StringValues "Ali"
+            "Children[1].Age"  , StringValues "22"
+            "Children[2].Name" , StringValues "Gholi"
+            "Children[2].Age"  , StringValues "44"
         ]
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
@@ -225,6 +335,12 @@ let ``ModelParser.tryParse with complete model data but wrong data`` () =
             "Sex"       , StringValues "Female"
             "BirthDate" , StringValues "wrong"
             "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "Children[0].Name" , StringValues "Hamed"
+            "Children[0].Age"  , StringValues "wrongAge"
+            "Children[1].Name" , StringValues "Ali"
+            "Children[1].Age"  , StringValues "wrongAge"
+            "Children[2].Name" , StringValues "Gholi"
+            "Children[2].Age"  , StringValues "wrongAge"
         ]
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
@@ -248,6 +364,12 @@ let ``ModelParser.parse with complete model data`` () =
             "Sex"       , StringValues "Female"
             "BirthDate" , StringValues "1986-12-29"
             "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "Children[0].Name" , StringValues "Hamed"
+            "Children[0].Age"  , StringValues "32"
+            "Children[1].Name" , StringValues "Ali"
+            "Children[1].Age"  , StringValues "22"
+            "Children[2].Name" , StringValues "Gholi"
+            "Children[2].Age"  , StringValues "44"
         ]
     let expected =
         {
@@ -258,6 +380,11 @@ let ``ModelParser.parse with complete model data`` () =
             Sex        = Female
             BirthDate  = DateTime(1986, 12, 29)
             Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
+            Children   = [|
+                { Name = "Hamed"; Age = 32 }
+                { Name = "Ali";   Age = 22 }
+                { Name = "Gholi"; Age = 44 }
+            |]
         }
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
@@ -273,6 +400,12 @@ let ``ModelParser.parse with model data without optional parameters`` () =
             "LastName"  , StringValues "Doe"
             "Sex"       , StringValues "Female"
             "BirthDate" , StringValues "1986-12-29"
+            "Children[0].Name" , StringValues "Hamed"
+            "Children[0].Age"  , StringValues "32"
+            "Children[1].Name" , StringValues "Ali"
+            "Children[1].Age"  , StringValues "22"
+            "Children[2].Name" , StringValues "Gholi"
+            "Children[2].Age"  , StringValues "44"
         ]
     let expected =
         {
@@ -283,6 +416,11 @@ let ``ModelParser.parse with model data without optional parameters`` () =
             Sex        = Female
             BirthDate  = DateTime(1986, 12, 29)
             Nicknames  = None
+            Children   = [|
+                { Name = "Hamed"; Age = 32 }
+                { Name = "Ali";   Age = 22 }
+                { Name = "Gholi"; Age = 44 }
+            |]
         }
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
@@ -300,6 +438,12 @@ let ``ModelParser.parse with complete model data but mixed casing`` () =
             "Sex"       , StringValues "female"
             "BirthDate" , StringValues "1986-12-29"
             "NickNames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "children[0].Name" , StringValues "Hamed"
+            "Children[0].Age"  , StringValues "32"
+            "Children[1].name" , StringValues "Ali"
+            "children[1].Age"  , StringValues "22"
+            "children[2].Name" , StringValues "Gholi"
+            "children[2].age"  , StringValues "44"
         ]
     let expected =
         {
@@ -310,6 +454,49 @@ let ``ModelParser.parse with complete model data but mixed casing`` () =
             Sex        = Female
             BirthDate  = DateTime(1986, 12, 29)
             Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
+            Children   = [|
+                { Name = "Hamed"; Age = 32 }
+                { Name = "Ali";   Age = 22 }
+                { Name = "Gholi"; Age = 44 }
+            |]
+        }
+    let culture = None
+    let result = ModelParser.parse<Model> culture modelData
+    Assert.Equal(expected, result)
+
+[<Fact>]
+let ``ModelParser.parse with complete model data but with different order for array of child`` () =
+    let id = Guid.NewGuid()
+    let modelData =
+        dict [
+            "id"        , StringValues (id.ToString())
+            "firstName" , StringValues "Susan"
+            "MiddleName", StringValues "Elisabeth"
+            "lastname"  , StringValues "Doe"
+            "Sex"       , StringValues "female"
+            "BirthDate" , StringValues "1986-12-29"
+            "NickNames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "Children[2].Name" , StringValues "Gholi"
+            "Children[0].Name" , StringValues "Hamed"
+            "Children[1].Age"  , StringValues "22"
+            "Children[2].Age"  , StringValues "44"
+            "Children[1].Name" , StringValues "Ali"
+            "Children[0].Age"  , StringValues "32"
+        ]
+    let expected =
+        {
+            Id         = id
+            FirstName  = "Susan"
+            MiddleName = Some "Elisabeth"
+            LastName   = "Doe"
+            Sex        = Female
+            BirthDate  = DateTime(1986, 12, 29)
+            Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
+            Children   = [|
+                { Name = "Hamed"; Age = 32 }
+                { Name = "Ali";   Age = 22 }
+                { Name = "Gholi"; Age = 44 }
+            |]
         }
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
@@ -324,7 +511,10 @@ let ``ModelParser.parse with incomplete model data`` () =
             "Sex"       , StringValues "Female"
             "BirthDate" , StringValues "1986-12-29"
             "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "Children[0].Name" , StringValues "Hamed"
+            "Children[2].Age"  , StringValues "44"
         ]
+
     let expected =
         {
             Id         = Guid.Empty
@@ -334,6 +524,43 @@ let ``ModelParser.parse with incomplete model data`` () =
             Sex        = Female
             BirthDate  = DateTime(1986, 12, 29)
             Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
+            Children   = [|
+                { Name = "Hamed"; Age = 0 }
+                Unchecked.defaultof<_>
+                { Name = null; Age = 44 }
+            |]
+        }
+    let culture = None
+    let result = ModelParser.parse<Model> culture modelData
+    Assert.Equal(expected, result)
+
+[<Fact>]
+let ``ModelParser.parse with incomplete model data and with different order for array of child`` () =
+    let modelData =
+        dict [
+            "FirstName" , StringValues "Susan"
+            "MiddleName", StringValues "Elisabeth"
+            "Sex"       , StringValues "Female"
+            "BirthDate" , StringValues "1986-12-29"
+            "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "Children[2].Age"  , StringValues "44"
+            "Children[0].Name" , StringValues "Hamed"
+        ]
+
+    let expected =
+        {
+            Id         = Guid.Empty
+            FirstName  = "Susan"
+            MiddleName = Some "Elisabeth"
+            LastName   = null
+            Sex        = Female
+            BirthDate  = DateTime(1986, 12, 29)
+            Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
+            Children   = [|
+                { Name = "Hamed"; Age = 0 }
+                Unchecked.defaultof<_>
+                { Name = null; Age = 44 }
+            |]
         }
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
@@ -348,7 +575,10 @@ let ``ModelParser.parse with incomplete model data and wrong union case`` () =
             "Sex"       , StringValues "wrong"
             "BirthDate" , StringValues "1986-12-29"
             "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "Children[0].Name" , StringValues "Hamed"
+            "Children[2].Age"  , StringValues "44"
         ]
+
     let expected =
         {
             Id         = Guid.Empty
@@ -358,9 +588,16 @@ let ``ModelParser.parse with incomplete model data and wrong union case`` () =
             Sex        = Unchecked.defaultof<Sex>
             BirthDate  = DateTime(1986, 12, 29)
             Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
+            Children   = [|
+                { Name = "Hamed"; Age = 0 }
+                Unchecked.defaultof<_>
+                { Name = null; Age = 44 }
+            |]
         }
+
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
+
     Assert.Equal(expected.Id, result.Id)
     Assert.Equal(expected.FirstName, result.FirstName)
     Assert.Equal(expected.MiddleName, result.MiddleName)
@@ -368,6 +605,7 @@ let ``ModelParser.parse with incomplete model data and wrong union case`` () =
     Assert.Null(result.Sex)
     Assert.Equal(expected.BirthDate, result.BirthDate)
     Assert.Equal(expected.Nicknames, result.Nicknames)
+    Assert.Equal<Child[]>(expected.Children, result.Children)
 
 [<Fact>]
 let ``ModelParser.parse with complete model data but wrong data`` () =
@@ -378,6 +616,12 @@ let ``ModelParser.parse with complete model data but wrong data`` () =
             "Sex"       , StringValues "wrong"
             "BirthDate" , StringValues "wrong"
             "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
+            "Children[0].Name" , StringValues "Hamed"
+            "Children[0].Age"  , StringValues "wrongAge"
+            "Children[1].Name" , StringValues "Ali"
+            "Children[1].Age"  , StringValues "22"
+            "Children[2].Name" , StringValues "Gholi"
+            "Children[2].Age"  , StringValues "wrongAge"
         ]
     let expected =
         {
@@ -388,6 +632,11 @@ let ``ModelParser.parse with complete model data but wrong data`` () =
             Sex        = Unchecked.defaultof<Sex>
             BirthDate  = Unchecked.defaultof<DateTime>
             Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
+            Children   = [|
+                { Name = "Hamed"; Age = 0 }
+                { Name = "Ali";   Age = 22 }
+                { Name = "Gholi"; Age = 0 }
+            |]
         }
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
@@ -398,6 +647,7 @@ let ``ModelParser.parse with complete model data but wrong data`` () =
     Assert.Null(result.Sex)
     Assert.Equal(expected.BirthDate, DateTime.MinValue)
     Assert.Equal(expected.Nicknames, result.Nicknames)
+    Assert.Equal<Child[]>(expected.Children, result.Children)
 
 // ---------------------------------
 // TryBindQueryString Tests

@@ -1,18 +1,22 @@
 namespace Giraffe.Serialization
 
+open Microsoft.IO
+
 // ---------------------------
 // JSON
 // ---------------------------
 
 [<AutoOpen>]
 module Json =
-    open System
     open System.IO
     open System.Text
     open System.Threading.Tasks
     open Newtonsoft.Json
     open Newtonsoft.Json.Serialization
+    open FSharp.Control.Tasks.V2.ContextInsensitive
     open Utf8Json
+
+    let recyclableMemoryStreamManager = RecyclableMemoryStreamManager()
 
     /// **Description**
     ///
@@ -75,9 +79,8 @@ module Json =
     /// Serializes objects to camel cased JSON code.
     ///
     type NewtonsoftJsonSerializer (settings : JsonSerializerSettings) =
-
+        let serializer = JsonSerializer.Create settings
         let Utf8EncodingWithoutBom = new UTF8Encoding(false)
-        let DefaultBufferSize = 1024
 
         static member DefaultSettings =
             JsonSerializerSettings(
@@ -92,11 +95,15 @@ module Json =
                 |> Encoding.UTF8.GetBytes
 
             member __.SerializeToStreamAsync (x : 'T) (stream : Stream) =
-                use sw = new StreamWriter(stream, Utf8EncodingWithoutBom, DefaultBufferSize, true)
-                use jw = new JsonTextWriter(sw)
-                let sr = JsonSerializer.Create settings
-                sr.Serialize(jw, x)
-                Task.CompletedTask
+                task {
+                    use memoryStream = recyclableMemoryStreamManager.GetStream()
+                    use streamWriter = new StreamWriter(memoryStream, Utf8EncodingWithoutBom)
+                    use jsonTextWriter = new JsonTextWriter(streamWriter)
+                    serializer.Serialize(jsonTextWriter, x)
+                    jsonTextWriter.Flush()
+                    memoryStream.Seek(0L, SeekOrigin.Begin) |> ignore
+                    do! memoryStream.CopyToAsync(stream, 65536)
+                } :> Task
 
             member __.Deserialize<'T> (json : string) =
                 JsonConvert.DeserializeObject<'T>(json, settings)
@@ -106,11 +113,14 @@ module Json =
                 JsonConvert.DeserializeObject<'T>(json, settings)
 
             member __.DeserializeAsync<'T> (stream : Stream) =
-                use sr = new StreamReader(stream, true)
-                use jr = new JsonTextReader(sr)
-                let sr = JsonSerializer.Create settings
-                Task.FromResult(sr.Deserialize<'T> jr)
-
+                task {
+                    use memoryStream = new MemoryStream()
+                    do! stream.CopyToAsync(memoryStream)
+                    memoryStream.Seek(0L, SeekOrigin.Begin) |> ignore
+                    use streamReader = new StreamReader(memoryStream)
+                    use jsonTextReader = new JsonTextReader(streamReader)
+                    return serializer.Deserialize<'T>(jsonTextReader)
+                }
 // ---------------------------
 // XML
 // ---------------------------

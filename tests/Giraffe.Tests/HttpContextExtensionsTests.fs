@@ -4,13 +4,16 @@ open System
 open System.IO
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Http.Internal
 open Microsoft.Extensions.Primitives
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Xunit
 open NSubstitute
 open Giraffe
 open Giraffe.GiraffeViewEngine
+
+#if NETCOREAPP2_1 || NET461
+open Microsoft.AspNetCore.Http.Internal
+#endif
 
 [<Fact>]
 let ``GetRequestUrl returns entire URL of the HTTP request`` () =
@@ -105,7 +108,7 @@ let ``WriteHtmlViewAsync should add html to the context`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+        fun (_ : HttpFunc) (ctx : HttpContext) ->
             let htmlDoc =
                 html [] [
                     head [] []
@@ -141,7 +144,7 @@ let ``WriteHtmlFileAsync should return html from physical folder`` () =
             "index.html")
 
     let testHandler : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+        fun (_ : HttpFunc) (ctx : HttpContext) ->
             ctx.WriteHtmlFileAsync filePath
 
     let app = route "/" >=> testHandler
@@ -165,7 +168,7 @@ let ``WriteTextAsync with HTTP GET should return text in body`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+        fun (_ : HttpFunc) (ctx : HttpContext) ->
             ctx.WriteTextAsync "Hello World Giraffe"
 
     let app = route "/" >=> testHandler
@@ -189,7 +192,7 @@ let ``WriteTextAsync with HTTP HEAD should not return text in body`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+        fun (_ : HttpFunc) (ctx : HttpContext) ->
             ctx.WriteTextAsync "Hello World Giraffe"
 
     let app = route "/" >=> testHandler

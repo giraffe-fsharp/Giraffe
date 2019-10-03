@@ -3,7 +3,6 @@ module Giraffe.Preconditional
 
 open System
 open System.Linq
-open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Headers
 open Microsoft.Extensions.Primitives
@@ -113,7 +112,7 @@ type HttpContext with
     /// Returns a `Precondition` union type, which can have one of the following cases:
     ///
     /// `NoConditionsSpecified`: No validation has taken place, because the client didn't send any conditional HTTP headers.
-    /// `ConditionFailed`: At least one condition couldn't be sastisfied. It is advised to return a `412` status code back to the client (you can use the `HttpContext.PreconditionFailedResponse()` method for that purpose).
+    /// `ConditionFailed`: At least one condition couldn't be satisfied. It is advised to return a `412` status code back to the client (you can use the `HttpContext.PreconditionFailedResponse()` method for that purpose).
     /// `ResourceNotModified`: The resource hasn't changed since the last visit. The server can skip processing this request and return a `304` status code back to the client (you can use the `HttpContext.NotModifiedResponse()` method for that purpose).
     /// `AllConditionsMet`: All pre-conditions can be satisfied. The server should continue processing the request as normal.
     ///
