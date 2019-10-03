@@ -2866,7 +2866,7 @@ The `vary` parameter specifies which HTTP request headers must be respected to v
 
 #### VaryByQueryKeys
 
-The ASP.NET Core response caching middleware offers one more additional feature which is not part of the response's HTTP headers. By default, if a route is cachable then the middleware will try to returnn a cached response even if the query parameters were different.
+The ASP.NET Core response caching middleware offers one more additional feature which is not part of the response's HTTP headers. By default, if a route is cachable then the middleware will try to return a cached response even if the query parameters were different.
 
 For example if a request to `/foo/bar` has been cached, then the cached version will also be returned if a request is made to `/foo/bar?query1=a` or `/foo/bar?query1=a&query2=b`.
 
