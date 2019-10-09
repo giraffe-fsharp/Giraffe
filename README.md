@@ -312,7 +312,7 @@ https://ci.appveyor.com/nuget/giraffe
 
 If you add this source to your NuGet CLI or project settings then you can pull unofficial NuGet packages for quick feature testing or urgent hot fixes.
 
-**Please be aware that unofficial builds have not gone through the scrunity of offical releases and their usage is on your own risk.**
+**Please be aware that unofficial builds have not gone through the scrutiny of official releases and their usage is on your own risk.**
 
 ## Blog posts
 
