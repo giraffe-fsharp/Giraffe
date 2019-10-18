@@ -22,9 +22,12 @@ let handler3 (a : string, b : string, c : string, d : int) : HttpHandler =
 
 let routes =
     [
-        route "/" handler1
-        routef "/%s/%i" handler2
-        routef "/%s/%s/%s/%i" handler3
+        yield route "/" handler1
+        yield routef "/%s/%i" handler2
+        yield routef "/%s/%s/%s/%i" handler3
+        yield! subRoute "/sub" [
+            route "/test" handler1
+        ]
     ]
 
 let configureApp (app : IApplicationBuilder) =
