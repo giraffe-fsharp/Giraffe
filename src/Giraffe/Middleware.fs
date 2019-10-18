@@ -81,7 +81,7 @@ type IApplicationBuilder with
     ///
     /// Adds the `GiraffeMiddleware` into the ASP.NET Core pipeline. Any web request which doesn't get handled by a surrounding middleware can be picked up by the Giraffe `HttpHandler` pipeline.
     ///
-    /// It is generally recommended to add the `GiraffeMiddleware` after the error handling-, static file- and any authentiation middleware.
+    /// It is generally recommended to add the `GiraffeMiddleware` after the error handling-, static file- and any authentication middleware.
     ///
     /// **Parameters**
     ///

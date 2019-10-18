@@ -128,7 +128,7 @@ module ModelParser =
 
         // Create culture and model objects
         let culture = defaultArg cultureInfo CultureInfo.InvariantCulture
-        
+
         let error =
             // Iterate through all properties of the model
             model.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
@@ -173,7 +173,7 @@ module ModelParser =
         match strict, error with
         | true, Some err -> Error err
         | _   , _        -> Ok model
-        
+
     and getValueForArrayOfGenericType (cultureInfo : CultureInfo option)
                                       (data        : IDictionary<string, StringValues>)
                                       (strict      : bool)
@@ -183,19 +183,19 @@ module ModelParser =
         if prop.PropertyType.IsArray then
             let lowerCasedPropName = prop.Name.ToLowerInvariant()
             let pattern = lowerCasedPropName |> Regex.Escape |> sprintf @"%s\[(\d+)\]\.(\w+)"
-            
+
             let innerType = prop.PropertyType.GetElementType()
-                        
-            let seqOfObjects = 
+
+            let seqOfObjects =
                 data
                 |> Seq.filter (fun item -> Regex.IsMatch(item.Key, pattern))
                 |> Seq.map (fun item ->
                     let matchedData = Regex.Match(item.Key, pattern)
-                    
+
                     let index = matchedData.Groups.[1].Value
                     let key = matchedData.Groups.[2].Value
                     let value = item.Value
-                    
+
                     index, key, value
                 )
                 |> Seq.groupBy (fun (index, _, _) -> index |> int)
@@ -206,28 +206,28 @@ module ModelParser =
                         |> Seq.fold(fun (state : Map<string, StringValues>) (_, key, value) ->
                             state.Add(key, value)
                         ) Map.empty
-                    
+
                     let model = Activator.CreateInstance(innerType)
                     let res = parseModel model cultureInfo dictData strict
-                                        
+
                     match res with
                     | Ok o ->
                         Some(index, o)
                     | Error _ -> None
                 )
-            
+
             let arrayOfObjects =
-                if (seqOfObjects |> Seq.length > 0) then    
+                if (seqOfObjects |> Seq.length > 0) then
                     let arraySize = (seqOfObjects |> Seq.last |> fst) + 1
                     let arrayOfObjects = Array.CreateInstance(innerType, arraySize)
-                                 
+
                     seqOfObjects
                     |> Seq.iter (fun (index, item) -> arrayOfObjects.SetValue(item, index))
-                    
+
                     arrayOfObjects
                 else
                     Array.CreateInstance(innerType, 0)
-            
+
             arrayOfObjects |> box |> Some
         else
             None
@@ -271,7 +271,7 @@ module ModelParser =
     let parse<'T> (culture : CultureInfo option)
                   (data    : IDictionary<string, StringValues>) =
         let model = Activator.CreateInstance<'T>()
-        
+
         let result = parseModel<'T> model culture data false
         match result with
         | Ok model  -> model
@@ -510,7 +510,7 @@ let bindForm<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHa
 ///
 /// `parsingErrorHandler`: A `string -> HttpHandler` function which will get invoked when the model parsing fails. The `string` parameter holds the parsing error message.
 /// `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
-/// `successhandler`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
+/// `successHandler`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
 ///
 /// **Output**
 ///
@@ -518,7 +518,7 @@ let bindForm<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHa
 ///
 let tryBindForm<'T> (parsingErrorHandler : string -> HttpHandler)
                     (culture             : CultureInfo option)
-                    (successhandler      : 'T -> HttpHandler) : HttpHandler =
+                    (successHandler      : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             let! result =
@@ -528,7 +528,7 @@ let tryBindForm<'T> (parsingErrorHandler : string -> HttpHandler)
             return!
                 (match result with
                 | Error msg -> parsingErrorHandler msg
-                | Ok model  -> successhandler model) next ctx
+                | Ok model  -> successHandler model) next ctx
         }
 
 /// **Description**
@@ -562,7 +562,7 @@ let bindQuery<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpH
 ///
 /// `parsingErrorHandler`: A `HttpHandler` function which will get invoked when the model parsing fails. The `string` input parameter holds the parsing error message.
 /// `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
-/// `successhandler`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
+/// `successHandler`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
 ///
 /// **Output**
 ///
@@ -570,7 +570,7 @@ let bindQuery<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpH
 ///
 let tryBindQuery<'T> (parsingErrorHandler : string -> HttpHandler)
                      (culture             : CultureInfo option)
-                     (successhandler      : 'T -> HttpHandler) : HttpHandler =
+                     (successHandler      : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let result =
             match culture with
@@ -578,7 +578,7 @@ let tryBindQuery<'T> (parsingErrorHandler : string -> HttpHandler)
             | None   -> ctx.TryBindQueryString<'T>()
         (match result with
         | Error msg -> parsingErrorHandler msg
-        | Ok model  -> successhandler model) next ctx
+        | Ok model  -> successHandler model) next ctx
 
 /// **Description**
 ///
