@@ -2,7 +2,7 @@
   <PropertyGroup>
     <!-- General -->
     <AssemblyName>Giraffe</AssemblyName>
-    <Version>4.0.0</Version>
+    <Version>4.0.1</Version>
     <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
     <Copyright>Copyright 2018 Dustin Moris Gorski</Copyright>
     <Authors>Dustin Moris Gorski and contributors</Authors>

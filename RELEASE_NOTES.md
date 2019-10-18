@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## 4.0.1
+
+Fixed dependency references for TFM `netcoreapp3.0` projects.
+
 ## 4.0.0
 
 Giraffe 4.0.0 has been tested against `netcoreapp3.0` alongside `netcoreapp2.1` and `net461`. All sample code has been upgraded to .NET Core 3.0 as well.
