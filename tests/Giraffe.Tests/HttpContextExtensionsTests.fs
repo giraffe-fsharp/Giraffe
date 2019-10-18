@@ -108,7 +108,7 @@ let ``WriteHtmlViewAsync should add html to the context`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+        fun (_ : HttpFunc) (ctx : HttpContext) ->
             let htmlDoc =
                 html [] [
                     head [] []
@@ -144,7 +144,7 @@ let ``WriteHtmlFileAsync should return html from physical folder`` () =
             "index.html")
 
     let testHandler : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+        fun (_ : HttpFunc) (ctx : HttpContext) ->
             ctx.WriteHtmlFileAsync filePath
 
     let app = route "/" >=> testHandler
@@ -168,7 +168,7 @@ let ``WriteTextAsync with HTTP GET should return text in body`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+        fun (_ : HttpFunc) (ctx : HttpContext) ->
             ctx.WriteTextAsync "Hello World Giraffe"
 
     let app = route "/" >=> testHandler
@@ -192,7 +192,7 @@ let ``WriteTextAsync with HTTP HEAD should not return text in body`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+        fun (_ : HttpFunc) (ctx : HttpContext) ->
             ctx.WriteTextAsync "Hello World Giraffe"
 
     let app = route "/" >=> testHandler

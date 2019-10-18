@@ -156,7 +156,7 @@ type HttpContext with
     member this.WriteJsonChunkedAsync<'T> (dataObj : 'T) =
         task {
             // Don't set the Transfer-Encoding to chunked manually.  If we do, we'll have to do the chunking manually
-            // ourselves rather than rely on asp.net to do it for us.  
+            // ourselves rather than rely on asp.net to do it for us.
             // Example : https://github.com/aspnet/AspNetCore/blame/728110ec9ee1b98b2d9c9ff247ba2955d6c05846/src/Servers/Kestrel/test/InMemory.FunctionalTests/ChunkedResponseTests.cs#L494
             this.SetContentType "application/json; charset=utf-8"
             if this.Request.Method <> HttpMethods.Head then
@@ -268,7 +268,7 @@ type HttpContext with
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let setBody (bytes : byte array) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
+    fun (_ : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteBytesAsync bytes
 
 /// **Description**
@@ -285,7 +285,7 @@ let setBody (bytes : byte array) : HttpHandler =
 ///
 let setBodyFromString (str : string) : HttpHandler =
     let bytes = Encoding.UTF8.GetBytes str
-    fun (next : HttpFunc) (ctx : HttpContext) ->
+    fun (_ : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteBytesAsync bytes
 
 /// **Description**
@@ -302,7 +302,7 @@ let setBodyFromString (str : string) : HttpHandler =
 ///
 let text (str : string) : HttpHandler =
     let bytes = Encoding.UTF8.GetBytes str
-    fun (next : HttpFunc) (ctx : HttpContext) ->
+    fun (_ : HttpFunc) (ctx : HttpContext) ->
         ctx.SetContentType "text/plain; charset=utf-8"
         ctx.WriteBytesAsync bytes
 
@@ -323,7 +323,7 @@ let text (str : string) : HttpHandler =
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let json<'T> (dataObj : 'T) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
+    fun (_ : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteJsonAsync dataObj
 
 /// **Description**
@@ -343,7 +343,7 @@ let json<'T> (dataObj : 'T) : HttpHandler =
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let jsonChunked<'T> (dataObj : 'T) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
+    fun (_ : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteJsonChunkedAsync dataObj
 
 /// **Description**
@@ -363,7 +363,7 @@ let jsonChunked<'T> (dataObj : 'T) : HttpHandler =
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let xml (dataObj : obj) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
+    fun (_ : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteXmlAsync dataObj
 
 /// **Description**
@@ -381,7 +381,7 @@ let xml (dataObj : obj) : HttpHandler =
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let htmlFile (filePath : string) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
+    fun (_ : HttpFunc) (ctx : HttpContext) ->
         ctx.WriteHtmlFileAsync filePath
 
 /// **Description**
@@ -400,7 +400,7 @@ let htmlFile (filePath : string) : HttpHandler =
 ///
 let htmlString (html : string) : HttpHandler =
     let bytes = Encoding.UTF8.GetBytes html
-    fun (next : HttpFunc) (ctx : HttpContext) ->
+    fun (_ : HttpFunc) (ctx : HttpContext) ->
         ctx.SetContentType "text/html; charset=utf-8"
         ctx.WriteBytesAsync bytes
 
@@ -420,6 +420,6 @@ let htmlString (html : string) : HttpHandler =
 ///
 let htmlView (htmlView : XmlNode) : HttpHandler =
     let bytes = nodeToUtf8HtmlDoc htmlView
-    fun (next : HttpFunc) (ctx : HttpContext) ->
+    fun (_ : HttpFunc) (ctx : HttpContext) ->
         ctx.SetContentType "text/html; charset=utf-8"
         ctx.WriteBytesAsync bytes
