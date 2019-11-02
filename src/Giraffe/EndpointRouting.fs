@@ -8,6 +8,40 @@ open Microsoft.FSharp.Reflection
 open FSharp.Core
 open FSharp.Control.Tasks.V2.ContextInsensitive
 
+// mustAccept
+
+// routePorts
+// routex
+// routeCix
+// routeBind
+// routeStartsWith
+// routeStartsWithCi
+// routeStartsWithf
+// routeStartsWithCif
+// subRoutef
+
+// Implemented
+// ---------------------
+
+// | Before                 | Now                   |
+// | ---------------------- | --------------------- |
+// | routeCi                | route                 |
+// | routeCif               | routef                |
+// | subRouteCi             | subRoute              |
+// | GET, POST, PUT, etc.   | GET, POST, PUT, ...   |
+
+// Not Supported
+// ---------------------
+
+// | Function     | Reason       |
+// | ------------ | ------------ |
+// | choose       | Endpoint routing is a flat level routing engine                        |
+// | route        | ASP.NET Core's endpoint routing doesn't support case-sensitive routes  |
+// | routef       | ASP.NET Core's endpoint routing doesn't support case-sensitive routes  |
+// | subRoute     | ASP.NET Core's endpoint routing doesn't support case-sensitive routes  |
+
+
+
 module private RouteTemplateBuilder =
     let private guidPattern =
         "([0-9A-Fa-f]{8}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{12}|[0-9A-Fa-f]{32}|[-_0-9A-Za-z]{22})"
@@ -16,7 +50,7 @@ module private RouteTemplateBuilder =
 
     let private getConstraint (i : int) (c : char) =
         match c with
-        | 'b' -> sprintf "{b%i:bool}" i                      // bool
+        | 'b' -> sprintf "{b%i:bool}" i                     // bool
         | 'c' -> sprintf "{c%i:length(1)}" i                // char
         | 's' -> sprintf "{s%i}" i                          // string
         | 'i' -> sprintf "{i%i:int}" i                      // int
@@ -59,25 +93,6 @@ module private RequestDelegateBuilder =
         | 'O' -> Some (parseGuid        >> box)
         | 'u' -> Some (ShortId.toUInt64 >> box)
         | _   -> None
-
-//    let private parsers =
-//        let parseBool     (s : string) = bool.Parse s
-//        let decodeSlashes (s : string) = s.Replace("%2F", "/").Replace("%2f", "/")
-//        let parseGuid     (s : string) =
-//            match s.Length with
-//            | 22 -> ShortGuid.toGuid s
-//            | _  -> Guid s
-//
-//        dict [
-//            'b', parseBool           >> box  // bool
-//            'c', char                >> box  // char
-//            's', decodeSlashes       >> box  // string
-//            'i', int32               >> box  // int
-//            'd', int64               >> box  // int64
-//            'f', float               >> box  // float
-//            'O', parseGuid           >> box  // Guid
-//            'u', ShortId.toUInt64    >> box  // uint64
-//        ]
 
     let private convertToTuple (formatChars : char list) (routeData : RouteData) =
         let values =
@@ -132,17 +147,51 @@ module private RequestDelegateBuilder =
 // Overriding Handlers
 // ---------------------------
 
+type HttpVerb =
+    | GET | POST | PUT | PATCH | DELETE | HEAD | OPTIONS | TRACE | CONNECT
+    | NotSpecified
+
+    override this.ToString() =
+        match this with
+        | GET        -> "GET"
+        | POST       -> "POST"
+        | PUT        -> "PUT"
+        | PATCH      -> "PATCH"
+        | DELETE     -> "DELETE"
+        | HEAD       -> "HEAD"
+        | OPTIONS    -> "OPTIONS"
+        | TRACE      -> "TRACE"
+        | CONNECT    -> "CONNECT"
+        | _          -> ""
+
+// HttpVerb -> routeTemplate -> RequestDelegate
+type Endpoint = HttpVerb * string * RequestDelegate
+
+let private httpVerb (verb : HttpVerb) (endpoint : Endpoint) =
+    let _, routeTemplate, requestDelegate = endpoint
+    verb, routeTemplate, requestDelegate
+
+let GET     = httpVerb GET
+let POST    = httpVerb POST
+let PUT     = httpVerb PUT
+let PATCH   = httpVerb PATCH
+let DELETE  = httpVerb DELETE
+let HEAD    = httpVerb HEAD
+let OPTIONS = httpVerb OPTIONS
+let TRACE   = httpVerb TRACE
+let CONNECT = httpVerb CONNECT
+
 let route (path : string) (handler : HttpHandler) =
-    path, RequestDelegateBuilder.createRequestDelegate handler
+    HttpVerb.NotSpecified, path, RequestDelegateBuilder.createRequestDelegate handler
 
 let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) =
     let template, chars = RouteTemplateBuilder.convertToRouteTemplate path
     let requestDelegate = RequestDelegateBuilder.createTokenizedRequestDelegate chars routeHandler
-    template, requestDelegate
+    HttpVerb.NotSpecified, template, requestDelegate
 
-let subRoute (path : string) (routes : (string * RequestDelegate) list) =
-    routes
-    |> List.map (fun (p, d) -> sprintf "%s%s" path p, d)
+let subRoute (path : string) (endpoints : Endpoint list) =
+    endpoints
+    |> List.map (fun (v, p, d) -> v, sprintf "%s%s" path p, d)
 
 // ---------------------------
 // Convenience Handlers
@@ -150,7 +199,10 @@ let subRoute (path : string) (routes : (string * RequestDelegate) list) =
 
 type IRouteBuilder with
 
-    member this.MapGiraffe (routes : (string * RequestDelegate) list) =
-        routes
-        |> List.iter(fun (routeTemplate, requestDelegate) ->
-            this.MapGet(routeTemplate, requestDelegate) |> ignore)
+    member this.MapGiraffe (endpoints : Endpoint list) =
+        endpoints
+        |> List.iter(fun (verb, routeTemplate, requestDelegate) ->
+            match verb with
+            | NotSpecified  -> this.MapRoute(routeTemplate, requestDelegate) |> ignore
+            | _             -> this.MapVerb(verb.ToString(), routeTemplate, requestDelegate) |> ignore
+        )
