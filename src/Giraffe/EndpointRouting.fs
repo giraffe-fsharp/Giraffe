@@ -219,13 +219,15 @@ let subRoute
 // Convenience Handlers
 // ---------------------------
 
-type IRouteBuilder with
+open Microsoft.AspNetCore.Builder
+
+type IEndpointRouteBuilder with
 
     member private this.MapSingleEndpoint (singleEndpoint : HttpVerb * RouteTemplate * RequestDelegate) =
         let verb, routeTemplate, requestDelegate = singleEndpoint
         match verb with
-        | NotSpecified  -> this.MapRoute(routeTemplate, requestDelegate) |> ignore
-        | _             -> this.MapVerb(verb.ToString(), routeTemplate, requestDelegate) |> ignore
+        | NotSpecified  -> this.Map(routeTemplate, requestDelegate) |> ignore
+        | _             -> this.MapMethods(routeTemplate, [ verb.ToString() ], requestDelegate) |> ignore
 
     member private this.MapNestedEndpoint (nestedEndpoint : RouteTemplate * Endpoint list) =
         let subRouteTemplate, endpoints = nestedEndpoint

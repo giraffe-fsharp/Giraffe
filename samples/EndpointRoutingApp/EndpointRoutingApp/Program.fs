@@ -20,7 +20,7 @@ let handler3 (a : string, b : string, c : string, d : int) : HttpHandler =
         sprintf "Hello %s %s %s %i" a b c d
         |> ctx.WriteTextAsync
 
-let routes =
+let endpoints =
     [
         GET => route "/" (text "Hello World")
         GET => routef "/%s/%i" handler2
@@ -31,8 +31,10 @@ let routes =
         ]
     ]
 
-let configureApp (app : IApplicationBuilder) =
-    app.UseRouter(fun r -> r.MapGiraffeEndpoints(routes))
+let configureApp (appBuilder : IApplicationBuilder) =
+    appBuilder
+        .UseRouting()
+        .UseEndpoints(fun e -> e.MapGiraffeEndpoints(endpoints))
     |> ignore
 
 let configureServices (services : IServiceCollection) =
