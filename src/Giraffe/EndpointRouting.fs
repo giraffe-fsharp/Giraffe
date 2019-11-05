@@ -1,6 +1,7 @@
 module Giraffe.EndpointRouting
 
 open System
+open System.Net
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Routing
@@ -8,17 +9,14 @@ open Microsoft.FSharp.Reflection
 open FSharp.Core
 open FSharp.Control.Tasks.V2.ContextInsensitive
 
-// mustAccept
+// ToDo:
+// ---------------------
 
+// mustAccept
 // routePorts
 // routex
 // routeCix
 // routeBind
-// routeStartsWith
-// routeStartsWithCi
-// routeStartsWithf
-// routeStartsWithCif
-// subRoutef
 
 // Implemented
 // ---------------------
@@ -33,13 +31,17 @@ open FSharp.Control.Tasks.V2.ContextInsensitive
 // Not Supported
 // ---------------------
 
-// | Function     | Reason       |
-// | ------------ | ------------ |
-// | choose       | Endpoint routing is a flat level routing engine                        |
-// | route        | ASP.NET Core's endpoint routing doesn't support case-sensitive routes  |
-// | routef       | ASP.NET Core's endpoint routing doesn't support case-sensitive routes  |
-// | subRoute     | ASP.NET Core's endpoint routing doesn't support case-sensitive routes  |
-
+// | Function            | Reason                   |
+// | ------------------- | ------------------------ |
+// | choose              | Not possible, endpoint routing is a flat level routing engine                     |
+// | route               | ASP.NET Core's endpoint routing doesn't support case-sensitive routes             |
+// | routef              | ASP.NET Core's endpoint routing doesn't support case-sensitive routes             |
+// | subRoute            | ASP.NET Core's endpoint routing doesn't support case-sensitive routes             |
+// | subRoutef           | Can't do. Use subRoute with a custom route template and read value from RouteData |
+// | routeStartsWith     | Use subRoute             |
+// | routeStartsWithCi   | Use subRoute             |
+// | routeStartsWithf    | Can't do, see subRoutef  |
+// | routeStartsWithCif  | Can't do, see subRoutef  |
 
 
 module private RouteTemplateBuilder =
@@ -49,30 +51,31 @@ module private RouteTemplateBuilder =
         "([-_0-9A-Za-z]{10}[048AEIMQUYcgkosw])"
 
     let private getConstraint (i : int) (c : char) =
+        let name = sprintf "%c%i" c i
         match c with
-        | 'b' -> sprintf "{b%i:bool}" i                     // bool
-        | 'c' -> sprintf "{c%i:length(1)}" i                // char
-        | 's' -> sprintf "{s%i}" i                          // string
-        | 'i' -> sprintf "{i%i:int}" i                      // int
-        | 'd' -> sprintf "{d%i:long}" i                     // int64
-        | 'f' -> sprintf "{f%i:double}" i                   // float
-        | 'O' -> sprintf "{O%i:regex(%s)}" i guidPattern    // Guid
-        | 'u' -> sprintf "{u%i:regex(%s)}" i shortIdPattern // uint64
+        | 'b' -> name, sprintf "{%s:bool}" name                     // bool
+        | 'c' -> name, sprintf "{%s:length(1)}" name                // char
+        | 's' -> name, sprintf "{%s}" name                          // string
+        | 'i' -> name, sprintf "{%s:int}" name                      // int
+        | 'd' -> name, sprintf "{%s:long}" name                     // int64
+        | 'f' -> name, sprintf "{%s:double}" name                   // float
+        | 'O' -> name, sprintf "{%s:regex(%s)}" name guidPattern    // Guid
+        | 'u' -> name, sprintf "{%s:regex(%s)}" name shortIdPattern // uint64
         | _   -> failwithf "%c is not a supported route format character." c
 
     let convertToRouteTemplate (path : PrintfFormat<_,_,_,_, 'T>) =
         let rec convert (i : int) (chars : char list) =
             match chars with
             | '%' :: '%' :: tail ->
-                let template, formatChars = convert i tail
-                "%" + template, formatChars
+                let template, mappings = convert i tail
+                "%" + template, mappings
             | '%' :: c :: tail ->
-                let template, formatChars = convert (i + 1) tail
-                let placeholder = getConstraint i c
-                placeholder + template, c :: formatChars
+                let template, mappings = convert (i + 1) tail
+                let placeholderName, placeholderTemplate = getConstraint i c
+                placeholderTemplate + template, (placeholderName, c) :: mappings
             | c :: tail ->
-                let template, formatChars = convert i tail
-                c.ToString() + template, formatChars
+                let template, mappings = convert i tail
+                c.ToString() + template, mappings
             | [] -> "", []
 
         path.Value
@@ -81,7 +84,7 @@ module private RouteTemplateBuilder =
 
 module private RequestDelegateBuilder =
 
-    let private tryGetSpecialParser (c : char) =
+    let private tryGetParser (c : char) =
         let decodeSlashes (s : string) = s.Replace("%2F", "/").Replace("%2f", "/")
         let parseGuid     (s : string) =
             match s.Length with
@@ -90,20 +93,24 @@ module private RequestDelegateBuilder =
 
         match c with
         | 's' -> Some (decodeSlashes    >> box)
+        | 'i' -> Some (int              >> box)
+        | 'b' -> Some (bool.Parse       >> box)
+        | 'c' -> Some (char             >> box)
+        | 'd' -> Some (int64            >> box)
+        | 'f' -> Some (float            >> box)
         | 'O' -> Some (parseGuid        >> box)
         | 'u' -> Some (ShortId.toUInt64 >> box)
         | _   -> None
 
-    let private convertToTuple (formatChars : char list) (routeData : RouteData) =
+    let private convertToTuple (mappings : (string * char) list) (routeData : RouteData) =
         let values =
-            (routeData.Values.Values, formatChars)
-            ||> Seq.map2 (fun v c ->
-                let value =
-                    match tryGetSpecialParser c with
-                    | Some p -> p (v.ToString())
-                    | None   -> v
-                value)
-            |> Seq.toArray
+            mappings
+            |> List.map (fun (placeholderName, formatChar) ->
+                let routeValue = routeData.Values.[placeholderName]
+                match tryGetParser formatChar with
+                | Some parseFn -> parseFn (routeValue.ToString())
+                | None         -> routeValue)
+            |> List.toArray
 
         let result =
             match values.Length with
@@ -120,7 +127,7 @@ module private RequestDelegateBuilder =
 
     let private handleResult (result : HttpContext option) (ctx : HttpContext) =
         match result with
-        | None   -> ctx.SetStatusCode 422
+        | None   -> ctx.SetStatusCode (int HttpStatusCode.UnprocessableEntity)
         | Some _ -> ()
 
     let createRequestDelegate (handler : HttpHandler) =
@@ -131,12 +138,12 @@ module private RequestDelegateBuilder =
             } :> Task
         |> wrapDelegate
 
-    let createTokenizedRequestDelegate (formatChars : char list) (tokenizedHandler : 'T -> HttpHandler) =
+    let createTokenizedRequestDelegate (mappings : (string * char) list) (tokenizedHandler : 'T -> HttpHandler) =
         fun (ctx : HttpContext) ->
             task {
                 let tuple =
                     ctx.GetRouteData()
-                    |> convertToTuple formatChars
+                    |> convertToTuple mappings
                     :?> 'T
                 let! result = tokenizedHandler tuple earlyReturn ctx
                 return handleResult result
@@ -164,12 +171,22 @@ type HttpVerb =
         | CONNECT    -> "CONNECT"
         | _          -> ""
 
-// HttpVerb -> routeTemplate -> RequestDelegate
-type Endpoint = HttpVerb * string * RequestDelegate
+type RouteTemplate = string
 
-let private httpVerb (verb : HttpVerb) (endpoint : Endpoint) =
-    let _, routeTemplate, requestDelegate = endpoint
-    verb, routeTemplate, requestDelegate
+type Endpoint =
+    | SingleEndpoint of HttpVerb * RouteTemplate * RequestDelegate
+    | NestedEndpoint of RouteTemplate * Endpoint list
+
+let inline (=>) (fx : Endpoint -> Endpoint) (x : Endpoint) = fx x
+
+let rec private httpVerb
+    (verb     : HttpVerb)
+    (endpoint : Endpoint) : Endpoint =
+    match endpoint with
+    | SingleEndpoint (_, routeTemplate, requestDelegate) ->
+        SingleEndpoint (verb, routeTemplate, requestDelegate)
+    | NestedEndpoint (routeTemplate, endpoints) ->
+        NestedEndpoint (routeTemplate, endpoints |> List.map (httpVerb verb))
 
 let GET     = httpVerb GET
 let POST    = httpVerb POST
@@ -181,17 +198,22 @@ let OPTIONS = httpVerb OPTIONS
 let TRACE   = httpVerb TRACE
 let CONNECT = httpVerb CONNECT
 
-let route (path : string) (handler : HttpHandler) =
-    HttpVerb.NotSpecified, path, RequestDelegateBuilder.createRequestDelegate handler
+let route
+    (path     : string)
+    (handler  : HttpHandler) : Endpoint =
+    SingleEndpoint (HttpVerb.NotSpecified, path, RequestDelegateBuilder.createRequestDelegate handler)
 
-let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) =
-    let template, chars = RouteTemplateBuilder.convertToRouteTemplate path
-    let requestDelegate = RequestDelegateBuilder.createTokenizedRequestDelegate chars routeHandler
-    HttpVerb.NotSpecified, template, requestDelegate
+let routef
+    (path         : PrintfFormat<_,_,_,_, 'T>)
+    (routeHandler : 'T -> HttpHandler) : Endpoint =
+    let template, mappings = RouteTemplateBuilder.convertToRouteTemplate path
+    let requestDelegate = RequestDelegateBuilder.createTokenizedRequestDelegate mappings routeHandler
+    SingleEndpoint (HttpVerb.NotSpecified, template, requestDelegate)
 
-let subRoute (path : string) (endpoints : Endpoint list) =
-    endpoints
-    |> List.map (fun (v, p, d) -> v, sprintf "%s%s" path p, d)
+let subRoute
+    (path      : string)
+    (endpoints : Endpoint list) : Endpoint =
+    NestedEndpoint (path, endpoints)
 
 // ---------------------------
 // Convenience Handlers
@@ -199,10 +221,28 @@ let subRoute (path : string) (endpoints : Endpoint list) =
 
 type IRouteBuilder with
 
-    member this.MapGiraffe (endpoints : Endpoint list) =
+    member private this.MapSingleEndpoint (singleEndpoint : HttpVerb * RouteTemplate * RequestDelegate) =
+        let verb, routeTemplate, requestDelegate = singleEndpoint
+        match verb with
+        | NotSpecified  -> this.MapRoute(routeTemplate, requestDelegate) |> ignore
+        | _             -> this.MapVerb(verb.ToString(), routeTemplate, requestDelegate) |> ignore
+
+    member private this.MapNestedEndpoint (nestedEndpoint : RouteTemplate * Endpoint list) =
+        let subRouteTemplate, endpoints = nestedEndpoint
+        let routeTemplate = sprintf "%s%s" subRouteTemplate
         endpoints
-        |> List.iter(fun (verb, routeTemplate, requestDelegate) ->
-            match verb with
-            | NotSpecified  -> this.MapRoute(routeTemplate, requestDelegate) |> ignore
-            | _             -> this.MapVerb(verb.ToString(), routeTemplate, requestDelegate) |> ignore
+        |> List.iter (
+            fun endpoint ->
+                match endpoint with
+                | SingleEndpoint (v, t, d) -> this.MapSingleEndpoint(v, routeTemplate t, d)
+                | NestedEndpoint (t, e)    -> this.MapNestedEndpoint(routeTemplate t, e)
+        )
+
+    member this.MapGiraffeEndpoints (endpoints : Endpoint list) =
+        endpoints
+        |> List.iter(
+            fun endpoint ->
+                match endpoint with
+                | SingleEndpoint (v, t, d)  -> this.MapSingleEndpoint (v, t, d)
+                | NestedEndpoint (t, e)     -> this.MapNestedEndpoint (t, e)
         )

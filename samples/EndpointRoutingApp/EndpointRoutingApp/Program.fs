@@ -22,16 +22,17 @@ let handler3 (a : string, b : string, c : string, d : int) : HttpHandler =
 
 let routes =
     [
-        yield GET (route "/" handler1)
-        yield GET (routef "/%s/%i" handler2)
-        yield GET (routef "/%s/%s/%s/%i" handler3)
-        yield! subRoute "/sub" [
+        GET => route "/" (text "Hello World")
+        GET => routef "/%s/%i" handler2
+        GET => routef "/%s/%s/%s/%i" handler3
+        subRoute "/sub" [
+            // Not specifying a http verb means it will listen to all verbs
             route "/test" handler1
         ]
     ]
 
 let configureApp (app : IApplicationBuilder) =
-    app.UseRouter(fun r -> r.MapGiraffe(routes))
+    app.UseRouter(fun r -> r.MapGiraffeEndpoints(routes))
     |> ignore
 
 let configureServices (services : IServiceCollection) =
