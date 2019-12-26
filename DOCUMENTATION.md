@@ -3594,8 +3594,12 @@ let someHandler : HttpHandler =
 
 #### DateTime Extension methods
 
-Giraffe automatically adds the `ToHtmlString()` extension method to `DateTime` and `DateTimeOffset` objects which formats a given timestamp into an [RFC3339](https://www.ietf.org/rfc/rfc3339.txt) formatted string:
+Giraffe automatically adds two extensions methods to the `DateTime` and `DateTimeOffset` objects. `ToIsoString()` formats a given timestamp into an [RFC3339](https://www.ietf.org/rfc/rfc3339.txt) formatted string and `ToHtmlString()` which formats the given timestamp into an [RFC822](https://www.ietf.org/rfc/rfc822.txt) formatted string:
 
+```fsharp
+let now = DateTimeOffset.UtcNow
+let isoFormattedTimestamp = now.ToIsoString()
+```
 ```fsharp
 let now = DateTimeOffset.UtcNow
 let htmlFormattedTimestamp = now.ToHtmlString()
