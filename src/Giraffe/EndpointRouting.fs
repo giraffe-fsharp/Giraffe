@@ -3,6 +3,7 @@ module Giraffe.EndpointRouting
 open System
 open System.Net
 open System.Threading.Tasks
+open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Routing
 open Microsoft.FSharp.Reflection
@@ -131,9 +132,10 @@ module private RequestDelegateBuilder =
         | Some _ -> ()
 
     let createRequestDelegate (handler : HttpHandler) =
+        let func : HttpFunc = handler earlyReturn
         fun (ctx : HttpContext) ->
             task {
-                let! result = handler earlyReturn ctx
+                let! result = func ctx
                 return handleResult result ctx
             } :> Task
         |> wrapDelegate
@@ -149,6 +151,10 @@ module private RequestDelegateBuilder =
                 return handleResult result
             } :> Task
         |> wrapDelegate
+
+module GiraffeMiddleware =
+    let create (handler : HttpHandler) (next : RequestDelegate) =
+        RequestDelegateBuilder.createRequestDelegate handler
 
 // ---------------------------
 // Overriding Handlers
@@ -216,10 +222,8 @@ let subRoute
     NestedEndpoint (path, endpoints)
 
 // ---------------------------
-// Convenience Handlers
+// Middleware Extension Methods
 // ---------------------------
-
-open Microsoft.AspNetCore.Builder
 
 type IEndpointRouteBuilder with
 

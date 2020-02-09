@@ -4,6 +4,7 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
+open Giraffe
 open Giraffe.EndpointRouting
 
 let handler1 : HttpHandler =
@@ -31,10 +32,17 @@ let endpoints =
         ]
     ]
 
+let notFoundMiddleware =
+    "Not Found"
+    |> text
+    |> RequestErrors.notFound
+    |> GiraffeMiddleware.create
+
 let configureApp (appBuilder : IApplicationBuilder) =
     appBuilder
         .UseRouting()
         .UseEndpoints(fun e -> e.MapGiraffeEndpoints(endpoints))
+        .Use(notFoundMiddleware)
     |> ignore
 
 let configureServices (services : IServiceCollection) =
