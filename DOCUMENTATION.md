@@ -1025,7 +1025,7 @@ Please be aware that such a `routex` can create a conflict and unexpected behavi
 let webApp =
     choose [
         routex "/foo(/*)" >=> text "Bar"
-        routef "/foo/%s/%s/%s" (fun s1, s2, s3 -> text (sprintf "%s%s%s" s1 s2 s3))
+        routef "/foo/%s/%s/%s" (fun (s1, s2, s3) -> text (sprintf "%s%s%s" s1 s2 s3))
 
         // If none of the routes matched then return a 404
         RequestErrors.NOT_FOUND "Not Found"
