@@ -313,13 +313,13 @@ Sometimes an `HttpHandler` wants to return early and not continue with the remai
 A typical example would be an authentication or authorization handler, which would not continue with the remaining pipeline if a user wasn't authenticated. Instead it might want to return a `401 Unauthorized` response:
 
 ```fsharp
-let finishEarly : HttpFunc = Some >> Task.FromResult
+let earlyReturn : HttpFunc = Some >> Task.FromResult
 
 let checkUserIsLoggedIn : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if isNotNull ctx.User && ctx.User.Identity.IsAuthenticated
         then next ctx
-        else (setStatusCode 401 >=> text "Please sign in.") finishEarly ctx
+        else (setStatusCode 401 >=> text "Please sign in.") earlyReturn ctx
 ```
 
 In the `else` clause the `checkUserIsLoggedIn` handler returns a `401 Unauthorized` HTTP response and skips the remaining `HttpHandler` pipeline by not invoking `next` but an already completed task.
@@ -3008,12 +3008,12 @@ It is possible to add JavaScript event handlers to HTML elements using the Giraf
 This example illustrates how inline JavaScript could be used to log to the console when a button is clicked:
 
 ```fsharp
-let inlineJSButton = 
+let inlineJSButton =
     button [_id "inline-js"
             _onclick "console.log(\"Hello from the 'inline-js' button!\");"] [str "Say Hello" ]
 ```
 
-There are some caveats with this approach, namely that 
+There are some caveats with this approach, namely that
 * it is not very scalable to write JavaScript inline in this manner, and more pressing
 * the Giraffe View Engine HTML-encodes the text provided to the `_onX` attributes.
 
@@ -3049,7 +3049,7 @@ function greet() {
 Then, you could reference that javascript via a script element, and use `greet` in your event handler like so:
 
 ```fsharp
-let page = 
+let page =
     html [] [
         head [] [
             script [_type "application/javascript"
@@ -3057,7 +3057,7 @@ let page =
         ]
         body [] [
             button [_id "greet-btn"
-                    _onclick "greet()"] [] // use the `greet()` function from `greet.js` to say hello 
+                    _onclick "greet()"] [] // use the `greet()` function from `greet.js` to say hello
         ]
     ]
 ```
