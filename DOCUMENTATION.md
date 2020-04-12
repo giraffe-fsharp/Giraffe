@@ -319,7 +319,7 @@ let checkUserIsLoggedIn : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if isNotNull ctx.User && ctx.User.Identity.IsAuthenticated
         then next ctx
-        else (setStatusCode 401 >=> text "Please sign in.") earlyReturn ctx
+        else setStatusCode 401 earlyReturn ctx
 ```
 
 In the `else` clause the `checkUserIsLoggedIn` handler returns a `401 Unauthorized` HTTP response and skips the remaining `HttpHandler` pipeline by not invoking `next` but an already completed task.
