@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 4.1.0
+
+- Removed unnecessary dependencies
+- Fixed model binding for arrays (see [#403](https://github.com/giraffe-fsharp/Giraffe/issues/403))
+- Added `netcoreapp3.1` support
+
 ## 4.0.1
 
 Fixed dependency references for TFM `netcoreapp3.0` projects.
