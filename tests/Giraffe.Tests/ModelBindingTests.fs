@@ -20,8 +20,8 @@ open Microsoft.AspNetCore.Http.Internal
 [<CLIMutable>]
 type ModelWithOption =
     {
-        OptionalInt: int option
-        OptionalString: string option
+        OptionalInt     : int option
+        OptionalString  : string option
     }
 
 [<CLIMutable>]
@@ -73,6 +73,11 @@ type Model =
     }
 
 [<CLIMutable>]
+type Model2 = {
+    SearchTerms : string[]
+}
+
+[<CLIMutable>]
 type QueryModel =
     {
         FirstName  : string
@@ -102,6 +107,23 @@ type QueryModel =
 // ---------------------------------
 // ModelParser.tryParse Tests
 // ---------------------------------
+
+[<Fact>]
+let ``ModelParser.tryParse with model which has primitive array`` () =
+    let modelData =
+        dict [
+            "SearchTerms" , StringValues [| "a"; "abc"; "abcdef" |]
+        ]
+    let expected =
+        {
+            SearchTerms = [| "a"; "abc"; "abcdef" |]
+        }
+    let culture = None
+
+    let result = ModelParser.tryParse<Model2> culture modelData
+    match result with
+    | Ok model  -> Assert.Equal(expected, model)
+    | Error err -> assertFailf "Model didn't bind successfully: %s." err
 
 [<Fact>]
 let ``ModelParser.tryParse with complete model data`` () =
