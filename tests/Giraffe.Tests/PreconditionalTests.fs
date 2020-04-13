@@ -3,6 +3,7 @@ module Giraffe.Tests.PreconditionsTests
 open System
 open System.Net
 open System.Net.Http
+open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
@@ -206,6 +207,15 @@ let ``HTTP GET with If-Unmodified-Since not in the future and equal to lastModif
         |> printBytes
         |> shouldEqual "48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90"
     }
+
+[<Fact>]
+let ``ValidatePreconditions with If-Unmodified-Since is equal to lastModified`` () =
+    let ctx = DefaultHttpContext() :> Microsoft.AspNetCore.Http.HttpContext
+    ctx.Request.GetTypedHeaders().IfUnmodifiedSince <- Nullable(DateTimeOffset.Parse "Sat, 01 Jan 2000 00:00:00 GMT")
+    let result = ctx.ValidatePreconditions None (Some (DateTimeOffset.Parse "Sat, 01 Jan 2000 00:00:00 GMT"))
+    match result with
+    | AllConditionsMet -> ()
+    | _ -> Assert.True(false, "The request should have met all pre-conditions.")
 
 [<Fact>]
 let ``HTTP GET with If-None-Match without ETag`` () =

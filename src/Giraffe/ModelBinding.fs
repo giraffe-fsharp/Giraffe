@@ -45,6 +45,7 @@ module ModelParser =
     let rec private parseValue (t : Type) (rawValues : StringValues) (culture : CultureInfo) : Result<obj, string> =
         // First load up some more type information,
         // whether the type is generic, a list or an option type.
+
         let isGeneric = t.GetTypeInfo().IsGenericType
         let isList, isOption, genArgType =
             if not isGeneric then false, false, null
@@ -53,7 +54,31 @@ module ModelParser =
                 genericTypeDef = typedefof<FSharpList<_>>,
                 genericTypeDef = typedefof<FSharpOption<_>>,
                 t.GetGenericArguments().[0]
-        if isList then
+        if t.IsArray then
+            let arrArgType  = t.GetElementType()
+            let arrLen      = rawValues.Count
+            let arr         = Array.CreateInstance(arrArgType, arrLen)
+            if arrLen = 0
+            then Ok (arr :> obj)
+            else
+                let (items, _, error) =
+                    Array.fold(
+                        fun (items : Array, idx : int, error : string option) (rawValue : string) ->
+                            let nIdx = idx + 1
+                            match error with
+                            | Some _ -> arr, nIdx, error
+                            | None   ->
+                                match parseValue arrArgType (StringValues rawValue) culture with
+                                | Error err -> arr, nIdx, Some err
+                                | Ok item   ->
+                                    items.SetValue(item, idx)
+                                    items, nIdx, None)
+                        (arr, 0, None)
+                        (rawValues.ToArray())
+                match error with
+                | Some err -> Error err
+                | None     -> Ok (items :> obj)
+        else if isList then
             let cases = FSharpType.GetUnionCases t
             let emptyList = FSharpValue.MakeUnion(cases.[0], [||])
             if rawValues.Count = 0

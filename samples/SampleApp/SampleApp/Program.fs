@@ -3,12 +3,12 @@
 open System
 open System.Security.Claims
 open System.Threading
-open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Features
 open Microsoft.AspNetCore.Authentication
+open Microsoft.Extensions.Hosting
 open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
@@ -190,10 +190,14 @@ let configureLogging (loggerBuilder : ILoggingBuilder) =
 
 [<EntryPoint>]
 let main _ =
-    WebHost.CreateDefaultBuilder()
-        .Configure(Action<IApplicationBuilder> configureApp)
-        .ConfigureServices(configureServices)
-        .ConfigureLogging(configureLogging)
+    Host.CreateDefaultBuilder()
+        .ConfigureWebHostDefaults(
+            fun webHostBuilder ->
+                webHostBuilder
+                    .Configure(configureApp)
+                    .ConfigureServices(configureServices)
+                    .ConfigureLogging(configureLogging)
+                    |> ignore)
         .Build()
         .Run()
     0

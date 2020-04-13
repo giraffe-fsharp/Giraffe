@@ -7,7 +7,7 @@ environment:
 init:
   - git config --global core.autocrlf true
 install:
-  - ps: .\.psscripts\install-dotnet.ps1 -SdkVersions "3.0.100, 2.2.402"
+  - ps: .\.psscripts\install-dotnet.ps1 -SdkVersions "3.1.201, 3.0.100, 2.2.402"
 build: off
 build_script:
   - ps: .\build.ps1 -Release -Pack
@@ -21,7 +21,7 @@ nuget:
 deploy:
   provider: NuGet
   api_key:
-    secure: +XDgIu4Tmln7LKedNmQgMFnyKTxxuCKFRK3V5oKEfwZiakPXRd5C7OueEGBL50oh
+    secure: KmGt31DHQC3dKFI3ZLCDKd9S5CnH/cV2Rhx3D3J/5b3qSjBh2U+/HOKyOfxJqY2W
   skip_symbols: false
   artifact: /.*\.nupkg/
   on:

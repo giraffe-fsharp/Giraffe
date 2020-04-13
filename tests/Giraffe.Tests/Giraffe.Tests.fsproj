@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.0;netcoreapp2.1;net461</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;netcoreapp2.1;net461</TargetFrameworks>
     <AssemblyName>Giraffe.Tests</AssemblyName>
   </PropertyGroup>
 
@@ -29,11 +29,11 @@
     </Content>
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.0' ">
+  <ItemGroup Condition=" ('$(TargetFramework)' == 'netcoreapp3.1') Or ('$(TargetFramework)' == 'netcoreapp3.0') ">
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' != 'netcoreapp3.0' ">
+  <ItemGroup Condition=" ('$(TargetFramework)' != 'netcoreapp3.1') And ('$(TargetFramework)' != 'netcoreapp3.0') ">
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.7" />
     <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.2.0" />
@@ -50,7 +50,7 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0-preview.2" PrivateAssets="All" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0'">
+  <ItemGroup Condition=" ('$(TargetFramework)' == 'netcoreapp3.1') Or ('$(TargetFramework)' == 'netcoreapp3.0') ">
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="3.0.0" />
   </ItemGroup>
 

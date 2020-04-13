@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
-    <DebugType>portable</DebugType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <EnableDefaultContentItems>false</EnableDefaultContentItems>
     <RunWorkingDirectory>$(MSBuildThisFileDirectory)</RunWorkingDirectory>
   </PropertyGroup>

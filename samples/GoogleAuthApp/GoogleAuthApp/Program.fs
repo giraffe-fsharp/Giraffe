@@ -5,6 +5,7 @@ open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Authentication
+open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open FSharp.Control.Tasks.V2.ContextInsensitive
@@ -177,12 +178,15 @@ let main _ =
                 Scheme   = Https
                 FilePath = Some "<path to self signed certificate>"
                 Password = Some "<password>" } ]
-
-    WebHostBuilder()
-        .UseKestrel(fun o -> o.ConfigureEndpoints endpoints)
-        .Configure(Action<IApplicationBuilder> configureApp)
-        .ConfigureServices(configureServices)
-        .ConfigureLogging(configureLogging)
+    Host.CreateDefaultBuilder()
+        .ConfigureWebHostDefaults(
+            fun webHostBuilder ->
+                webHostBuilder
+                    .UseKestrel(fun o -> o.ConfigureEndpoints endpoints)
+                    .Configure(configureApp)
+                    .ConfigureServices(configureServices)
+                    .ConfigureLogging(configureLogging)
+                    |> ignore)
         .Build()
         .Run()
     0
