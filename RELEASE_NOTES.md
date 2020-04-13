@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## 5.0.0-alpha-001
+
+- Removed official support for `net461` target framework.
+
 ## 4.1.0
 
 - Removed redundant dependencies
