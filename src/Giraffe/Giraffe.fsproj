@@ -70,7 +70,6 @@
     <Compile Include="FormatExpressions.fs" />
     <Compile Include="Core.fs" />
     <Compile Include="ResponseCaching.fs" />
-    <Compile Include="GiraffeViewEngine.fs" />
     <Compile Include="ModelBinding.fs" />
     <Compile Include="ModelValidation.fs" />
     <Compile Include="Auth.fs" />

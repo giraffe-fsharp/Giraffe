@@ -1,6 +1,5 @@
 module Giraffe.Tests.HttpContextExtensionsTests
 
-open System
 open System.IO
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
@@ -9,7 +8,6 @@ open FSharp.Control.Tasks.V2.ContextInsensitive
 open Xunit
 open NSubstitute
 open Giraffe
-open Giraffe.GiraffeViewEngine
 
 #if NETCOREAPP2_1 || NET461
 open Microsoft.AspNetCore.Http.Internal
@@ -100,37 +98,6 @@ let ``TryGetQueryStringValue during HTTP GET request with query string returns c
 
         match result with
         | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Fact>]
-let ``WriteHtmlViewAsync should add html to the context`` () =
-    let ctx = Substitute.For<HttpContext>()
-
-    let testHandler =
-        fun (_ : HttpFunc) (ctx : HttpContext) ->
-            let htmlDoc =
-                html [] [
-                    head [] []
-                    body [] [
-                        h1 [] [ Text "Hello world" ]
-                    ]
-                ]
-            ctx.WriteHtmlViewAsync(htmlDoc)
-
-    let app = route "/" >=> testHandler
-
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-
-    let expected = sprintf "<!DOCTYPE html>%s<html><head></head><body><h1>Hello world</h1></body></html>" Environment.NewLine
-
-    task {
-        let! result = app (Some >> Task.FromResult) ctx
-
-        match result with
-        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
