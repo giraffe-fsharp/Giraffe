@@ -87,7 +87,7 @@ Next create a web application and plug it into the ASP.NET Core middleware:
 ```fsharp
 open System
 open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Hosting
+open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
 
@@ -109,9 +109,12 @@ type Startup() =
 
 [<EntryPoint>]
 let main _ =
-    WebHostBuilder()
-        .UseKestrel()
-        .UseStartup<Startup>()
+    Host.CreateDefaultBuilder()
+        .ConfigureWebHostDefaults(
+            fun webHostBuilder ->
+                webHostBuilder
+                    .UseStartup<Startup>()
+                    |> ignore)
         .Build()
         .Run()
     0
@@ -122,7 +125,7 @@ Instead of creating a `Startup` class you can also add Giraffe in a more functio
 ```fsharp
 open System
 open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Hosting
+open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
 
@@ -141,10 +144,13 @@ let configureServices (services : IServiceCollection) =
 
 [<EntryPoint>]
 let main _ =
-    WebHostBuilder()
-        .UseKestrel()
-        .Configure(Action<IApplicationBuilder> configureApp)
-        .ConfigureServices(configureServices)
+    Host.CreateDefaultBuilder()
+        .ConfigureWebHostDefaults(
+            fun webHostBuilder ->
+                webHostBuilder
+                    .Configure(configureApp)
+                    .ConfigureServices(configureServices)
+                    |> ignore)
         .Build()
         .Run()
     0

@@ -399,9 +399,12 @@ type Startup() =
 
 [<EntryPoint>]
 let main _ =
-    WebHostBuilder()
-        .UseKestrel()
-        .UseStartup<Startup>()
+    Host.CreateDefaultBuilder()
+        .ConfigureWebHostDefaults(
+            fun webHostBuilder ->
+                webHostBuilder
+                    .UseStartup<Startup>()
+                    |> ignore)
         .Build()
         .Run()
     0
@@ -427,10 +430,13 @@ let configureServices (services : IServiceCollection) =
 
 [<EntryPoint>]
 let main _ =
-    WebHostBuilder()
-        .UseKestrel()
-        .Configure(Action<IApplicationBuilder> configureApp)
-        .ConfigureServices(configureServices)
+    Host.CreateDefaultBuilder()
+        .ConfigureWebHostDefaults(
+            fun webHostBuilder ->
+                webHostBuilder
+                    .Configure(configureApp)
+                    .ConfigureServices(configureServices)
+                    |> ignore)
         .Build()
         .Run()
     0
@@ -454,12 +460,15 @@ let configureServices (services : IServiceCollection) =
 
 [<EntryPoint>]
 let main _ =
-    WebHostBuilder()
-        .UseKestrel()
-        .Configure(Action<IApplicationBuilder> configureApp)
-        // Calling ConfigureServices to set up dependencies
-        .ConfigureServices(configureServices)
-        .ConfigureLogging(configureLogging)
+    Host.CreateDefaultBuilder()
+        .ConfigureWebHostDefaults(
+            fun webHostBuilder ->
+                webHostBuilder
+                    .Configure(configureApp)
+                    // Calling ConfigureServices to set up dependencies
+                    .ConfigureServices(configureServices)
+                    .ConfigureLogging(configureLogging)
+                    |> ignore)
         .Build()
         .Run()
     0
@@ -548,12 +557,15 @@ let configureLogging (builder : ILoggingBuilder) =
 
 [<EntryPoint>]
 let main _ =
-    WebHostBuilder()
-        .UseKestrel()
-        .Configure(Action<IApplicationBuilder> configureApp)
-        .ConfigureServices(configureServices)
-        // Calling ConfigureLogging to set up logging providers
-        .ConfigureLogging(configureLogging)
+    Host.CreateDefaultBuilder()
+        .ConfigureWebHostDefaults(
+            fun webHostBuilder ->
+                webHostBuilder
+                    .Configure(configureApp)
+                    .ConfigureServices(configureServices)
+                    // Calling ConfigureLogging to set up logging providers
+                    .ConfigureLogging(configureLogging)
+                    |> ignore)
         .Build()
         .Run()
     0
@@ -622,12 +634,15 @@ let configureApp (app : IApplicationBuilder) =
 
 [<EntryPoint>]
 let main _ =
-    WebHostBuilder()
-        .UseKestrel()
-        // Calling Configure to set up all middleware
-        .Configure(Action<IApplicationBuilder> configureApp)
-        .ConfigureServices(configureServices)
-        .ConfigureLogging(configureLogging)
+    Host.CreateDefaultBuilder()
+        .ConfigureWebHostDefaults(
+            fun webHostBuilder ->
+                webHostBuilder
+                    // Calling Configure to set up all middleware
+                    .Configure(configureApp)
+                    .ConfigureServices(configureServices)
+                    .ConfigureLogging(configureLogging)
+                    |> ignore)
         .Build()
         .Run()
     0
@@ -649,9 +664,12 @@ type Startup() =
 
 [<EntryPoint>]
 let main _ =
-    WebHostBuilder()
-        .UseKestrel()
-        .UseStartup<Startup>()
+    Host.CreateDefaultBuilder()
+        .ConfigureWebHostDefaults(
+            fun webHostBuilder ->
+                webHostBuilder
+                    .UseStartup<Startup>()
+                    |> ignore)
         .Build()
         .Run()
     0
