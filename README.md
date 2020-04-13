@@ -162,20 +162,17 @@ For more information please check the official [Giraffe documentation](https://g
 
 ### Demo apps
 
-There is a few sample applications which can be found in the [`/samples`](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples) folder:
-
-| Sample | Description |
-| ------ | ----------- |
-| [GoogleAuthApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/GoogleAuthApp) | Demonstrates how Google Auth can be used with Giraffe. |
-| [IdentityApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/IdentityApp) | Demonstrates how ASP.NET Core Identity can be used with Giraffe. |
-| [JwtApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/JwtApp) | Demonstrates how JWT tokens can be used with Giraffe. |
-| [SampleApp](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/SampleApp) | Generic sample application showcasing multiple features such as file uploads, cookie auth, model binding and validation, etc. |
+There is a few sample applications which can be found in the [`samples`](https://github.com/giraffe-fsharp/samples) GitHub repository. Please check the `README.md` there for further information.
 
 ### Live apps
 
-#### Buildstats.info
+#### buildstats.info
 
 The web service [https://buildstats.info](https://buildstats.info) uses Giraffe to build rich SVG widgets for Git repositories. The application runs as a Docker container in the Google Container Engine (see [CI-BuiltStats on GitHub](https://github.com/dustinmoris/CI-BuildStats) for more information).
+
+#### dusted.codes
+
+My personal blog [https://dusted.codes](https://dusted.codes) is also built with Giraffe and ASP.NET Core and all of the [source code is published on GitHub](https://github.com/dustinmoris/DustedCodes) for further reference.
 
 More sample applications will be added in the future.
 
@@ -197,53 +194,42 @@ Giraffe is built with the latest [.NET Core SDK](https://www.microsoft.com/net/d
 
 You can either install [Visual Studio 2017](https://www.visualstudio.com/vs/) which comes with the latest SDK or manually download and install the [.NET SDK 2.1](https://www.microsoft.com/net/download/core).
 
-After installation you should be able to run the `.\build.ps1` script to successfully build, test and package the library.
+After installation you should be able to run the `./build.ps1` script to successfully build, test and package the library.
 
 The build script supports the following flags:
 
-- `-IncludeTests` will build and run the tests project as well
-- `-IncludeSamples` will build and test the samples project as well
-- `-All` will build and test all projects
 - `-Release` will build Giraffe with the `Release` configuration
-- `-Pack` will create a NuGet package for Giraffe and giraffe-template.
+- `-ExcludeTests` will skip the test project. This is useful to quickly validate any build errors.
+- `-Pack` will create a NuGet package for Giraffe.
+- `-ClearOnly` will delete all old build artifacts and not build anything itself.
 
 Examples:
 
 Only build the Giraffe project in `Debug` mode:
 ```
-PS > .\build.ps1
+PS > ./build.ps1
 ```
 
 Build the Giraffe project in `Release` mode:
 ```
-PS > .\build.ps1 -Release
+PS > ./build.ps1 -Release
 ```
 
-Build the Giraffe project in `Debug` mode and also build and run the tests project:
+Build the Giraffe project in `Debug` mode and skip running the tests project:
 ```
-PS > .\build.ps1 -IncludeTests
-```
-
-Same as before, but also build and test the samples project:
-```
-PS > .\build.ps1 -IncludeTests -IncludeSamples
-```
-
-One switch to build and test all projects:
-```
-PS > .\build.ps1 -All
+PS > ./build.ps1 -ExcludeTests
 ```
 
 Build and test all projects, use the `Release` build configuration and create all NuGet packages:
 ```
-PS > .\build.ps1 -Release -All -Pack
+PS > ./build.ps1 -Release -Pack
 ```
 
 ### Building on Linux or macOS
 
 In order to successfully run the build script on Linux or macOS you will have to [install PowerShell for Linux or Mac](https://github.com/PowerShell/PowerShell#get-powershell).
 
-Additionally you will have to [install the latest version of Mono](http://www.mono-project.com/download/) and execute the `./build.sh` script which will set the correct `FrameworkPathOverride` before subsequently executing the `./build.ps1` PowerShell script.
+Additionally you will also have to [install the latest version of Mono](http://www.mono-project.com/download/) in order to target full framework monikers during the build steps.
 
 ### Development environment
 
