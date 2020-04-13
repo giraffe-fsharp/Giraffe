@@ -3,7 +3,6 @@
 open System
 open System.Security.Claims
 open System.Threading
-open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http

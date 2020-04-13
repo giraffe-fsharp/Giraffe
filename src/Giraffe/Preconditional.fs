@@ -125,7 +125,12 @@ type HttpContext with
         let bind (result : RequestHeaders -> Precondition) =
             function
             | NoConditionsSpecified -> result requestHeaders
-            | AllConditionsMet      -> result requestHeaders
+            | AllConditionsMet      ->
+                match result requestHeaders with
+                | NoConditionsSpecified -> AllConditionsMet
+                | AllConditionsMet      -> AllConditionsMet
+                | ConditionFailed       -> ConditionFailed
+                | ResourceNotModified   -> ResourceNotModified
             | ConditionFailed       -> ConditionFailed
             | ResourceNotModified   -> ResourceNotModified
 
@@ -137,7 +142,7 @@ type HttpContext with
             | ResourceNotModified   -> ResourceNotModified
 
         // Set ETag and Last-Modified in the response
-        if eTag.IsSome         then responseHeaders.ETag         <- eTag.Value
+        if eTag.IsSome        then responseHeaders.ETag        <- eTag.Value
         if lastModified.IsSome then responseHeaders.LastModified <- Nullable(lastModified.Value)
 
         // Validate headers in correct precedence
