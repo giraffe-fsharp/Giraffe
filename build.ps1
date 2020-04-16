@@ -6,9 +6,7 @@ param
 (
     [switch] $Release,
     [switch] $ExcludeTests,
-    [switch] $ExcludeSamples,
     [switch] $Pack,
-    [switch] $Run,
     [switch] $ClearOnly
 )
 
@@ -30,10 +28,6 @@ if ($ClearOnly.IsPresent)
 
 $giraffe               = "./src/Giraffe/Giraffe.fsproj"
 $giraffeTests          = "./tests/Giraffe.Tests/Giraffe.Tests.fsproj"
-$identityApp           = "./samples/IdentityApp/IdentityApp/IdentityApp.fsproj"
-$jwtApp                = "./samples/JwtApp/JwtApp/JwtApp.fsproj"
-$sampleApp             = "./samples/SampleApp/SampleApp/SampleApp.fsproj"
-$sampleAppTests        = "./samples/SampleApp/SampleApp.Tests/SampleApp.Tests.fsproj"
 
 $version = Get-ProjectVersion $giraffe
 Update-AppVeyorBuildVersion $version
@@ -59,25 +53,6 @@ if (!$ExcludeTests.IsPresent -and !$Run.IsPresent)
 
     dotnet-build $giraffeTests
     dotnet-test  $giraffeTests
-}
-
-if (!$ExcludeSamples.IsPresent -and !$Run.IsPresent)
-{
-    Write-Host "Building and testing samples..." -ForegroundColor Magenta
-
-    dotnet-build   $identityApp
-    dotnet-build   $jwtApp
-    dotnet-build   $sampleApp
-
-    dotnet-build   $sampleAppTests
-    dotnet-test    $sampleAppTests
-}
-
-if ($Run.IsPresent)
-{
-    Write-Host "Launching sample application..." -ForegroundColor Magenta
-    dotnet-build   $sampleApp
-    dotnet-run     $sampleApp
 }
 
 if ($Pack.IsPresent)
