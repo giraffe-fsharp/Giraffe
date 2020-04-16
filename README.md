@@ -87,6 +87,7 @@ Next create a web application and plug it into the ASP.NET Core middleware:
 ```fsharp
 open System
 open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
@@ -125,6 +126,7 @@ Instead of creating a `Startup` class you can also add Giraffe in a more functio
 ```fsharp
 open System
 open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
