@@ -21,6 +21,7 @@ type GiraffeMiddleware (next          : RequestDelegate,
 
     do if isNull next then raise (ArgumentNullException("next"))
 
+    let logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
     // pre-compile the handler pipeline
     let func : HttpFunc = handler (Some >> Task.FromResult)
 
@@ -29,7 +30,6 @@ type GiraffeMiddleware (next          : RequestDelegate,
             let start = System.Diagnostics.Stopwatch.GetTimestamp();
 
             let! result = func ctx
-            let  logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
 
             if logger.IsEnabled LogLevel.Debug then
                 let freq = double System.Diagnostics.Stopwatch.Frequency
