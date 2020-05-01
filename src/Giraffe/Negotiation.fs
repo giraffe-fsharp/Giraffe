@@ -31,6 +31,13 @@ type INegotiationConfig =
     /// A `HttpHandler` function which will be invoked if none of the accepted mime types can be satisfied. Generally this `HttpHandler` would send a response with a status code of `406 Unacceptable`.
     ///
     abstract member UnacceptableHandler : HttpHandler
+        
+let private unacceptableHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+    (setStatusCode 406
+    >=> ((ctx.Request.Headers.["Accept"]).ToString()
+        |> sprintf "%s is unacceptable by the server."
+        |> text)) next ctx
 
 /// **Description**
 ///
@@ -54,12 +61,26 @@ type DefaultNegotiationConfig() =
                 "text/xml"        , xml
                 "text/plain"      , fun x -> x.ToString() |> text
             ]
-        member __.UnacceptableHandler =
-            fun (next : HttpFunc) (ctx : HttpContext) ->
-                (setStatusCode 406
-                >=> ((ctx.Request.Headers.["Accept"]).ToString()
-                    |> sprintf "%s is unacceptable by the server."
-                    |> text)) next ctx
+        member __.UnacceptableHandler = unacceptableHandler
+            
+
+/// **Description**
+///
+/// An implementation of `INegotiationConfig` which allows returning JSON only.
+///
+/// **Supported mime types**
+///
+/// `*/*`: If a client accepts any content type then the server will return a JSON response.
+/// `application/json`: Server will send a JSON response.
+///
+type JsonOnlyNegotiationConfig() =
+    interface INegotiationConfig with
+        member __.Rules =
+            dict [
+                "*/*"             , json
+                "application/json", json
+            ]
+        member __.UnacceptableHandler = unacceptableHandler
 
 // ---------------------------
 // HttpContext extensions

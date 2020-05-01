@@ -2643,6 +2643,8 @@ dict [
 ]
 ```
 
+In addition to the `DefaultNegotiationConfig`, there is also a `JsonOnlyNegotiationConfig` provided which only returns JSON.
+
 As you can see from the example above the default dictionary uses the `json` and `xml` http handlers to define the response handler for the respective media types. If a client requests a `text/plain` response then a new function had to be created which accepts an `obj` and uses the `.ToString()` method in combination with the `text` http handler to return a plain text response.
 
 If a client has no particular preference (`*/*`) then the default response is `json`.
