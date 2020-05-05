@@ -1,6 +1,7 @@
 module Giraffe.Tests.HttpHandlerTests
 
 open System
+open System.Collections
 open System.IO
 open System.Collections.Generic
 open Microsoft.AspNetCore.Http
@@ -692,7 +693,7 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
     }
 
 [<Theory>]
-[<MemberData("XmlReturningAcceptHeaderCases")>]
+[<MemberData("XmlJsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xml" returns XML object`` (config : NegotiationConfigWithExpectedResult) =
     let johnDoe =
         {
@@ -705,6 +706,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
 
     let ctx = Substitute.For<HttpContext>()
     mockXml ctx
+    mockJson ctx (Newtonsoft None)
     mockNegotiation ctx config.NegotiationConfig
     let app =
         GET >=> choose [
@@ -741,7 +743,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
         | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx ->
             Assert.Equal(config.StatusCode, ctx.Response.StatusCode)
-            if ctx.Response.StatusCode = 200 then
+            if ctx.Response.StatusCode = 200 && config.ReturnContentType = "application/xml; charset=utf-8" then
                 let body = getBody ctx
                 XmlAssert.equals expected body
                 Assert.Equal(config.ReturnContentType, ctx.Response |> getContentType)
@@ -761,6 +763,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
 
     let ctx = Substitute.For<HttpContext>()
     mockXml ctx
+    mockJson ctx (Newtonsoft None)
     mockNegotiation ctx config.NegotiationConfig
     let app =
         GET >=> choose [
@@ -797,7 +800,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
         | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx ->
             Assert.Equal(config.StatusCode, ctx.Response.StatusCode)
-            if ctx.Response.StatusCode = 200 then
+            if ctx.Response.StatusCode = 200 && config.ReturnContentType = "application/xml; charset=utf-8" then
                 let body = getBody ctx
                 XmlAssert.equals expected body
                 Assert.Equal(config.ReturnContentType, ctx.Response |> getContentType)
