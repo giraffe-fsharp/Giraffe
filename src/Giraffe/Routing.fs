@@ -121,10 +121,10 @@ let routeCi (path : string) : HttpHandler =
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let routex (path : string) : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        let pattern = sprintf "^%s$" path
-        let regex   = Regex(pattern, RegexOptions.Compiled)
-        let result  = regex.Match (SubRouting.getNextPartOfPath ctx)
+    let pattern = sprintf "^%s$" path
+    let regex   = Regex(pattern, RegexOptions.Compiled)
+    fun (next : HttpFunc) (ctx : Microsoft.AspNetCore.Http.HttpContext) ->
+        let result = regex.Match (SubRouting.getNextPartOfPath ctx)
         match result.Success with
         | true  -> next ctx
         | false -> skipPipeline
@@ -142,10 +142,10 @@ let routex (path : string) : HttpHandler =
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let routeCix (path : string) : HttpHandler =
+    let pattern = sprintf "^%s$" path
+    let regex   = Regex(pattern, RegexOptions.IgnoreCase ||| RegexOptions.Compiled)
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        let pattern = sprintf "^%s$" path
-        let regex   = Regex(pattern, RegexOptions.IgnoreCase ||| RegexOptions.Compiled)
-        let result  = regex.Match (SubRouting.getNextPartOfPath ctx)
+        let result = regex.Match (SubRouting.getNextPartOfPath ctx)
         match result.Success with
         | true  -> next ctx
         | false -> skipPipeline
@@ -232,10 +232,10 @@ let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandle
 /// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
 ///
 let routeBind<'T> (route : string) (routeHandler : 'T -> HttpHandler) : HttpHandler =
+    let pattern = route.Replace("{", "(?<").Replace("}", ">[^/\n]+)") |> sprintf "^%s$"
+    let regex   = Regex(pattern, RegexOptions.IgnoreCase)
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        let pattern = route.Replace("{", "(?<").Replace("}", ">[^/\n]+)") |> sprintf "^%s$"
-        let regex   = Regex(pattern, RegexOptions.IgnoreCase)
-        let result  = regex.Match (SubRouting.getNextPartOfPath ctx)
+        let result = regex.Match (SubRouting.getNextPartOfPath ctx)
         match result.Success with
         | true ->
             let groups = result.Groups
