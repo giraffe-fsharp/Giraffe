@@ -2,24 +2,6 @@
 # Generic functions
 # ----------------------------------------------
 
-function Test-IsMonoInstalled
-{
-    <#
-        .DESCRIPTION
-        Checks to see whether the current environment has the Mono framework installed.
-
-        .EXAMPLE
-        if (Test-IsMonoInstalled) { Write-Host "Mono is available." }
-    #>
-
-    try
-    {
-        $result = Invoke-Cmd "mono --version" -Silent
-        return $result.StartsWith("Mono JIT compiler version")
-    }
-    catch { return false }
-}
-
 function Get-UbuntuVersion
 {
     <#
@@ -210,32 +192,11 @@ function Get-NetCoreTargetFrameworks ($projFile)
     Get-TargetFrameworks $projFile | Where-Object { $_ -like "netstandard*" -or $_ -like "netcoreapp*" }
 }
 
-function Invoke-DotNetCli ($cmd, $proj, $argv)
-{
-    # Currently dotnet test does not work for net461 on Linux/Mac
-    # See: https://github.com/Microsoft/vstest/issues/1318
-
-    if((!($IsWindows) -and !(Test-IsMonoInstalled)) `
-        -or (!($IsWindows) -and ($cmd -eq "test")))
-    {
-        $netCoreFrameworks = Get-NetCoreTargetFrameworks($proj)
-
-        foreach($fw in $netCoreFrameworks) {
-            $fwArgv = "-f $fw " + $argv
-            Invoke-Cmd "dotnet $cmd $proj $fwArgv"
-        }
-    }
-    else
-    {
-        Invoke-Cmd "dotnet $cmd $proj $argv"
-    }
-}
-
 function dotnet-info                      { Invoke-Cmd "dotnet --info" -Silent }
 function dotnet-version                   { Invoke-Cmd "dotnet --version" -Silent }
 function dotnet-restore ($project, $argv) { Invoke-Cmd "dotnet restore $project $argv" }
-function dotnet-build   ($project, $argv) { Invoke-DotNetCli -Cmd "build" -Proj $project -Argv $argv }
-function dotnet-test    ($project, $argv) { Invoke-DotNetCli -Cmd "test"  -Proj $project -Argv $argv  }
+function dotnet-build   ($project, $argv) { Invoke-Cmd "dotnet build $project $argv" }
+function dotnet-test    ($project, $argv) { Invoke-Cmd "dotnet test $project $argv" }
 function dotnet-run     ($project, $argv) { Invoke-Cmd "dotnet run --project $project $argv" }
 function dotnet-pack    ($project, $argv) { Invoke-Cmd "dotnet pack $project $argv" }
 function dotnet-publish ($project, $argv) { Invoke-Cmd "dotnet publish $project $argv" }
