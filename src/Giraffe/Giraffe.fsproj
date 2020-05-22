@@ -9,7 +9,7 @@
     <NeutralLanguage>en-GB</NeutralLanguage>
 
     <!-- Build settings -->
-    <TargetFrameworks>netcoreapp3.1;netcoreapp3.0;netstandard2.0</TargetFrameworks>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <DebugType>portable</DebugType>
     <OutputType>Library</OutputType>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -43,16 +43,8 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup Condition=" ('$(TargetFramework)' == 'netcoreapp3.1') Or ('$(TargetFramework)' == 'netcoreapp3.0') ">
+  <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
-
-  <ItemGroup Condition=" ('$(TargetFramework)' != 'netcoreapp3.1') And ('$(TargetFramework)' != 'netcoreapp3.0') ">
-    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.2.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.2.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="2.2.*" />
-    <PackageReference Include="Microsoft.AspNetCore.ResponseCaching" Version="2.2.*" />
   </ItemGroup>
 
   <ItemGroup>

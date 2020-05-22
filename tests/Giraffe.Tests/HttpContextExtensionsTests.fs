@@ -9,10 +9,6 @@ open Xunit
 open NSubstitute
 open Giraffe
 
-#if NETCOREAPP2_1 || NET461
-open Microsoft.AspNetCore.Http.Internal
-#endif
-
 [<Fact>]
 let ``GetRequestUrl returns entire URL of the HTTP request`` () =
     let ctx = Substitute.For<HttpContext>()
