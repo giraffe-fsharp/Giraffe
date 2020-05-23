@@ -35,7 +35,8 @@ module Json =
 
     /// **Description**
     ///
-    /// The `Utf8JsonSerializer` is the default `IJsonSerializer` in Giraffe.
+    /// `Utf8JsonSerializer` is an alternative serializer with 
+    /// great performance and supports true chunked transfer encoding.
     ///
     /// It uses `Utf8Json` as the underlying JSON serializer to (de-)serialize
     /// JSON content. [Utf8Json](https://github.com/neuecc/Utf8Json) is currently
@@ -67,15 +68,7 @@ module Json =
 
     /// **Description**
     ///
-    /// The previous default JSON serializer in Giraffe.
-    ///
-    /// The `NewtonsoftJsonSerializer` has been replaced by `Utf8JsonSerializer` as
-    /// the default `IJsonSerializer` which has much better performance and supports
-    /// true chunked transfer encoding.
-    ///
-    /// The `NewtonsoftJsonSerializer` remains available as an alternative JSON
-    /// serializer which can be used to override the `Utf8JsonSerializer` for
-    /// backwards compatibility.
+    /// Default JSON serializer in Giraffe.
     ///
     /// Serializes objects to camel cased JSON code.
     ///
@@ -127,7 +120,7 @@ module Json =
 
     /// **Description**
     ///
-    /// The `SystemTextJsonSerializer` is an alternaive `IJsonSerializer` in Giraffe.
+    /// `SystemTextJsonSerializer` is an alternaive `IJsonSerializer` in Giraffe.
     ///
     /// It uses `System.Text.Json` as the underlying JSON serializer to (de-)serialize
     /// JSON content. For support of F# unions and records, look at https://github.com/Tarmil/FSharp.SystemTextJson
