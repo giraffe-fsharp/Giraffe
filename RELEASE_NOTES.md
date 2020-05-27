@@ -1,6 +1,16 @@
 Release Notes
 =============
 
+## 5.0.0-alpha-001
+
+- Only supported target framework is .NET Core 3.1 (in preparation for .NET 5)
+- Added `System.Text.Json` serializer
+- Added `Giraffe.EndpointRouting` namespace with a super early alpha version of new routing handlers which integrate with ASP.NET Core's endpoint routing API (check out the `EndpointRoutingApp` sample app for examples before the documentation is ready)
+- Removed `Giraffe.GiraffeViewEngine` (in preparation to distribute it as a separate NuGet package, which doesn't exist yet). This release has no `GiraffeViewEngine` which is one of the reasons why it's an `alpha-001` release. Plans are to bring it back in `5.0.0-alpha-002`
+- New `JsonOnlyNegotiationConfig` for setting a content negotiation which only supports JSON serialisation and not XML
+- Improved RegEx http handlers in original (non Endpoint routing) http handlers
+- Added `SystemTextJsonSerializer` which uses `System.Text.Json` for JSON serialisation when configured as the desired JSON serializer in Giraffe
+
 ## 4.1.0
 
 - Removed redundant dependencies

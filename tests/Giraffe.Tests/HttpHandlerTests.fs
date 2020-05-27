@@ -1,6 +1,7 @@
 module Giraffe.Tests.HttpHandlerTests
 
 open System
+open System.Collections
 open System.IO
 open System.Collections.Generic
 open Microsoft.AspNetCore.Http
@@ -9,7 +10,6 @@ open FSharp.Control.Tasks.V2.ContextInsensitive
 open Xunit
 open NSubstitute
 open Giraffe
-open Giraffe.GiraffeViewEngine
 
 // ---------------------------------
 // Test Types
@@ -382,49 +382,15 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
             Assert.Equal(404, ctx.Response.StatusCode)
     }
 
-[<Fact>]
-let ``GET "/person" returns rendered HTML view`` () =
-    let ctx = Substitute.For<HttpContext>()
+let JsonReturningAcceptHeaderCases =
+    [
+        {NegotiationConfig = JsonOnlyNegotiationConfig() :> INegotiationConfig; StatusCode = 200; ReturnContentType = "application/json; charset=utf-8"}
+        {NegotiationConfig = DefaultNegotiationConfig() :> INegotiationConfig; StatusCode = 200; ReturnContentType = "application/json; charset=utf-8"}
+    ] |> toTheoryData
 
-    let personView model =
-        html [] [
-            head [] [
-                title [] [ str "Html Node" ]
-            ]
-            body [] [
-                p [] [ sprintf "%s %s is %i years old." model.Foo model.Bar model.Age |> str ]
-            ]
-        ]
-
-    let johnDoe = { Foo = "John"; Bar = "Doe"; Age = 30 }
-
-    let app =
-        choose [
-            GET >=> choose [
-                route "/"          >=> text "Hello World"
-                route "/person"    >=> (personView johnDoe |> htmlView) ]
-            POST >=> choose [
-                route "/post/1"    >=> text "1" ]
-            setStatusCode 404      >=> text "Not found" ]
-
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/person")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "<!DOCTYPE html><html><head><title>Html Node</title></head><body><p>John Doe is 30 years old.</p></body></html>"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None -> assertFailf "Result was expected to be %s" expected
-        | Some ctx ->
-            let body = (getBody ctx).Replace(Environment.NewLine, String.Empty)
-            Assert.Equal(expected, body)
-            Assert.Equal("text/html; charset=utf-8", ctx.Response |> getContentType)
-    }
-
-[<Fact>]
-let ``Get "/auto" with Accept header of "application/json" returns JSON object`` () =
+[<Theory>]
+[<MemberData("JsonReturningAcceptHeaderCases")>]
+let ``Get "/auto" with Accept header of "application/json" returns JSON object`` (config : NegotiationConfigWithExpectedResult) =
     let johnDoe =
         {
             FirstName = "John"
@@ -436,7 +402,7 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
 
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx (Newtonsoft None)
-    mockNegotiation ctx
+    mockNegotiation ctx config.NegotiationConfig
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -451,6 +417,7 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    ctx.Response.StatusCode <- 200
 
     let expected = "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"birthDate\":\"1990-07-12T00:00:00\",\"height\":1.85,\"piercings\":[\"left ear\",\"nose\"]}"
 
@@ -462,11 +429,13 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
         | Some ctx ->
             let body = getBody ctx
             Assert.Equal(expected, body)
-            Assert.Equal("application/json; charset=utf-8", ctx.Response |> getContentType)
+            Assert.Equal(config.StatusCode, ctx.Response.StatusCode)
+            Assert.Equal(config.ReturnContentType, ctx.Response |> getContentType)
     }
 
-[<Fact>]
-let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/json" returns JSON object`` () =
+[<Theory>]
+[<MemberData("JsonReturningAcceptHeaderCases")>]
+let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/json" returns JSON object`` (config : NegotiationConfigWithExpectedResult) =
     let johnDoe =
         {
             FirstName = "John"
@@ -478,7 +447,7 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
 
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx (Newtonsoft None)
-    mockNegotiation ctx
+    mockNegotiation ctx config.NegotiationConfig
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -493,6 +462,7 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    ctx.Response.StatusCode <- 200
 
     let expected = "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"birthDate\":\"1990-07-12T00:00:00\",\"height\":1.85,\"piercings\":[\"left ear\",\"nose\"]}"
 
@@ -502,13 +472,22 @@ let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/jso
         match result with
         | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal(expected, body)
-            Assert.Equal("application/json; charset=utf-8", ctx.Response |> getContentType)
+            Assert.Equal(config.StatusCode, ctx.Response.StatusCode)
+            if ctx.Response.StatusCode = 200 then
+                let body = getBody ctx
+                Assert.Equal(expected, body)
+                Assert.Equal(config.ReturnContentType, ctx.Response |> getContentType)
     }
 
-[<Fact>]
-let ``Get "/auto" with Accept header of "application/xml" returns XML object`` () =
+let XmlReturningAcceptHeaderCases =
+    [
+        {NegotiationConfig = JsonOnlyNegotiationConfig() :> INegotiationConfig; StatusCode = 406; ReturnContentType = ""}
+        {NegotiationConfig = DefaultNegotiationConfig() :> INegotiationConfig; StatusCode = 200; ReturnContentType = "application/xml; charset=utf-8"}
+    ] |> toTheoryData
+
+[<Theory>]
+[<MemberData("XmlReturningAcceptHeaderCases")>]
+let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (config : NegotiationConfigWithExpectedResult) =
     let johnDoe =
         {
             FirstName = "John"
@@ -520,7 +499,7 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
 
     let ctx = Substitute.For<HttpContext>()
     mockXml ctx
-    mockNegotiation ctx
+    mockNegotiation ctx config.NegotiationConfig
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -535,6 +514,7 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    ctx.Response.StatusCode <- 200
 
     let expected = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Person xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
@@ -554,13 +534,22 @@ let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (
         match result with
         | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx ->
-            let body = getBody ctx
-            XmlAssert.equals expected body
-            Assert.Equal("application/xml; charset=utf-8", ctx.Response |> getContentType)
+            Assert.Equal(config.StatusCode, ctx.Response.StatusCode)
+            if ctx.Response.StatusCode = 200 then
+                let body = getBody ctx
+                XmlAssert.equals expected body
+                Assert.Equal(config.ReturnContentType, ctx.Response |> getContentType)
     }
 
-[<Fact>]
-let ``Get "/auto" with Accept header of "application/xml, application/json" returns XML object`` () =
+let XmlJsonReturningAcceptHeaderCases =
+    [
+        {NegotiationConfig = JsonOnlyNegotiationConfig() :> INegotiationConfig; StatusCode = 200; ReturnContentType = "application/json; charset=utf-8"}
+        {NegotiationConfig = DefaultNegotiationConfig() :> INegotiationConfig; StatusCode = 200; ReturnContentType = "application/xml; charset=utf-8"}
+    ] |> toTheoryData
+
+[<Theory>]
+[<MemberData("XmlJsonReturningAcceptHeaderCases")>]
+let ``Get "/auto" with Accept header of "application/xml, application/json" returns XML object`` (config : NegotiationConfigWithExpectedResult) =
     let johnDoe =
         {
             FirstName = "John"
@@ -572,7 +561,8 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
 
     let ctx = Substitute.For<HttpContext>()
     mockXml ctx
-    mockNegotiation ctx
+    mockJson ctx (Newtonsoft None)
+    mockNegotiation ctx config.NegotiationConfig
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -587,6 +577,7 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    ctx.Response.StatusCode <- 200
 
     let expected = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Person xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
@@ -606,13 +597,16 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
         match result with
         | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx ->
-            let body = getBody ctx
-            XmlAssert.equals expected body
-            Assert.Equal("application/xml; charset=utf-8", ctx.Response |> getContentType)
+            Assert.Equal(config.StatusCode, ctx.Response.StatusCode)
+            if ctx.Response.StatusCode = 200 && config.ReturnContentType = "application/xml; charset=utf-8" then
+                let body = getBody ctx
+                XmlAssert.equals expected body
+                Assert.Equal(config.ReturnContentType, ctx.Response |> getContentType)
     }
 
-[<Fact>]
-let ``Get "/auto" with Accept header of "application/json, application/xml" returns JSON object`` () =
+[<Theory>]
+[<MemberData("JsonReturningAcceptHeaderCases")>]
+let ``Get "/auto" with Accept header of "application/json, application/xml" returns JSON object`` (config : NegotiationConfigWithExpectedResult) =
     let johnDoe =
         {
             FirstName = "John"
@@ -624,7 +618,7 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
 
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx (Newtonsoft None)
-    mockNegotiation ctx
+    mockNegotiation ctx config.NegotiationConfig
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -639,6 +633,7 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    ctx.Response.StatusCode <- 200
 
     let expected = "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"birthDate\":\"1990-07-12T00:00:00\",\"height\":1.85,\"piercings\":[\"ear\",\"nose\"]}"
 
@@ -648,13 +643,16 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
         match result with
         | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal(expected, body)
-            Assert.Equal("application/json; charset=utf-8", ctx.Response |> getContentType)
+            Assert.Equal(config.StatusCode, ctx.Response.StatusCode)
+            if ctx.Response.StatusCode = 200 then
+                let body = getBody ctx
+                Assert.Equal(expected, body)
+                Assert.Equal(config.ReturnContentType, ctx.Response |> getContentType)
     }
 
-[<Fact>]
-let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xml" returns XML object`` () =
+[<Theory>]
+[<MemberData("XmlJsonReturningAcceptHeaderCases")>]
+let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xml" returns XML object`` (config : NegotiationConfigWithExpectedResult) =
     let johnDoe =
         {
             FirstName = "John"
@@ -666,7 +664,8 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
 
     let ctx = Substitute.For<HttpContext>()
     mockXml ctx
-    mockNegotiation ctx
+    mockJson ctx (Newtonsoft None)
+    mockNegotiation ctx config.NegotiationConfig
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -681,6 +680,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    ctx.Response.StatusCode <- 200
 
     let expected = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Person xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
@@ -700,13 +700,16 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
         match result with
         | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx ->
-            let body = getBody ctx
-            XmlAssert.equals expected body
-            Assert.Equal("application/xml; charset=utf-8", ctx.Response |> getContentType)
+            Assert.Equal(config.StatusCode, ctx.Response.StatusCode)
+            if ctx.Response.StatusCode = 200 && config.ReturnContentType = "application/xml; charset=utf-8" then
+                let body = getBody ctx
+                XmlAssert.equals expected body
+                Assert.Equal(config.ReturnContentType, ctx.Response |> getContentType)
     }
 
-[<Fact>]
-let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xml; q=0.6" returns XML object`` () =
+[<Theory>]
+[<MemberData("XmlJsonReturningAcceptHeaderCases")>]
+let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xml; q=0.6" returns XML object`` (config : NegotiationConfigWithExpectedResult) =
     let johnDoe =
         {
             FirstName = "John"
@@ -718,7 +721,8 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
 
     let ctx = Substitute.For<HttpContext>()
     mockXml ctx
-    mockNegotiation ctx
+    mockJson ctx (Newtonsoft None)
+    mockNegotiation ctx config.NegotiationConfig
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -733,6 +737,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    ctx.Response.StatusCode <- 200
 
     let expected = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Person xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
@@ -752,13 +757,22 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
         match result with
         | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx ->
-            let body = getBody ctx
-            XmlAssert.equals expected body
-            Assert.Equal("application/xml; charset=utf-8", ctx.Response |> getContentType)
+            Assert.Equal(config.StatusCode, ctx.Response.StatusCode)
+            if ctx.Response.StatusCode = 200 && config.ReturnContentType = "application/xml; charset=utf-8" then
+                let body = getBody ctx
+                XmlAssert.equals expected body
+                Assert.Equal(config.ReturnContentType, ctx.Response |> getContentType)
     }
 
-[<Fact>]
-let ``Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0.6" returns text object`` () =
+let TextReturningAcceptHeaderCases =
+    [
+        {NegotiationConfig = JsonOnlyNegotiationConfig() :> INegotiationConfig; StatusCode = 406; ReturnContentType = ""}
+        {NegotiationConfig = DefaultNegotiationConfig() :> INegotiationConfig; StatusCode = 200; ReturnContentType = "text/plain; charset=utf-8"}
+    ] |> toTheoryData
+
+[<Theory>]
+[<MemberData("TextReturningAcceptHeaderCases")>]
+let ``Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0.6" returns text object`` (config : NegotiationConfigWithExpectedResult) =
     let johnDoe =
         {
             FirstName = "John"
@@ -769,7 +783,7 @@ let ``Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0
         }
 
     let ctx = Substitute.For<HttpContext>()
-    mockNegotiation ctx
+    mockNegotiation ctx config.NegotiationConfig
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -784,6 +798,7 @@ let ``Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    ctx.Response.StatusCode <- 200
 
     let expected = @"First name: John, Last name: Doe, Birth date: 1990-07-12, Height: 1.85, Piercings: [|""ear""; ""nose""|]"
 
@@ -793,13 +808,22 @@ let ``Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0
         match result with
         | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal(expected, body)
-            Assert.Equal("text/plain; charset=utf-8", ctx.Response |> getContentType)
+            Assert.Equal(config.StatusCode, ctx.Response.StatusCode)
+            if ctx.Response.StatusCode = 200 then
+                let body = getBody ctx
+                Assert.Equal(expected, body)
+                Assert.Equal(config.ReturnContentType, ctx.Response |> getContentType)
     }
 
-[<Fact>]
-let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () =
+let HtmlReturningAcceptHeaderCases =
+    [
+        {NegotiationConfig = JsonOnlyNegotiationConfig() :> INegotiationConfig; StatusCode = 406; ReturnContentType = "text/plain; charset=utf-8"}
+        {NegotiationConfig = DefaultNegotiationConfig() :> INegotiationConfig; StatusCode = 406; ReturnContentType = "text/plain; charset=utf-8"}
+    ] |> toTheoryData
+
+[<Theory>]
+[<MemberData("HtmlReturningAcceptHeaderCases")>]
+let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` (config : NegotiationConfigWithExpectedResult) =
     let johnDoe =
         {
             FirstName = "John"
@@ -810,7 +834,7 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
         }
 
     let ctx = Substitute.For<HttpContext>()
-    mockNegotiation ctx
+    mockNegotiation ctx config.NegotiationConfig
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -825,6 +849,7 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    ctx.Response.StatusCode <- 200
 
     let expected = "text/html is unacceptable by the server."
 
@@ -834,14 +859,16 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` () 
         match result with
         | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal(406, getStatusCode ctx)
-            Assert.Equal(expected, body)
-            Assert.Equal("text/plain; charset=utf-8", ctx.Response |> getContentType)
+            Assert.Equal(config.StatusCode, ctx.Response.StatusCode)
+            if ctx.Response.StatusCode = 406 then
+                let body = getBody ctx
+                Assert.Equal(expected, body)
+                Assert.Equal("text/plain; charset=utf-8", ctx.Response |> getContentType)
     }
 
-[<Fact>]
-let ``Get "/auto" without an Accept header returns a JSON object`` () =
+[<Theory>]
+[<MemberData("JsonReturningAcceptHeaderCases")>]
+let ``Get "/auto" without an Accept header returns a JSON object`` (config : NegotiationConfigWithExpectedResult) =
     let johnDoe =
         {
             FirstName = "John"
@@ -853,7 +880,7 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
 
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx (Newtonsoft None)
-    mockNegotiation ctx
+    mockNegotiation ctx config.NegotiationConfig
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -867,6 +894,7 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
+    ctx.Response.StatusCode <- 200
 
     let expected = "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"birthDate\":\"1990-07-12T00:00:00\",\"height\":1.85,\"piercings\":[\"ear\",\"nose\"]}"
 
@@ -876,9 +904,11 @@ let ``Get "/auto" without an Accept header returns a JSON object`` () =
         match result with
         | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx ->
-            let body = getBody ctx
-            Assert.Equal(expected, body)
-            Assert.Equal("application/json; charset=utf-8", ctx.Response |> getContentType)
+            Assert.Equal(config.StatusCode, ctx.Response.StatusCode)
+            if ctx.Response.StatusCode = 200 then
+                let body = getBody ctx
+                Assert.Equal(expected, body)
+                Assert.Equal("application/json; charset=utf-8", ctx.Response |> getContentType)
     }
 
 [<Fact>]
