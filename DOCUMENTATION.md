@@ -2087,7 +2087,7 @@ let fileUploadHandler =
 let webApp = route "/upload" >=> fileUploadHandler
 ```
 
-For large file uploads it is recommended to [stream the file](https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads#uploading-large-files-with-streaming) in order to prevent resource exhaustion.
+The latter allows you to stream the file, which is [recommended for large file uploads](https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads#uploading-large-files-with-streaming) in order to prevent resource exhaustion.
 
 See also [large file uploads in ASP.NET Core](https://stackoverflow.com/questions/36437282/dealing-with-large-file-uploads-on-asp-net-core-1-0) on StackOverflow.
 
