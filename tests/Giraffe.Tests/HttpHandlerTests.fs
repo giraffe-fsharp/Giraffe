@@ -10,7 +10,6 @@ open FSharp.Control.Tasks.V2.ContextInsensitive
 open Xunit
 open NSubstitute
 open Giraffe
-open Giraffe.GiraffeViewEngine
 
 // ---------------------------------
 // Test Types

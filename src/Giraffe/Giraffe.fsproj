@@ -2,14 +2,14 @@
   <PropertyGroup>
     <!-- General -->
     <AssemblyName>Giraffe</AssemblyName>
-    <Version>4.1.0</Version>
+    <Version>5.0.0-alpha-001</Version>
     <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
     <Copyright>Copyright 2020 Dustin Moris Gorski</Copyright>
     <Authors>Dustin Moris Gorski and contributors</Authors>
     <NeutralLanguage>en-GB</NeutralLanguage>
 
     <!-- Build settings -->
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <DebugType>portable</DebugType>
     <OutputType>Library</OutputType>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -52,8 +52,8 @@
     <PackageReference Include="Newtonsoft.Json" Version="12.0.*" />
     <PackageReference Include="Utf8Json" Version="1.3.*" />
     <PackageReference Include="TaskBuilder.fs" Version="2.1.*" />
+    <PackageReference Include="System.Text.Json" Version="4.7.*" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.*" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.*" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
@@ -63,7 +63,6 @@
     <Compile Include="FormatExpressions.fs" />
     <Compile Include="Core.fs" />
     <Compile Include="ResponseCaching.fs" />
-    <Compile Include="GiraffeViewEngine.fs" />
     <Compile Include="ModelBinding.fs" />
     <Compile Include="ModelValidation.fs" />
     <Compile Include="Auth.fs" />
