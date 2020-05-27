@@ -9,7 +9,7 @@
     <NeutralLanguage>en-GB</NeutralLanguage>
 
     <!-- Build settings -->
-    <TargetFrameworks>netcoreapp3.0</TargetFrameworks>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <DebugType>portable</DebugType>
     <OutputType>Library</OutputType>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
