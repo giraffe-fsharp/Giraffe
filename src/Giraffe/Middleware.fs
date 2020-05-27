@@ -23,7 +23,7 @@ type GiraffeMiddleware (next          : RequestDelegate,
 
     let logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
     // pre-compile the handler pipeline
-    let func : HttpFunc = handler (Some >> Task.FromResult)
+    let func : HttpFunc = handler earlyReturn
 
     member __.Invoke (ctx : HttpContext) =
         task {

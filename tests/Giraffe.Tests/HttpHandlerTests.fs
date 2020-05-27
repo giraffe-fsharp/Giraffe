@@ -10,7 +10,6 @@ open FSharp.Control.Tasks.V2.ContextInsensitive
 open Xunit
 open NSubstitute
 open Giraffe
-open Giraffe.GiraffeViewEngine
 
 // ---------------------------------
 // Test Types
@@ -383,47 +382,6 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
             Assert.Equal(404, ctx.Response.StatusCode)
     }
 
-[<Fact>]
-let ``GET "/person" returns rendered HTML view`` () =
-    let ctx = Substitute.For<HttpContext>()
-
-    let personView model =
-        html [] [
-            head [] [
-                title [] [ str "Html Node" ]
-            ]
-            body [] [
-                p [] [ sprintf "%s %s is %i years old." model.Foo model.Bar model.Age |> str ]
-            ]
-        ]
-
-    let johnDoe = { Foo = "John"; Bar = "Doe"; Age = 30 }
-
-    let app =
-        choose [
-            GET >=> choose [
-                route "/"          >=> text "Hello World"
-                route "/person"    >=> (personView johnDoe |> htmlView) ]
-            POST >=> choose [
-                route "/post/1"    >=> text "1" ]
-            setStatusCode 404      >=> text "Not found" ]
-
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/person")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "<!DOCTYPE html><html><head><title>Html Node</title></head><body><p>John Doe is 30 years old.</p></body></html>"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None -> assertFailf "Result was expected to be %s" expected
-        | Some ctx ->
-            let body = (getBody ctx).Replace(Environment.NewLine, String.Empty)
-            Assert.Equal(expected, body)
-            Assert.Equal("text/html; charset=utf-8", ctx.Response |> getContentType)
-    }
-
 let JsonReturningAcceptHeaderCases =
     [
         {NegotiationConfig = JsonOnlyNegotiationConfig() :> INegotiationConfig; StatusCode = 200; ReturnContentType = "application/json; charset=utf-8"}
@@ -748,7 +706,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
                 XmlAssert.equals expected body
                 Assert.Equal(config.ReturnContentType, ctx.Response |> getContentType)
     }
-    
+
 [<Theory>]
 [<MemberData("XmlJsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xml; q=0.6" returns XML object`` (config : NegotiationConfigWithExpectedResult) =
