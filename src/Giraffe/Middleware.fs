@@ -8,7 +8,7 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.DependencyInjection.Extensions
-open FSharp.Control.Tasks.V2.ContextInsensitive
+open FSharp.Control.Tasks.Builders
 open Giraffe.Serialization
 
 // ---------------------------

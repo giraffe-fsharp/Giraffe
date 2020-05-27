@@ -3,7 +3,7 @@ module Giraffe.Common
 
 open System
 open System.IO
-open FSharp.Control.Tasks.V2.ContextInsensitive
+open FSharp.Control.Tasks.Builders
 
 // ---------------------------
 // Useful extension methods

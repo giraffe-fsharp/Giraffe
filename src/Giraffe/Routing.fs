@@ -6,7 +6,7 @@ open System.Collections.Generic
 open System.Text.RegularExpressions
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Primitives
-open FSharp.Control.Tasks.V2.ContextInsensitive
+open FSharp.Control.Tasks.Builders
 open Giraffe.FormatExpressions
 
 // ---------------------------

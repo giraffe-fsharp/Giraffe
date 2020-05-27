@@ -51,7 +51,7 @@
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="1.3.*" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.*" />
     <PackageReference Include="Utf8Json" Version="1.3.*" />
-    <PackageReference Include="TaskBuilder.fs" Version="2.1.*" />
+    <PackageReference Include="Ply" Version="0.1.*" />
     <PackageReference Include="System.Text.Json" Version="4.7.*" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.*" PrivateAssets="All" />
   </ItemGroup>

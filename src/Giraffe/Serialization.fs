@@ -14,7 +14,7 @@ module Json =
     open System.Threading.Tasks
     open Newtonsoft.Json
     open Newtonsoft.Json.Serialization
-    open FSharp.Control.Tasks.V2.ContextInsensitive
+    open FSharp.Control.Tasks.Builders
     open Utf8Json
 
     let recyclableMemoryStreamManager = RecyclableMemoryStreamManager()
