@@ -2923,7 +2923,7 @@ Please visit the [Giraffe.ViewEngine](https://github.com/giraffe-fsharp/Giraffe.
 
 ### JSON
 
-By default Giraffe uses [Newtonsoft JSON.NET](https://www.newtonsoft.com/json) for (de-)serializing JSON content. An application can modify the default serializer by registering a new dependency which implements the `IJsonSerializer` interface during application startup.
+By default Giraffe uses [Newtonsoft.Json](https://www.newtonsoft.com/json) for (de-)serializing JSON content. An application can modify the default serializer by registering a new dependency which implements the `IJsonSerializer` interface during application startup.
 
 Customizing Giraffe's JSON serialization can either happen via providing a custom object of `JsonSerializerSettings` when instantiating the default `NewtonsoftJsonSerializer` or by swapping in an entire different JSON library by creating a new class which implements the `IJsonSerializer` interface.
 
@@ -2931,10 +2931,11 @@ By default Giraffe offers two `IJsonSerializer` implementations out of the box:
 
 | Name | Description | Default |
 | :--- | :---------- | :------ |
-| `NewtonsoftJsonSerializer` | Uses `Newtonsoft.Json` aka JSON.Net for JSON (de-)serialization in Giraffe. It is the most downloaded library on NuGet, battle tested by millions of users and has great support for F# data types. Use this json serializer for maximum compatibility and easy adoption. | True |
+| `NewtonsoftJsonSerializer` | Uses `Newtonsoft.Json` aka Json.NET for JSON (de-)serialization in Giraffe. It is the most downloaded library on NuGet, battle tested by millions of users and has great support for F# data types. Use this json serializer for maximum compatibility and easy adoption. | True |
 | `Utf8JsonSerializer` | Uses `Utf8Json` for JSON (de-)serialization in Giraffe. This is the fastest JSON serializer written in .NET with huge extensibility points and native support for directly serializing JSON content to the HTTP response stream via chunked encoding. This serializer has been specifically crafted for maximum performance and should be used when that extra perf is important. | False |
+| `SystemTextJsonSerializer` | Uses `System.Text.Json` for JSON (de-)serialization in Giraffe. `System.Text.Json` is a high performance serialization library, and aims to be the serializaion library of choice for ASP.NET Core. For better support of F# types with `System.Text.Json`, look at [FSharp.SystemTextJson](https://github.com/Tarmil/FSharp.SystemTextJson). | False |
 
-The `Utf8JsonSerializer` can be used instead of the `NewtonsoftJsonSerializer` by registering a new dependency of type `IJsonSerializer` during application configuration:
+To use `Utf8JsonSerializer` instead of `NewtonsoftJsonSerializer`, register a new dependency of type `IJsonSerializer` during application configuration:
 
 ```fsharp
 let configureServices (services : IServiceCollection) =
@@ -2945,9 +2946,24 @@ let configureServices (services : IServiceCollection) =
     this.AddSingleton<IJsonSerializer>(Utf8JsonSerializer(Utf8JsonSerializer.DefaultResolver)) |> ignore
 ```
 
+Or to use `SystemTextJsonSerializer` instead of `NewtonsoftJsonSerializer`, register a new dependency of type `IJsonSerializer` during application configuration:
+
+```fsharp
+let configureServices (services : IServiceCollection) =
+    // First register all default Giraffe dependencies
+    services.AddGiraffe() |> ignore
+
+    let serializationOptions = SystemTextJsonSerializer.DefaultOptions
+    // Optionally use `FSharp.SystemTextJson` (requires `FSharp.SystemTextJson` package reference)
+    serializationOptions.Converters.Add(JsonFSharpConverter(JsonUnionEncoding.FSharpLuLike))
+    // Now register SystemTextJsonSerializer
+    this.AddSingleton<IJsonSerializer>(SystemTextJsonSerializer(SystemTextJsonSerializer.DefaultOptions)) |> ignore
+```
+
+
 #### Customizing JsonSerializerSettings
 
-You can change the default `JsonSerializerSettings` of the `NewtonsoftJsonSerializer` by registering a new instance of `NewtonsoftJsonSerializer` during application startup. For example, the [`Microsoft.FSharpLu` project](https://github.com/Microsoft/fsharplu/wiki/fsharplu.json) provides a JSON.NET converter (`CompactUnionJsonConverter`) that serializes and deserializes `Option`s and discriminated unions much more succinctly. If you wanted to use it, and set the culture to German, your configuration would look something like:
+You can change the default `JsonSerializerSettings` of the `NewtonsoftJsonSerializer` by registering a new instance of `NewtonsoftJsonSerializer` during application startup. For example, the [`Microsoft.FSharpLu` project](https://github.com/Microsoft/fsharplu/wiki/fsharplu.json) provides a Json.NET converter (`CompactUnionJsonConverter`) that serializes and deserializes `Option`s and discriminated unions much more succinctly. If you wanted to use it, and set the culture to German, your configuration would look something like:
 
 ```fsharp
 let configureServices (services : IServiceCollection) =
