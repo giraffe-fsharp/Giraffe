@@ -15,7 +15,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_misc", "_misc", "{CE10552A
 	ProjectSection(SolutionItems) = preProject
 		giraffe-64x64.png = giraffe-64x64.png
 		giraffe.png = giraffe.png
-		jmeter-load-test.jmx = jmeter-load-test.jmx
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_docs", "_docs", "{39555F35-F514-4521-A3CC-1CFF95ED581E}"
@@ -34,6 +33,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_build", "_build", "{8F5B79
 		global.json = global.json
 		NuGet.config = NuGet.config
 	EndProjectSection
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "EndpointRoutingApp", "samples\EndpointRoutingApp\EndpointRoutingApp\EndpointRoutingApp.fsproj", "{E4E1FB62-8268-4E0C-9F6E-25FF21E376E9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EndpointRoutingApp", "EndpointRoutingApp", "{C8D24EFD-B9A9-43DD-BE58-BB3C673869A5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +72,18 @@ Global
 		{2AF14B8E-56FF-4E54-99DA-C530D573814D}.Release|x64.Build.0 = Release|Any CPU
 		{2AF14B8E-56FF-4E54-99DA-C530D573814D}.Release|x86.ActiveCfg = Release|Any CPU
 		{2AF14B8E-56FF-4E54-99DA-C530D573814D}.Release|x86.Build.0 = Release|Any CPU
+		{E4E1FB62-8268-4E0C-9F6E-25FF21E376E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4E1FB62-8268-4E0C-9F6E-25FF21E376E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4E1FB62-8268-4E0C-9F6E-25FF21E376E9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E4E1FB62-8268-4E0C-9F6E-25FF21E376E9}.Debug|x64.Build.0 = Debug|Any CPU
+		{E4E1FB62-8268-4E0C-9F6E-25FF21E376E9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E4E1FB62-8268-4E0C-9F6E-25FF21E376E9}.Debug|x86.Build.0 = Debug|Any CPU
+		{E4E1FB62-8268-4E0C-9F6E-25FF21E376E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4E1FB62-8268-4E0C-9F6E-25FF21E376E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4E1FB62-8268-4E0C-9F6E-25FF21E376E9}.Release|x64.ActiveCfg = Release|Any CPU
+		{E4E1FB62-8268-4E0C-9F6E-25FF21E376E9}.Release|x64.Build.0 = Release|Any CPU
+		{E4E1FB62-8268-4E0C-9F6E-25FF21E376E9}.Release|x86.ActiveCfg = Release|Any CPU
+		{E4E1FB62-8268-4E0C-9F6E-25FF21E376E9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -76,6 +91,8 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{A16935F3-2E48-4D38-B08C-36E5ADE3B199} = {9E892FBB-74FD-464B-8939-6E4D9D70D99D}
 		{2AF14B8E-56FF-4E54-99DA-C530D573814D} = {152E856C-48EA-42A1-A5F4-960819BEC170}
+		{C8D24EFD-B9A9-43DD-BE58-BB3C673869A5} = {34A76D42-035A-4CD1-85B2-EC01D9CE3571}
+		{E4E1FB62-8268-4E0C-9F6E-25FF21E376E9} = {C8D24EFD-B9A9-43DD-BE58-BB3C673869A5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {77FFE315-7928-4985-B60D-8009AE1A3805}

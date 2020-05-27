@@ -155,6 +155,12 @@ type JsonSerializersData =
         ]
 
     static member PreserveCaseData = JsonSerializersData.PreserveCaseSettings |> toTheoryData
+    
+type NegotiationConfigWithExpectedResult = {
+    NegotiationConfig : INegotiationConfig
+    StatusCode : int
+    ReturnContentType : string
+}
 
 let mockXml (ctx : HttpContext) =
     ctx.RequestServices
@@ -162,10 +168,10 @@ let mockXml (ctx : HttpContext) =
        .Returns(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
     |> ignore
 
-let mockNegotiation (ctx : HttpContext) =
+let mockNegotiation (ctx : HttpContext) (negotiationConfig : INegotiationConfig) =
     ctx.RequestServices
        .GetService(typeof<INegotiationConfig>)
-       .Returns(DefaultNegotiationConfig())
+       .Returns(negotiationConfig)
     |> ignore
 
 // ---------------------------------

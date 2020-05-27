@@ -73,6 +73,7 @@
     <Compile Include="Negotiation.fs" />
     <Compile Include="HttpStatusCodeHandlers.fs" />
     <Compile Include="Middleware.fs" />
+    <Compile Include="EndpointRouting.fs" />
   </ItemGroup>
 
 </Project>
