@@ -227,6 +227,22 @@ let subRoute
     (endpoints : Endpoint list) : Endpoint =
     NestedEndpoint (path, endpoints)
 
+let rec applyBefore
+    (httpHandler: HttpHandler)
+    (endpoint: Endpoint) =
+    match endpoint with
+    | SingleEndpoint(v, p, h )     -> SingleEndpoint(v, p, httpHandler >=> h)
+    | TemplateEndpoint(v, p, m, h) -> TemplateEndpoint(v, p, m, fun (o: obj) -> httpHandler >=> h o)
+    | NestedEndpoint(t, lst)       -> NestedEndpoint(t, List.map (applyBefore httpHandler) lst)
+
+let rec applyAfter
+    (httpHandler: HttpHandler)
+    (endpoint: Endpoint) =
+    match endpoint with
+    | SingleEndpoint(v, p, h )     -> SingleEndpoint(v, p, h >=> httpHandler)
+    | TemplateEndpoint(v, p, m, h) -> TemplateEndpoint(v, p, m, fun (o: obj) -> h o >=> httpHandler)
+    | NestedEndpoint(t, lst)       -> NestedEndpoint(t, List.map (applyAfter httpHandler) lst)
+
 // ---------------------------
 // Middleware Extension Methods
 // ---------------------------
