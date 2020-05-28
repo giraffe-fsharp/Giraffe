@@ -178,9 +178,11 @@ type HttpVerb =
         | _          -> ""
 
 type RouteTemplate = string
+type RouteTemplateMappings = list<string * char>
 
 type Endpoint =
-    | SingleEndpoint of HttpVerb * RouteTemplate * RequestDelegate
+    | SingleEndpoint of HttpVerb * RouteTemplate * HttpHandler
+    | TemplateEndpoint of HttpVerb * RouteTemplate * RouteTemplateMappings * (obj -> HttpHandler)
     | NestedEndpoint of RouteTemplate * Endpoint list
 
 let inline (=>) (fx : Endpoint -> Endpoint) (x : Endpoint) = fx x
@@ -191,6 +193,8 @@ let rec private httpVerb
     match endpoint with
     | SingleEndpoint (_, routeTemplate, requestDelegate) ->
         SingleEndpoint (verb, routeTemplate, requestDelegate)
+    | TemplateEndpoint(_, routeTempplte,mappings, requestDelegate) ->
+        TemplateEndpoint(verb, routeTempplte,mappings, requestDelegate)
     | NestedEndpoint (routeTemplate, endpoints) ->
         NestedEndpoint (routeTemplate, endpoints |> List.map (httpVerb verb))
 
@@ -207,14 +211,16 @@ let CONNECT = httpVerb CONNECT
 let route
     (path     : string)
     (handler  : HttpHandler) : Endpoint =
-    SingleEndpoint (HttpVerb.NotSpecified, path, RequestDelegateBuilder.createRequestDelegate handler)
+    SingleEndpoint (HttpVerb.NotSpecified, path, handler)
 
 let routef
     (path         : PrintfFormat<_,_,_,_, 'T>)
     (routeHandler : 'T -> HttpHandler) : Endpoint =
     let template, mappings = RouteTemplateBuilder.convertToRouteTemplate path
-    let requestDelegate = RequestDelegateBuilder.createTokenizedRequestDelegate mappings routeHandler
-    SingleEndpoint (HttpVerb.NotSpecified, template, requestDelegate)
+    let boxedHandler (o: obj) =
+        let t = o :?> 'T
+        routeHandler t
+    TemplateEndpoint (HttpVerb.NotSpecified, template, mappings, boxedHandler)
 
 let subRoute
     (path      : string)
@@ -240,8 +246,14 @@ type IEndpointRouteBuilder with
         |> List.iter (
             fun endpoint ->
                 match endpoint with
-                | SingleEndpoint (v, t, d) -> this.MapSingleEndpoint(v, routeTemplate t, d)
-                | NestedEndpoint (t, e)    -> this.MapNestedEndpoint(routeTemplate t, e)
+                | SingleEndpoint (v, t, d) ->
+                    let d = RequestDelegateBuilder.createRequestDelegate d
+                    this.MapSingleEndpoint(v, routeTemplate t, d)
+                | TemplateEndpoint(v, t, m, d) ->
+                    let d = RequestDelegateBuilder.createTokenizedRequestDelegate m d
+                    this.MapSingleEndpoint(v, routeTemplate t, d)
+                | NestedEndpoint (t, e) ->
+                    this.MapNestedEndpoint(routeTemplate t, e)
         )
 
     member this.MapGiraffeEndpoints (endpoints : Endpoint list) =
@@ -249,6 +261,11 @@ type IEndpointRouteBuilder with
         |> List.iter(
             fun endpoint ->
                 match endpoint with
-                | SingleEndpoint (v, t, d)  -> this.MapSingleEndpoint (v, t, d)
+                | SingleEndpoint (v, t, d)  ->
+                    let d = RequestDelegateBuilder.createRequestDelegate d
+                    this.MapSingleEndpoint (v, t, d)
+                | TemplateEndpoint(v,t, m, d) ->
+                    let d = RequestDelegateBuilder.createTokenizedRequestDelegate m d
+                    this.MapSingleEndpoint(v, t, d)
                 | NestedEndpoint (t, e)     -> this.MapNestedEndpoint (t, e)
         )
