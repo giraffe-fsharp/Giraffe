@@ -1965,7 +1965,7 @@ type Adult =
         else None
 ```
 
-The `HasError` method is checking business logic which is specific to the type `Adult`. For instance if `Age` is less than 18 then the person is not an adult and therefore `HasErrors` would return an F# option type with `Some "Person must be an adult (age >= 18)."`.
+The `HasErrors` method is checking business logic which is specific to the type `Adult`. For instance if `Age` is less than 18 then the person is not an adult and therefore `HasErrors` would return an F# option type with `Some "Person must be an adult (age >= 18)."`.
 
 It is a generic validation method which can be used from anywhere in an F# application to validate if a given `Adult` object has logically correct data.
 
