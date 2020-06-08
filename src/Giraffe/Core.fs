@@ -171,7 +171,7 @@ type HttpContext with
 // ---------------------------
 
 /// <summary>
-/// A type alias for <see cref="System.Threading.Tasks.Task<HttpContext option>" />  which represents the result of a HTTP function (HttpFunc).
+/// A type alias for <see cref="System.Threading.Tasks.Task{HttpContext option}" />  which represents the result of a HTTP function (HttpFunc).
 /// If the result is Some HttpContext then the Giraffe middleware will return the response to the client and end the pipeline. However, if the result is None then the Giraffe middleware will continue the ASP.NET Core pipeline by invoking the next middleware.
 /// </summary>
 type HttpFuncResult = Task<HttpContext option>
