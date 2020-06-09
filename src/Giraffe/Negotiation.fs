@@ -9,27 +9,26 @@ open Microsoft.AspNetCore.Http
 // Configuration types
 // ---------------------------
 
-/// **Description**
-///
-/// Interface defining the negotiation rules and the `HttpHandler` for unacceptable requests when doing content negotiation in Giraffe.
-///
+/// <summary>
+/// Interface defining the negotiation rules and the <see cref="HttpHandler" /> for unacceptable requests when doing content negotiation in Giraffe.
+/// </summary>
 type INegotiationConfig =
-    /// **Description**
+    /// <summary>
+    /// A dictionary of mime types and response writing <see cref="HttpHandler" /> functions.
     ///
-    /// A dictionary of mime types and response writing `HttpHandler` functions.
-    ///
-    /// Each mime type must be mapped to a function which accepts an `obj` and returns a `HttpHandler` which will send a response in the associated mime type.
-    ///
-    /// **Example**
-    ///
-    /// `dict [ "application/json", json; "application/xml" , xml ]`
-    ///
+    /// Each mime type must be mapped to a function which accepts an obj and returns a <see cref="HttpHandler" /> which will send a response in the associated mime type.
+    /// </summary>
+    /// <example>
+    /// <code>
+    /// dict [ "application/json", json; "application/xml" , xml ]
+    /// </code>
+    /// </example>
     abstract member Rules : IDictionary<string, obj -> HttpHandler>
 
-    /// **Description**
-    ///
-    /// A `HttpHandler` function which will be invoked if none of the accepted mime types can be satisfied. Generally this `HttpHandler` would send a response with a status code of `406 Unacceptable`.
-    ///
+    /// <summary>
+    /// A <see cref="HttpHandler" /> function which will be invoked if none of the accepted mime types can be satisfied. Generally this <see cref="HttpHandler" /> would send a response with a status code of 406 Unacceptable.
+    /// </summary>
+    /// <returns></returns>
     abstract member UnacceptableHandler : HttpHandler
         
 let private unacceptableHandler =
@@ -39,18 +38,21 @@ let private unacceptableHandler =
         |> sprintf "%s is unacceptable by the server."
         |> text)) next ctx
 
-/// **Description**
+/// <summary>
+/// The default implementation of <see cref="INegotiationConfig."/>
 ///
-/// The default implementation of `INegotiationConfig`.
+/// Supported mime types:
 ///
-/// **Supported mime types**
-///
-/// `*/*`: If a client accepts any content type then the server will return a JSON response.
-/// `application/json`: Server will send a JSON response.
-/// `application/xml`: Server will send an XML response.
-/// `text/xml`: Server will send an XML response.
-/// `text/plain`: Server will send a plain text response (by suing an object's `ToString()` method).
-///
+/// */*: If a client accepts any content type then the server will return a JSON response.
+/// 
+/// application/json: Server will send a JSON response.
+/// 
+/// application/xml: Server will send an XML response.
+/// 
+/// text/xml: Server will send an XML response.
+/// 
+/// text/plain: Server will send a plain text response (by suing an object's ToString() method).
+/// </summary>
 type DefaultNegotiationConfig() =
     interface INegotiationConfig with
         member __.Rules =
@@ -64,15 +66,14 @@ type DefaultNegotiationConfig() =
         member __.UnacceptableHandler = unacceptableHandler
             
 
-/// **Description**
+/// <summary>
+/// An implementation of INegotiationConfig which allows returning JSON only.
 ///
-/// An implementation of `INegotiationConfig` which allows returning JSON only.
+/// Supported mime types:
 ///
-/// **Supported mime types**
-///
-/// `*/*`: If a client accepts any content type then the server will return a JSON response.
-/// `application/json`: Server will send a JSON response.
-///
+/// */*: If a client accepts any content type then the server will return a JSON response.
+/// application/json: Server will send a JSON response.
+/// </summary>
 type JsonOnlyNegotiationConfig() =
     interface INegotiationConfig with
         member __.Rules =
@@ -87,22 +88,15 @@ type JsonOnlyNegotiationConfig() =
 // ---------------------------
 
 type HttpContext with
-    /// **Description**
+    /// <summary>
+    /// Sends a response back to the client based on the request's Accept header.
     ///
-    /// Sends a response back to the client based on the request's `Accept` header.
-    ///
-    /// If the `Accept` header cannot be matched with one of the supported mime types from the `negotiationRules` then the `unacceptableHandler` will be invoked.
-    ///
-    /// **Parameters**
-    ///
-    /// `negotiationRules`: A dictionary of mime types and response writing `HttpHandler` functions. Each mime type must be mapped to a function which accepts an `obj` and returns a `HttpHandler` which will send a response in the associated mime type (e.g.: `dict [ "application/json", json; "application/xml" , xml ]`).
-    /// `unacceptableHandler`: A `HttpHandler` function which will be invoked if none of the accepted mime types can be satisfied. Generally this `HttpHandler` would send a response with a status code of `406 Unacceptable`.
-    /// `responseObj`: The object to send back to the client.
-    ///
-    /// **Output**
-    ///
-    /// Task of `Some HttpContext` after writing to the body of the response.
-    ///
+    /// If the Accept header cannot be matched with one of the supported mime types from the negotiationRules then the unacceptableHandler will be invoked.
+    /// </summary>
+    /// <param name="negotiationRules">A dictionary of mime types and response writing <see cref="HttpHandler" /> functions. Each mime type must be mapped to a function which accepts an obj and returns a <see cref="HttpHandler" /> which will send a response in the associated mime type (e.g.: dict [ "application/json", json; "application/xml" , xml ]).</param>
+    /// <param name="unacceptableHandler"> A <see cref="HttpHandler" /> function which will be invoked if none of the accepted mime types can be satisfied. Generally this <see cref="HttpHandler" /> would send a response with a status code of 406 Unacceptable.</param>
+    /// <param name="responseObj">The object to send back to the client.</param>
+    /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
     member this.NegotiateWithAsync (negotiationRules    : IDictionary<string, obj -> HttpHandler>)
                               (unacceptableHandler : HttpHandler)
                               (responseObj         : obj) =
@@ -129,20 +123,13 @@ type HttpContext with
             else
                 negotiationRules.[mimeType.MediaType.Value] responseObj earlyReturn this
 
-    /// **Description**
+    /// <summary>
+    /// Sends a response back to the client based on the request's Accept header.
     ///
-    /// Sends a response back to the client based on the request's `Accept` header.
-    ///
-    /// The negotiation rules as well as a `HttpHandler` for unacceptable requests can be configured in the ASP.NET Core startup code by registering a custom class of type `INegotiationConfig`.
-    ///
-    /// **Parameters**
-    ///
-    /// `responseObj`: The object to send back to the client.
-    ///
-    /// **Output**
-    ///
-    /// Task of `Some HttpContext` after writing to the body of the response.
-    ///
+    /// The negotiation rules as well as a <see cref="HttpHandler" /> for unacceptable requests can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="INegotiationConfig"/>.
+    /// </summary>
+    /// <param name="responseObj">The object to send back to the client.</param>
+    /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
     member this.NegotiateAsync (responseObj : obj) =
         let config = this.GetService<INegotiationConfig>()
         this.NegotiateWithAsync config.Rules config.UnacceptableHandler responseObj
@@ -151,22 +138,16 @@ type HttpContext with
 // HttpHandler functions
 // ---------------------------
 
-/// **Description**
+/// <summary>
+/// Sends a response back to the client based on the request's Accept header.
 ///
-/// Sends a response back to the client based on the request's `Accept` header.
-///
-/// If the `Accept` header cannot be matched with one of the supported mime types from the `negotiationRules` then the `unacceptableHandler` will be invoked.
-///
-/// **Parameters**
-///
-/// `negotiationRules`: A dictionary of mime types and response writing `HttpHandler` functions. Each mime type must be mapped to a function which accepts an `obj` and returns a `HttpHandler` which will send a response in the associated mime type (e.g.: `dict [ "application/json", json; "application/xml" , xml ]`).
-/// `unacceptableHandler`: A `HttpHandler` function which will be invoked if none of the accepted mime types can be satisfied. Generally this `HttpHandler` would send a response with a status code of `406 Unacceptable`.
-/// `responseObj`: The object to send back to the client.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// If the Accept header cannot be matched with one of the supported mime types from the negotiationRules then the unacceptableHandler will be invoked.
+/// </summary>
+/// <param name="negotiationRules">A dictionary of mime types and response writing <see cref="HttpHandler" /> functions. Each mime type must be mapped to a function which accepts an obj and returns a <see cref="HttpHandler" /> which will send a response in the associated mime type (e.g.: dict [ "application/json", json; "application/xml" , xml ]).</param>
+/// <param name="unacceptableHandler">A <see cref="HttpHandler" /> function which will be invoked if none of the accepted mime types can be satisfied. Generally this <see cref="HttpHandler" /> would send a response with a status code of 406 Unacceptable.</param>
+/// <param name="responseObj">The object to send back to the client.</param>
+/// <param name="ctx"></param>
+/// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
 let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>)
                   (unacceptableHandler : HttpHandler)
                   (responseObj         : obj)
@@ -174,20 +155,14 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
     fun (_ : HttpFunc) (ctx : HttpContext) ->
         ctx.NegotiateWithAsync negotiationRules unacceptableHandler responseObj
 
-/// **Description**
+/// <summary>
+/// Sends a response back to the client based on the request's Accept header.
 ///
-/// Sends a response back to the client based on the request's `Accept` header.
-///
-/// The negotiation rules as well as a `HttpHandler` for unacceptable requests can be configured in the ASP.NET Core startup code by registering a custom class of type `INegotiationConfig`.
-///
-/// **Parameters**
-///
-/// `responseObj`: The object to send back to the client.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// The negotiation rules as well as a <see cref="HttpHandler" /> for unacceptable requests can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="INegotiationConfig"/>.
+/// </summary>
+/// <param name="responseObj">The object to send back to the client.</param>
+/// <param name="ctx"></param>
+/// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
 let negotiate (responseObj : obj) : HttpHandler =
     fun (_ : HttpFunc) (ctx : HttpContext) ->
         ctx.NegotiateAsync responseObj
