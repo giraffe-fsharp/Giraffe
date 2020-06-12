@@ -19,10 +19,9 @@ open System.Text.RegularExpressions
 // Model parsing functions
 // ---------------------------
 
-/// **Description**
-///
+/// <summary>
 /// Module for parsing models from a generic data set.
-///
+/// </summary>
 module ModelParser =
 
     type private FSharpOption<'T> = Microsoft.FSharp.Core.Option<'T>
@@ -256,43 +255,28 @@ module ModelParser =
             arrayOfObjects |> box |> Some
         else
             None
-
-    /// **Description**
-    ///
-    /// Tries to create an instance of type `'T` from a given set of `data`.
-    ///
-    /// It will try to match each property of `'T` with a key from the `data` dictionary and parse the associated value to the value of `'T`'s property.
-    ///
-    /// **Parameters**
-    ///
-    /// `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
-    /// `data`: A key-value dictionary of values for each property of type `'T`. Only optional properties can be omitted from the dictionary.
-    ///
-    /// **Output**
-    ///
-    /// If all properties were able to successfully parse then `Some 'T` will be returned, otherwise `None`.
-    ///
+    
+    /// <summary>
+    /// Tries to create an instance of type 'T from a given set of data.
+    /// It will try to match each property of 'T with a key from the data dictionary and parse the associated value to the value of 'T's property.
+    /// </summary>
+    /// <param name="culture">An optional <see cref="System.Globalization.CultureInfo"/> element to be used when parsing culture specific data such as float, DateTime or decimal values.</param>
+    /// <param name="data">A key-value dictionary of values for each property of type 'T. Only optional properties can be omitted from the dictionary.</param>
+    /// <typeparam name="'T"></typeparam>
+    /// <returns>If all properties were able to successfully parse then Some 'T will be returned, otherwise None.</returns>
     let tryParse<'T> (culture : CultureInfo option)
                      (data    : IDictionary<string, StringValues>) =
         let model = Activator.CreateInstance<'T>()
 
         parseModel<'T> model culture data true
 
-    /// **Description**
-    ///
-    /// Create an instance of type `'T` from a given set of `data`.
-    ///
-    /// It will try to match each property of `'T` with a key from the `data` dictionary and parse the associated value to the value of `'T`'s property. If a property is missing from the `data` set or cannot be parsed then it will be omitted and a default value will be set (either `null` for reference types or a default value for value types).
-    ///
-    /// **Parameters**
-    ///
-    /// `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
-    /// `data`: A key-value dictionary of values for each property of type `'T`.
-    ///
-    /// **Output**
-    ///
-    /// An instance of type `'T`. Not all properties might be set. Null checks are required for reference types.
-    ///
+    /// <summary>
+    /// Create an instance of type 'T from a given set of data.
+    /// </summary>
+    /// <param name="culture">An optional <see cref="System.Globalization.CultureInfo"/> element to be used when parsing culture specific data such as float, DateTime or decimal values.</param>
+    /// <param name="data">A key-value dictionary of values for each property of type 'T. Only optional properties can be omitted from the dictionary.</param>
+    /// <typeparam name="'T"></typeparam>
+    /// <returns>An instance of type 'T. Not all properties might be set. Null checks are required for reference types.</returns>
     let parse<'T> (culture : CultureInfo option)
                   (data    : IDictionary<string, StringValues>) =
         let model = Activator.CreateInstance<'T>()
@@ -306,62 +290,46 @@ module ModelParser =
 // HttpContext extensions
 // ---------------------------
 
-type HttpContext with
-    /// **Description**
-    ///
-    /// Reads the entire body of the `HttpRequest` asynchronously and returns it as a `string` value.
-    ///
-    /// **Output**
-    ///
-    /// Returns the contents of the request body as a `Task<string>`.
-    ///
+type HttpContext with   
+    /// <summary>
+    /// Reads the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously and returns it as a <see cref="System.String"/> value.
+    /// </summary>
+    /// <returns>Returns the contents of the request body as a <see cref="System.Threading.Tasks.Task{System.String}"/>.</returns>
     member this.ReadBodyFromRequestAsync() =
         task {
             use reader = new StreamReader(this.Request.Body, Encoding.UTF8)
             return! reader.ReadToEndAsync()
         }
-
-    /// **Description**
-    ///
-    /// Uses the `IJsonSerializer` to deserializes the entire body of the `HttpRequest` asynchronously into an object of type `'T`.
-    ///
-    /// **Output**
-    ///
-    /// Returns a `Task<'T>`.
-    ///
+    
+    /// <summary>
+    /// Uses the <see cref="IJsonSerializer"/> to deserializes the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously into an object of type 'T.
+    /// </summary>
+    /// <typeparam name="'T"></typeparam>
+    /// <returns>Retruns a <see cref="System.Threading.Tasks.Task{T}"/></returns>
     member this.BindJsonAsync<'T>() =
         task {
             let serializer = this.GetJsonSerializer()
             return! serializer.DeserializeAsync<'T> this.Request.Body
         }
-
-    /// **Description**
-    ///
-    /// Uses the `IXmlSerializer` to deserializes the entire body of the `HttpRequest` asynchronously into an object of type `'T`.
-    ///
-    /// **Output**
-    ///
-    /// Returns a `Task<'T>`.
-    ///
+    
+    /// <summary>
+    /// Uses the <see cref="IXmlSerializer"/> to deserializes the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously into an object of type 'T.
+    /// </summary>
+    /// <typeparam name="'T"></typeparam>
+    /// <returns>Retruns a <see cref="System.Threading.Tasks.Task{T}"/></returns>
     member this.BindXmlAsync<'T>() =
         task {
             let serializer = this.GetXmlSerializer()
             let! body = this.ReadBodyFromRequestAsync()
             return serializer.Deserialize<'T> body
         }
-
-    /// **Description**
-    ///
-    /// Parses all input elements from an HTML form into an object of type `'T`.
-    ///
-    /// **Parameters**
-    ///
-    /// `cultureInfo`: An optional `CultureInfo` element which will be used to parse culture specific data such as `float`, `DateTime` or `decimal` values.
-    ///
-    /// **Output**
-    ///
-    /// Returns a `Task<'T>`.
-    ///
+    
+    /// <summary>
+    /// Parses all input elements from an HTML form into an object of type 'T.
+    /// </summary>
+    /// <param name="cultureInfo">An optional <see cref="System.Globalization.CultureInfo"/> element to be used when parsing culture specific data such as float, DateTime or decimal values.</param>
+    /// <typeparam name="'T"></typeparam>
+    /// <returns>Returns a <see cref="System.Threading.Tasks.Task{T}"/></returns>
     member this.BindFormAsync<'T> (?cultureInfo : CultureInfo) =
         task {
             let! form = this.Request.ReadFormAsync()
@@ -371,19 +339,13 @@ type HttpContext with
                 |> dict
                 |> ModelParser.parse<'T> cultureInfo
         }
-
-    /// **Description**
-    ///
-    /// Tries to parse all input elements from an HTML form into an object of type `'T`.
-    ///
-    /// **Parameters**
-    ///
-    /// `cultureInfo`: An optional `CultureInfo` element which will be used to parse culture specific data such as `float`, `DateTime` or `decimal` values.
-    ///
-    /// **Output**
-    ///
-    /// Returns an object `'T` if model binding succeeded, otherwise a `string` message containing the specific model parsing error.
-    ///
+    
+    /// <summary>
+    /// Tries to parse all input elements from an HTML form into an object of type 'T.
+    /// </summary>
+    /// <param name="cultureInfo">An optional <see cref="System.Globalization.CultureInfo"/> element to be used when parsing culture specific data such as float, DateTime or decimal values.</param>
+    /// <typeparam name="'T"></typeparam>
+    /// <returns>Returns an object 'T if model binding succeeded, otherwise a <see cref="System.String"/> message containing the specific model parsing error.</returns>
     member this.TryBindFormAsync<'T> (?cultureInfo : CultureInfo) =
         task {
             let! form = this.Request.ReadFormAsync()
@@ -393,55 +355,37 @@ type HttpContext with
                 |> dict
                 |> ModelParser.tryParse<'T> cultureInfo
         }
-
-    /// **Description**
-    ///
-    /// Parses all parameters of a request's query string into an object of type `'T`.
-    ///
-    /// **Parameters**
-    ///
-    /// `cultureInfo`: An optional `CultureInfo` element which will be used to parse culture specific data such as `float`, `DateTime` or `decimal` values.
-    ///
-    /// **Output**
-    ///
-    /// Returns an instance of type `'T`.
-    ///
+   
+    /// <summary>
+    /// Parses all parameters of a request's query string into an object of type 'T.
+    /// </summary>
+    /// <param name="cultureInfo">An optional <see cref="System.Globalization.CultureInfo"/> element to be used when parsing culture specific data such as float, DateTime or decimal values.</param>
+    /// <typeparam name="'T"></typeparam>
+    /// <returns>Returns an instance of type 'T</returns>
     member this.BindQueryString<'T> (?cultureInfo : CultureInfo) =
         this.Request.Query
         |> Seq.map (fun i -> i.Key, i.Value)
         |> dict
         |> ModelParser.parse<'T> cultureInfo
-
-    /// **Description**
-    ///
-    /// Tries to parse all parameters of a request's query string into an object of type `'T`.
-    ///
-    /// **Parameters**
-    ///
-    /// `cultureInfo`: An optional `CultureInfo` element which will be used to parse culture specific data such as `float`, `DateTime` or `decimal` values.
-    ///
-    /// **Output**
-    ///
-    /// Returns an object `'T` if model binding succeeded, otherwise a `string` message containing the specific model parsing error.
-    ///
+    
+    /// <summary>
+    /// Tries to parse all parameters of a request's query string into an object of type 'T.
+    /// </summary>
+    /// <param name="cultureInfo">An optional <see cref="System.Globalization.CultureInfo"/> element to be used when parsing culture specific data such as float, DateTime or decimal values.</param>
+    /// <typeparam name="'T"></typeparam>
+    /// <returns>Returns an object 'T if model binding succeeded, otherwise a <see cref="System.String"/> message containing the specific model parsing error.</returns>
     member this.TryBindQueryString<'T> (?cultureInfo : CultureInfo) =
         this.Request.Query
         |> Seq.map (fun i -> i.Key, i.Value)
         |> dict
         |> ModelParser.tryParse<'T> cultureInfo
-
-    /// **Description**
-    ///
-    /// Parses the request body into an object of type `'T` based on the request's `Content-Type` header.
-    ///
-    /// **Parameters**
-    ///
-    /// `cultureInfo`: An optional `CultureInfo` element which will be used to parse culture specific data such as `float`, `DateTime` or `decimal` values.
-    ///
-    /// **Output**
-    ///
-    /// Returns a `Task<'T>`.
-    ///
+    
+    /// <summary>
+    /// Parses the request body into an object of type 'T based on the request's Content-Type header.
+    /// </summary>
+    /// <param name="cultureInfo">An optional <see cref="System.Globalization.CultureInfo"/> element to be used when parsing culture specific data such as float, DateTime or decimal values.</param>
+    /// <typeparam name="'T"></typeparam>
+    /// <returns>Returns a <see cref="System.Threading.Tasks.Task{T}"/></returns>
     member this.BindModelAsync<'T> (?cultureInfo : CultureInfo) =
         task {
             let method = this.Request.Method
@@ -464,18 +408,14 @@ type HttpContext with
 // HttpHandler functions
 // ---------------------------
 
-/// **Description**
-///
-/// Parses a JSON payload into an instance of type `'T`.
-///
-/// **Parameters**
-///
-/// `f`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// <summary>
+/// Parses a JSON payload into an instance of type 'T.
+/// </summary>
+/// <param name="f">A function which accepts an object of type 'T and returns a <see cref="HttpHandler"/> function.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <typeparam name="'T"></typeparam>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let bindJson<'T> (f : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
@@ -483,18 +423,14 @@ let bindJson<'T> (f : 'T -> HttpHandler) : HttpHandler =
             return! f model next ctx
         }
 
-/// **Description**
-///
-/// Parses an XML payload into an instance of type `'T`.
-///
-/// **Parameters**
-///
-/// `f`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// <summary>
+/// Parses a XML payload into an instance of type 'T.
+/// </summary>
+/// <param name="f">A function which accepts an object of type 'T and returns a <see cref="HttpHandler"/> function.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <typeparam name="'T"></typeparam>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let bindXml<'T> (f : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
@@ -502,19 +438,15 @@ let bindXml<'T> (f : 'T -> HttpHandler) : HttpHandler =
             return! f model next ctx
         }
 
-/// **Description**
-///
-/// Parses a HTTP form payload into an instance of type `'T`.
-///
-/// **Parameters**
-///
-/// `f`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
-/// `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// <summary>
+/// Parses a HTTP form payload into an instance of type 'T.
+/// </summary>
+/// <param name="culture">An optional <see cref="System.Globalization.CultureInfo"/> element to be used when parsing culture specific data such as float, DateTime or decimal values.</param>
+/// <param name="f">A function which accepts an object of type 'T and returns a <see cref="HttpHandler"/> function.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <typeparam name="'T"></typeparam>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let bindForm<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
@@ -525,22 +457,16 @@ let bindForm<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHa
             return! f model next ctx
         }
 
-/// **Description**
-///
-/// Tries to parse a HTTP form payload into an instance of type `'T`.
-///
-/// The payload must contain all non-optional properties of type `'T` (with correct data) in order to successfully parse the form data. If some data is missing or wrong then the `parsingErrorHandler` will be executed.
-///
-/// **Parameters**
-///
-/// `parsingErrorHandler`: A `string -> HttpHandler` function which will get invoked when the model parsing fails. The `string` parameter holds the parsing error message.
-/// `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
-/// `successHandler`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// <summary>
+/// Tries to parse a HTTP form payload into an instance of type 'T.
+/// </summary>
+/// <param name="parsingErrorHandler">A <see cref="System.String"/> -> <see cref="HttpHandler"/> function which will get invoked when the model parsing fails. The <see cref="System.String"/> parameter holds the parsing error message.</param>
+/// <param name="culture">An optional <see cref="System.Globalization.CultureInfo"/> element to be used when parsing culture specific data such as float, DateTime or decimal values.</param>
+/// <param name="successHandler">A function which accepts an object of type 'T and returns a <see cref="HttpHandler"/> function.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <typeparam name="'T"></typeparam>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let tryBindForm<'T> (parsingErrorHandler : string -> HttpHandler)
                     (culture             : CultureInfo option)
                     (successHandler      : 'T -> HttpHandler) : HttpHandler =
@@ -556,19 +482,15 @@ let tryBindForm<'T> (parsingErrorHandler : string -> HttpHandler)
                 | Ok model  -> successHandler model) next ctx
         }
 
-/// **Description**
-///
-/// Parses a HTTP query string into an instance of type `'T`.
-///
-/// **Parameters**
-///
-/// `f`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
-/// `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// <summary>
+/// Parses a HTTP query string into an instance of type 'T.
+/// </summary>
+/// <param name="culture">An optional <see cref="System.Globalization.CultureInfo"/> element to be used when parsing culture specific data such as float, DateTime or decimal values.</param>
+/// <param name="f">A function which accepts an object of type 'T and returns a <see cref="HttpHandler"/> function.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <typeparam name="'T"></typeparam>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let bindQuery<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let model =
@@ -577,22 +499,16 @@ let bindQuery<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpH
             | None   -> ctx.BindQueryString<'T>()
         f model next ctx
 
-/// **Description**
-///
+/// <summary>
 /// Tries to parse a query string into an instance of type `'T`.
-///
-/// The query string must contain all non-optional properties of type `'T` (with correct data) in order to successfully parse the query string. If some data is missing or wrong then the `parsingErrorHandler` function will be executed.
-///
-/// **Parameters**
-///
-/// `parsingErrorHandler`: A `HttpHandler` function which will get invoked when the model parsing fails. The `string` input parameter holds the parsing error message.
-/// `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
-/// `successHandler`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// </summary>
+/// <param name="parsingErrorHandler">A <see href="HttpHandler"/> function which will get invoked when the model parsing fails. The <see cref="System.String"/> input parameter holds the parsing error message.</param>
+/// <param name="culture">An optional <see cref="System.Globalization.CultureInfo"/> element to be used when parsing culture specific data such as float, DateTime or decimal values.</param>
+/// <param name="successHandler">A function which accepts an object of type 'T and returns a <see cref="HttpHandler"/> function.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <typeparam name="'T"></typeparam>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let tryBindQuery<'T> (parsingErrorHandler : string -> HttpHandler)
                      (culture             : CultureInfo option)
                      (successHandler      : 'T -> HttpHandler) : HttpHandler =
@@ -605,21 +521,16 @@ let tryBindQuery<'T> (parsingErrorHandler : string -> HttpHandler)
         | Error msg -> parsingErrorHandler msg
         | Ok model  -> successHandler model) next ctx
 
-/// **Description**
-///
-/// Parses a HTTP payload into an instance of type `'T`.
-///
+/// <summary>
+/// Parses a HTTP payload into an instance of type 'T.
 /// The model can be sent via XML, JSON, form or query string.
-///
-/// **Parameters**
-///
-/// `f`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
-/// `culture`: An optional `CultureInfo` element to be used when parsing culture specific data such as `float`, `DateTime` or `decimal` values.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// </summary>
+/// <param name="culture">An optional <see cref="System.Globalization.CultureInfo"/> element to be used when parsing culture specific data such as float, DateTime or decimal values.</param>
+/// <param name="f">A function which accepts an object of type 'T and returns a <see cref="HttpHandler"/> function.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <typeparam name="'T"></typeparam>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let bindModel<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
