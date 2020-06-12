@@ -58,7 +58,8 @@ type HttpContext with
             match lastModified with
             | None              -> AllConditionsMet
             | Some lastModified ->
-                match  requestHeaders.IfUnmodifiedSince.Value > DateTimeOffset.UtcNow
+                let lastModified = lastModified.CutOffMs()
+                match  requestHeaders.IfUnmodifiedSince.Value > DateTimeOffset.UtcNow.CutOffMs()
                     || requestHeaders.IfUnmodifiedSince.Value >= lastModified with
                 | true  -> AllConditionsMet
                 | false -> ConditionFailed
@@ -88,7 +89,8 @@ type HttpContext with
             match lastModified with
             | None              -> AllConditionsMet
             | Some lastModified ->
-                match  requestHeaders.IfModifiedSince.Value <= DateTimeOffset.UtcNow
+                let lastModified = lastModified.CutOffMs()
+                match  requestHeaders.IfModifiedSince.Value <= DateTimeOffset.UtcNow.CutOffMs()
                     && requestHeaders.IfModifiedSince.Value < lastModified with
                 | true  -> AllConditionsMet
                 | false -> ResourceNotModified
@@ -142,8 +144,8 @@ type HttpContext with
             | ResourceNotModified   -> ResourceNotModified
 
         // Set ETag and Last-Modified in the response
-        if eTag.IsSome        then responseHeaders.ETag        <- eTag.Value
-        if lastModified.IsSome then responseHeaders.LastModified <- Nullable(lastModified.Value)
+        if eTag.IsSome         then responseHeaders.ETag         <- eTag.Value
+        if lastModified.IsSome then responseHeaders.LastModified <- Nullable(lastModified.Value.CutOffMs())
 
         // Validate headers in correct precedence
         // RFC: https://tools.ietf.org/html/rfc7232#section-6
