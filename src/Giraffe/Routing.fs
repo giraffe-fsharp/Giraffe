@@ -48,18 +48,12 @@ module SubRouting =
 // Public routing HttpHandler functions
 // ---------------------------
 
-/// **Description**
-///
+/// <summary>
 /// Filters an incoming HTTP request based on the port.
-///
-/// **Parameters**
-///
-/// `fns`: List of port to `HttpHandler` mappings
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// </summary>
+/// <param name="fns">List of port to <see cref="HttpHandler"/> mappings</param>
+/// <param name="next"></param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let routePorts (fns : (int * HttpHandler) list) : HttpHandler =
     fun next ->
         let portMap = Dictionary<_, _>(fns.Length)
@@ -72,54 +66,37 @@ let routePorts (fns : (int * HttpHandler) list) : HttpHandler =
                 | false, _    -> skipPipeline
             else skipPipeline
 
-/// **Description**
-///
+/// <summary>
 /// Filters an incoming HTTP request based on the request path (case sensitive).
-///
-/// **Parameters**
-///
-/// `path`: Request path.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// </summary>
+/// <param name="path">Request path.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let route (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (SubRouting.getNextPartOfPath ctx).Equals path
         then next ctx
         else skipPipeline
 
-/// **Description**
-///
+/// <summary>
 /// Filters an incoming HTTP request based on the request path (case insensitive).
-///
-/// **Parameters**
-///
-/// `path`: Request path.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// </summary>
+/// <param name="path">Request path.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let routeCi (path : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if String.Equals(SubRouting.getNextPartOfPath ctx, path, StringComparison.OrdinalIgnoreCase)
         then next ctx
         else skipPipeline
 
-/// **Description**
-///
+/// <summary>
 /// Filters an incoming HTTP request based on the request path using Regex (case sensitive).
-///
-/// **Parameters**
-///
-/// `path`: Regex path.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// </summary>
+/// <param name="path">Regex path.</param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let routex (path : string) : HttpHandler =
     let pattern = sprintf "^%s$" path
     let regex   = Regex(pattern, RegexOptions.Compiled)
@@ -129,18 +106,11 @@ let routex (path : string) : HttpHandler =
         | true  -> next ctx
         | false -> skipPipeline
 
-/// **Description**
-///
+/// <summary>
 /// Filters an incoming HTTP request based on the request path using Regex (case insensitive).
-///
-/// **Parameters**
-///
-/// `path`: Regex path.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// </summary>
+/// <param name="path">Regex path.</param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let routeCix (path : string) : HttpHandler =
     let pattern = sprintf "^%s$" path
     let regex   = Regex(pattern, RegexOptions.IgnoreCase ||| RegexOptions.Compiled)
@@ -150,31 +120,23 @@ let routeCix (path : string) : HttpHandler =
         | true  -> next ctx
         | false -> skipPipeline
 
-/// **Description**
-///
+/// <summary>
 /// Filters an incoming HTTP request based on the request path (case sensitive).
+/// If the route matches the incoming HTTP request then the arguments from the <see cref="Microsoft.FSharp.Core.PrintfFormat"/> will be automatically resolved and passed into the supplied routeHandler.
+/// 
+/// Supported format chars**
 ///
-/// If the route matches the incoming HTTP request then the arguments from the `PrintfFormat<...>` will be automatically resolved and passed into the supplied `routeHandler`.
-///
-/// **Supported format chars**
-///
-/// `%b`: `bool`
-/// `%c`: `char`
-/// `%s`: `string`
-/// `%i`: `int`
-/// `%d`: `int64`
-/// `%f`: `float`/`double`
-/// `%O`: `Guid`
-///
-/// **Parameters**
-///
-/// `path`: A format string representing the expected request path.
-/// `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// %b: bool
+/// %c: char
+/// %s: string
+/// %i: int
+/// %d: int64
+/// %f: float/double
+/// %O: Guid
+/// </summary>
+/// <param name="path">A format string representing the expected request path.</param>
+/// <param name="routeHandler">A function which accepts a tuple 'T of the parsed arguments and returns a <see cref="HttpHandler"/> function which will subsequently deal with the request.</param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -183,31 +145,23 @@ let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler)
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
 
-/// **Description**
+/// <summary>
+/// Filters an incoming HTTP request based on the request path.
+/// If the route matches the incoming HTTP request then the arguments from the <see cref="Microsoft.FSharp.Core.PrintfFormat"/> will be automatically resolved and passed into the supplied routeHandler.
+/// 
+/// Supported format chars**
 ///
-/// Filters an incoming HTTP request based on the request path (case insensitive).
-///
-/// If the route matches the incoming HTTP request then the arguments from the `PrintfFormat<...>` will be automatically resolved and passed into the supplied `routeHandler`.
-///
-/// **Supported format chars**
-///
-/// `%b`: `bool`
-/// `%c`: `char`
-/// `%s`: `string`
-/// `%i`: `int`
-/// `%d`: `int64`
-/// `%f`: `float`/`double`
-/// `%O`: `Guid`
-///
-/// **Parameters**
-///
-/// `path`: A format string representing the expected request path.
-/// `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// %b: bool
+/// %c: char
+/// %s: string
+/// %i: int
+/// %d: int64
+/// %f: float/double
+/// %O: Guid
+/// </summary>
+/// <param name="path">A format string representing the expected request path.</param>
+/// <param name="routeHandler">A function which accepts a tuple 'T of the parsed arguments and returns a <see cref="HttpHandler"/> function which will subsequently deal with the request.</param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
     fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -216,21 +170,14 @@ let routeCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandle
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
 
-/// **Description**
-///
+/// <summary>
 /// Filters an incoming HTTP request based on the request path (case insensitive).
-///
-/// If the route matches the incoming HTTP request then the parameters from the string will be used to create an instance of `'T` and subsequently passed into the supplied `routeHandler`.
-///
-/// **Parameters**
-///
-/// `route`: A string representing the expected request path. Use `{propertyName}` for reserved parameter names which should map to the properties of type `'T`. You can also use valid `Regex` within the `route` string.
-/// `routeHandler`: A function which accepts a tuple `'T` of the parsed parameters and returns a `HttpHandler` function which will subsequently deal with the request.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// If the route matches the incoming HTTP request then the parameters from the string will be used to create an instance of 'T and subsequently passed into the supplied routeHandler.
+/// </summary>
+/// <param name="route">A string representing the expected request path. Use {propertyName} for reserved parameter names which should map to the properties of type 'T. You can also use valid Regex within the route string.</param>
+/// <param name="routeHandler">A function which accepts a tuple 'T of the parsed parameters and returns a <see cref="HttpHandler"/> function which will subsequently deal with the request.</param>
+/// <typeparam name="'T"></typeparam>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let routeBind<'T> (route : string) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     let pattern = route.Replace("{", "(?<").Replace("}", ">[^/\n]+)") |> sprintf "^%s$"
     let regex   = Regex(pattern, RegexOptions.IgnoreCase)
@@ -250,68 +197,49 @@ let routeBind<'T> (route : string) (routeHandler : 'T -> HttpHandler) : HttpHand
             | Ok model -> routeHandler model next ctx
         | _ -> skipPipeline
 
-/// **Description**
-///
+/// <summary>
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
-///
-/// **Parameters**
-///
-/// `subPath`: The expected beginning of a request path.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// </summary>
+/// <param name="subPath">The expected beginning of a request path.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let routeStartsWith (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (SubRouting.getNextPartOfPath ctx).StartsWith subPath
         then next ctx
         else skipPipeline
 
-/// **Description**
-///
+/// <summary>
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
-///
-/// **Parameters**
-///
-/// `subPath`: The expected beginning of a request path.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// </summary>
+/// <param name="subPath">The expected beginning of a request path.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let routeStartsWithCi (subPath : string) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if (SubRouting.getNextPartOfPath ctx).StartsWith(subPath, StringComparison.OrdinalIgnoreCase)
         then next ctx
         else skipPipeline
 
-
-/// **Description**
-///
+/// <summary>
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
+/// If the route matches the incoming HTTP request then the arguments from the <see cref="Microsoft.FSharp.Core.PrintfFormat"/> will be automatically resolved and passed into the supplied routeHandler.
+/// 
+/// Supported format chars**
 ///
-/// If the route matches the incoming HTTP request then the arguments from the `PrintfFormat<...>` will be automatically resolved and passed into the supplied `routeHandler`.
-///
-/// **Supported format chars**
-///
-/// `%b`: `bool`
-/// `%c`: `char`
-/// `%s`: `string`
-/// `%i`: `int`
-/// `%d`: `int64`
-/// `%f`: `float`/`double`
-/// `%O`: `Guid`
-///
-/// **Parameters**
-///
-/// `path`: A format string representing the expected request path.
-/// `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// %b: bool
+/// %c: char
+/// %s: string
+/// %i: int
+/// %d: int64
+/// %f: float/double
+/// %O: Guid
+/// </summary>
+/// <param name="path">A format string representing the expected request path.</param>
+/// <param name="routeHandler">A function which accepts a tuple 'T of the parsed arguments and returns a <see cref="HttpHandler"/> function which will subsequently deal with the request.</param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let routeStartsWithf (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
 
@@ -323,31 +251,23 @@ let routeStartsWithf (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> Ht
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
 
-/// **Description**
-///
+/// <summary>
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
+/// If the route matches the incoming HTTP request then the arguments from the <see cref="Microsoft.FSharp.Core.PrintfFormat"/> will be automatically resolved and passed into the supplied routeHandler.
+/// 
+/// Supported format chars**
 ///
-/// If the route matches the incoming HTTP request then the arguments from the `PrintfFormat<...>` will be automatically resolved and passed into the supplied `routeHandler`.
-///
-/// **Supported format chars**
-///
-/// `%b`: `bool`
-/// `%c`: `char`
-/// `%s`: `string`
-/// `%i`: `int`
-/// `%d`: `int64`
-/// `%f`: `float`/`double`
-/// `%O`: `Guid`
-///
-/// **Parameters**
-///
-/// `path`: A format string representing the expected request path.
-/// `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// %b: bool
+/// %c: char
+/// %s: string
+/// %i: int
+/// %d: int64
+/// %f: float/double
+/// %O: Guid
+/// </summary>
+/// <param name="path">A format string representing the expected request path.</param>
+/// <param name="routeHandler">A function which accepts a tuple 'T of the parsed arguments and returns a <see cref="HttpHandler"/> function which will subsequently deal with the request.</param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let routeStartsWithCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
     validateFormat path
 
@@ -359,38 +279,28 @@ let routeStartsWithCif (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> 
             | None      -> skipPipeline
             | Some args -> routeHandler args next ctx
 
-/// **Description**
-///
+/// <summary>
 /// Filters an incoming HTTP request based on a part of the request path (case sensitive).
-///
-/// Subsequent routing handlers inside the given `handler` function should omit the already validated path.
-///
-/// **Parameters**
-///
-/// `path`: A part of an expected request path.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// Subsequent route handlers inside the given handler function should omit the already validated path.
+/// </summary>
+/// <param name="path">A part of an expected request path.</param>
+/// <param name="handler">A Giraffe <see cref="HttpHandler"/> function.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let subRoute (path : string) (handler : HttpHandler) : HttpHandler =
     routeStartsWith path >=>
     SubRouting.routeWithPartialPath path handler
 
-/// **Description**
-///
+/// <summary>
 /// Filters an incoming HTTP request based on a part of the request path (case insensitive).
-///
-/// Subsequent route handlers inside the given `handler` function should omit the already validated path.
-///
-/// **Parameters**
-///
-/// `path`: A part of an expected request path.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// Subsequent route handlers inside the given handler function should omit the already validated path.
+/// </summary>
+/// <param name="path">A part of an expected request path.</param>
+/// <param name="handler">A Giraffe <see cref="HttpHandler"/> function.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx: HttpContext) ->
         let nextPartOfPath = SubRouting.getNextPartOfPath ctx
@@ -399,33 +309,25 @@ let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
             SubRouting.routeWithPartialPath matchedPathFragment handler next ctx
         else skipPipeline
 
-/// **Description**
-///
+/// <summary>
 /// Filters an incoming HTTP request based on a part of the request path (case sensitive).
+/// If the sub route matches the incoming HTTP request then the arguments from the <see cref="Microsoft.FSharp.Core.PrintfFormat"/> will be automatically resolved and passed into the supplied routeHandler.
+/// 
+/// Supported format chars
 ///
-/// If the sub route matches the incoming HTTP request then the arguments from the `PrintfFormat<...>` will be automatically resolved and passed into the supplied `routeHandler`.
-///
-/// **Supported format chars**
-///
-/// `%b`: `bool`
-/// `%c`: `char`
-/// `%s`: `string`
-/// `%i`: `int`
-/// `%d`: `int64`
-/// `%f`: `float`/`double`
-/// `%O`: `Guid`
-///
-/// Subsequent routing handlers inside the given `handler` function should omit the already validated path.
-///
-/// **Parameters**
-///
-/// `path`: A format string representing the expected request sub path.
-/// `routeHandler`: A function which accepts a tuple `'T` of the parsed arguments and returns a `HttpHandler` function which will subsequently deal with the request.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// %b: bool
+/// %c: char
+/// %s: string
+/// %i: int
+/// %d: int64
+/// %f: float/double
+/// %O: Guid
+/// 
+/// Subsequent routing handlers inside the given handler function should omit the already validated path.
+/// </summary>
+/// <param name="path">A format string representing the expected request sub path.</param>
+/// <param name="routeHandler">A function which accepts a tuple 'T of the parsed arguments and returns a <see cref="HttpHandler"/> function which will subsequently deal with the request.</param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let subRoutef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler) : HttpHandler =
         validateFormat path
         fun (next : HttpFunc) (ctx : HttpContext) ->

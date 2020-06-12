@@ -83,20 +83,13 @@ let private convertToRegexPatternAndFormatChars (mode : MatchMode) (formatString
     |> convert
     |> (fun (pattern, formatChars) -> formatRegex mode pattern, formatChars)
 
-/// **Description**
-///
+/// <summary>
 /// Tries to parse an input string based on a given format string and return a tuple of all parsed arguments.
-///
-/// **Parameters**
-///
-/// `format`: The format string which shall be used for parsing.
-/// `input`: The input string from which the parsed arguments shall be extracted.
-/// `options`: The options record with specifications on how the matching should behave.
-///
-/// **Output**
-///
-/// Matched value as an option of 'T
-///
+/// </summary>
+/// <param name="format">The format string which shall be used for parsing.</param>
+/// <param name="options">The options record with specifications on how the matching should behave.</param>
+/// <param name="input">The input string from which the parsed arguments shall be extracted.</param>
+/// <returns>Matched value as an option of 'T</returns>
 let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (options : MatchOptions) (input : string) =
     try
         let pattern, formatChars =
@@ -142,20 +135,13 @@ let tryMatchInput (format : PrintfFormat<_,_,_,_, 'T>) (options : MatchOptions) 
     with
     | _ -> None
 
-/// **Description**
-///
+/// <summary>
 /// Tries to parse an input string based on a given format string and return a tuple of all parsed arguments.
-///
-/// **Parameters**
-///
-/// `format`: The format string which shall be used for parsing.
-/// `input`: The input string from which the parsed arguments shall be extracted.
-/// `ignoreCase`: The flag to make matching case insensitive.
-///
-/// **Output**
-///
-/// Matched value as an option of 'T
-///
+/// </summary>
+/// <param name="format">The format string which shall be used for parsing.</param>
+/// <param name="ignoreCase">The flag to make matching case insensitive.</param>
+/// <param name="input">The input string from which the parsed arguments shall be extracted.</param>
+/// <returns>Matched value as an option of 'T</returns>
 let tryMatchInputExact (format : PrintfFormat<_,_,_,_, 'T>) (ignoreCase : bool) (input : string) =
     let options = match ignoreCase with
                   | true -> MatchOptions.IgnoreCaseExact
@@ -178,7 +164,12 @@ let tryMatchInputExact (format : PrintfFormat<_,_,_,_, 'T>) (ignoreCase : bool) 
 /// **Output**
 ///
 /// Returns `unit` if validation was successful otherwise will throw an `Exception`.
-///
+
+/// <summary>
+/// Validates if a given format string can be matched with a given tuple.
+/// </summary>
+/// <param name="format">The format string which shall be used for parsing.</param>
+/// <returns>Returns <see cref="Microsoft.FSharp.Core.Unit"/> if validation was successful otherwise will throw an `Exception`.</returns>
 let validateFormat (format : PrintfFormat<_,_,_,_, 'T>) =
 
     let mapping = [
