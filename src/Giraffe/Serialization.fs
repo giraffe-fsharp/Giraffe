@@ -8,6 +8,7 @@ open Microsoft.IO
 
 [<AutoOpen>]
 module Json =
+    open System
     open System.IO
     open System.Text
     open System.Threading.Tasks
@@ -18,10 +19,9 @@ module Json =
 
     let recyclableMemoryStreamManager = RecyclableMemoryStreamManager()
 
-    /// **Description**
-    ///
-    /// Interface defining JSON serialization methods. Use this interface to customize JSON serialization in Giraffe.
-    ///
+    /// <summary>
+    ///  Interface defining JSON serialization methods. Use this interface to customize JSON serialization in Giraffe.
+    /// </summary>
     [<AllowNullLiteral>]
     type IJsonSerializer =
         abstract member SerializeToString<'T>      : 'T -> string
@@ -32,14 +32,15 @@ module Json =
         abstract member Deserialize<'T>      : byte[] -> 'T
         abstract member DeserializeAsync<'T> : Stream -> Task<'T>
 
-    /// **Description**
+    /// <summary>
+    /// <see cref="Utf8JsonSerializer" /> is an alternative serializer with 
+    /// great performance and supports true chunked transfer encoding.
     ///
-    /// The `Utf8JsonSerializer` is the default `IJsonSerializer` in Giraffe.
-    ///
-    /// It uses `Utf8Json` as the underlying JSON serializer to (de-)serialize
-    /// JSON content. [Utf8Json](https://github.com/neuecc/Utf8Json) is currently
+    /// It uses Utf8Json as the underlying JSON serializer to (de-)serialize
+    /// JSON content. Utf8Json is currently
     /// the fastest JSON serializer for .NET.
-    ///
+    /// </summary>
+    /// <remarks>https://github.com/neuecc/Utf8Json</remarks>
     type Utf8JsonSerializer (resolver : IJsonFormatterResolver) =
 
         static member DefaultResolver = Utf8Json.Resolvers.StandardResolver.CamelCase
@@ -64,20 +65,11 @@ module Json =
             member __.DeserializeAsync<'T> (stream : Stream) : Task<'T> =
                 JsonSerializer.DeserializeAsync(stream, resolver)
 
-    /// **Description**
-    ///
-    /// The previous default JSON serializer in Giraffe.
-    ///
-    /// The `NewtonsoftJsonSerializer` has been replaced by `Utf8JsonSerializer` as
-    /// the default `IJsonSerializer` which has much better performance and supports
-    /// true chunked transfer encoding.
-    ///
-    /// The `NewtonsoftJsonSerializer` remains available as an alternative JSON
-    /// serializer which can be used to override the `Utf8JsonSerializer` for
-    /// backwards compatibility.
+    /// <summary>
+    /// Default JSON serializer in Giraffe.
     ///
     /// Serializes objects to camel cased JSON code.
-    ///
+    /// </summary>
     type NewtonsoftJsonSerializer (settings : JsonSerializerSettings) =
         let serializer = JsonSerializer.Create settings
         let Utf8EncodingWithoutBom = new UTF8Encoding(false)
@@ -121,6 +113,43 @@ module Json =
                     use jsonTextReader = new JsonTextReader(streamReader)
                     return serializer.Deserialize<'T>(jsonTextReader)
                 }
+
+    open System.Text.Json
+
+    /// <summary>
+    ///
+    /// <see cref="SystemTextJsonSerializer" /> is an alternaive <see cref="IJsonSerializer"/> in Giraffe.
+    ///
+    /// It uses <see cref="System.Text.Json"/> as the underlying JSON serializer to (de-)serialize
+    /// JSON content. For support of F# unions and records, look at https://github.com/Tarmil/FSharp.SystemTextJson
+    /// which plugs into this serializer.
+    /// </summary>
+    type SystemTextJsonSerializer (options: JsonSerializerOptions) =
+
+        static member DefaultOptions =
+           JsonSerializerOptions(
+               PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+           )
+
+        interface IJsonSerializer with
+            member __.SerializeToString (x : 'T) =
+                JsonSerializer.Serialize(x,  options)
+
+            member __.SerializeToBytes (x : 'T) =
+                JsonSerializer.SerializeToUtf8Bytes(x, options)
+
+            member __.SerializeToStreamAsync (x : 'T) (stream : Stream) =
+                JsonSerializer.SerializeAsync(stream, x, options)
+
+            member __.Deserialize<'T> (json : string) : 'T =
+                JsonSerializer.Deserialize<'T>(json, options)
+
+            member __.Deserialize<'T> (bytes : byte array) : 'T =
+                JsonSerializer.Deserialize<'T>(Span<_>.op_Implicit(bytes.AsSpan()), options)
+
+            member __.DeserializeAsync<'T> (stream : Stream) : Task<'T> =
+                JsonSerializer.DeserializeAsync<'T>(stream, options).AsTask()
+
 // ---------------------------
 // XML
 // ---------------------------
@@ -132,21 +161,19 @@ module Xml =
     open System.Xml
     open System.Xml.Serialization
 
-    /// **Description**
-    ///
+    /// <summary>
     /// Interface defining XML serialization methods. Use this interface to customize XML serialization in Giraffe.
-    ///
+    /// </summary>
     [<AllowNullLiteral>]
     type IXmlSerializer =
         abstract member Serialize       : obj    -> byte array
         abstract member Deserialize<'T> : string -> 'T
 
-    /// **Description**
-    ///
+    /// <summary>
     /// Default XML serializer in Giraffe.
     ///
     /// Serializes objects to UTF8 encoded indented XML code.
-    ///
+    /// </summary>
     type DefaultXmlSerializer (settings : XmlWriterSettings) =
         static member DefaultSettings =
             XmlWriterSettings(

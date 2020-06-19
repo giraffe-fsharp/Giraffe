@@ -21,6 +21,7 @@ open Newtonsoft.Json
 open Giraffe
 open Giraffe.Serialization
 open Utf8Json
+open System.Text.Json
 
 // ---------------------------------
 // Common functions
@@ -99,14 +100,15 @@ let next : HttpFunc = Some >> Task.FromResult
 let createHost (configureApp      : 'Tuple -> IApplicationBuilder -> unit)
                (configureServices : IServiceCollection -> unit)
                (args              : 'Tuple) =
-    (new WebHostBuilder())
+    (WebHostBuilder())
         .UseContentRoot(Path.GetFullPath("TestFiles"))
         .Configure(Action<IApplicationBuilder> (configureApp args))
         .ConfigureServices(Action<IServiceCollection> configureServices)
 
 type MockJsonSettings =
-    | Newtonsoft of JsonSerializerSettings option
-    | Utf8       of IJsonFormatterResolver option
+    | Newtonsoft     of JsonSerializerSettings option
+    | Utf8           of IJsonFormatterResolver option
+    | SystemTextJson of JsonSerializerOptions  option
 
 let mockJson (ctx : HttpContext) (settings : MockJsonSettings) =
 
@@ -116,7 +118,7 @@ let mockJson (ctx : HttpContext) (settings : MockJsonSettings) =
             defaultArg settings NewtonsoftJsonSerializer.DefaultSettings
         ctx.RequestServices
            .GetService(typeof<IJsonSerializer>)
-           .Returns(new NewtonsoftJsonSerializer(jsonSettings))
+           .Returns(NewtonsoftJsonSerializer(jsonSettings))
         |> ignore
 
     | Utf8 settings ->
@@ -124,7 +126,15 @@ let mockJson (ctx : HttpContext) (settings : MockJsonSettings) =
             defaultArg settings Utf8JsonSerializer.DefaultResolver
         ctx.RequestServices
            .GetService(typeof<IJsonSerializer>)
-           .Returns(new Utf8JsonSerializer(resolver))
+           .Returns(Utf8JsonSerializer(resolver))
+        |> ignore
+
+    | SystemTextJson settings ->
+        let jsonOptions =
+            defaultArg settings SystemTextJsonSerializer.DefaultOptions
+        ctx.RequestServices
+           .GetService(typeof<IJsonSerializer>)
+           .Returns(SystemTextJsonSerializer(jsonOptions))
         |> ignore
 
 type JsonSerializersData =
@@ -132,6 +142,7 @@ type JsonSerializersData =
     static member DefaultSettings = [
             Utf8 None;
             Newtonsoft None
+            SystemTextJson None
         ]
 
     static member DefaultData = JsonSerializersData.DefaultSettings |> toTheoryData
@@ -139,10 +150,17 @@ type JsonSerializersData =
     static member PreserveCaseSettings =
         [
             Utf8 (Some Utf8Json.Resolvers.StandardResolver.Default)
-            Newtonsoft (Some (new JsonSerializerSettings()))
+            Newtonsoft (Some (JsonSerializerSettings()))
+            SystemTextJson (Some (JsonSerializerOptions()))
         ]
 
     static member PreserveCaseData = JsonSerializersData.PreserveCaseSettings |> toTheoryData
+    
+type NegotiationConfigWithExpectedResult = {
+    NegotiationConfig : INegotiationConfig
+    StatusCode : int
+    ReturnContentType : string
+}
 
 let mockXml (ctx : HttpContext) =
     ctx.RequestServices
@@ -150,10 +168,10 @@ let mockXml (ctx : HttpContext) =
        .Returns(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
     |> ignore
 
-let mockNegotiation (ctx : HttpContext) =
+let mockNegotiation (ctx : HttpContext) (negotiationConfig : INegotiationConfig) =
     ctx.RequestServices
        .GetService(typeof<INegotiationConfig>)
-       .Returns(DefaultNegotiationConfig())
+       .Returns(negotiationConfig)
     |> ignore
 
 // ---------------------------------

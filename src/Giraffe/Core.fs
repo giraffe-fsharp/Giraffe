@@ -26,236 +26,138 @@ type MissingDependencyException(dependencyName : string) =
 
 type HttpContext with
 
-    /// **Description**
-    ///
+    /// <summary>
     /// Returns the entire request URL in a fully escaped form, which is suitable for use in HTTP headers and other operations.
-    ///
-    /// **Output**
-    ///
-    /// Returns a `string` URL.
-    ///
+    /// </summary>
+    /// <returns>Returns a <see cref="System.String"/> URL.</returns>
     member this.GetRequestUrl() =
         this.Request.GetEncodedUrl()
 
-    /// **Description**
-    ///
+    /// <summary>
     /// Gets an instance of `'T` from the request's service container.
-    ///
-    /// **Output**
-    ///
-    /// Returns an instance of `'T`.
-    ///
+    /// </summary
+    /// <returns>Returns an instance of `'T`.</returns>
     member this.GetService<'T>() =
         let t = typeof<'T>
         match this.RequestServices.GetService t with
         | null    -> raise (MissingDependencyException t.Name)
         | service -> service :?> 'T
 
-    /// **Description**
-    ///
-    /// Gets an instance of `ILogger<'T>` from the request's service container.
+    /// <summary>
+    /// Gets an instance of <see cref="Microsoft.Extensions.Logging.ILogger<'T>" /> from the request's service container.
     ///
     /// The type `'T` should represent the class or module from where the logger gets instantiated.
-    ///
-    /// **Output**
-    ///
-    /// Returns an instance of `ILogger<'T>`.
-    ///
+    /// </summary>
+    /// <returns> Returns an instance of <see cref="Microsoft.Extensions.Logging.ILogger<'T>" />.</returns>
     member this.GetLogger<'T>() =
         this.GetService<ILogger<'T>>()
 
-    /// **Description**
-    ///
-    /// Gets an instance of `ILogger` from the request's service container.
-    ///
-    /// **Parameters**
-    ///
-    /// `categoryName`: The category name for messages produced by this logger.
-    ///
-    /// **Output**
-    ///
-    /// Returns an instance of `ILogger`.
-    ///
+    /// <summary>
+    /// Gets an instance of <see cref="Microsoft.Extensions.Logging.ILogger"/> from the request's service container.
+    /// </summary>
+    /// <param name="categoryName">The category name for messages produced by this logger.</param>
+    /// <returns>Returns an instance of <see cref="Microsoft.Extensions.Logging.ILogger"/>.</returns>
     member this.GetLogger (categoryName : string) =
         let loggerFactory = this.GetService<ILoggerFactory>()
         loggerFactory.CreateLogger categoryName
 
-    /// **Description**
-    ///
-    /// Gets an instance of `IHostingEnvironment` from the request's service container.
-    ///
-    /// **Output**
-    ///
-    /// Returns an instance of `IHostingEnvironment`.
-    ///
+    /// <summary>
+    /// Gets an instance of <see cref="Microsoft.Extensions.Hosting.IHostingEnvironment"/> from the request's service container.
+    /// </summary>
+    /// <returns>Returns an instance of <see cref="Microsoft.Extensions.Hosting.IHostingEnvironment"/>.</returns>
     member this.GetHostingEnvironment() =
         this.GetService<IHostingEnvironment>()
-
-    /// **Description**
-    ///
-    /// Gets an instance of `IJsonSerializer` from the request's service container.
-    ///
-    /// **Output**
-    ///
-    /// Returns an instance of `Giraffe.Serialization.Json.IJsonSerializer`.
-    ///
+    
+    /// <summary>
+    /// Gets an instance of <see cref="Giraffe.Serialization.Json.IJsonSerializer"/> from the request's service container.
+    /// </summary>
+    /// <returns>Returns an instance of <see cref="Giraffe.Serialization.Json.IJsonSerializer"/>.</returns>
     member this.GetJsonSerializer() : IJsonSerializer =
         this.GetService<IJsonSerializer>()
 
-    /// **Description**
-    ///
-    /// Gets an instance of `IXmlSerializer` from the request's service container.
-    ///
-    /// **Output**
-    ///
-    /// Returns an instance of `Giraffe.Serialization.Xml.IXmlSerializer`.
-    ///
+    /// <summary>
+    /// Gets an instance of <see cref="Giraffe.Serialization.Xml.IXmlSerializer"/> from the request's service container.
+    /// </summary>
+    /// <returns>Returns an instance of <see cref="Giraffe.Serialization.Xml.IXmlSerializer"/>.</returns>
     member this.GetXmlSerializer() : IXmlSerializer  =
         this.GetService<IXmlSerializer>()
-
-    /// **Description**
-    ///
+    
+    /// <summary>
     /// Sets the HTTP status code of the response.
-    ///
-    /// **Parameters**
-    ///
-    /// `httpStatusCode`: The status code to be set in the response. For convenience you can use the static `Microsoft.AspNetCore.Http.StatusCodes` class for passing in named status codes instead of using pure `int` values.
-    ///
-    /// **Output**
-    ///
-    /// Returns `unit`.
-    ///
+    /// </summary>
+    /// <param name="httpStatusCode">The status code to be set in the response. For convenience you can use the static <see cref="Microsoft.AspNetCore.Http.StatusCodes"/> class for passing in named status codes instead of using pure int values.</param>
     member this.SetStatusCode (httpStatusCode : int) =
         this.Response.StatusCode <- httpStatusCode
-
-    /// **Description**
-    ///
+    
+    /// <summary>
     /// Adds or sets a HTTP header in the response.
-    ///
-    /// **Parameters**
-    ///
-    /// `key`: The HTTP header name. For convenience you can use the static `Microsoft.Net.Http.Headers.HeaderNames` class for passing in strongly typed header names instead of using pure `string` values.
-    /// `value`: The value to be set. Non string values will be converted to a string using the object's `ToString()` method.
-    ///
-    /// **Output**
-    ///
-    /// Returns `unit`.
-    ///
+    /// </summary>
+    /// <param name="key">The HTTP header name. For convenience you can use the static <see cref="Microsoft.Net.Http.Headers.HeaderNames"/> class for passing in strongly typed header names instead of using pure `string` values.</param>
+    /// <param name="value">The value to be set. Non string values will be converted to a string using the object's ToString() method.</param>
     member this.SetHttpHeader (key : string) (value : obj) =
         this.Response.Headers.[key] <- StringValues(value.ToString())
-
-    /// **Description**
-    ///
-    /// Sets the `Content-Type` HTTP header in the response.
-    ///
-    /// **Parameters**
-    ///
-    /// `contentType`: The mime type of the response (e.g.: `application/json` or `text/html`).
-    ///
-    /// **Output**
-    ///
-    /// Returns `unit`.
-    ///
+    
+    /// <summary>
+    /// Sets the Content-Type HTTP header in the response.
+    /// </summary>
+    /// <param name="contentType">The mime type of the response (e.g.: application/json or text/html).</param>
     member this.SetContentType (contentType : string) =
         this.SetHttpHeader HeaderNames.ContentType contentType
-
-    /// **Description**
-    ///
-    /// Tries to get the `string` value of a HTTP header from the request.
-    ///
-    /// **Parameters**
-    ///
-    /// `key`: The name of the HTTP header.
-    ///
-    /// **Output**
-    ///
-    /// Returns `Some string` if the HTTP header was present in the request, otherwise returns `None`.
-    ///
+    
+    /// <summary>
+    /// Tries to get the <see cref="System.String"/> value of a HTTP header from the request.
+    /// </summary>
+    /// <param name="key">The name of the HTTP header.</param>
+    /// <returns> Returns Some string if the HTTP header was present in the request, otherwise returns None.</returns>
     member this.TryGetRequestHeader (key : string) =
         match this.Request.Headers.TryGetValue key with
         | true, value -> Some (value.ToString())
         | _           -> None
-
-    /// **Description**
-    ///
-    /// Retrieves the `string` value of a HTTP header from the request.
-    ///
-    /// **Parameters**
-    ///
-    /// `key`: The name of the HTTP header.
-    ///
-    /// **Output**
-    ///
-    /// Returns `Ok string` if the HTTP header was present in the request, otherwise returns `Error string`.
-    ///
+    /// <summary>
+    /// Retrieves the <see cref="System.String"/> value of a HTTP header from the request.
+    /// </summary>
+    /// <param name="key">The name of the HTTP header.</param>
+    /// <returns>Returns Ok string if the HTTP header was present in the request, otherwise returns Error string.</returns>
     member this.GetRequestHeader (key : string) =
         match this.Request.Headers.TryGetValue key with
         | true, value -> Ok (value.ToString())
         | _           -> Error (sprintf "HTTP request header '%s' is missing." key)
 
-    /// **Description**
-    ///
-    /// Tries to get the `string` value of a query string parameter from the request.
-    ///
-    /// **Parameters**
-    ///
-    /// `key`: The name of the query string parameter.
-    ///
-    /// **Output**
-    ///
-    /// Returns `Some string` if the parameter was present in the request's query string, otherwise returns `None`.
-    ///
+    /// <summary>
+    ///  Tries to get the <see cref="System.String"/> value of a query string parameter from the request.
+    /// </summary>
+    /// <param name="key">The name of the query string parameter.</param>
+    /// <returns>Returns Some string if the parameter was present in the request's query string, otherwise returns None.</returns>
     member this.TryGetQueryStringValue (key : string) =
         match this.Request.Query.TryGetValue key with
         | true, value -> Some (value.ToString())
         | _           -> None
-
-    /// **Description**
-    ///
-    /// Retrieves the `string` value of a query string parameter from the request.
-    ///
-    /// **Parameters**
-    ///
-    /// `key`: The name of the query string parameter.
-    ///
-    /// **Output**
-    ///
-    /// Returns `Ok string` if the parameter was present in the request's query string, otherwise returns `Error string`.
-    ///
+    
+    /// <summary>
+    /// Retrieves the <see cref="System.String"/> value of a query string parameter from the request.
+    /// </summary>
+    /// <param name="key">The name of the query string parameter.</param>
+    /// <returns>Returns Ok string if the parameter was present in the request's query string, otherwise returns Error string.</returns>
     member this.GetQueryStringValue (key : string) =
         match this.Request.Query.TryGetValue key with
         | true, value -> Ok (value.ToString())
         | _           -> Error (sprintf "Query string value '%s' is missing." key)
-
-    /// **Description**
-    ///
-    /// Retrieves the `string` value of a cookie from the request.
-    ///
-    /// **Parameters**
-    ///
-    /// `key`: The name of the cookie.
-    ///
-    /// **Output**
-    ///
-    /// Returns `Some string` if the cookie was set, otherwise returns `None`.
-    ///
+    
+    /// <summary>
+    /// Retrieves the <see cref="System.String"/> value of a cookie from the request.
+    /// </summary>
+    /// <param name="key">The name of the cookie.</param>
+    /// <returns>Returns Some string if the cookie was set, otherwise returns None.</returns>
     member this.GetCookieValue (key : string) =
         match this.Request.Cookies.TryGetValue key with
         | true , cookie -> Some cookie
         | false, _      -> None
 
-    /// **Description**
-    ///
-    /// Retrieves the `string` value of a form parameter from the request.
-    ///
-    /// **Parameters**
-    ///
-    /// `key`: The name of the form parameter.
-    ///
-    /// **Output**
-    ///
-    /// Returns `Some string` if the form parameter was set, otherwise returns `None`.
-    ///
+    /// <summary>
+    /// Retrieves the <see cref="System.String"/> value of a form parameter from the request.
+    /// </summary>
+    /// <param name="key">The name of the form parameter.</param>
+    /// <returns>Returns Some string if the form parameter was set, otherwise returns None.</returns>
     member this.GetFormValue (key : string) =
         match this.Request.HasFormContentType with
         | false -> None
@@ -268,86 +170,68 @@ type HttpContext with
 // HttpHandler definition
 // ---------------------------
 
-/// **Description**
-///
-/// A type alias for `Task<HttpContext option>` which represents the result of a HTTP function (`HttpFunc`).
-///
-/// If the result is `Some HttpContext` then the Giraffe middleware will return the response to the client and end the pipeline. However, if the result is `None` then the Giraffe middleware will continue the ASP.NET Core pipeline by invoking the `next` middleware.
-///
+/// <summary>
+/// A type alias for <see cref="System.Threading.Tasks.Task{HttpContext option}" />  which represents the result of a HTTP function (HttpFunc).
+/// If the result is Some HttpContext then the Giraffe middleware will return the response to the client and end the pipeline. However, if the result is None then the Giraffe middleware will continue the ASP.NET Core pipeline by invoking the next middleware.
+/// </summary>
 type HttpFuncResult = Task<HttpContext option>
 
-/// **Description**
-///
-/// A HTTP function which takes an `HttpContext` object and returns a `HttpFuncResult`.
-///
-/// The function may inspect the incoming `HttpRequest` and make modifications to the `HttpResponse` before returning a `HttpFuncResult`. The result can be either a `Task` of `Some HttpContext` or a `Task` of `None`.
-///
-/// If the result is `Some HttpContext` then the Giraffe middleware will return the response to the client and end the pipeline. However, if the result is `None` then the Giraffe middleware will continue the ASP.NET Core pipeline by invoking the `next` middleware.
-///
+/// <summary>
+/// A HTTP function which takes an <see cref="Microsoft.AspNetCore.Http.HttpContext"/> object and returns a <see cref="HttpFuncResult"/>.
+/// The function may inspect the incoming <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> and make modifications to the <see cref="Microsoft.AspNetCore.Http.HttpResponse"/> before returning a <see cref="HttpFuncResult"/>. The result can be either a <see cref="System.Threading.Tasks.Task"/> of Some HttpContext or a <see cref="System.Threading.Tasks.Task"/> of None.
+/// If the result is Some HttpContext then the Giraffe middleware will return the response to the client and end the pipeline. However, if the result is None then the Giraffe middleware will continue the ASP.NET Core pipeline by invoking the next middleware.
+/// </summary>
 type HttpFunc = HttpContext -> HttpFuncResult
 
-/// **Description**
-///
-/// A HTTP handler is the core building block of a Giraffe web application. It works similarly to ASP.NET Core's middleware where it is self responsible for invoking the next `HttpFunc` function of the pipeline or shortcircuit the execution by directly returning a `Task` of `HttpContext option`.
-///
+/// <summary>
+/// A HTTP handler is the core building block of a Giraffe web application. It works similarly to ASP.NET Core's middleware where it is self responsible for invoking the next <see cref="HttpFunc"/> function of the pipeline or shortcircuit the execution by directly returning a <see cref="System.Threading.Tasks.Task"/> of HttpContext option.
+/// </summary>
 type HttpHandler = HttpFunc -> HttpFunc
 
-/// **Description**
-///
-/// The error handler function takes an `Exception` object as well as an `ILogger` instance and returns a `HttpHandler` function which takes care of handling any uncaught application errors.
-///
+/// <summary>
+/// The error handler function takes an <see cref="System.Exception"/> object as well as an <see cref="Microsoft.Extensions.Logging.ILogger"/> instance and returns a <see cref="HttpHandler"/> function which takes care of handling any uncaught application errors.
+/// </summary>
 type ErrorHandler = exn -> ILogger -> HttpHandler
 
 // ---------------------------
 // Globally useful functions
 // ---------------------------
 
-/// **Description**
-///
-/// The `warbler` function is a `HttpHandler` wrapper function which prevents a `HttpHandler` to be pre-evaluated at startup.
-///
-/// **Parameters**
-///
-/// `f`: A function which takes a `HttpFunc * HttpContext` tuple and returns a `HttpHandler` function.
-///
-/// **Output**
-///
-/// Returns a `HttpHandler` function.
-///
-/// **Example**
-///
-/// `warbler(fun _ -> someHttpHandler)`
-///
+/// <summary>
+/// The warbler function is a <see cref="HttpHandler"/> wrapper function which prevents a <see cref="HttpHandler"/> to be pre-evaluated at startup.
+/// </summary>
+/// <param name="f">A function which takes a HttpFunc * HttpContext tuple and returns a <see cref="HttpHandler"/> function.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <example>
+/// <code>
+/// warbler(fun _ -> someHttpHandler)
+/// </code>
+/// </example>
+/// <returns>Returns a <see cref="HttpHandler"/> function.</returns>
 let inline warbler f (next : HttpFunc) (ctx : HttpContext) = f (next, ctx) next ctx
 
-/// **Description**
-///
-/// Use `skipPipeline` to shortcircuit the `HttpHandler` pipeline and return `None` to the surrounding `HttpHandler` or the Giraffe middleware (which would subsequently invoke the `next` middleware as a result of it).
-///
+/// <summary>
+/// Use skipPipeline to shortcircuit the <see cref="HttpHandler"/> pipeline and return None to the surrounding <see cref="HttpHandler"/> or the Giraffe middleware (which would subsequently invoke the next middleware as a result of it).
+/// </summary>
 let skipPipeline : HttpFuncResult = Task.FromResult None
 
-/// **Description**
-///
-/// Use `earlyReturn` to shortcircuit the `HttpHandler` pipeline and return `Some HttpContext` to the surrounding `HttpHandler` or the Giraffe middleware (which would subsequently end the pipeline by returning the response back to the client).
-///
+/// <summary>
+/// Use earlyReturn to shortcircuit the <see cref="HttpHandler"/> pipeline and return Some HttpContext to the surrounding <see cref="HttpHandler"/> or the Giraffe middleware (which would subsequently end the pipeline by returning the response back to the client).
+/// </summary>
 let earlyReturn : HttpFunc = Some >> Task.FromResult
 
 // ---------------------------
 // Convenience Handlers
 // ---------------------------
 
-/// **Description**
-///
-/// The `handleContext` function is a convenience function which can be used to create a new `HttpHandler` function which only requires access to the `HttpContext` object.
-///
-/// **Parameters**
-///
-/// `contextMap`: A function which accepts a `HttpContext` object and returns a `HttpFuncResult` function.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// <summary>
+/// The handleContext function is a convenience function which can be used to create a new <see cref="HttpHandler"/> function which only requires access to the <see cref="Microsoft.AspNetCore.Http.HttpContext"/> object.
+/// </summary>
+/// <param name="contextMap">A function which accepts a <see cref="Microsoft.AspNetCore.Http.HttpContext"/> object and returns a <see cref="HttpFuncResult"/> function.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let handleContext (contextMap : HttpContext -> HttpFuncResult) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
@@ -363,14 +247,15 @@ let handleContext (contextMap : HttpContext -> HttpFuncResult) : HttpHandler =
 // Default Combinators
 // ---------------------------
 
-/// **Description**
-///
-/// Combines two `HttpHandler` functions into one.
-///
-/// Please mind that both `HttpHandler` functions will get pre-evaluated at runtime by applying the `next` `HttpFunc` parameter of each handler.
-///
-/// You can also use the fish operator `>=>` as a more convenient alternative to `compose`.
-///
+/// <summary>
+/// Combines two <see cref="HttpHandler"/> functions into one.
+/// Please mind that both <see cref="HttpHandler"/>  functions will get pre-evaluated at runtime by applying the next <see cref="HttpFunc"/> parameter of each handler.
+/// You can also use the fish operator `>=>` as a more convenient alternative to compose.
+/// </summary>
+/// <param name="handler1"></param>
+/// <param name="handler2"></param>
+/// <param name="final"></param>
+/// <returns>A <see cref="HttpFunc"/>.</returns>
 let compose (handler1 : HttpHandler) (handler2 : HttpHandler) : HttpHandler =
     fun (final : HttpFunc) ->
         let func = final |> handler2 |> handler1
@@ -379,18 +264,18 @@ let compose (handler1 : HttpHandler) (handler2 : HttpHandler) : HttpHandler =
             | true  -> final ctx
             | false -> func ctx
 
-/// **Description**
-///
-/// Combines two `HttpHandler` functions into one.
-///
-/// Please mind that both `HttpHandler` functions will get pre-evaluated at runtime by applying the `next` `HttpFunc` parameter of each handler.
-///
+/// <summary>
+/// Combines two <see cref="HttpHandler"/> functions into one.
+/// Please mind that both <see cref="HttpHandler"/> functions will get pre-evaluated at runtime by applying the next <see cref="HttpFunc"/> parameter of each handler.
+/// </summary>
 let (>=>) = compose
 
-/// **Description**
-///
+/// <summary>
 /// Iterates through a list of `HttpFunc` functions and returns the result of the first `HttpFunc` of which the outcome is `Some HttpContext`.
-///
+/// </summary>
+/// <param name="funcs"></param>
+/// <param name="ctx"></param>
+/// <returns>A <see cref="HttpFuncResult"/>.</returns>
 let rec private chooseHttpFunc (funcs : HttpFunc list) : HttpFunc =
     fun (ctx : HttpContext) ->
         task {
@@ -403,12 +288,13 @@ let rec private chooseHttpFunc (funcs : HttpFunc list) : HttpFunc =
                 | None   -> return! chooseHttpFunc tail ctx
         }
 
-/// **Description**
-///
-/// Iterates through a list of `HttpHandler` functions and returns the result of the first `HttpHandler` of which the outcome is `Some HttpContext`.
-///
-/// Please mind that all `HttpHandler` functions will get pre-evaluated at runtime by applying the `next` (`HttpFunc`) parameter to each handler.
-///
+/// <summary>
+/// Iterates through a list of <see cref="HttpHandler"/> functions and returns the result of the first <see cref="HttpHandler"/> of which the outcome is Some HttpContext.
+/// Please mind that all <see cref="HttpHandler"/> functions will get pre-evaluated at runtime by applying the next (HttpFunc) parameter to each handler.
+/// </summary>
+/// <param name="handlers"></param>
+/// <param name="next"></param>
+/// <returns>A <see cref="HttpFunc"/>.</returns>
 let choose (handlers : HttpHandler list) : HttpHandler =
     fun (next : HttpFunc) ->
         let funcs = handlers |> List.map (fun h -> h next)
@@ -419,18 +305,13 @@ let choose (handlers : HttpHandler list) : HttpHandler =
 // Default HttpHandlers
 // ---------------------------
 
-/// **Description**
-///
+/// <summary>
 /// Filters an incoming HTTP request based on the HTTP verb.
-///
-/// **Parameters**
-///
-/// `validate`: A validation function which checks for a single HTTP verb.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// </summary>
+/// <param name="validate">A validation function which checks for a single HTTP verb.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let private httpVerb (validate : string -> bool) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         if validate ctx.Request.Method
@@ -449,70 +330,51 @@ let CONNECT : HttpHandler = httpVerb HttpMethods.IsConnect
 
 let GET_HEAD : HttpHandler = choose [ GET; HEAD ]
 
-/// **Description**
-///
-/// Clears the current `HttpResponse` object.
-///
-/// This can be useful if a `HttpHandler` function needs to overwrite the response of all previous `HttpHandler` functions with its own response (most commonly used by an `ErrorHandler` function).
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// <summary>
+/// Clears the current <see cref="Microsoft.AspNetCore.Http.HttpResponse"/> object.
+/// This can be useful if a <see cref="HttpHandler"/> function needs to overwrite the response of all previous <see cref="HttpHandler"/> functions with its own response (most commonly used by an <see cref="ErrorHandler"/> function).
+/// </summary>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let clearResponse : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.Response.Clear()
         next ctx
 
-/// **Description**
-///
+/// <summary>
 /// Sets the HTTP status code of the response.
-///
-/// **Parameters**
-///
-/// `statusCode`: The status code to be set in the response. For convenience you can use the static `Microsoft.AspNetCore.Http.StatusCodes` class for passing in named status codes instead of using pure `int` values.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// </summary>
+/// <param name="statusCode">The status code to be set in the response. For convenience you can use the static <see cref="Microsoft.AspNetCore.Http.StatusCodes"/> class for passing in named status codes instead of using pure int values.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let setStatusCode (statusCode : int) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.SetStatusCode statusCode
         next ctx
 
-/// **Description**
-///
+/// <summary>
 /// Adds or sets a HTTP header in the response.
-///
-/// **Parameters**
-///
-/// `key`: The HTTP header name. For convenience you can use the static `Microsoft.Net.Http.Headers.HeaderNames` class for passing in strongly typed header names instead of using pure `string` values.
-/// `value`: The value to be set. Non string values will be converted to a string using the object's `ToString()` method.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// </summary>
+/// <param name="key">The HTTP header name. For convenience you can use the static <see cref="Microsoft.Net.Http.Headers.HeaderNames"/> class for passing in strongly typed header names instead of using pure string values.</param>
+/// <param name="value">The value to be set. Non string values will be converted to a string using the object's ToString() method.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let setHttpHeader (key : string) (value : obj) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.SetHttpHeader key value
         next ctx
 
-/// **Description**
-///
-/// Filters an incoming HTTP request based on the accepted mime types of the client (`Accept` HTTP header).
-///
-/// If the client doesn't accept any of the provided `mimeTypes` then the handler will not continue executing the `next` `HttpHandler` function.
-///
-/// **Parameters**
-///
-/// `mimeTypes`: List of mime types of which the client has to accept at least one.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// <summary>
+/// Filters an incoming HTTP request based on the accepted mime types of the client (Accept HTTP header).
+/// If the client doesn't accept any of the provided mimeTypes then the handler will not continue executing the next <see cref="HttpHandler"/> function.
+/// </summary>
+/// <param name="mimeTypes">List of mime types of which the client has to accept at least one.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let mustAccept (mimeTypes : string list) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let headers = ctx.Request.GetTypedHeaders()
@@ -523,19 +385,14 @@ let mustAccept (mimeTypes : string list) : HttpHandler =
             | true  -> next ctx
             | false -> skipPipeline
 
-/// **Description**
-///
+/// <summary>
 /// Redirects to a different location with a `302` or `301` (when permanent) HTTP status code.
-///
-/// **Parameters**
-///
-/// `permanent`: If true the redirect is permanent (301), otherwise temporary (302).
-/// `location`: The URL to redirect the client to.
-///
-/// **Output**
-///
-/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
-///
+/// </summary>
+/// <param name="permanent">If true the redirect is permanent (301), otherwise temporary (302).</param>
+/// <param name="location">The URL to redirect the client to.</param>
+/// <param name="next"></param>
+/// <param name="ctx"></param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let redirectTo (permanent : bool) (location : string) : HttpHandler  =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         ctx.Response.Redirect(location, permanent)
