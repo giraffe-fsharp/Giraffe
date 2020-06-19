@@ -1,18 +1,16 @@
 [<AutoOpen>]
 module Giraffe.HttpStatusCodeHandlers
 
-/// **Description**
-///
-/// A collection of `HttpHandler` functions to return HTTP status code `1xx` responses.
-///
+/// <summary>
+/// A collection of <see cref="HttpHandler" /> functions to return HTTP status code 1xx responses.
+/// </summary>
 module Intermediate =
     let CONTINUE        : HttpHandler = setStatusCode 100 >=> setBody [||]
     let SWITCHING_PROTO : HttpHandler = setStatusCode 101 >=> setBody [||]
 
-/// **Description**
-///
-/// A collection of `HttpHandler` functions to return HTTP status code `2xx` responses.
-///
+/// <summary>
+/// A collection of <see cref="HttpHandler" /> functions to return HTTP status code 2xx responses.
+/// </summary>
 module Successful =
     let ok x        = setStatusCode 200 >=> x
     let OK x        = ok (negotiate x)
@@ -25,29 +23,26 @@ module Successful =
 
     let NO_CONTENT : HttpHandler = setStatusCode 204
 
-/// **Description**
-///
-/// A collection of `HttpHandler` functions to return HTTP status code `4xx` responses.
-///
+/// <summary>
+/// A collection of <see cref="HttpHandler" /> functions to return HTTP status code 4xx responses.
+/// </summary>
 module RequestErrors =
     let badRequest x  = setStatusCode 400 >=> x
     let BAD_REQUEST x = badRequest (negotiate x)
 
-    /// **Description**
+    /// <summary>
+    /// Sends a 401 Unauthorized HTTP status code response back to the client.
     ///
-    /// Sends a `401 Unauthorized` HTTP status code response back to the client.
+    /// Use the unauthorized status code handler when a user could not be authenticated by the server (either missing or wrong authentication data). By returning a 401 Unauthorized HTTP response the server tells the client that it must know who is making the request before it can return a successful response. As such the server must also include which authentication scheme the client must use in order to successfully authenticate.
+    /// </summary>
+    /// <remarks>
+    /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/WWW-Authenticate
+    /// http://stackoverflow.com/questions/3297048/403-forbidden-vs-401-unauthorized-http-responses/12675357
     ///
-    /// Use the `unauthorized` status code handler when a user could not be authenticated by the server (either missing or wrong authentication data). By returning a `401 Unauthorized` HTTP response the server tells the client that it must know **who** is making the request before it can return a successful response. As such the server must also include which authentication scheme the client must use in order to successfully authenticate.
+    /// List of authentication schemes:
     ///
-    /// **More information**
-    ///
-    /// - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/WWW-Authenticate
-    /// - http://stackoverflow.com/questions/3297048/403-forbidden-vs-401-unauthorized-http-responses/12675357
-    ///
-    /// **List of authentication schemes**
-    ///
-    /// - https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication#Authentication_schemes
-    ///
+    /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication#Authentication_schemes
+    /// </remarks>
     let unauthorized scheme realm x =
         setStatusCode 401
         >=> setHttpHeader "WWW-Authenticate" (sprintf "%s realm=\"%s\"" scheme realm)
@@ -85,10 +80,9 @@ module RequestErrors =
     let TOO_MANY_REQUESTS x         = tooManyRequests (negotiate x)
 
 
-/// **Description**
-///
-/// A collection of `HttpHandler` functions to return HTTP status code `5xx` responses.
-///
+/// <summary>
+/// A collection of <see cref="HttpHandler" /> functions to return HTTP status code 5xx responses.
+/// </summary>
 module ServerErrors =
     let internalError x         = setStatusCode 500 >=> x
     let INTERNAL_ERROR x        = internalError (negotiate x)
