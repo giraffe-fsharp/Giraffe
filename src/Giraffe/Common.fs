@@ -10,108 +10,62 @@ open FSharp.Control.Tasks.Builders
 // ---------------------------
 
 type DateTime with
-    /// **Description**
+
+    /// <summary>
+    /// Converts a <see cref="System.DateTime" /> object into an RFC822 formatted <see cref="System.String" />.
+    /// </summary>
+    /// <remarks>Using specification https://www.ietf.org/rfc/rfc822.txt</remarks>
+    /// 
     ///
-    /// Converts a `DateTime` object into an RFC822 formatted `string`.
-    ///
-    /// **Specification**
-    ///
-    /// https://www.ietf.org/rfc/rfc822.txt
-    ///
-    /// **Output**
-    ///
-    /// Formatted string value.
-    ///
+    /// <returns>Formatted string value.</returns>
     member this.ToHtmlString() = this.ToString("r")
 
-    /// **Description**
-    ///
-    /// Converts a `DateTime` object into an RFC3339 formatted `string`.
-    ///
-    /// **Specification**
-    ///
-    /// https://www.ietf.org/rfc/rfc3339.txt
-    ///
-    /// **Output**
-    ///
-    /// Formatted string value.
-    ///
+    /// <summary>
+    /// Converts a <see cref="System.DateTime" /> object into an RFC3339 formatted <see cref="System.String" />.
+    /// </summary>
+    /// <remarks>Using specification https://www.ietf.org/rfc/rfc3339.txt</remarks>
+    /// <returns>Formatted string value.</returns>
     member this.ToIsoString() = this.ToString("o")
 
 type DateTimeOffset with
-    /// **Description**
-    ///
-    /// Converts a `DateTimeOffset` object into an RFC822 formatted `string`.
-    ///
-    /// **Specification**
-    ///
-    /// https://www.ietf.org/rfc/rfc822.txt
-    ///
-    /// **Output**
-    ///
-    /// Formatted string value.
-    ///
+    /// <summary>
+    /// Converts a <see cref="System.DateTimeOffset" /> object into an RFC822 formatted <see cref="System.String" />.
+    /// </summary>
+    /// <remarks>Using specification https://www.ietf.org/rfc/rfc822.txt</remarks>
+    /// <returns>Formatted string value.</returns>
     member this.ToHtmlString() = this.ToString("r")
 
-    /// **Description**
-    ///
-    /// Converts a `DateTime` object into an RFC3339 formatted `string`.
-    ///
-    /// **Specification**
-    ///
-    /// https://www.ietf.org/rfc/rfc3339.txt
-    ///
-    /// **Output**
-    ///
-    /// Formatted string value.
-    ///
+    /// <summary>
+    /// Converts a <see cref="System.DateTimeOffset" /> object into an RFC3339 formatted <see cref="System.String" />.
+    /// </summary>
+    /// <remarks>Using specification https://www.ietf.org/rfc/rfc3339.txt</remarks>
+    /// <returns>Formatted string value.</returns>
     member this.ToIsoString() = this.ToString("o")
 
 // ---------------------------
 // Common helper functions
 // ---------------------------
 
-/// **Description**
-///
+/// <summary>
 /// Checks if an object is not null.
-///
-/// **Parameters**
-///
-/// `x`: The object to validate against `null`.
-///
-/// **Output**
-///
-/// Returns `true` if the object is not `null` otherwise `false`.
-///
+/// </summary>
+/// <param name="x">The object to validate against `null`.</param>
+/// <returns>Returns true if the object is not null otherwise false.</returns>
 let inline isNotNull x = not (isNull x)
 
-/// **Description**
-///
-/// Converts a `string` into a `string option` where `null` or an empty string will be converted to `None` and everything else to `Some string`.
-///
-/// **Parameters**
-///
-/// `str`: The string value to be converted into an option of string.
-///
-/// **Output**
-///
-/// Returns `None` if the string was `null` or empty otherwise `Some string`.
-///
+/// <summary>
+/// Converts a string into a string option where null or an empty string will be converted to None and everything else to Some string.
+/// </summary>
+/// <param name="str">The string value to be converted into an option of string.</param>
+/// <returns>Returns None if the string was null or empty otherwise Some string.</returns>
 let inline strOption (str : string) =
     if String.IsNullOrEmpty str then None else Some str
 
-/// **Description**
-///
+/// <summary>
 /// Reads a file asynchronously from the file system.
-///
-/// **Parameters**
-///
-/// `filePath`: The absolute path of the file.
-///
-/// **Output**
-///
-/// Returns the string contents of the file wrapped in a Task.
-///
+/// </summary>
+/// <param name="filePath">The absolute path of the file.</param>
+/// <returns>Returns the string contents of the file wrapped in a Task.</returns>
 let readFileAsStringAsync (filePath : string) =
     task {
         use reader = new StreamReader(filePath)
@@ -122,42 +76,34 @@ let readFileAsStringAsync (filePath : string) =
 // Short GUIDs and IDs
 // ---------------------------
 
-/// **Description**
-///
+/// <summary>
 /// Short GUIDs are a shorter, URL-friendlier version
-/// of the traditional `System.Guid` type.
+/// of the traditional <see cref="System.Guid" /> type.
 ///
 /// Short GUIDs are always 22 characters long, which let's
 /// one save a total of 10 characters in comparison to using
-/// a normal `System.Guid` as identifier.
+/// a normal <see cref="System.Guid" /> as identifier.
 ///
 /// Additionally a Short GUID is by default a URL encoded
 /// string which doesn't need extra character replacing
 /// before using of it in a URL query parameter.
 ///
-/// All Short GUID strings map directly to a `System.Guid`
+/// All Short GUID strings map directly to a <see cref="System.Guid" />
 /// object and the `ShortGuid` module can be used to convert
-/// a `System.Guid` into a short GUID `string` and vice versa.
+/// a <see cref="System.Guid" /> into a short GUID <see cref="System.String" /> and vice versa.
 ///
 /// For more information please check:
 /// https://madskristensen.net/blog/A-shorter-and-URL-friendly-GUID
-///
+/// </summary>
 [<RequireQualifiedAccess>]
 module ShortGuid =
-
-    /// **Description**
-    ///
-    /// Converts a `System.Guid` into a 22 character long
+ 
+    /// <summary>
+    /// Converts a <see cref="System.Guid" /> into a 22 character long
     /// short GUID string.
-    ///
-    /// **Parameters**
-    ///
-    /// `guid`: The `System.Guid` to be converted into a short GUID.
-    ///
-    /// **Output**
-    ///
-    /// Returns a 22 character long URL encoded short GUID string.
-    ///
+    /// </summary>
+    /// <param name="guid">The <see cref="System.Guid" />  to be converted into a short GUID.</param>
+    /// <returns>Returns a 22 character long URL encoded short GUID string.</returns>
     let fromGuid (guid : Guid) =
         guid.ToByteArray()
         |> Convert.ToBase64String
@@ -165,19 +111,12 @@ module ShortGuid =
             str.Replace("/", "_")
                .Replace("+", "-")
                .Substring(0, 22))
-
-    /// **Description**
-    ///
-    /// Converts a 22 character short GUID string into the matching `System.Guid`.
-    ///
-    /// **Parameters**
-    ///
-    /// `shortGuid`: The short GUID string to be converted into a `System.Guid`.
-    ///
-    /// **Output**
-    ///
-    /// Returns a `System.Guid` object.
-    ///
+    
+    /// <summary>
+    /// Converts a 22 character short GUID string into the matching <see cref="System.Guid" />.
+    /// </summary>
+    /// <param name="shortGuid">The short GUID string to be converted into a <see cref="System.Guid" />.</param>
+    /// <returns>Returns a <see cref="System.Guid" /> object.</returns>
     let toGuid (shortGuid : string) =
         shortGuid.Replace("_", "/")
                  .Replace("-", "+")
@@ -185,8 +124,7 @@ module ShortGuid =
         |> Convert.FromBase64String
         |> Guid
 
-/// **Description**
-///
+/// <summary>
 /// Short IDs are a shorter, URL-friendlier version
 /// of an unsigned 64-bit integer value (`uint64` in F# and `ulong` in C#).
 ///
@@ -204,23 +142,16 @@ module ShortGuid =
 ///
 /// For more information please check:
 /// https://webapps.stackexchange.com/questions/54443/format-for-id-of-youtube-video
-///
+/// </summary>
 [<RequireQualifiedAccess>]
 module ShortId =
 
-    /// **Description**
-    ///
-    /// Converts a `uint64` value into a 11 character long
+    /// <summary>
+    /// Converts a uint64 value into a 11 character long
     /// short ID string.
-    ///
-    /// **Parameters**
-    ///
-    /// `id`: The `uint64` to be converted into a short ID.
-    ///
-    /// **Output**
-    ///
-    /// Returns a 11 character long URL encoded short ID string.
-    ///
+    /// </summary>
+    /// <param name="id">The uint64 to be converted into a short ID.</param>
+    /// <returns>Returns a 11 character long URL encoded short ID string.</returns>
     let fromUInt64 (id : uint64) =
         BitConverter.GetBytes id
         |> (fun arr ->
@@ -233,18 +164,11 @@ module ShortId =
                .Replace("/", "_")
                .Replace("+", "-"))
 
-    /// **Description**
-    ///
-    /// Converts a 11 character short ID string into the matching `uint64` value.
-    ///
-    /// **Parameters**
-    ///
-    /// `shortId`: The short ID string to be converted into a `uint64` value.
-    ///
-    /// **Output**
-    ///
-    /// Returns a `uint64` value.
-    ///
+    /// <summary>
+    /// Converts a 11 character short ID string into the matching uint64 value.
+    /// </summary>
+    /// <param name="shortId">The short ID string to be converted into a uint64 value.</param>
+    /// <returns>The short ID string to be converted into a uint64 value.</returns>
     let toUInt64 (shortId : string) =
         let bytes =
             shortId.Replace("_", "/")
