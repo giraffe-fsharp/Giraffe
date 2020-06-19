@@ -28,6 +28,16 @@ type ModelWithNullable =
     }
 
 [<CLIMutable>]
+type CustomerWithOptionalFields =
+    {
+        Name          : string option
+        IsVip         : bool
+        BirthDate     : DateTime
+        Balance       : float option
+        LoyaltyPoints : int
+    }
+
+[<CLIMutable>]
 type Customer =
     {
         Name          : string
@@ -845,6 +855,126 @@ let ``BindJsonAsync test`` (settings) =
 
     let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+    
+[<Fact>]
+let ``TryBindJsonAsync success test`` () =
+    let ctx = Substitute.For<HttpContext>()
+    mockJson ctx (Newtonsoft None)
+
+    let outputCustomer (c : Result<CustomerWithOptionalFields, string>) =
+        match c with
+        | Ok a -> text (a.ToString())
+        | Error err -> failwith err
+    let app =
+        POST
+        >=> route "/json"
+        >=> tryBindJson<CustomerWithOptionalFields> outputCustomer
+
+    let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
+    let stream = new MemoryStream()
+    let writer = new StreamWriter(stream, Encoding.UTF8)
+    writer.Write postContent
+    writer.Flush()
+    stream.Position <- 0L
+
+    let headers = HeaderDictionary()
+    headers.Add("Content-Type", StringValues("application/json"))
+    headers.Add("Content-Length", StringValues(stream.Length.ToString()))
+    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
+    ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    ctx.Request.Body  <- stream
+
+    let expected = "{ Name = Some \"John Doe\"\n  IsVip = true\n  BirthDate = 20/04/1990 00:00:00\n  Balance = Some 150000.5\n  LoyaltyPoints = 137 }"
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+    
+[<Fact>]
+let ``TryBindJsonAsync missing non-optional field test`` () =
+    let ctx = Substitute.For<HttpContext>()
+    mockJson ctx (Newtonsoft None)
+
+    let outputCustomer (c : Result<CustomerWithOptionalFields, string>) =
+        match c with
+        | Ok a -> failwith (a.ToString())
+        | Error err -> text err
+    let app =
+        POST
+        >=> route "/json"
+        >=> tryBindJson<CustomerWithOptionalFields> outputCustomer
+
+    let postContent = "{ \"Name\": \"John Doe\", \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
+    let stream = new MemoryStream()
+    let writer = new StreamWriter(stream, Encoding.UTF8)
+    writer.Write postContent
+    writer.Flush()
+    stream.Position <- 0L
+
+    let headers = HeaderDictionary()
+    headers.Add("Content-Type", StringValues("application/json"))
+    headers.Add("Content-Length", StringValues(stream.Length.ToString()))
+    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
+    ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    ctx.Request.Body  <- stream
+
+    let expected = "Required property 'isVip' not found in JSON. Path '', line 1, position 92."
+    
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``TryBindJsonAsync missing optional field test`` () =
+    let ctx = Substitute.For<HttpContext>()
+    mockJson ctx (Newtonsoft None)
+
+    let outputCustomer (c : Result<CustomerWithOptionalFields, string>) =
+        match c with
+        | Ok a -> text (a.ToString())
+        | Error err -> failwith err
+    let app =
+        POST
+        >=> route "/json"
+        >=> tryBindJson<CustomerWithOptionalFields> outputCustomer
+
+    let postContent = "{ \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
+    let stream = new MemoryStream()
+    let writer = new StreamWriter(stream, Encoding.UTF8)
+    writer.Write postContent
+    writer.Flush()
+    stream.Position <- 0L
+
+    let headers = HeaderDictionary()
+    headers.Add("Content-Type", StringValues("application/json"))
+    headers.Add("Content-Length", StringValues(stream.Length.ToString()))
+    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
+    ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    ctx.Request.Body  <- stream
+
+    let expected = "{ Name = None\n  IsVip = true\n  BirthDate = 20/04/1990 00:00:00\n  Balance = Some 150000.5\n  LoyaltyPoints = 137 }"
+    
     task {
         let! result = app (Some >> Task.FromResult) ctx
 

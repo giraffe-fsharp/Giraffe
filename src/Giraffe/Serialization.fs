@@ -1,5 +1,7 @@
 namespace Giraffe.Serialization
 
+open System.Reflection
+open Microsoft.FSharp.Reflection
 open Microsoft.IO
 
 // ---------------------------
@@ -32,6 +34,7 @@ module Json =
         abstract member Deserialize<'T>      : string -> 'T
         abstract member Deserialize<'T>      : byte[] -> 'T
         abstract member DeserializeAsync<'T> : Stream -> Task<'T>
+        abstract member TryDeserializeAsync<'T> : Stream -> Task<Result<'T, string>>
 
     /// **Description**
     ///
@@ -65,7 +68,67 @@ module Json =
 
             member __.DeserializeAsync<'T> (stream : Stream) : Task<'T> =
                 JsonSerializer.DeserializeAsync(stream, resolver)
+                
+            member __.TryDeserializeAsync<'T> (stream : Stream) : Task<Result<'T, string>> =
+                raise (NotImplementedException("Not implemented"))
 
+    
+    type private RequireObjectPropertiesContractResolver() =
+        inherit CamelCasePropertyNamesContractResolver()
+
+        override x.CreateObjectContract(objectType : Type) = 
+            let contract = base.CreateObjectContract(objectType)
+            contract.ItemRequired <- System.Nullable<Required>(Required.Always);
+            contract
+
+        override x.CreateProperty(memberInfo : MemberInfo, memberSerialization : MemberSerialization) =
+            let jsonProperty = base.CreateProperty(memberInfo, memberSerialization);
+            // https://stackoverflow.com/questions/20696262/reflection-to-find-out-if-property-is-of-option-type
+            let isOption =
+                jsonProperty.PropertyType.IsGenericType &&
+                jsonProperty.PropertyType.GetGenericTypeDefinition() = typedefof<Option<_>>
+            if isOption then (
+                jsonProperty.Required <- Required.Default        
+                jsonProperty.NullValueHandling <- System.Nullable<NullValueHandling>(NullValueHandling.Ignore)
+            )
+            jsonProperty
+    type private OptionConverter() =
+        inherit JsonConverter()
+        
+        override x.CanConvert (t) =
+            t.IsGenericType && t.GetGenericTypeDefinition() = typedefof<option<_>>
+
+        override x.WriteJson(writer, value, serializer) =
+            let value =
+                if value = null then
+                    null
+                else
+                    let _, fields = FSharpValue.GetUnionFields(value, value.GetType())
+                    fields |> Array.exactlyOne
+            serializer.Serialize(writer, value)
+
+        override x.ReadJson(reader, t, existingValue, serializer) =
+            let innerType = t.GetGenericArguments() |> Array.exactlyOne
+            let innerType =
+                if innerType.IsValueType then
+                    (typedefof<Nullable<_>>).MakeGenericType([|innerType|])
+                else
+                    innerType
+            let value = serializer.Deserialize(reader, innerType)
+            let cases = FSharpType.GetUnionCases(t)
+            if value = null then
+                FSharpValue.MakeUnion(cases.[0], [||])
+            else
+                FSharpValue.MakeUnion(cases.[1], [|value|])
+    
+    let private copyProperties<'T when 'T : (new : unit -> 'T)> (source : 'T) : 'T =
+        let destination = new 'T()
+            
+        typeof<'T>.GetProperties()
+        |> Seq.filter(fun x -> x.CanRead && x.CanWrite)
+        |> Seq.iter(fun x -> x.SetValue(destination, x.GetValue(source)))
+            
+        destination
     /// **Description**
     ///
     /// Default JSON serializer in Giraffe.
@@ -74,6 +137,11 @@ module Json =
     ///
     type NewtonsoftJsonSerializer (settings : JsonSerializerSettings) =
         let serializer = JsonSerializer.Create settings
+        let optionConvertingSerializer =
+            let settings = copyProperties settings
+            settings.Converters.Add(OptionConverter())
+            settings.ContractResolver <- RequireObjectPropertiesContractResolver()
+            JsonSerializer.Create settings
         let Utf8EncodingWithoutBom = new UTF8Encoding(false)
 
         static member DefaultSettings =
@@ -115,6 +183,22 @@ module Json =
                     use jsonTextReader = new JsonTextReader(streamReader)
                     return serializer.Deserialize<'T>(jsonTextReader)
                 }
+                
+            member __.TryDeserializeAsync<'T> (stream : Stream) : Task<Result<'T, string>> =
+                task {
+                    use memoryStream = new MemoryStream()
+                    do! stream.CopyToAsync(memoryStream)
+                    memoryStream.Seek(0L, SeekOrigin.Begin) |> ignore
+                    use streamReader = new StreamReader(memoryStream)
+                    use jsonTextReader = new JsonTextReader(streamReader)
+                    let thing =
+                        try
+                            Ok(optionConvertingSerializer.Deserialize<'T>(jsonTextReader))
+                        with
+                        | :? JsonSerializationException as ex ->
+                            Error(ex.Message)
+                    return thing
+                }
 
     open System.Text.Json
 
@@ -151,6 +235,9 @@ module Json =
 
             member __.DeserializeAsync<'T> (stream : Stream) : Task<'T> =
                 JsonSerializer.DeserializeAsync<'T>(stream, options).AsTask()
+                
+            member __.TryDeserializeAsync<'T> (stream : Stream) : Task<Result<'T, string>> =
+                raise (NotImplementedException("Not implemented"))
 
 // ---------------------------
 // XML

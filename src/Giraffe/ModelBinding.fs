@@ -334,6 +334,20 @@ type HttpContext with
             let serializer = this.GetJsonSerializer()
             return! serializer.DeserializeAsync<'T> this.Request.Body
         }
+        
+    /// **Description**
+    ///
+    /// Uses the `IJsonSerializer` to deserializes the entire body of the `HttpRequest` asynchronously into an object of type `'T`.
+    ///
+    /// **Output**
+    ///
+    /// Returns a `Task<'T>`.
+    ///
+    member this.TryBindJsonAsync<'T>() =
+        task {
+            let serializer = this.GetJsonSerializer()
+            return! serializer.TryDeserializeAsync<'T> this.Request.Body
+        }
 
     /// **Description**
     ///
@@ -480,6 +494,26 @@ let bindJson<'T> (f : 'T -> HttpHandler) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             let! model = ctx.BindJsonAsync<'T>()
+            return! f model next ctx
+        }
+        
+/// **Description**
+///
+/// Parses a JSON payload into an instance of type `'T`.
+/// Any properties of `'T` which aren't `option` types are mandatory, `option` types are optional.
+///
+/// **Parameters**
+///
+/// `f`: A function which accepts an object of type `'T` and returns a `HttpHandler` function.
+///
+/// **Output**
+///
+/// A Giraffe `HttpHandler` function which can be composed into a bigger web application.
+///
+let tryBindJson<'T> (f : Result<'T, string> -> HttpHandler) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            let! model = ctx.TryBindJsonAsync<'T>()
             return! f model next ctx
         }
 
