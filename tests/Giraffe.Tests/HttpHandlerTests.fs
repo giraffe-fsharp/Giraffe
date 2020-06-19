@@ -1,7 +1,6 @@
 module Giraffe.Tests.HttpHandlerTests
 
 open System
-open System.Collections
 open System.IO
 open System.Collections.Generic
 open Microsoft.AspNetCore.Http
@@ -381,7 +380,7 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
             Assert.Equal(expected, body)
             Assert.Equal(404, ctx.Response.StatusCode)
     }
-    
+
 [<Fact>]
 let ``Warbler function should execute inner function each time`` () =
     let ctx = Substitute.For<HttpContext>()
@@ -488,7 +487,7 @@ let johnDoeAsXml = @"<?xml version=""1.0"" encoding=""utf-8""?>
 </Person>"
 
 let johnDoeAsText = @"First name: John, Last name: Doe, Birth date: 1990-07-12, Height: 1.85, Piercings: [|""ear""; ""nose""|]"
-    
+
 let getNegotiationTestHttpContext
     (negotiationConfig : INegotiationConfig)
     (jsonSettings : MockJsonSettings option)
@@ -496,30 +495,30 @@ let getNegotiationTestHttpContext
     (acceptHeaders : StringValues)
     =
     let ctx = Substitute.For<HttpContext>()
-    
+
     let headers = HeaderDictionary()
     headers.Add("Accept", acceptHeaders)
-    
+
     jsonSettings |> Option.iter(fun settings -> mockJson ctx settings)
     if shouldMockXml then mockXml ctx
     mockNegotiation ctx negotiationConfig
-    
-    ctx.Items.Returns (new Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
+
+    ctx.Items.Returns (Dictionary<obj,obj>() :> IDictionary<obj,obj>) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
     ctx.Response.StatusCode <- 200
-    
+
     ctx
-    
+
 let negotiationTestApp =
     GET >=> choose [
         route "/"     >=> text "Hello World"
         route "/foo"  >=> text "bar"
         route "/auto" >=> negotiate johnDoe
         setStatusCode 404 >=> text "Not found" ]
-    
+
 let runNegotiationTest (ctx : HttpContext) (expectedString : string) (testChecks : HttpContext -> unit) =
     task {
         let! result = negotiationTestApp next ctx
@@ -541,7 +540,7 @@ let JsonReturningAcceptHeaderCases =
 [<Theory>]
 [<MemberData("JsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "application/json" returns JSON object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) false (StringValues("application/json")) 
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) false (StringValues("application/json"))
     let testChecks (context : HttpContext) =
         let body = getBody context
         Assert.Equal(johnDoeAsJson, body)
@@ -552,7 +551,7 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
 [<Theory>]
 [<MemberData("JsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/json" returns JSON object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) false (StringValues("application/xml; q=0.9, application/json")) 
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) false (StringValues("application/xml; q=0.9, application/json"))
     let testChecks (context : HttpContext) =
         Assert.Equal(config.StatusCode, context.Response.StatusCode)
         if context.Response.StatusCode = 200 then
@@ -661,7 +660,7 @@ let HtmlReturningAcceptHeaderCases =
 [<MemberData("HtmlReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` (config : NegotiationConfigWithExpectedResult) =
     let ctx = getNegotiationTestHttpContext config.NegotiationConfig None false (StringValues("text/html"))
-    
+
     let expected = "text/html is unacceptable by the server."
     let testChecks (context : HttpContext) =
         Assert.Equal(config.StatusCode, context.Response.StatusCode)
