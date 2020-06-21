@@ -24,13 +24,11 @@ jobs:
       run: dotnet build --configuration Release --no-restore src/Giraffe/Giraffe.fsproj
     - name: Test
       run: dotnet test --configuration Release tests/Giraffe.Tests/Giraffe.Tests.fsproj
-    - name: Pack on Unix
-      if: matrix.os != 'windows-latest'
+    - name: Pack
+      if: matrix.os == 'ubuntu-latest'
       run: dotnet pack --configuration Release --no-restore --verbosity normal --include-symbols --include-source -p:PackageVersion=$GITHUB_RUN_ID src/Giraffe/Giraffe.fsproj
-    - name: Pack on Windows
-      if: matrix.os == 'windows-latest'
-      run: dotnet pack --configuration Release --no-restore --verbosity normal --include-symbols --include-source -p:PackageVersion=%GITHUB_RUN_ID% src/Giraffe/Giraffe.fsproj
     - name: Upload Artifact
+      if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-artifact@v2
       with:
         name: nupkg
