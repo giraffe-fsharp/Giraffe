@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+## 5.0.0-alpha-002
+
+- Swapped Markdown docs for XML docs for all functions.
+- Improved endpoint routing by deferring the creation of `RequestDelegate` functions.
+- Added dependency to new `Giraffe.ViewEngine` package and re-introduced the `htmlView` and `WriteHtmlViewAsync` functions into Giraffe.
+- Added support for complex model binding (see [#416](https://github.com/giraffe-fsharp/Giraffe/issues/416))
+
 ## 5.0.0-alpha-001
 
 - Only supported target framework is .NET Core 3.1 (in preparation for .NET 5)
