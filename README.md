@@ -8,7 +8,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 [![NuGet Info](https://buildstats.info/nuget/Giraffe?includePreReleases=true)](https://www.nuget.org/packages/Giraffe/)
 
-### Windows and Linux Builds
+### Linux, macOS and Windows Build Status
 
 ![.NET Core](https://github.com/giraffe-fsharp/Giraffe/workflows/.NET%20Core/badge.svg?branch=develop)
 
