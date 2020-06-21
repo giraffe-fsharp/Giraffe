@@ -10,9 +10,9 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 ### Windows and Linux Builds
 
-[![Build status](https://ci.appveyor.com/api/projects/status/bcst827ht2tcuhwo/branch/develop?svg=true)](https://ci.appveyor.com/project/dustinmoris/giraffe/branch/develop)
+![.NET Core](https://github.com/giraffe-fsharp/Giraffe/workflows/.NET%20Core/badge.svg?branch=develop)
 
-[![Windows Build history](https://buildstats.info/appveyor/chart/dustinmoris/giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/giraffe/history?branch=develop)
+[![Windows Build history](https://buildstats.info/github/chart/giraffe-fsharp/giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://github.com/giraffe-fsharp/Giraffe/actions?query=branch%3Adevelop++)
 
 
 ## Table of contents
