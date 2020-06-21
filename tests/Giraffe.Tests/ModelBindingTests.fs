@@ -100,6 +100,12 @@ type QueryModel =
             (this.Sex.ToString())
             (formatNicknames())
 
+[<CLIMutable>]
+type CompositeModel = {
+    FirstChild: Child
+    SecondChild: Child option
+}
+
 // ---------------------------------
 // ModelParser.tryParse Tests
 // ---------------------------------
@@ -666,6 +672,40 @@ let ``ModelParser.parse with complete model data but wrong data`` () =
     Assert.Equal(expected.BirthDate, DateTime.MinValue)
     Assert.Equal(expected.Nicknames, result.Nicknames)
     Assert.Equal<Child[]>(expected.Children, result.Children)
+
+[<Fact>]
+let ``ModelParser.parse with composite model and SecondChild missing data`` () =
+    let modelData =
+        dict [
+            "FirstChild.Name"  , StringValues "FirstName"
+            "FirstChild.Age"   , StringValues "2"
+        ]
+    let expected =
+        {
+            FirstChild = { Name = "FirstName"; Age = 2}
+            SecondChild = None
+        }
+    let culture = None
+    let result = ModelParser.parse<CompositeModel> culture modelData
+    Assert.Equal(expected, result)
+
+[<Fact>]
+let ``ModelParser.parse with complete composite model data`` () =
+    let modelData =
+        dict [
+            "FirstChild.Name"  , StringValues "FirstName"
+            "FirstChild.Age"   , StringValues "2"
+            "SecondChild.Name" , StringValues "SecondName"
+            "SecondChild.Age"  , StringValues "10"
+        ]
+    let expected =
+        {
+            FirstChild = { Name = "FirstName"; Age = 2}
+            SecondChild = Some { Name = "SecondName"; Age = 10}
+        }
+    let culture = None
+    let result = ModelParser.parse<CompositeModel> culture modelData
+    Assert.Equal(expected, result)
 
 // ---------------------------------
 // TryBindQueryString Tests
