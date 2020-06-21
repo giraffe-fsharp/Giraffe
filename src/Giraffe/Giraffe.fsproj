@@ -54,6 +54,7 @@
     <PackageReference Include="TaskBuilder.fs" Version="2.1.*" />
     <PackageReference Include="System.Text.Json" Version="4.7.*" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.*" PrivateAssets="All" />
+    <PackageReference Include="Giraffe.ViewEngine" Version="1.0.*" />
   </ItemGroup>
 
   <ItemGroup>

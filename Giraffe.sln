@@ -3,29 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_misc", "_misc", "{CE10552A-F0F8-4C51-9CCF-4B0F160351E8}"
-	ProjectSection(SolutionItems) = preProject
-		giraffe-64x64.png = giraffe-64x64.png
-		giraffe.png = giraffe.png
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_docs", "_docs", "{39555F35-F514-4521-A3CC-1CFF95ED581E}"
-	ProjectSection(SolutionItems) = preProject
-		DOCUMENTATION.md = DOCUMENTATION.md
-		LICENSE = LICENSE
-		README.md = README.md
-		RELEASE_NOTES.md = RELEASE_NOTES.md
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_build", "_build", "{8F5B7963-8206-47B1-AD19-900229E2FBF5}"
-	ProjectSection(SolutionItems) = preProject
-		appveyor.yml = appveyor.yml
-		build.ps1 = build.ps1
-		build.sh = build.sh
-		global.json = global.json
-		NuGet.config = NuGet.config
-	EndProjectSection
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{5FC3763D-0893-4C44-81EC-84484527D23C}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Giraffe", "src\Giraffe\Giraffe.fsproj", "{2B9A54E8-005B-40B3-A734-ED630504E522}"
@@ -39,6 +16,21 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EndpointRoutingApp", "EndpointRoutingApp", "{B9B26DDC-608C-42FE-9AB9-6CF0EE4920CD}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "EndpointRoutingApp", "samples\EndpointRoutingApp\EndpointRoutingApp\EndpointRoutingApp.fsproj", "{0E15F922-7A44-4116-9DAB-FAEB94392FEC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_root", "_root", "{FADD8661-7ADD-42BA-B3BF-F8C8DB70BE00}"
+ProjectSection(SolutionItems) = preProject
+	SECURITY.md = SECURITY.md
+	RELEASE_NOTES.md = RELEASE_NOTES.md
+	README.md = README.md
+	NuGet.config = NuGet.config
+	LICENSE = LICENSE
+	appveyor.yml = appveyor.yml
+	giraffe.png = giraffe.png
+	build.ps1 = build.ps1
+	CODE_OF_CONDUCT.md = CODE_OF_CONDUCT.md
+	DOCUMENTATION.md = DOCUMENTATION.md
+	giraffe-64x64.png = giraffe-64x64.png
+EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
