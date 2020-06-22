@@ -1,0 +1,89 @@
+name: .NET Core
+on:
+  push:
+  pull_request:
+  release:
+    types:
+      - published
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.301
+    - name: Restore
+      run: dotnet restore src/Giraffe/Giraffe.fsproj
+    - name: Build
+      run: dotnet build --configuration Release --no-restore src/Giraffe/Giraffe.fsproj
+    - name: Test
+      run: dotnet test --configuration Release tests/Giraffe.Tests/Giraffe.Tests.fsproj
+    - name: Pack
+      if: matrix.os == 'ubuntu-latest'
+      run: dotnet pack --configuration Release --no-restore --verbosity normal --include-symbols --include-source -p:PackageVersion=$GITHUB_RUN_ID src/Giraffe/Giraffe.fsproj
+    - name: Upload Artifact
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v2
+      with:
+        name: nupkg
+        path: ./src/Giraffe/bin/Release/*.nupkg
+
+  prerelease:
+    needs: build
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_SOURCE: https://nuget.pkg.github.com/giraffe-fsharp/
+      GITHUB_USER: dustinmoris
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v1
+        with:
+          name: nupkg
+      - name: Push Pre-Release NuGet
+        run: |
+          for f in ./nupkg/*.nupkg
+          do
+            curl -vX PUT -u "$GITHUB_USER:$GITHUB_TOKEN" -F package=@$f $GITHUB_SOURCE
+          done
+        shell: bash
+
+  deploy:
+    needs: build
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    env:
+      NUGET_KEY: ${{ secrets.NUGET_KEY }}
+      GITHUB_SOURCE: https://nuget.pkg.github.com/giraffe-fsharp/
+      GITHUB_USER: dustinmoris
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.301
+      - name: Create Release NuGet package
+        run: |
+          arrTag=(${GITHUB_REF//\// })
+          VERSION="${arrTag[2]}"
+          echo Version: $VERSION
+          VERSION="${VERSION//v}"
+          echo Clean Version: $VERSION
+          dotnet pack --configuration Release --verbosity normal --include-symbols --include-source -p:PackageVersion=$VERSION -o nupkg src/Giraffe/Giraffe.fsproj
+      - name: Push to GitHub Feed
+        run: |
+          for f in ./nupkg/*.nupkg
+          do
+            curl -vX PUT -u "$GITHUB_USER:$GITHUB_TOKEN" -F package=@$f $GITHUB_SOURCE
+          done
+        shell: bash
+      - name: Push to NuGet Feed
+        run: dotnet nuget push nupkg/*.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key $NUGET_KEY

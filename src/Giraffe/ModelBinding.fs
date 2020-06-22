@@ -19,40 +19,50 @@ open System.Text.RegularExpressions
 // Model parsing functions
 // ---------------------------
 
+type private Type with
+    member this.IsGeneric() =
+        this.GetTypeInfo().IsGenericType
+
+    member this.IsFSharpList() =
+        match this.IsGeneric() with
+        | false -> false
+        | true  ->
+            let t = this.GetGenericTypeDefinition()
+            t = typedefof<Microsoft.FSharp.Collections.List<_>>
+
+    member this.IsFSharpOption() =
+        match this.IsGeneric() with
+        | false -> false
+        | true  ->
+            let t = this.GetGenericTypeDefinition()
+            t = typedefof<Microsoft.FSharp.Core.Option<_>>
+
+    member this.GetGenericType() =
+        this.GetGenericArguments().[0]
+
+    member this.MakeNoneCase() =
+        let cases = FSharpType.GetUnionCases this
+        FSharpValue.MakeUnion(cases.[0], [||])
+
+    member this.MakeSomeCase(value : obj) =
+        let cases = FSharpType.GetUnionCases this
+        FSharpValue.MakeUnion(cases.[1], [| value |])
+
 /// <summary>
 /// Module for parsing models from a generic data set.
 /// </summary>
 module ModelParser =
 
-    type private FSharpOption<'T> = Microsoft.FSharp.Core.Option<'T>
-    type private FSharpList<'T>   = Microsoft.FSharp.Collections.List<'T>
-
-    /// Returns a value (the None union case) if the type is `Option<'T>` otherwise `None`.
-    let private getValueForMissingProperty (t : Type) =
-        let isGeneric = t.GetTypeInfo().IsGenericType
-        if not isGeneric then None
-        else
-            let genericTypeDef = t.GetGenericTypeDefinition()
-            let isOption = if isGeneric then genericTypeDef = typedefof<FSharpOption<_>> else false
-            if not isOption then None
-            else
-                let cases = FSharpType.GetUnionCases t
-                FSharpValue.MakeUnion(cases.[0], [||])
-                |> Some
-
     /// Returns either a successfully parsed object `'T` or a `string` error message containing the parsing error.
     let rec private parseValue (t : Type) (rawValues : StringValues) (culture : CultureInfo) : Result<obj, string> =
-        // First load up some more type information,
-        // whether the type is generic, a list or an option type.
 
-        let isGeneric = t.GetTypeInfo().IsGenericType
+        // First establish some basic type information:
+        let isGeneric = t.IsGeneric()
         let isList, isOption, genArgType =
-            if not isGeneric then false, false, null
-            else
-                let genericTypeDef = t.GetGenericTypeDefinition()
-                genericTypeDef = typedefof<FSharpList<_>>,
-                genericTypeDef = typedefof<FSharpOption<_>>,
-                t.GetGenericArguments().[0]
+            match isGeneric with
+            | true  -> t.IsFSharpList(), t.IsFSharpOption(), t.GetGenericType()
+            | false -> false, false, null
+
         if t.IsArray then
             let arrArgType  = t.GetElementType()
             let arrLen      = rawValues.Count
@@ -103,12 +113,12 @@ module ModelParser =
             match result with
             | Error err -> Error err
             | Ok value  ->
-                if not isOption then Ok value
-                else
-                    let cases = FSharpType.GetUnionCases t
-                    if isNull value
-                    then FSharpValue.MakeUnion(cases.[0], [||])
-                    else FSharpValue.MakeUnion(cases.[1], [| value |])
+                match isOption with
+                | false -> Ok value
+                | true  ->
+                    match isNull value with
+                    | true  -> t.MakeNoneCase()
+                    | false -> t.MakeSomeCase(value)
                     |> Ok
         else if FSharpType.IsUnion t then
             let unionName = rawValues.ToString()
@@ -174,9 +184,12 @@ module ModelParser =
                                 match getValueForArrayOfGenericType cultureInfo data strict prop with
                                 | Some v -> Ok v
                                 | None ->
-                                    match getValueForMissingProperty prop.PropertyType with
+                                    match getValueForComplexType cultureInfo data strict prop with
                                     | Some v -> Ok v
-                                    | None   -> Error (sprintf "Missing value for required property %s." prop.Name)
+                                    | None   ->
+                                        match getValueForMissingProperty prop.PropertyType with
+                                        | Some v -> Ok v
+                                        | None   -> Error (sprintf "Missing value for required property %s." prop.Name)
                             | true , rawValue -> parseValue prop.PropertyType rawValue culture
 
                         // Check if a value was able to get successfully parsed.
@@ -197,6 +210,57 @@ module ModelParser =
         match strict, error with
         | true, Some err -> Error err
         | _   , _        -> Ok model
+
+    /// Returns a value (the None union case) if the type is `Option<'T>` otherwise `None`.
+    and getValueForMissingProperty (t : Type) =
+        match t.IsFSharpOption() with
+        | false -> None
+        | true  -> Some (t.MakeNoneCase())
+
+    and getValueForComplexType (cultureInfo : CultureInfo option)
+                              (data        : IDictionary<string, StringValues>)
+                              (strict      : bool)
+                              (prop        : PropertyInfo)
+                              : (obj option) =
+        let lowerCasedPropName    = prop.Name.ToLowerInvariant()
+        let isMaybeComplexType    = data.Keys |> Seq.exists (fun k -> k.StartsWith(lowerCasedPropName + "."))
+        let isRecordType          = FSharpType.IsRecord prop.PropertyType
+        let isGenericType         = prop.PropertyType.IsGenericType
+        let tryResolveComplexType = isMaybeComplexType && (isRecordType || isGenericType)
+
+        if tryResolveComplexType then
+            let pattern = lowerCasedPropName |> Regex.Escape |> sprintf @"%s\.(\w+)"
+
+            let dictData =
+                data
+                |> Seq.filter (fun item -> Regex.IsMatch(item.Key, pattern))
+                |> Seq.map (fun item ->
+                    let matchedData = Regex.Match(item.Key, pattern)
+                    let key = matchedData.Groups.[1].Value
+                    let value = item.Value
+                    key, value
+                )
+                |> Seq.fold(fun (state : Map<string, StringValues>) (key, value) ->
+                    state.Add(key, value)
+                ) Map.empty
+
+            match prop.PropertyType.IsFSharpOption() with
+            | false ->
+                let model = Activator.CreateInstance(prop.PropertyType)
+                let res = parseModel model cultureInfo dictData strict
+                match res with
+                | Ok o    -> o |> box |> Some
+                | Error _ -> None
+            | true  ->
+                let genericType = prop.PropertyType.GetGenericType()
+                let model = Activator.CreateInstance(genericType)
+                let res = parseModel model cultureInfo dictData strict
+                match res with
+                | Ok o    -> prop.PropertyType.MakeSomeCase(o) |> box |> Some
+                | Error _ -> None
+
+        else
+            None
 
     and getValueForArrayOfGenericType (cultureInfo : CultureInfo option)
                                       (data        : IDictionary<string, StringValues>)
@@ -255,7 +319,7 @@ module ModelParser =
             arrayOfObjects |> box |> Some
         else
             None
-    
+
     /// <summary>
     /// Tries to create an instance of type 'T from a given set of data.
     /// It will try to match each property of 'T with a key from the data dictionary and parse the associated value to the value of 'T's property.
@@ -290,7 +354,7 @@ module ModelParser =
 // HttpContext extensions
 // ---------------------------
 
-type HttpContext with   
+type HttpContext with
     /// <summary>
     /// Reads the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously and returns it as a <see cref="System.String"/> value.
     /// </summary>
@@ -300,7 +364,7 @@ type HttpContext with
             use reader = new StreamReader(this.Request.Body, Encoding.UTF8)
             return! reader.ReadToEndAsync()
         }
-    
+
     /// <summary>
     /// Uses the <see cref="IJsonSerializer"/> to deserializes the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously into an object of type 'T.
     /// </summary>
@@ -311,7 +375,7 @@ type HttpContext with
             let serializer = this.GetJsonSerializer()
             return! serializer.DeserializeAsync<'T> this.Request.Body
         }
-    
+
     /// <summary>
     /// Uses the <see cref="IXmlSerializer"/> to deserializes the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously into an object of type 'T.
     /// </summary>
@@ -323,7 +387,7 @@ type HttpContext with
             let! body = this.ReadBodyFromRequestAsync()
             return serializer.Deserialize<'T> body
         }
-    
+
     /// <summary>
     /// Parses all input elements from an HTML form into an object of type 'T.
     /// </summary>
@@ -339,7 +403,7 @@ type HttpContext with
                 |> dict
                 |> ModelParser.parse<'T> cultureInfo
         }
-    
+
     /// <summary>
     /// Tries to parse all input elements from an HTML form into an object of type 'T.
     /// </summary>
@@ -355,7 +419,7 @@ type HttpContext with
                 |> dict
                 |> ModelParser.tryParse<'T> cultureInfo
         }
-   
+
     /// <summary>
     /// Parses all parameters of a request's query string into an object of type 'T.
     /// </summary>
@@ -367,7 +431,7 @@ type HttpContext with
         |> Seq.map (fun i -> i.Key, i.Value)
         |> dict
         |> ModelParser.parse<'T> cultureInfo
-    
+
     /// <summary>
     /// Tries to parse all parameters of a request's query string into an object of type 'T.
     /// </summary>
@@ -379,7 +443,7 @@ type HttpContext with
         |> Seq.map (fun i -> i.Key, i.Value)
         |> dict
         |> ModelParser.tryParse<'T> cultureInfo
-    
+
     /// <summary>
     /// Parses the request body into an object of type 'T based on the request's Content-Type header.
     /// </summary>

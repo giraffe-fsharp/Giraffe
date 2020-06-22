@@ -8,12 +8,11 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 [![NuGet Info](https://buildstats.info/nuget/Giraffe?includePreReleases=true)](https://www.nuget.org/packages/Giraffe/)
 
-### Windows and Linux Builds
+### Linux, macOS and Windows Build Status
 
-[![Build status](https://ci.appveyor.com/api/projects/status/bcst827ht2tcuhwo/branch/develop?svg=true)](https://ci.appveyor.com/project/dustinmoris/giraffe/branch/develop)
+![.NET Core](https://github.com/giraffe-fsharp/Giraffe/workflows/.NET%20Core/badge.svg?branch=develop)
 
-[![Windows Build history](https://buildstats.info/appveyor/chart/dustinmoris/giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/dustinmoris/giraffe/history?branch=develop)
-
+[![Windows Build history](https://buildstats.info/github/chart/giraffe-fsharp/giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://github.com/giraffe-fsharp/Giraffe/actions?query=branch%3Adevelop++)
 
 ## Table of contents
 
@@ -192,50 +191,23 @@ Giraffe is also featured in [Jimmy Byrd](https://github.com/TheAngryByrd)'s [dot
 
 ## Building and developing
 
-Giraffe is built with the latest [.NET Core SDK](https://www.microsoft.com/net/download/core).
+Giraffe is built with the latest [.NET Core SDK](https://www.microsoft.com/net/download/core), which works on Windows, macOS and Linux out of the box.
 
-You can either install [Visual Studio 2017](https://www.visualstudio.com/vs/) which comes with the latest SDK or manually download and install the [.NET SDK 2.1](https://www.microsoft.com/net/download/core).
+You can either install [Microsoft Visual Studio](https://www.visualstudio.com/vs/) or [JetBrains Rider](https://www.jetbrains.com/rider/) which both come with the latest .NET Core SDK or manually download and install the [.NET Core SDK](https://www.microsoft.com/net/download/core) and use the .NET CLI or [Visual Studio Code]() with the [Ionide]() extension to build and develop Giraffe.
 
-After installation you should be able to run the `./build.ps1` script to successfully build, test and package the library.
+The easiest way to build Giraffe is via the .NET CLI.
 
-The build script supports the following flags:
+Run `dotnet build` from the root folder of the project to restore and build all projects in the solution:
 
-- `-Release` will build Giraffe with the `Release` configuration
-- `-ExcludeTests` will skip the test project. This is useful to quickly validate any build errors.
-- `-Pack` will create a NuGet package for Giraffe.
-- `-ClearOnly` will delete all old build artifacts and not build anything itself.
-
-Examples:
-
-Only build the Giraffe project in `Debug` mode:
 ```
-PS > ./build.ps1
+dotnet build
 ```
 
-Build the Giraffe project in `Release` mode:
+Running `dotnet test` from the root of the project will execute all test projects referenced in the solution:
+
 ```
-PS > ./build.ps1 -Release
-```
-
-Build the Giraffe project in `Debug` mode and skip running the tests project:
-```
-PS > ./build.ps1 -ExcludeTests
-```
-
-Build and test all projects, use the `Release` build configuration and create all NuGet packages:
-```
-PS > ./build.ps1 -Release -Pack
-```
-
-### Building on Linux or macOS
-
-In order to successfully run the build script on Linux or macOS you will have to [install PowerShell for Linux or Mac](https://github.com/PowerShell/PowerShell#get-powershell).
-
-Additionally you will also have to [install the latest version of Mono](http://www.mono-project.com/download/) in order to target full framework monikers during the build steps.
-
-### Development environment
-
-Currently the best way to work with F# on .NET Core is to use [Visual Studio Code](https://code.visualstudio.com/) with the [Ionide](http://ionide.io/) extension. Intellisense and debugging is supported with the latest versions of both.
+dotnet test
+``` 
 
 ## Contributing
 
@@ -296,17 +268,13 @@ You can file an [issue on GitHub](https://github.com/giraffe-fsharp/Giraffe/issu
 
 ## Nightly builds and NuGet feed
 
-All official Giraffe packages are published to the official and public NuGet feed.
+All official release packages are published to the official and public NuGet feed.
 
-Unofficial builds (such as pre-release builds from the `develop` branch and pull requests) produce unofficial pre-release NuGet packages which can be pulled from the project's public NuGet feed on AppVeyor:
+Nightly builds (builds from the `develop` branch) produce unofficial pre-release packages which can be pulled from the [project's NuGet feed on GitHub](https://github.com/orgs/giraffe-fsharp/packages).
 
-```
-https://ci.appveyor.com/nuget/giraffe
-```
+These packages are being tagged with the Workflow's run number as the package version.
 
-If you add this source to your NuGet CLI or project settings then you can pull unofficial NuGet packages for quick feature testing or urgent hot fixes.
-
-**Please be aware that unofficial builds have not gone through the scrutiny of official releases and their usage is on your own risk.**
+All other builds, such as builds triggered by pull requests produce a NuGet package which can be downloaded as an artifact from the individual GitHub action.
 
 ## Blog posts
 

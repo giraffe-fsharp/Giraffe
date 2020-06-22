@@ -33,7 +33,7 @@ module Json =
         abstract member DeserializeAsync<'T> : Stream -> Task<'T>
 
     /// <summary>
-    /// <see cref="Utf8JsonSerializer" /> is an alternative serializer with 
+    /// <see cref="Utf8JsonSerializer" /> is an alternative serializer with
     /// great performance and supports true chunked transfer encoding.
     ///
     /// It uses Utf8Json as the underlying JSON serializer to (de-)serialize
@@ -72,7 +72,7 @@ module Json =
     /// </summary>
     type NewtonsoftJsonSerializer (settings : JsonSerializerSettings) =
         let serializer = JsonSerializer.Create settings
-        let Utf8EncodingWithoutBom = new UTF8Encoding(false)
+        let Utf8EncodingWithoutBom = UTF8Encoding(false)
 
         static member DefaultSettings =
             JsonSerializerSettings(
