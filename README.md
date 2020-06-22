@@ -14,7 +14,6 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 [![Windows Build history](https://buildstats.info/github/chart/giraffe-fsharp/giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://github.com/giraffe-fsharp/Giraffe/actions?query=branch%3Adevelop++)
 
-
 ## Table of contents
 
 - [About](#about)
