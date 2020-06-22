@@ -36,7 +36,7 @@ module Json =
         abstract member TryDeserializeAsync<'T> : Stream -> Task<Result<'T, string>>
 
     /// <summary>
-    /// <see cref="Utf8JsonSerializer" /> is an alternative serializer with 
+    /// <see cref="Utf8JsonSerializer" /> is an alternative serializer with
     /// great performance and supports true chunked transfer encoding.
     ///
     /// It uses Utf8Json as the underlying JSON serializer to (de-)serialize
