@@ -1,6 +1,6 @@
-# Giraffe
-
 ![Giraffe](https://raw.githubusercontent.com/giraffe-fsharp/Giraffe/develop/giraffe.png)
+
+# Giraffe
 
 A functional ASP.NET Core micro web framework for building rich web applications.
 
