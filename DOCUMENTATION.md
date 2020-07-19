@@ -41,6 +41,7 @@ An in depth functional reference to all of Giraffe's default features.
 - [Serialization](#serialization)
     - [JSON](#json)
     - [XML](#xml)
+- [Testing](#testing)
 - [Miscellaneous](#miscellaneous)
     - [Short GUIDs and Short IDs](#short-guids-and-short-ids)
     - [Common Helper Functions](#common-helper-functions)
@@ -3122,6 +3123,55 @@ let customHandler (dataObj : obj) : HttpHandler =
         let serializer = ctx.GetXmlSerializer()
         let xml = serializer.Serialize dataObj
         // ... do more...
+```
+
+## Testing
+
+Testing a Giraffe application builds on [ASP.NET Core testing](https://docs.microsoft.com/en-us/aspnet/core/test/middleware?view=aspnetcore-3.1).
+
+### Necessary imports:
+```fsharp
+open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.TestHost
+open Microsoft.AspNetCore.Hosting
+```
+
+### Build a test host:
+```fsharp
+let getTestHost =
+    WebHostBuilder()
+        .UseTestServer()
+        .Configure(Action<IApplicationBuilder> [YourApp].configureApp)
+        .ConfigureServices([YourApp].configureServices)
+        .ConfigureLogging([YourApp].configureLogging)
+        .UseUrls([YourUrl])
+```
+
+### Build a test server:
+```fsharp
+let getTestServer =
+    let testHost = getTestHost
+    new TestServer(testHost)
+```
+
+### Build a test client:
+```fsharp
+let getTestClient =
+    let testServer = getTestServer
+    testServer.CreateClient()
+```
+
+### Example (using Xunit):
+```fsharp
+open System.Net // Import needed for the code below:
+
+[<Fact>]
+let ``Hello world endpoint says hello`` () =
+    let testClient = getTestClient
+    let response = testClient.GetAsync("/hello-world").Result
+    let content = response.Content.ReadAsStringAsync().Result
+    Assert.Equal(response.StatusCode, HttpStatusCode.OK)
+    Assert.Equal(content, "hello")
 ```
 
 ## Miscellaneous
