@@ -3138,7 +3138,7 @@ open Microsoft.AspNetCore.Hosting
 
 ### Build a test host:
 ```fsharp
-let getTestHost =
+let getTestHost() =
     WebHostBuilder()
         .UseTestServer()
         .Configure(Action<IApplicationBuilder> [YourApp].configureApp)
@@ -3149,15 +3149,15 @@ let getTestHost =
 
 ### Build a test server:
 ```fsharp
-let getTestServer =
-    let testHost = getTestHost
+let getTestServer() =
+    let testHost = getTestHost()
     new TestServer(testHost)
 ```
 
 ### Build a test client:
 ```fsharp
-let getTestClient =
-    let testServer = getTestServer
+let getTestClient() =
+    let testServer = getTestServer()
     testServer.CreateClient()
 ```
 
