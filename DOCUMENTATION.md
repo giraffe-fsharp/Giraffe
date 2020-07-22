@@ -3167,7 +3167,7 @@ open System.Net // Import needed for the code below:
 
 [<Fact>]
 let ``Hello world endpoint says hello`` () =
-    use testClient = getTestClient
+    let testClient = getTestClient
     let response = testClient.GetAsync("/hello-world").Result
     let content = response.Content.ReadAsStringAsync().Result
     Assert.Equal(response.StatusCode, HttpStatusCode.OK)
