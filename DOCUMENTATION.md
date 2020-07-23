@@ -3131,9 +3131,11 @@ Testing a Giraffe application builds on [ASP.NET Core testing](https://docs.micr
 
 ### Necessary imports:
 ```fsharp
+open FSharp.Control.Tasks
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.TestHost
 open Microsoft.AspNetCore.Hosting
+open System.Net.Http
 ```
 
 ### Build a test host:
@@ -3147,31 +3149,36 @@ let getTestHost() =
         .UseUrls([YourUrl])
 ```
 
-### Build a test server:
+### Create a flexible function to handle requests:
 ```fsharp
-let getTestServer() =
-    let testHost = getTestHost()
-    new TestServer(testHost)
+let testRequest (request : HttpRequestMessage) =
+    let resp = task {
+        use server = new TestServer(getTestHost())
+        use client = server.CreateClient()
+        let! response = request |> client.SendAsync
+        return response
+    }
+    resp.Result
 ```
 
-### Build a test client:
-```fsharp
-let getTestClient() =
-    let testServer = getTestServer()
-    testServer.CreateClient()
-```
-
-### Example (using Xunit):
+### Examples (using Xunit):
 ```fsharp
 open System.Net // Import needed for the code below:
 
 [<Fact>]
 let ``Hello world endpoint says hello`` () =
-    let testClient = getTestClient
-    let response = testClient.GetAsync("/hello-world").Result
+    let response = testRequest (new HttpRequestMessage(HttpMethod.Get, "/hello-world"))
     let content = response.Content.ReadAsStringAsync().Result
     Assert.Equal(response.StatusCode, HttpStatusCode.OK)
     Assert.Equal(content, "hello")
+
+[<Fact>]
+let ``Example HTTP Post`` () =
+    let request = new HttpRequestMessage(HttpMethod.Post, "/hello-world")
+    request.Content <- "{\"JsonField\":\"JsonValue\"}"
+    let response = testRequest request
+    Assert.Equal(response.StatusCode, HttpStatusCode.OK)
+    // Check the json content
 ```
 
 ## Miscellaneous
