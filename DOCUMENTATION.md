@@ -721,7 +721,7 @@ You can also set an HTTP header via the `setHttpHeader` http handler:
 
 ```fsharp
 let notFoundHandler : HttpHandler =
-    setHttpHeader "X-CustomHeader"
+    setHttpHeader "X-CustomHeader" "Some value"
     >=> RequestErrors.NOT_FOUND "Not Found"
 
 let webApp =
