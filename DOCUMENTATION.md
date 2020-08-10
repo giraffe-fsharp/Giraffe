@@ -172,7 +172,7 @@ The `task {}` CE is an independent project maintained by [Robert Peele](https://
 If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks.ContextInsensitive` namespace to resolve any type inference issues:
 
 ```fsharp
-open FSharp.Control.Tasks.V2.ContextInsensitive
+open FSharp.Control.Tasks.ContextInsensitive
 ```
 
 ### Ways of creating a new HttpHandler
