@@ -70,6 +70,17 @@ let responseCaching (directive       : CacheDirective)
 let noResponseCaching : HttpHandler = responseCaching NoCache None None
 
 /// <summary>
+/// Enables response caching for clients only.
+///
+/// The <see cref="responseCaching"/> http handler will set the relevant HTTP response headers in order to enable response caching on the client only.
+/// </summary>
+/// <param name="seconds">Specifies the duration (in seconds) for which the response may be cached.</param>
+/// <param name="vary">Optionally specify which HTTP headers have to match in order to return a cached response (e.g. Accept and/or Accept-Encoding).</param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
+let privateResponseCaching (seconds : int) (vary : string option) : HttpHandler =
+    responseCaching (Private (TimeSpan.FromSeconds(float seconds))) vary None
+
+/// <summary>
 /// Enables response caching for clients and proxy servers.
 /// This http handler integrates with ASP.NET Core's response caching middleware.
 ///
@@ -78,17 +89,6 @@ let noResponseCaching : HttpHandler = responseCaching NoCache None None
 /// </summary>
 /// <param name="seconds">Specifies the duration (in seconds) for which the response may be cached.</param>
 /// <param name="vary">Optionally specify which HTTP headers have to match in order to return a cached response (e.g. `Accept` and/or `Accept-Encoding`).</param>
-/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-let privateResponseCaching (seconds : int) (vary : string option) : HttpHandler =
-    responseCaching (Private (TimeSpan.FromSeconds(float seconds))) vary None
-
-/// <summary>
-/// Enables response caching for clients only.
-///
-/// The <see cref="responseCaching"/> http handler will set the relevant HTTP response headers in order to enable response caching on the client only.
-/// </summary>
-/// <param name="seconds">Specifies the duration (in seconds) for which the response may be cached.</param>
-/// <param name="vary">Optionally specify which HTTP headers have to match in order to return a cached response (e.g. Accept and/or Accept-Encoding).</param>
 /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
 let publicResponseCaching (seconds : int) (vary : string option) : HttpHandler =
     responseCaching (Public (TimeSpan.FromSeconds(float seconds))) vary None
