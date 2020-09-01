@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## 5.0.0-alpha-003
+
+- Enhanced Endpoint routing with a metadata list (see [PR #437](https://github.com/giraffe-fsharp/Giraffe/pull/437))
+
 ## 5.0.0-alpha-002
 
 - Swapped Markdown docs for XML docs for all functions.
