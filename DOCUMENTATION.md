@@ -169,7 +169,7 @@ The `task {}` CE is an independent project maintained by [Robert Peele](https://
 
 **IMPORTANT NOTICE**
 
-If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks.ContextInsensitive` namespace to resolve any type inference issues:
+If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks.V2.ContextInsensitive` namespace to resolve any type inference issues:
 
 ```fsharp
 open FSharp.Control.Tasks.V2.ContextInsensitive
@@ -721,7 +721,7 @@ You can also set an HTTP header via the `setHttpHeader` http handler:
 
 ```fsharp
 let notFoundHandler : HttpHandler =
-    setHttpHeader "X-CustomHeader"
+    setHttpHeader "X-CustomHeader" "Some value"
     >=> RequestErrors.NOT_FOUND "Not Found"
 
 let webApp =
