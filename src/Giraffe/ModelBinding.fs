@@ -366,6 +366,25 @@ type HttpContext with
         }
 
     /// <summary>
+    /// Reads the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously and returns it as a <see cref="System.String"/> value.
+    /// This method buffers the response and makes subsequent reads possible.
+    /// </summary>
+    /// <returns>Returns the contents of the request body as a <see cref="System.Threading.Tasks.Task{System.String}"/>.</returns>
+    member this.ReadBodyBufferedFromRequestAsync() =
+        task {
+            this.Request.EnableBuffering()
+            use reader =
+                new StreamReader(
+                    this.Request.Body,
+                    encoding = Encoding.UTF8,
+                    detectEncodingFromByteOrderMarks = false,
+                    leaveOpen = true)
+            let! body = reader.ReadToEndAsync()
+            this.Request.Body.Position <- 0L
+            return body
+        }
+
+    /// <summary>
     /// Uses the <see cref="IJsonSerializer"/> to deserializes the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously into an object of type 'T.
     /// </summary>
     /// <typeparam name="'T"></typeparam>
