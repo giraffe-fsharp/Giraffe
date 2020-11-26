@@ -47,6 +47,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [Common Helper Functions](#common-helper-functions)
     - [Computation Expressions](#computation-expressions)
 - [Additional Features](#additional-features)
+    - [Endpoint Routing](#endpoint-routing)
     - [TokenRouter](#tokenrouter)
     - [Razor](#razor)
     - [DotLiquid](#dotliquid)
@@ -170,7 +171,7 @@ The `task {}` CE is an independent project maintained by [Robert Peele](https://
 
 **IMPORTANT NOTICE**
 
-If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks.ContextInsensitive` namespace to resolve any type inference issues:
+If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks.V2.ContextInsensitive` namespace to resolve any type inference issues:
 
 ```fsharp
 open FSharp.Control.Tasks.V2.ContextInsensitive
@@ -722,7 +723,7 @@ You can also set an HTTP header via the `setHttpHeader` http handler:
 
 ```fsharp
 let notFoundHandler : HttpHandler =
-    setHttpHeader "X-CustomHeader"
+    setHttpHeader "X-CustomHeader" "Some value"
     >=> RequestErrors.NOT_FOUND "Not Found"
 
 let webApp =
@@ -2960,7 +2961,7 @@ let configureServices (services : IServiceCollection) =
     // Optionally use `FSharp.SystemTextJson` (requires `FSharp.SystemTextJson` package reference)
     serializationOptions.Converters.Add(JsonFSharpConverter(JsonUnionEncoding.FSharpLuLike))
     // Now register SystemTextJsonSerializer
-    this.AddSingleton<IJsonSerializer>(SystemTextJsonSerializer(SystemTextJsonSerializer.DefaultOptions)) |> ignore
+    this.AddSingleton<IJsonSerializer>(SystemTextJsonSerializer(serializationOptions)) |> ignore
 ```
 
 
@@ -3316,6 +3317,105 @@ let someHttpHandler : HttpHandler =
 ## Additional Features
 
 There's more features available for Giraffe web applications through additional NuGet packages:
+
+### Endpoint Routing
+
+Starting with Giraffe 5.x we introduced a new module called `Giraffe.EndpointRouting`. The endpoint routing module implements an alternative router to Giraffe's default routing functions which integrates with [ASP.NET Core's endpoint routing APIs](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0).
+
+ Given the way how ASP.NET Core's Endpoint Routing works this module comes with several benefits (and unfortunately also some minor downsides) in comparison to Giraffe's default router. The main benefit of `Giraffe.EndpointRouting` is that it nicely integrates with the rest of ASP.NET Core and can benefit from everything which Endpoint Routing makes possible. It also means that any performance improvements made to the ASP.NET Core router will directly translate to Giraffe. The downsides are that several existing routing functions couldn't be ported to `Giraffe.EndpointRouting` and routes are case-insensitive by default. Whilst this can be a problem with some applications overall the limitations are minimal and the benefits should greatly outweigh the downsides in the long term. Endpoint Routing is definitely the new preferred option of routing in ASP.NET Core and will undoubtedly see a lot of investment and improvements by the ASP.NET team over the years.
+
+ At last it is possible to have the `Giraffe.EndpointRouting` module and Giraffe's default router work side by side, benefiting from Endpoint Routing where possible and keeping the default router elsewhere.
+
+ #### Endpoint Routing Basics
+
+ In order to make use of Giraffe's endpoint routing functions one has to open the required module first:
+
+ ```fsharp
+open Giraffe.EndpointRouting
+```
+
+Giraffe's HTTP handlers remain unchanged regardless if they are used from a typical Giraffe router or the `Giraffe.EndpointRouting` module. This makes porting to the `Giraffe.EndpointRouting` module tremendously easy:
+
+```fsharp
+let handler1 : HttpHandler =
+    fun (_ : HttpFunc) (ctx : HttpContext) ->
+        ctx.WriteTextAsync "Hello World"
+```
+
+Unlike Giraffe's default router (which really is just a big `HttpHandler` function often implemented with the help of the `choose` function) the endpoint router requires a flat list of `Endpoint` functions:
+
+```fsharp
+let endpoints =
+    [
+        GET => route "/" (text "Hello World")
+        GET => routef "/%s/%i" handler2
+        GET => routef "/%s/%s/%s/%i" handler3
+        subRoute "/sub" [
+            // Not specifying a http verb means it will listen to all verbs
+            route "/test" handler1
+        ]
+    ]
+```
+
+Then the `Endpoint list` must be initialised with ASP.NET Core's `EndpointMiddleware` instead of being passed into the `GiraffeMiddleware`:
+
+```fsharp
+let configureApp (appBuilder : IApplicationBuilder) =
+    appBuilder
+        .UseRouting()
+        .UseEndpoints(fun e -> e.MapGiraffeEndpoints(endpoints))
+    |> ignore
+```
+
+The main differences are:
+
+- Additionally to `HttpHandler` functions there is a new type called `Endpoint`
+- The router is a flat list of `Endpoint` functions
+- The `GET`, `POST`, `route`, etc. functions map a conventional `HttpHandler` to an `Endpoint` function (when the `Giraffe.EndpointRouting` module has been opened)
+- The final `Endpoint list` has to be passed into ASP.NET Core's `EndpointMiddleware` instead of using the `GiraffeMiddleware`
+
+The `MapGiraffeEndpoints` extension method translates those functions into the final `RequestDelegate` functions which the `EndpointMiddleware` relies on and therefore the `Giraffe.EndpointRouting` module doesn't add any extra overhead or runtime cost to ASP.NET Core's endpoint routing resolution.
+
+#### Endpoint Routing Functions
+
+The following routing functions are available as part of the `Giraffe.EndpointRouting` module:
+
+- `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`, `TRACE`, `CONNECT`
+- `route`
+- `routef`
+- `subRoute`
+
+The `route`, `routef` and `subRoute` handlers are all case-insensitive. Other handlers such as `routex`, `subRoutef` or `choose` are not supported by the `Giraffe.EndpointRouting` module.
+
+The `choose` handler is replaced by composing an `Endpoint list`.
+
+Other routing handlers couldn't be ported like for like, but the ASP.NET Core Endpoint Routing API allows for greater control and better insight into an endpoint by exposing useful helper functions.
+
+Using the `GetRouteData` extension method one can get access to route values and data tokens from within a handler:
+
+```fsharp
+open Microsoft.AspNetCore.Routing
+
+let myHandler (foo : int, bar : string) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+
+        let routeData = ctx.GetRouteData()
+        routeData.Values     // Values produced on the current path
+        routeData.DataTokens // Tokens produced on the current path
+
+        sprintf "Yada Yada %i %s" foo bar
+        |> ctx.WriteTextAsync
+```
+
+The `GetEndpoint` extension method returns the endpoint for the currently executed path and can be used to further explore the metadata and other data attached to this endpoint:
+
+```fsharp
+let myHandler (foo : int, bar : string) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let endpoint = ctx.GetEndpoint()
+```
+
+For more information about ASP.NET Core Endpoint Routing please refer to the [official documentation](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0).
 
 ### TokenRouter
 
