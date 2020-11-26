@@ -41,6 +41,7 @@ An in depth functional reference to all of Giraffe's default features.
 - [Serialization](#serialization)
     - [JSON](#json)
     - [XML](#xml)
+- [Testing](#testing)
 - [Miscellaneous](#miscellaneous)
     - [Short GUIDs and Short IDs](#short-guids-and-short-ids)
     - [Common Helper Functions](#common-helper-functions)
@@ -1047,6 +1048,10 @@ let webApp =
 In the above scenario it is not clear which one of the two http handlers a user want to be invoked when a request is made to `https://example.org/foo///`.
 
 If you want to learn more about `Regex` please check the [Regular Expression Language Reference](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference).
+
+#### routexp
+
+The `routexp` http handler is a combination of `routex` and `routef`. It resolves a route exactly like `routex`, but then passes the resolved Regex Groups as a `Seq<string>` parameter into the supplied handler function similar to how `routef` invokes the next handler in the pipeline.
 
 #### routeCix
 
@@ -3123,6 +3128,67 @@ let customHandler (dataObj : obj) : HttpHandler =
         let serializer = ctx.GetXmlSerializer()
         let xml = serializer.Serialize dataObj
         // ... do more...
+```
+
+## Testing
+
+Testing a Giraffe application follows the concept of [ASP.NET Core testing](https://docs.microsoft.com/en-us/aspnet/core/test/middleware?view=aspnetcore-3.1).
+
+### Necessary imports:
+
+```fsharp
+open FSharp.Control.Tasks
+open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.TestHost
+open Microsoft.AspNetCore.Hosting
+open System.Net.Http
+```
+
+### Build a test host:
+
+```fsharp
+let getTestHost() =
+    WebHostBuilder()
+        .UseTestServer()
+        .Configure(Action<IApplicationBuilder> [YourApp].configureApp)
+        .ConfigureServices([YourApp].configureServices)
+        .ConfigureLogging([YourApp].configureLogging)
+        .UseUrls([YourUrl])
+```
+
+### Create a helper function to issue test requests:
+
+```fsharp
+let testRequest (request : HttpRequestMessage) =
+    let resp = task {
+        use server = new TestServer(getTestHost())
+        use client = server.CreateClient()
+        let! response = request |> client.SendAsync
+        return response
+    }
+    resp.Result
+```
+
+### Examples (using Xunit):
+
+```fsharp
+// Import needed for the code below:
+open System.Net
+
+[<Fact>]
+let ``Hello world endpoint says hello`` () =
+    let response = testRequest (new HttpRequestMessage(HttpMethod.Get, "/hello-world"))
+    let content = response.Content.ReadAsStringAsync().Result
+    Assert.Equal(response.StatusCode, HttpStatusCode.OK)
+    Assert.Equal(content, "hello")
+
+[<Fact>]
+let ``Example HTTP Post`` () =
+    let request = new HttpRequestMessage(HttpMethod.Post, "/hello-world")
+    request.Content <- "{\"JsonField\":\"JsonValue\"}"
+    let response = testRequest request
+    Assert.Equal(response.StatusCode, HttpStatusCode.OK)
+    // Check the json content
 ```
 
 ## Miscellaneous

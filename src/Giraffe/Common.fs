@@ -42,6 +42,9 @@ type DateTimeOffset with
     /// <returns>Formatted string value.</returns>
     member this.ToIsoString() = this.ToString("o")
 
+    member this.CutOffMs() =
+        DateTimeOffset(this.Year, this.Month, this.Day, this.Hour, this.Minute, this.Second, 0, this.Offset)
+
 // ---------------------------
 // Common helper functions
 // ---------------------------

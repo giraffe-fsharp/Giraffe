@@ -107,6 +107,28 @@ let routex (path : string) : HttpHandler =
         | false -> skipPipeline
 
 /// <summary>
+/// Filters an incoming HTTP request based on the request path using Regex (case sensitive).
+///
+/// If the route matches the incoming HTTP request then the Regex groups will be passed into the supplied `routeHandler`.
+///
+/// This is similar to routex but also allows to use matched strings as parameters for a controller.
+/// </summary>
+/// <param name="path">Regex path.</param>
+/// <param name="routeHandler">A function which accepts a string sequence of the matched groups and returns a `HttpHandler` function which will subsequently deal with the request.</param>
+/// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
+let routexp (path : string) (routeHandler : seq<string> -> HttpHandler): HttpHandler =
+    let pattern = sprintf "^%s$" path
+    let regex   = Regex(pattern, RegexOptions.Compiled)
+
+    fun (next : HttpFunc) (ctx : Microsoft.AspNetCore.Http.HttpContext) ->
+        let result  = regex.Match (SubRouting.getNextPartOfPath ctx)
+        match result.Success with
+        | true  ->
+            let args = result.Groups |> Seq.map (fun x -> x.Value)
+            routeHandler args next ctx
+        | false -> skipPipeline
+
+/// <summary>
 /// Filters an incoming HTTP request based on the request path using Regex (case insensitive).
 /// </summary>
 /// <param name="path">Regex path.</param>
@@ -123,7 +145,7 @@ let routeCix (path : string) : HttpHandler =
 /// <summary>
 /// Filters an incoming HTTP request based on the request path (case sensitive).
 /// If the route matches the incoming HTTP request then the arguments from the <see cref="Microsoft.FSharp.Core.PrintfFormat"/> will be automatically resolved and passed into the supplied routeHandler.
-/// 
+///
 /// Supported format chars**
 ///
 /// %b: bool
@@ -148,7 +170,7 @@ let routef (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> HttpHandler)
 /// <summary>
 /// Filters an incoming HTTP request based on the request path.
 /// If the route matches the incoming HTTP request then the arguments from the <see cref="Microsoft.FSharp.Core.PrintfFormat"/> will be automatically resolved and passed into the supplied routeHandler.
-/// 
+///
 /// Supported format chars**
 ///
 /// %b: bool
@@ -226,7 +248,7 @@ let routeStartsWithCi (subPath : string) : HttpHandler =
 /// <summary>
 /// Filters an incoming HTTP request based on the beginning of the request path (case sensitive).
 /// If the route matches the incoming HTTP request then the arguments from the <see cref="Microsoft.FSharp.Core.PrintfFormat"/> will be automatically resolved and passed into the supplied routeHandler.
-/// 
+///
 /// Supported format chars**
 ///
 /// %b: bool
@@ -254,7 +276,7 @@ let routeStartsWithf (path : PrintfFormat<_,_,_,_, 'T>) (routeHandler : 'T -> Ht
 /// <summary>
 /// Filters an incoming HTTP request based on the beginning of the request path (case insensitive).
 /// If the route matches the incoming HTTP request then the arguments from the <see cref="Microsoft.FSharp.Core.PrintfFormat"/> will be automatically resolved and passed into the supplied routeHandler.
-/// 
+///
 /// Supported format chars**
 ///
 /// %b: bool
@@ -312,7 +334,7 @@ let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
 /// <summary>
 /// Filters an incoming HTTP request based on a part of the request path (case sensitive).
 /// If the sub route matches the incoming HTTP request then the arguments from the <see cref="Microsoft.FSharp.Core.PrintfFormat"/> will be automatically resolved and passed into the supplied routeHandler.
-/// 
+///
 /// Supported format chars
 ///
 /// %b: bool
@@ -322,7 +344,7 @@ let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
 /// %d: int64
 /// %f: float/double
 /// %O: Guid
-/// 
+///
 /// Subsequent routing handlers inside the given handler function should omit the already validated path.
 /// </summary>
 /// <param name="path">A format string representing the expected request sub path.</param>
