@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## 5.0.0-rc-2
+
+- Fixed pre-conditions validation issue (see [#424](https://github.com/giraffe-fsharp/Giraffe/issues/424))
+
 ## 5.0.0-rc-1
 
 Upgraded to .NET 5. The 5.x version of Giraffe is targeting `net5.0` and dropping support for all other target frameworks. If you cannot upgrade a project to .NET 5 yet then stay on an older version of Giraffe until you can. Giraffe has always been a .NET Core centered project and in the .NET Core world (and now .NET 5 world) there is little to no reason why a project should remain on an old .NET Core version for a long time when upgrade paths are mostly as simple as changing the `<TargetFramework>` property in an `.fsproj` file.

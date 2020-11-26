@@ -3128,9 +3128,10 @@ let customHandler (dataObj : obj) : HttpHandler =
 
 ## Testing
 
-Testing a Giraffe application builds on [ASP.NET Core testing](https://docs.microsoft.com/en-us/aspnet/core/test/middleware?view=aspnetcore-3.1).
+Testing a Giraffe application follows the concept of [ASP.NET Core testing](https://docs.microsoft.com/en-us/aspnet/core/test/middleware?view=aspnetcore-3.1).
 
 ### Necessary imports:
+
 ```fsharp
 open FSharp.Control.Tasks
 open Microsoft.AspNetCore.Builder
@@ -3140,6 +3141,7 @@ open System.Net.Http
 ```
 
 ### Build a test host:
+
 ```fsharp
 let getTestHost() =
     WebHostBuilder()
@@ -3150,7 +3152,8 @@ let getTestHost() =
         .UseUrls([YourUrl])
 ```
 
-### Create a flexible function to handle requests:
+### Create a helper function to issue test requests:
+
 ```fsharp
 let testRequest (request : HttpRequestMessage) =
     let resp = task {
@@ -3163,8 +3166,10 @@ let testRequest (request : HttpRequestMessage) =
 ```
 
 ### Examples (using Xunit):
+
 ```fsharp
-open System.Net // Import needed for the code below:
+// Import needed for the code below:
+open System.Net
 
 [<Fact>]
 let ``Hello world endpoint says hello`` () =
