@@ -1,6 +1,36 @@
 Release Notes
 =============
 
+## 5.0.0-rc-1
+
+Upgraded to .NET 5. The 5.x version of Giraffe is targeting `net5.0` and dropping support for all other target frameworks. If you cannot upgrade a project to .NET 5 yet then stay on an older version of Giraffe until you can. Giraffe has always been a .NET Core centered project and in the .NET Core world (and now .NET 5 world) there is little to no reason why a project should remain on an old .NET Core version for a long time when upgrade paths are mostly as simple as changing the `<TargetFramework>` property in an `.fsproj` file.
+
+### Summary of changes going into 5.0.0-rc-1
+
+- Only supported target framework is .NET 5
+
+- Added `Giraffe.EndpointRouting` namespace with a version of a few routing handlers which integrate with ASP.NET Core's endpoint routing API
+    - Currently supported are: `route`, `routef`, `subRoute` and HTTP verb handlers such as `GET`, `POST`, `PUT`, etc.
+    - Check the [Endpoint Routing](https://github.com/giraffe-fsharp/Giraffe/blob/v5.0.0-rc-1/DOCUMENTATION.md#edpoint-routing) documentation for more details
+    - Or check the [`EndpointRoutingApp` sample app](https://github.com/giraffe-fsharp/Giraffe/tree/v5.0.0-rc-1/samples/EndpointRoutingApp) for how to use `Giraffe.EndpointRouting`
+- Replaced `Giraffe.GiraffeViewEngine` with the standalone NuGet package `Giraffe.ViewEngine`
+- New `JsonOnlyNegotiationConfig` for setting a content negotiation policy which only supports JSON serialisation (no XML for those who don't need it)
+- Added `SystemTextJsonSerializer` which uses `System.Text.Json` for JSON serialisation when configured as the desired JSON serializer in Giraffe
+- Improved RegEx http handlers in original (non Endpoint routing) http handlers
+- Swapped Markdown docs for XML docs for all functions.
+- Added support for complex model binding (see [#416](https://github.com/giraffe-fsharp/Giraffe/issues/416))
+
+## 5.0.0-alpha-003
+
+- Enhanced Endpoint routing with a metadata list (see [PR #437](https://github.com/giraffe-fsharp/Giraffe/pull/437))
+
+## 5.0.0-alpha-002
+
+- Swapped Markdown docs for XML docs for all functions.
+- Improved endpoint routing by deferring the creation of `RequestDelegate` functions.
+- Added dependency to new `Giraffe.ViewEngine` package and re-introduced the `htmlView` and `WriteHtmlViewAsync` functions into Giraffe.
+- Added support for complex model binding (see [#416](https://github.com/giraffe-fsharp/Giraffe/issues/416))
+
 ## 5.0.0-alpha-001
 
 - Only supported target framework is .NET Core 3.1 (in preparation for .NET 5)
