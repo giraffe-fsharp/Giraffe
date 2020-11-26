@@ -4,6 +4,7 @@ Release Notes
 ## 5.0.0-rc-2
 
 - Fixed pre-conditions validation issue (see [#424](https://github.com/giraffe-fsharp/Giraffe/issues/424))
+- Fixed parsing issue with Guids and ShortIds in `Giraffe.EndpointRouting` (see [#447](https://github.com/giraffe-fsharp/Giraffe/issues/447))
 
 ## 5.0.0-rc-1
 
