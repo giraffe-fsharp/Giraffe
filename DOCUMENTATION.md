@@ -1049,6 +1049,10 @@ In the above scenario it is not clear which one of the two http handlers a user 
 
 If you want to learn more about `Regex` please check the [Regular Expression Language Reference](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference).
 
+#### routexp
+
+The `routexp` http handler is a combination of `routex` and `routef`. It resolves a route exactly like `routex`, but then passes the resolved Regex Groups as a `Seq<string>` parameter into the supplied handler function similar to how `routef` invokes the next handler in the pipeline.
+
 #### routeCix
 
 The `routeCix` http handler is the case insensitive version of `routex`:
