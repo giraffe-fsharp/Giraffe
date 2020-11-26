@@ -44,12 +44,11 @@ open FSharp.Control.Tasks.V2.ContextInsensitive
 // | routeStartsWithf    | Can't do, see subRoutef  |
 // | routeStartsWithCif  | Can't do, see subRoutef  |
 
-
 module private RouteTemplateBuilder =
     let private guidPattern =
-        "([0-9A-Fa-f]{8}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{12}|[0-9A-Fa-f]{32}|[-_0-9A-Za-z]{22})"
+        "([0-9A-Fa-f]{{8}}\-[0-9A-Fa-f]{{4}}\-[0-9A-Fa-f]{{4}}\-[0-9A-Fa-f]{{4}}\-[0-9A-Fa-f]{{12}}|[0-9A-Fa-f]{{32}}|[-_0-9A-Za-z]{{22}})"
     let private shortIdPattern =
-        "([-_0-9A-Za-z]{10}[048AEIMQUYcgkosw])"
+        "([-_0-9A-Za-z]{{10}}[048AEIMQUYcgkosw])"
 
     let private getConstraint (i : int) (c : char) =
         let name = sprintf "%c%i" c i
