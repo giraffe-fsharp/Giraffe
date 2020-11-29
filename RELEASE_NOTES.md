@@ -4,6 +4,13 @@ Release Notes
 ## 5.0.0-rc-3
 
 - Added `ReadBodyBufferedFromRequestAsync` extension method to buffer and read a the request body and make subsequent reads possible (see [#449](https://github.com/giraffe-fsharp/Giraffe/issues/449))
+- Changed how the serialization modules are structured:
+    - `IJsonSerializer` is now `Json.ISerializer`
+    - `Utf8JsonSerializer` is now `Utf8Json.Serializer`
+    - `NewtonsoftJsonSerializer` is now `NewtonsoftJson.Serializer`
+    - `SystemTextJsonSerializer` is now `SystemTextJson.Serializer`
+    - `IXmlSerializer` is now `Xml.ISerializer`
+    - `DefaultXmlSerializer` is now `SystemXml.Serializer`
 
 ## 5.0.0-rc-2
 

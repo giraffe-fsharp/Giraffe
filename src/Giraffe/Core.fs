@@ -67,28 +67,28 @@ type HttpContext with
     /// <returns>Returns an instance of <see cref="Microsoft.Extensions.Hosting.IHostingEnvironment"/>.</returns>
     member this.GetHostingEnvironment() =
         this.GetService<IHostingEnvironment>()
-    
-    /// <summary>
-    /// Gets an instance of <see cref="Giraffe.Serialization.Json.IJsonSerializer"/> from the request's service container.
-    /// </summary>
-    /// <returns>Returns an instance of <see cref="Giraffe.Serialization.Json.IJsonSerializer"/>.</returns>
-    member this.GetJsonSerializer() : IJsonSerializer =
-        this.GetService<IJsonSerializer>()
 
     /// <summary>
-    /// Gets an instance of <see cref="Giraffe.Serialization.Xml.IXmlSerializer"/> from the request's service container.
+    /// Gets an instance of <see cref="Giraffe.Serialization.Json.ISerializer"/> from the request's service container.
     /// </summary>
-    /// <returns>Returns an instance of <see cref="Giraffe.Serialization.Xml.IXmlSerializer"/>.</returns>
-    member this.GetXmlSerializer() : IXmlSerializer  =
-        this.GetService<IXmlSerializer>()
-    
+    /// <returns>Returns an instance of <see cref="Giraffe.Serialization.Json.ISerializer"/>.</returns>
+    member this.GetJsonSerializer() : Json.ISerializer =
+        this.GetService<Json.ISerializer>()
+
+    /// <summary>
+    /// Gets an instance of <see cref="Giraffe.Serialization.Xml.Xml.ISerializer"/> from the request's service container.
+    /// </summary>
+    /// <returns>Returns an instance of <see cref="Giraffe.Serialization.Xml.Xml.ISerializer"/>.</returns>
+    member this.GetXmlSerializer() : Xml.ISerializer  =
+        this.GetService<Xml.ISerializer>()
+
     /// <summary>
     /// Sets the HTTP status code of the response.
     /// </summary>
     /// <param name="httpStatusCode">The status code to be set in the response. For convenience you can use the static <see cref="Microsoft.AspNetCore.Http.StatusCodes"/> class for passing in named status codes instead of using pure int values.</param>
     member this.SetStatusCode (httpStatusCode : int) =
         this.Response.StatusCode <- httpStatusCode
-    
+
     /// <summary>
     /// Adds or sets a HTTP header in the response.
     /// </summary>
@@ -96,14 +96,14 @@ type HttpContext with
     /// <param name="value">The value to be set. Non string values will be converted to a string using the object's ToString() method.</param>
     member this.SetHttpHeader (key : string) (value : obj) =
         this.Response.Headers.[key] <- StringValues(value.ToString())
-    
+
     /// <summary>
     /// Sets the Content-Type HTTP header in the response.
     /// </summary>
     /// <param name="contentType">The mime type of the response (e.g.: application/json or text/html).</param>
     member this.SetContentType (contentType : string) =
         this.SetHttpHeader HeaderNames.ContentType contentType
-    
+
     /// <summary>
     /// Tries to get the <see cref="System.String"/> value of a HTTP header from the request.
     /// </summary>
@@ -132,7 +132,7 @@ type HttpContext with
         match this.Request.Query.TryGetValue key with
         | true, value -> Some (value.ToString())
         | _           -> None
-    
+
     /// <summary>
     /// Retrieves the <see cref="System.String"/> value of a query string parameter from the request.
     /// </summary>
@@ -142,7 +142,7 @@ type HttpContext with
         match this.Request.Query.TryGetValue key with
         | true, value -> Ok (value.ToString())
         | _           -> Error (sprintf "Query string value '%s' is missing." key)
-    
+
     /// <summary>
     /// Retrieves the <see cref="System.String"/> value of a cookie from the request.
     /// </summary>

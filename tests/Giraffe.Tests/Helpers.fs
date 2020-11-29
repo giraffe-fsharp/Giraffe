@@ -115,26 +115,26 @@ let mockJson (ctx : HttpContext) (settings : MockJsonSettings) =
     match settings with
     | Newtonsoft settings ->
         let jsonSettings =
-            defaultArg settings NewtonsoftJsonSerializer.DefaultSettings
+            defaultArg settings NewtonsoftJson.Serializer.DefaultSettings
         ctx.RequestServices
-           .GetService(typeof<IJsonSerializer>)
-           .Returns(NewtonsoftJsonSerializer(jsonSettings))
+           .GetService(typeof<Json.ISerializer>)
+           .Returns(NewtonsoftJson.Serializer(jsonSettings))
         |> ignore
 
     | Utf8 settings ->
         let resolver =
-            defaultArg settings Utf8JsonSerializer.DefaultResolver
+            defaultArg settings Utf8Json.Serializer.DefaultResolver
         ctx.RequestServices
-           .GetService(typeof<IJsonSerializer>)
-           .Returns(Utf8JsonSerializer(resolver))
+           .GetService(typeof<Json.ISerializer>)
+           .Returns(Utf8Json.Serializer(resolver))
         |> ignore
 
     | SystemTextJson settings ->
         let jsonOptions =
-            defaultArg settings SystemTextJsonSerializer.DefaultOptions
+            defaultArg settings SystemTextJson.Serializer.DefaultOptions
         ctx.RequestServices
-           .GetService(typeof<IJsonSerializer>)
-           .Returns(SystemTextJsonSerializer(jsonOptions))
+           .GetService(typeof<Json.ISerializer>)
+           .Returns(SystemTextJson.Serializer(jsonOptions))
         |> ignore
 
 type JsonSerializersData =
@@ -155,7 +155,7 @@ type JsonSerializersData =
         ]
 
     static member PreserveCaseData = JsonSerializersData.PreserveCaseSettings |> toTheoryData
-    
+
 type NegotiationConfigWithExpectedResult = {
     NegotiationConfig : INegotiationConfig
     StatusCode : int
@@ -164,8 +164,8 @@ type NegotiationConfigWithExpectedResult = {
 
 let mockXml (ctx : HttpContext) =
     ctx.RequestServices
-       .GetService(typeof<IXmlSerializer>)
-       .Returns(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
+       .GetService(typeof<Xml.ISerializer>)
+       .Returns(SystemXml.Serializer(SystemXml.Serializer.DefaultSettings))
     |> ignore
 
 let mockNegotiation (ctx : HttpContext) (negotiationConfig : INegotiationConfig) =

@@ -2931,61 +2931,61 @@ Please visit the [Giraffe.ViewEngine](https://github.com/giraffe-fsharp/Giraffe.
 
 ### JSON
 
-By default Giraffe uses [Newtonsoft.Json](https://www.newtonsoft.com/json) for (de-)serializing JSON content. An application can modify the default serializer by registering a new dependency which implements the `IJsonSerializer` interface during application startup.
+By default Giraffe uses [Newtonsoft.Json](https://www.newtonsoft.com/json) for (de-)serializing JSON content. An application can modify the default serializer by registering a new dependency which implements the `Json.ISerializer` interface during application startup.
 
-Customizing Giraffe's JSON serialization can either happen via providing a custom object of `JsonSerializerSettings` when instantiating the default `NewtonsoftJsonSerializer` or by swapping in an entire different JSON library by creating a new class which implements the `IJsonSerializer` interface.
+Customizing Giraffe's JSON serialization can either happen via providing a custom object of `JsonSerializerSettings` when instantiating the default `NewtonsoftJson.Serializer` or by swapping in an entire different JSON library by creating a new class which implements the `Json.ISerializer` interface.
 
-By default Giraffe offers two `IJsonSerializer` implementations out of the box:
+By default Giraffe offers three `Json.ISerializer` implementations out of the box:
 
 | Name | Description | Default |
 | :--- | :---------- | :------ |
-| `NewtonsoftJsonSerializer` | Uses `Newtonsoft.Json` aka Json.NET for JSON (de-)serialization in Giraffe. It is the most downloaded library on NuGet, battle tested by millions of users and has great support for F# data types. Use this json serializer for maximum compatibility and easy adoption. | True |
-| `Utf8JsonSerializer` | Uses `Utf8Json` for JSON (de-)serialization in Giraffe. This is the fastest JSON serializer written in .NET with huge extensibility points and native support for directly serializing JSON content to the HTTP response stream via chunked encoding. This serializer has been specifically crafted for maximum performance and should be used when that extra perf is important. | False |
-| `SystemTextJsonSerializer` | Uses `System.Text.Json` for JSON (de-)serialization in Giraffe. `System.Text.Json` is a high performance serialization library, and aims to be the serializaion library of choice for ASP.NET Core. For better support of F# types with `System.Text.Json`, look at [FSharp.SystemTextJson](https://github.com/Tarmil/FSharp.SystemTextJson). | False |
+| `NewtonsoftJson.Serializer` | Uses `Newtonsoft.Json` aka Json.NET for JSON (de-)serialization in Giraffe. It is the most downloaded library on NuGet, battle tested by millions of users and has great support for F# data types. Use this json serializer for maximum compatibility and easy adoption. | True |
+| `Utf8Json.Serializer` | Uses `Utf8Json` for JSON (de-)serialization in Giraffe. This is the fastest JSON serializer written in .NET with huge extensibility points and native support for directly serializing JSON content to the HTTP response stream via chunked encoding. This serializer has been specifically crafted for maximum performance and should be used when that extra perf is important. | False |
+| `SystemTextJson.Serializer` | Uses `System.Text.Json` for JSON (de-)serialization in Giraffe. `System.Text.Json` is a high performance serialization library, and aims to be the serializaion library of choice for ASP.NET Core. For better support of F# types with `System.Text.Json`, look at [FSharp.SystemTextJson](https://github.com/Tarmil/FSharp.SystemTextJson). | False |
 
-To use `Utf8JsonSerializer` instead of `NewtonsoftJsonSerializer`, register a new dependency of type `IJsonSerializer` during application configuration:
+To use `Utf8Json.Serializer` instead of `NewtonsoftJson.Serializer`, register a new dependency of type `Json.ISerializer` during application configuration:
 
 ```fsharp
 let configureServices (services : IServiceCollection) =
     // First register all default Giraffe dependencies
     services.AddGiraffe() |> ignore
 
-    // Now register Utf8JsonSerializer
-    this.AddSingleton<IJsonSerializer>(Utf8JsonSerializer(Utf8JsonSerializer.DefaultResolver)) |> ignore
+    // Now register Utf8Json.Serializer
+    this.AddSingleton<Json.ISerializer>(Utf8Json.Serializer(Utf8Json.Serializer.DefaultResolver)) |> ignore
 ```
 
-Or to use `SystemTextJsonSerializer` instead of `NewtonsoftJsonSerializer`, register a new dependency of type `IJsonSerializer` during application configuration:
+Or to use `SystemTextJson.Serializer` instead of `NewtonsoftJson.Serializer`, register a new dependency of type `Json.ISerializer` during application configuration:
 
 ```fsharp
 let configureServices (services : IServiceCollection) =
     // First register all default Giraffe dependencies
     services.AddGiraffe() |> ignore
 
-    let serializationOptions = SystemTextJsonSerializer.DefaultOptions
+    let serializationOptions = SystemTextJson.Serializer.DefaultOptions
     // Optionally use `FSharp.SystemTextJson` (requires `FSharp.SystemTextJson` package reference)
     serializationOptions.Converters.Add(JsonFSharpConverter(JsonUnionEncoding.FSharpLuLike))
-    // Now register SystemTextJsonSerializer
-    this.AddSingleton<IJsonSerializer>(SystemTextJsonSerializer(serializationOptions)) |> ignore
+    // Now register SystemTextJson.Serializer
+    this.AddSingleton<Json.ISerializer>(SystemTextJson.Serializer(serializationOptions)) |> ignore
 ```
 
 
 #### Customizing JsonSerializerSettings
 
-You can change the default `JsonSerializerSettings` of the `NewtonsoftJsonSerializer` by registering a new instance of `NewtonsoftJsonSerializer` during application startup. For example, the [`Microsoft.FSharpLu` project](https://github.com/Microsoft/fsharplu/wiki/fsharplu.json) provides a Json.NET converter (`CompactUnionJsonConverter`) that serializes and deserializes `Option`s and discriminated unions much more succinctly. If you wanted to use it, and set the culture to German, your configuration would look something like:
+You can change the default `JsonSerializerSettings` of the `NewtonsoftJson.Serializer` by registering a new instance of `NewtonsoftJson.Serializer` during application startup. For example, the [`Microsoft.FSharpLu` project](https://github.com/Microsoft/fsharplu/wiki/fsharplu.json) provides a Json.NET converter (`CompactUnionJsonConverter`) that serializes and deserializes `Option`s and discriminated unions much more succinctly. If you wanted to use it, and set the culture to German, your configuration would look something like:
 
 ```fsharp
 let configureServices (services : IServiceCollection) =
     // First register all default Giraffe dependencies
     services.AddGiraffe() |> ignore
 
-    // Now customize only the IJsonSerializer by providing a custom
+    // Now customize only the Json.ISerializer by providing a custom
     // object of JsonSerializerSettings
     let customSettings = JsonSerializerSettings(
         Culture = CultureInfo("de-DE"))
     customSettings.Converters.Add(CompactUnionJsonConverter(true))
 
-    services.AddSingleton<IJsonSerializer>(
-        NewtonsoftJsonSerializer(customSettings)) |> ignore
+    services.AddSingleton<Json.ISerializer>(
+        NewtonsoftJson.Serializer(customSettings)) |> ignore
 
 [<EntryPoint>]
 let main _ =
@@ -3000,11 +3000,11 @@ let main _ =
 
 #### Using a different JSON serializer
 
-You can change the entire underlying JSON serializer by creating a new class which implements the `IJsonSerializer` interface:
+You can change the entire underlying JSON serializer by creating a new class which implements the `Json.ISerializer` interface:
 
 ```fsharp
 type CustomJsonSerializer() =
-    interface IJsonSerializer with
+    interface Json.ISerializer with
         // Use different JSON library ...
         member __.SerializeToString<'T>      (x : 'T) = // ...
         member __.SerializeToBytes<'T>       (x : 'T) = // ...
@@ -3022,8 +3022,8 @@ let configureServices (services : IServiceCollection) =
     // First register all default Giraffe dependencies
     services.AddGiraffe() |> ignore
 
-    // Now register your custom IJsonSerializer
-    services.AddSingleton<IJsonSerializer, CustomJsonSerializer>() |> ignore
+    // Now register your custom Json.ISerializer
+    services.AddSingleton<Json.ISerializer, CustomJsonSerializer>() |> ignore
 
 [<EntryPoint>]
 let main _ =
@@ -3050,20 +3050,20 @@ let customHandler (dataObj : obj) : HttpHandler =
 
 ### XML
 
-By default Giraffe uses the `System.Xml.Serialization.XmlSerializer` for (de-)serializing XML content. An application can modify the serializer by registering a new dependency which implements the `IXmlSerializer` interface during application startup.
+By default Giraffe uses the `System.Xml.Serialization.XmlSerializer` for (de-)serializing XML content. An application can modify the serializer by registering a new dependency which implements the `Xml.ISerializer` interface during application startup.
 
-Customizing Giraffe's XML serialization can either happen via providing a custom object of `XmlWriterSettings` when instantiating the default `DefaultXmlSerializer` or swap in an entire different XML library by creating a new class which implements the `IXmlSerializer` interface.
+Customizing Giraffe's XML serialization can either happen via providing a custom object of `XmlWriterSettings` when instantiating the default `SystemXml.Serializer` or swap in an entire different XML library by creating a new class which implements the `Xml.ISerializer` interface.
 
 #### Customizing XmlWriterSettings
 
-You can change the default `XmlWriterSettings` of the `DefaultXmlSerializer` by registering a new instance of `DefaultXmlSerializer` during application startup:
+You can change the default `XmlWriterSettings` of the `SystemXml.Serializer` by registering a new instance of `SystemXml.Serializer` during application startup:
 
 ```fsharp
 let configureServices (services : IServiceCollection) =
     // First register all default Giraffe dependencies
     services.AddGiraffe() |> ignore
 
-    // Now customize the IXmlSerializer
+    // Now customize the Xml.ISerializer
     let customSettings =
         XmlWriterSettings(
                 Encoding           = Encoding.UTF8,
@@ -3071,8 +3071,8 @@ let configureServices (services : IServiceCollection) =
                 OmitXmlDeclaration = true
             )
 
-    services.AddSingleton<IXmlSerializer>(
-        DefaultXmlSerializer(customSettings)) |> ignore
+    services.AddSingleton<Xml.ISerializer>(
+        SystemXml.Serializer(customSettings)) |> ignore
 
 [<EntryPoint>]
 let main _ =
@@ -3087,11 +3087,11 @@ let main _ =
 
 ####  Using a different XML serializer
 
-You can change the entire underlying XML serializer by creating a new class which implements the `IXmlSerializer` interface:
+You can change the entire underlying XML serializer by creating a new class which implements the `Xml.ISerializer` interface:
 
 ```fsharp
 type CustomXmlSerializer() =
-    interface IXmlSerializer with
+    interface Xml.ISerializer with
         // Use different XML library ...
         member __.Serialize (o : obj) = // ...
         member __.Deserialize<'T> (xml : string) = // ...
@@ -3104,8 +3104,8 @@ let configureServices (services : IServiceCollection) =
     // First register all default Giraffe dependencies
     services.AddGiraffe() |> ignore
 
-    // Now register your custom IXmlSerializer
-    services.AddSingleton<IXmlSerializer, CustomXmlSerializer>() |> ignore
+    // Now register your custom Xml.ISerializer
+    services.AddSingleton<Xml.ISerializer, CustomXmlSerializer>() |> ignore
 
 [<EntryPoint>]
 let main _ =

@@ -46,7 +46,7 @@ type HttpContext with
     /// <summary>
     /// Serializes an object to JSON and writes the output to the body of the HTTP response.
     /// It also sets the HTTP Content-Type header to application/json and sets the Content-Length header accordingly.
-    /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="IJsonSerializer"/>
+    /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="Json.ISerializer"/>
     /// </summary>
     /// <param name="dataObj">The object to be send back to the client.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
@@ -59,7 +59,7 @@ type HttpContext with
     /// <summary>
     /// Serializes an object to JSON and writes the output to the body of the HTTP response using chunked transfer encoding.
     /// It also sets the HTTP Content-Type header to application/json and sets the Transfer-Encoding header to chunked.
-    /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="IJsonSerializer"/>.
+    /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="Json.ISerializer"/>.
     /// </summary>
     /// <param name="dataObj">The object to be send back to the client.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
@@ -78,7 +78,7 @@ type HttpContext with
     /// <summary>
     /// Serializes an object to XML and writes the output to the body of the HTTP response.
     /// It also sets the HTTP Content-Type header to application/xml and sets the Content-Length header accordingly.
-    /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="IXmlSerializer"/>.
+    /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="Xml.ISerializer"/>.
     /// </summary>
     /// <param name="dataObj">The object to be send back to the client.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
@@ -177,7 +177,7 @@ let text (str : string) : HttpHandler =
 /// <summary>
 /// Serializes an object to JSON and writes the output to the body of the HTTP response.
 /// It also sets the HTTP Content-Type header to application/json and sets the Content-Length header accordingly.
-/// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="IJsonSerializer"/>.
+/// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="Json.ISerializer"/>.
 /// </summary>
 /// <param name="dataObj">The object to be send back to the client.</param>
 /// <param name="ctx"></param>
@@ -190,7 +190,7 @@ let json<'T> (dataObj : 'T) : HttpHandler =
 /// <summary>
 /// Serializes an object to JSON and writes the output to the body of the HTTP response using chunked transfer encoding.
 /// It also sets the HTTP Content-Type header to application/json and sets the Transfer-Encoding header to chunked.
-/// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="IJsonSerializer"/>.
+/// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="Json.ISerializer"/>.
 /// </summary>
 /// <param name="dataObj">The object to be send back to the client.</param>
 /// <param name="ctx"></param>
@@ -202,7 +202,7 @@ let jsonChunked<'T> (dataObj : 'T) : HttpHandler =
 /// <summary>
 /// Serializes an object to XML and writes the output to the body of the HTTP response.
 /// It also sets the HTTP Content-Type header to application/xml and sets the Content-Length header accordingly.
-/// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="IXmlSerializer"/>.
+/// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="Xml.ISerializer"/>.
 /// </summary>
 /// <param name="dataObj">The object to be send back to the client.</param>
 /// <param name="ctx"></param>
