@@ -1,4 +1,4 @@
-namespace Giraffe.Serialization
+namespace Giraffe
 
 [<RequireQualifiedAccess>]
 module Xml =

@@ -17,11 +17,10 @@ open Microsoft.Extensions.DependencyInjection
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Xunit
 open NSubstitute
-open Newtonsoft.Json
-open Giraffe
-open Giraffe.Serialization
 open Utf8Json
 open System.Text.Json
+open Newtonsoft.Json
+open Giraffe
 
 // ---------------------------------
 // Common functions
