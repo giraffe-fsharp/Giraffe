@@ -3,6 +3,7 @@ module Giraffe.Negotiation
 
 open System
 open System.Collections.Generic
+open System.Runtime.CompilerServices
 open Microsoft.AspNetCore.Http
 
 // ---------------------------
@@ -30,7 +31,7 @@ type INegotiationConfig =
     /// </summary>
     /// <returns></returns>
     abstract member UnacceptableHandler : HttpHandler
-        
+
 let private unacceptableHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
     (setStatusCode 406
@@ -44,13 +45,13 @@ let private unacceptableHandler =
 /// Supported mime types:
 ///
 /// */*: If a client accepts any content type then the server will return a JSON response.
-/// 
+///
 /// application/json: Server will send a JSON response.
-/// 
+///
 /// application/xml: Server will send an XML response.
-/// 
+///
 /// text/xml: Server will send an XML response.
-/// 
+///
 /// text/plain: Server will send a plain text response (by suing an object's ToString() method).
 /// </summary>
 type DefaultNegotiationConfig() =
@@ -64,7 +65,7 @@ type DefaultNegotiationConfig() =
                 "text/plain"      , fun x -> x.ToString() |> text
             ]
         member __.UnacceptableHandler = unacceptableHandler
-            
+
 
 /// <summary>
 /// An implementation of INegotiationConfig which allows returning JSON only.
@@ -87,7 +88,8 @@ type JsonOnlyNegotiationConfig() =
 // HttpContext extensions
 // ---------------------------
 
-type HttpContext with
+[<Extension>]
+type NegotiationExtensions() =
     /// <summary>
     /// Sends a response back to the client based on the request's Accept header.
     ///
@@ -97,13 +99,16 @@ type HttpContext with
     /// <param name="unacceptableHandler"> A <see cref="HttpHandler" /> function which will be invoked if none of the accepted mime types can be satisfied. Generally this <see cref="HttpHandler" /> would send a response with a status code of 406 Unacceptable.</param>
     /// <param name="responseObj">The object to send back to the client.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
-    member this.NegotiateWithAsync (negotiationRules    : IDictionary<string, obj -> HttpHandler>)
-                              (unacceptableHandler : HttpHandler)
-                              (responseObj         : obj) =
-        let acceptedMimeTypes = (this.Request.GetTypedHeaders()).Accept
+    [<Extension>]
+    static member NegotiateWithAsync
+        (ctx                : HttpContext,
+        negotiationRules    : IDictionary<string, obj -> HttpHandler>,
+        unacceptableHandler : HttpHandler,
+        responseObj         : obj) =
+        let acceptedMimeTypes = (ctx.Request.GetTypedHeaders()).Accept
         if isNull acceptedMimeTypes || acceptedMimeTypes.Count = 0 then
             let kv = negotiationRules |> Seq.head
-            kv.Value responseObj earlyReturn this
+            kv.Value responseObj earlyReturn ctx
         else
             let mutable mimeType    = Unchecked.defaultof<_>
             let mutable bestQuality = Double.NegativeInfinity
@@ -119,9 +124,9 @@ type HttpContext with
                         mimeType    <- x
 
             if isNull mimeType then
-                unacceptableHandler earlyReturn this
+                unacceptableHandler earlyReturn ctx
             else
-                negotiationRules.[mimeType.MediaType.Value] responseObj earlyReturn this
+                negotiationRules.[mimeType.MediaType.Value] responseObj earlyReturn ctx
 
     /// <summary>
     /// Sends a response back to the client based on the request's Accept header.
@@ -130,9 +135,10 @@ type HttpContext with
     /// </summary>
     /// <param name="responseObj">The object to send back to the client.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
-    member this.NegotiateAsync (responseObj : obj) =
-        let config = this.GetService<INegotiationConfig>()
-        this.NegotiateWithAsync config.Rules config.UnacceptableHandler responseObj
+    [<Extension>]
+    static member NegotiateAsync (ctx : HttpContext, responseObj : obj) =
+        let config = ctx.GetService<INegotiationConfig>()
+        ctx.NegotiateWithAsync(config.Rules, config.UnacceptableHandler, responseObj)
 
 // ---------------------------
 // HttpHandler functions
@@ -153,7 +159,7 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
                   (responseObj         : obj)
                   : HttpHandler =
     fun (_ : HttpFunc) (ctx : HttpContext) ->
-        ctx.NegotiateWithAsync negotiationRules unacceptableHandler responseObj
+        ctx.NegotiateWithAsync(negotiationRules, unacceptableHandler, responseObj)
 
 /// <summary>
 /// Sends a response back to the client based on the request's Accept header.

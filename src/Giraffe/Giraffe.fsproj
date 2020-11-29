@@ -57,18 +57,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Common.fs" />
+    <Compile Include="Helpers.fs" />
+    <Compile Include="ShortGuid.fs" />
+    <Compile Include="DateTimeExtensions.fs" />
     <Compile Include="ComputationExpressions.fs" />
     <Compile Include="Json.fs" />
     <Compile Include="Xml.fs" />
     <Compile Include="FormatExpressions.fs" />
+    <Compile Include="ModelParser.fs" />
+    <Compile Include="HttpContextExtensions.fs" />
     <Compile Include="Core.fs" />
     <Compile Include="ResponseCaching.fs" />
-    <Compile Include="ModelBinding.fs" />
     <Compile Include="ModelValidation.fs" />
     <Compile Include="Auth.fs" />
     <Compile Include="Routing.fs" />
-    <Compile Include="ResponseWriters.fs" />
     <Compile Include="Preconditional.fs" />
     <Compile Include="Streaming.fs" />
     <Compile Include="Negotiation.fs" />

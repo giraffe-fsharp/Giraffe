@@ -11,6 +11,7 @@ Release Notes
     - `SystemTextJsonSerializer` is now `SystemTextJson.Serializer`
     - `IXmlSerializer` is now `Xml.ISerializer`
     - `DefaultXmlSerializer` is now `SystemXml.Serializer`
+- Converted all `HttpContext` extension methods into C# compatible extension methods, meaning that function arguments had to be merged into tuples
 
 ## 5.0.0-rc-2
 
