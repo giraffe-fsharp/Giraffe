@@ -22,6 +22,7 @@ type GiraffeMiddleware (next          : RequestDelegate,
     do if isNull next then raise (ArgumentNullException("next"))
 
     let logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
+
     // pre-compile the handler pipeline
     let func : HttpFunc = handler earlyReturn
 
@@ -100,11 +101,13 @@ type IServiceCollection with
     /// <summary>
     /// Adds default Giraffe services to the ASP.NET Core service container.
     ///
-    /// The default services include features like <see cref="IJsonSerializer"/>, <see cref="IXmlSerializer"/>, <see cref="INegotiationConfig"/> or more. Please check the official Giraffe documentation for an up to date list of configurable services.
+    /// The default services include features like <see cref="Json.ISerializer"/>, <see cref="Xml.ISerializer"/>, <see cref="INegotiationConfig"/> or more. Please check the official Giraffe documentation for an up to date list of configurable services.
     /// </summary>
     /// <returns>Returns an <see cref="Microsoft.Extensions.DependencyInjection.IServiceCollection"/> builder object.</returns>
     member this.AddGiraffe() =
-        this.TryAddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer(NewtonsoftJsonSerializer.DefaultSettings))
-        this.TryAddSingleton<IXmlSerializer>(DefaultXmlSerializer(DefaultXmlSerializer.DefaultSettings))
+        this.TryAddSingleton<Json.ISerializer>(
+            NewtonsoftJson.Serializer(NewtonsoftJson.Serializer.DefaultSettings))
+        this.TryAddSingleton<Xml.ISerializer>(
+            SystemXml.Serializer(SystemXml.Serializer.DefaultSettings))
         this.TryAddSingleton<INegotiationConfig, DefaultNegotiationConfig>()
         this

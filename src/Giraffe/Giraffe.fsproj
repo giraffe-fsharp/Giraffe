@@ -59,7 +59,8 @@
   <ItemGroup>
     <Compile Include="Common.fs" />
     <Compile Include="ComputationExpressions.fs" />
-    <Compile Include="Serialization.fs" />
+    <Compile Include="Json.fs" />
+    <Compile Include="Xml.fs" />
     <Compile Include="FormatExpressions.fs" />
     <Compile Include="Core.fs" />
     <Compile Include="ResponseCaching.fs" />
