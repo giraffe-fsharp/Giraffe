@@ -2,7 +2,7 @@ module Giraffe.Tests.ShortGuidTests
 
 open System
 open Xunit
-open Giraffe.Common
+open Giraffe
 
 // ---------------------------------
 // Short Guid Tests
