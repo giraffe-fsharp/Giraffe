@@ -4,6 +4,26 @@ Release Notes
 ## 5.0.0-rc-3
 
 - Added `ReadBodyBufferedFromRequestAsync` extension method to buffer and read a the request body and make subsequent reads possible (see [#449](https://github.com/giraffe-fsharp/Giraffe/issues/449))
+- Changed how the serialization modules are structured:
+    - `IJsonSerializer` is now `Json.ISerializer`
+    - `Utf8JsonSerializer` is now `Utf8Json.Serializer`
+    - `NewtonsoftJsonSerializer` is now `NewtonsoftJson.Serializer`
+    - `SystemTextJsonSerializer` is now `SystemTextJson.Serializer`
+    - `IXmlSerializer` is now `Xml.ISerializer`
+    - `DefaultXmlSerializer` is now `SystemXml.Serializer`
+- Converted all `HttpContext` extension methods into C# compatible extension methods, meaning that function arguments had to be merged into tuples
+- Removed the `=>` operator from `Giraffe.EndpointRouting`
+- Changed the `GET`, `POST`, `PUT`, `HEAD`, etc. functions to accept an `Endpoint list` instead of an `Endpoint`
+    - Before: `GET => route "/foo" (text "bar")`, After: `GET [ route "/foo" (text "bar") ]`
+    - One can now compose routes easier:
+        ```fsharp
+        GET [
+            route "/a" (text "A")
+            route "/b" (text "B")
+            route "/c" (text "C")
+        ]
+        ```
+- Added `GET_HEAD` to the endpoint routing functions, which will handle a `HEAD` request for the same `GET` handler.
 
 ## 5.0.0-rc-2
 
