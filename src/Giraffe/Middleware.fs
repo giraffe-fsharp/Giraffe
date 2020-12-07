@@ -2,6 +2,7 @@
 module Giraffe.Middleware
 
 open System
+open System.Runtime.CompilerServices
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
@@ -76,7 +77,8 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
 // Extension methods for convenience
 // ---------------------------
 
-type IApplicationBuilder with
+[<Extension>]
+type ApplicationBuilderExtensions() =
     /// <summary>
     /// Adds the <see cref="GiraffeMiddleware" /> into the ASP.NET Core pipeline. Any web request which doesn't get handled by a surrounding middleware can be picked up by the Giraffe <see cref="HttpHandler" /> pipeline.
     ///
@@ -84,8 +86,10 @@ type IApplicationBuilder with
     /// </summary>
     /// <param name="handler">The Giraffe <see cref="HttpHandler" /> pipeline. The handler can be anything from a single handler to an entire web application which has been composed from many smaller handlers.</param>
     /// <returns><see cref="Microsoft.FSharp.Core.Unit"/></returns>
-    member this.UseGiraffe (handler : HttpHandler) =
-        this.UseMiddleware<GiraffeMiddleware> handler
+    [<Extension>]
+    static member UseGiraffe
+        (builder : IApplicationBuilder, handler : HttpHandler) =
+        builder.UseMiddleware<GiraffeMiddleware> handler
         |> ignore
 
     /// <summary>
@@ -93,20 +97,24 @@ type IApplicationBuilder with
     /// </summary>
     /// <param name="handler">The Giraffe <see cref="ErrorHandler" /> pipeline. The handler can be anything from a single handler to a bigger error application which has been composed from many smaller handlers.</param>
     /// <returns>Returns an <see cref="Microsoft.AspNetCore.Builder.IApplicationBuilder"/> builder object.</returns>
-    member this.UseGiraffeErrorHandler (handler : ErrorHandler) =
-        this.UseMiddleware<GiraffeErrorHandlerMiddleware> handler
+    [<Extension>]
+    static member UseGiraffeErrorHandler
+        (builder : IApplicationBuilder, handler : ErrorHandler) =
+        builder.UseMiddleware<GiraffeErrorHandlerMiddleware> handler
 
-type IServiceCollection with
+[<Extension>]
+type ServiceCollectionExtensions() =
     /// <summary>
     /// Adds default Giraffe services to the ASP.NET Core service container.
     ///
     /// The default services include features like <see cref="Json.ISerializer"/>, <see cref="Xml.ISerializer"/>, <see cref="INegotiationConfig"/> or more. Please check the official Giraffe documentation for an up to date list of configurable services.
     /// </summary>
     /// <returns>Returns an <see cref="Microsoft.Extensions.DependencyInjection.IServiceCollection"/> builder object.</returns>
-    member this.AddGiraffe() =
-        this.TryAddSingleton<Json.ISerializer>(
+    [<Extension>]
+    static member AddGiraffe(svc : IServiceCollection) =
+        svc.TryAddSingleton<Json.ISerializer>(
             NewtonsoftJson.Serializer(NewtonsoftJson.Serializer.DefaultSettings))
-        this.TryAddSingleton<Xml.ISerializer>(
+        svc.TryAddSingleton<Xml.ISerializer>(
             SystemXml.Serializer(SystemXml.Serializer.DefaultSettings))
-        this.TryAddSingleton<INegotiationConfig, DefaultNegotiationConfig>()
-        this
+        svc.TryAddSingleton<INegotiationConfig, DefaultNegotiationConfig>()
+        svc

@@ -4,6 +4,16 @@ Release Notes
 ## 5.0.0-rc-4
 
 - Fixed bug when a `NestedEndpoint` preceded a `MultiEndpoint` in `Giraffe.EndpointRouting` (see [#452](https://github.com/giraffe-fsharp/Giraffe/issues/452))
+- Removed the sub-module `GiraffeMiddleware` from the `Giraffe.EndpointRouting` module (simply keep using the `UseGiraffe` extension method of an `IApplicationBuilder`)
+- Added an overload for `UseGiraffe` to pass in an `Endpoint list`:
+    - Before:
+        ```fsharp
+        app.UseEndpoints(fun e -> e.MapGiraffeEndpoints(endpoints))
+        ```
+    - Now:
+        ```fsharp
+        app.UseGiraffe(endpoints)
+        ```
 
 ## 5.0.0-rc-3
 
