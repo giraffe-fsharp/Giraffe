@@ -1,4 +1,5 @@
-﻿open Microsoft.AspNetCore
+﻿open System
+open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
@@ -22,6 +23,11 @@ let handler3 (a : string, b : string, c : string, d : int) : HttpHandler =
 
 let endpoints =
     [
+        subRoute "/foo" [
+            GET [
+                route "/bar" (text "Aloha!")
+            ]
+        ]
         GET [
             route  "/" (text "Hello World")
             routef "/%s/%i" handler2
@@ -38,18 +44,16 @@ let endpoints =
         ]
     ]
 
-let notFoundMiddleware =
+let notFoundHandler =
     "Not Found"
     |> text
     |> RequestErrors.notFound
-    |> GiraffeMiddleware.create
 
 let configureApp (appBuilder : IApplicationBuilder) =
     appBuilder
         .UseRouting()
-        .UseEndpoints(fun e -> e.MapGiraffeEndpoints(endpoints))
-        .Use(notFoundMiddleware)
-    |> ignore
+        .UseGiraffe(endpoints)
+        .UseGiraffe(notFoundHandler)
 
 let configureServices (services : IServiceCollection) =
     services
