@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## 5.0.0-rc-4
+
+- Fixed bug when a `NestedEndpoint` preceded a `MultiEndpoint` in `Giraffe.EndpointRouting` (see [#452](https://github.com/giraffe-fsharp/Giraffe/issues/452))
+
 ## 5.0.0-rc-3
 
 - Added `ReadBodyBufferedFromRequestAsync` extension method to buffer and read a the request body and make subsequent reads possible (see [#449](https://github.com/giraffe-fsharp/Giraffe/issues/449))

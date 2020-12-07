@@ -22,6 +22,11 @@ let handler3 (a : string, b : string, c : string, d : int) : HttpHandler =
 
 let endpoints =
     [
+        subRoute "/foo" [
+            GET [
+                route "/bar" (text "Aloha!")
+            ]
+        ]
         GET [
             route  "/" (text "Hello World")
             routef "/%s/%i" handler2

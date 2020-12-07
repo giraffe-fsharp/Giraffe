@@ -327,21 +327,23 @@ type IEndpointRouteBuilder with
         | NotSpecified  -> this.Map(routeTemplate, requestDelegate).WithMetadata(List.toArray metadataList) |> ignore
         | _             -> this.MapMethods(routeTemplate, [ verb.ToString() ], requestDelegate).WithMetadata(List.toArray metadataList) |> ignore
 
-    member private this.MapMultiEndpoint (endpoints : Endpoint list) =
+    member private this.MapMultiEndpoint (multiEndpoint : RouteTemplate * Endpoint list * MetadataList) =
+        let subRouteTemplate, endpoints, parentMetadata = multiEndpoint
+        let routeTemplate = sprintf "%s%s" subRouteTemplate
         endpoints
         |> List.iter (
             fun endpoint ->
                 match endpoint with
                 | SimpleEndpoint (v, t, h, ml) ->
                     let d = RequestDelegateBuilder.createRequestDelegate h
-                    this.MapSingleEndpoint(v, t, d, ml)
+                    this.MapSingleEndpoint(v, routeTemplate t, d, ml @ parentMetadata)
                 | TemplateEndpoint(v, t, m, h, ml) ->
                     let d = RequestDelegateBuilder.createTokenizedRequestDelegate m h
-                    this.MapSingleEndpoint(v, t, d, ml)
+                    this.MapSingleEndpoint(v, routeTemplate t, d, ml @ parentMetadata)
                 | NestedEndpoint (t, e, ml) ->
-                    this.MapNestedEndpoint(t, e, ml)
+                    this.MapNestedEndpoint(routeTemplate t, e, ml @ parentMetadata)
                 | MultiEndpoint (el) ->
-                    this.MapMultiEndpoint(el)
+                    this.MapMultiEndpoint(subRouteTemplate, el, parentMetadata)
         )
 
     member private this.MapNestedEndpoint (nestedEndpoint : RouteTemplate * Endpoint list * MetadataList) =
@@ -360,7 +362,7 @@ type IEndpointRouteBuilder with
                 | NestedEndpoint (t, e, ml) ->
                     this.MapNestedEndpoint(routeTemplate t, e, ml @ parentMetadata)
                 | MultiEndpoint (el) ->
-                    this.MapMultiEndpoint(el)
+                    this.MapMultiEndpoint(subRouteTemplate, el, parentMetadata)
         )
 
     member this.MapGiraffeEndpoints (endpoints : Endpoint list) =
@@ -375,5 +377,5 @@ type IEndpointRouteBuilder with
                     let d = RequestDelegateBuilder.createTokenizedRequestDelegate m h
                     this.MapSingleEndpoint(v, t, d, ml)
                 | NestedEndpoint (t, e, ml) -> this.MapNestedEndpoint (t, e, ml)
-                | MultiEndpoint (el) -> this.MapMultiEndpoint (el)
+                | MultiEndpoint (el) -> this.MapMultiEndpoint ("", el, [])
         )
