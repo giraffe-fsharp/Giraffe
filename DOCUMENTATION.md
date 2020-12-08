@@ -41,11 +41,13 @@ An in depth functional reference to all of Giraffe's default features.
 - [Serialization](#serialization)
     - [JSON](#json)
     - [XML](#xml)
+- [Testing](#testing)
 - [Miscellaneous](#miscellaneous)
     - [Short GUIDs and Short IDs](#short-guids-and-short-ids)
     - [Common Helper Functions](#common-helper-functions)
     - [Computation Expressions](#computation-expressions)
 - [Additional Features](#additional-features)
+    - [Endpoint Routing](#endpoint-routing)
     - [TokenRouter](#tokenrouter)
     - [Razor](#razor)
     - [DotLiquid](#dotliquid)
@@ -151,10 +153,10 @@ let webApp =
 
 Another important aspect of Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core only works with tasks out of the box).
 
-For this purpose Giraffe uses the `task {}` computation expression from the [TaskBuilder.fs](https://www.nuget.org/packages/TaskBuilder.fs/) NuGet package. Syntactically it works identical to F#'s async workflows (after opening the `FSharp.Control.Tasks.V2.ContextInsensitive` module):
+For this purpose Giraffe uses the `task {}` computation expression from the [Ply](https://www.nuget.org/packages/Ply/) NuGet package. Syntactically it works identical to F#'s async workflows (after opening the `FSharp.Control.Tasks.Builders` module):
 
 ```fsharp
-open FSharp.Control.Tasks.V2.ContextInsensitive
+open FSharp.Control.Tasks.Builders
 open Giraffe
 
 let personHandler =
@@ -165,14 +167,14 @@ let personHandler =
         }
 ```
 
-The `task {}` CE is an independent project maintained by [Robert Peele](https://github.com/rspeele), for more information please visit the official [TaskBuilder.fs](https://github.com/rspeele/TaskBuilder.fs) GitHub repository.
+The `task {}` CE is an independent project maintained by [Crowded](https://github.com/crowded), for more information please visit the official [Ply](https://github.com/crowded/ply) GitHub repository.
 
 **IMPORTANT NOTICE**
 
-If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks.ContextInsensitive` namespace to resolve any type inference issues:
+If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks.V2.ContextInsensitive` namespace to resolve any type inference issues:
 
 ```fsharp
-open FSharp.Control.Tasks.V2.ContextInsensitive
+open FSharp.Control.Tasks.Builders
 ```
 
 ### Ways of creating a new HttpHandler
@@ -210,7 +212,7 @@ Because an `HttpHandler` is defined as `HttpFunc -> HttpContext -> HttpFuncResul
 The most verbose version of defining a new `HttpHandler` function is by explicitly returning a `Task<HttpContext option>`. This is useful when an async operation needs to be called from within an `HttpHandler` function:
 
 ```fsharp
-open FSharp.Control.Tasks.V2.ContextInsensitive
+open FSharp.Control.Tasks.Builders
 
 type Person = { Name : string }
 
@@ -721,7 +723,7 @@ You can also set an HTTP header via the `setHttpHeader` http handler:
 
 ```fsharp
 let notFoundHandler : HttpHandler =
-    setHttpHeader "X-CustomHeader"
+    setHttpHeader "X-CustomHeader" "Some value"
     >=> RequestErrors.NOT_FOUND "Not Found"
 
 let webApp =
@@ -1046,6 +1048,10 @@ let webApp =
 In the above scenario it is not clear which one of the two http handlers a user want to be invoked when a request is made to `https://example.org/foo///`.
 
 If you want to learn more about `Regex` please check the [Regular Expression Language Reference](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference).
+
+#### routexp
+
+The `routexp` http handler is a combination of `routex` and `routef`. It resolves a route exactly like `routex`, but then passes the resolved Regex Groups as a `Seq<string>` parameter into the supplied handler function similar to how `routef` invokes the next handler in the pipeline.
 
 #### routeCix
 
@@ -2925,61 +2931,61 @@ Please visit the [Giraffe.ViewEngine](https://github.com/giraffe-fsharp/Giraffe.
 
 ### JSON
 
-By default Giraffe uses [Newtonsoft.Json](https://www.newtonsoft.com/json) for (de-)serializing JSON content. An application can modify the default serializer by registering a new dependency which implements the `IJsonSerializer` interface during application startup.
+By default Giraffe uses [Newtonsoft.Json](https://www.newtonsoft.com/json) for (de-)serializing JSON content. An application can modify the default serializer by registering a new dependency which implements the `Json.ISerializer` interface during application startup.
 
-Customizing Giraffe's JSON serialization can either happen via providing a custom object of `JsonSerializerSettings` when instantiating the default `NewtonsoftJsonSerializer` or by swapping in an entire different JSON library by creating a new class which implements the `IJsonSerializer` interface.
+Customizing Giraffe's JSON serialization can either happen via providing a custom object of `JsonSerializerSettings` when instantiating the default `NewtonsoftJson.Serializer` or by swapping in an entire different JSON library by creating a new class which implements the `Json.ISerializer` interface.
 
-By default Giraffe offers two `IJsonSerializer` implementations out of the box:
+By default Giraffe offers three `Json.ISerializer` implementations out of the box:
 
 | Name | Description | Default |
 | :--- | :---------- | :------ |
-| `NewtonsoftJsonSerializer` | Uses `Newtonsoft.Json` aka Json.NET for JSON (de-)serialization in Giraffe. It is the most downloaded library on NuGet, battle tested by millions of users and has great support for F# data types. Use this json serializer for maximum compatibility and easy adoption. | True |
-| `Utf8JsonSerializer` | Uses `Utf8Json` for JSON (de-)serialization in Giraffe. This is the fastest JSON serializer written in .NET with huge extensibility points and native support for directly serializing JSON content to the HTTP response stream via chunked encoding. This serializer has been specifically crafted for maximum performance and should be used when that extra perf is important. | False |
-| `SystemTextJsonSerializer` | Uses `System.Text.Json` for JSON (de-)serialization in Giraffe. `System.Text.Json` is a high performance serialization library, and aims to be the serializaion library of choice for ASP.NET Core. For better support of F# types with `System.Text.Json`, look at [FSharp.SystemTextJson](https://github.com/Tarmil/FSharp.SystemTextJson). | False |
+| `NewtonsoftJson.Serializer` | Uses `Newtonsoft.Json` aka Json.NET for JSON (de-)serialization in Giraffe. It is the most downloaded library on NuGet, battle tested by millions of users and has great support for F# data types. Use this json serializer for maximum compatibility and easy adoption. | True |
+| `Utf8Json.Serializer` | Uses `Utf8Json` for JSON (de-)serialization in Giraffe. This is the fastest JSON serializer written in .NET with huge extensibility points and native support for directly serializing JSON content to the HTTP response stream via chunked encoding. This serializer has been specifically crafted for maximum performance and should be used when that extra perf is important. | False |
+| `SystemTextJson.Serializer` | Uses `System.Text.Json` for JSON (de-)serialization in Giraffe. `System.Text.Json` is a high performance serialization library, and aims to be the serializaion library of choice for ASP.NET Core. For better support of F# types with `System.Text.Json`, look at [FSharp.SystemTextJson](https://github.com/Tarmil/FSharp.SystemTextJson). | False |
 
-To use `Utf8JsonSerializer` instead of `NewtonsoftJsonSerializer`, register a new dependency of type `IJsonSerializer` during application configuration:
+To use `Utf8Json.Serializer` instead of `NewtonsoftJson.Serializer`, register a new dependency of type `Json.ISerializer` during application configuration:
 
 ```fsharp
 let configureServices (services : IServiceCollection) =
     // First register all default Giraffe dependencies
     services.AddGiraffe() |> ignore
 
-    // Now register Utf8JsonSerializer
-    this.AddSingleton<IJsonSerializer>(Utf8JsonSerializer(Utf8JsonSerializer.DefaultResolver)) |> ignore
+    // Now register Utf8Json.Serializer
+    this.AddSingleton<Json.ISerializer>(Utf8Json.Serializer(Utf8Json.Serializer.DefaultResolver)) |> ignore
 ```
 
-Or to use `SystemTextJsonSerializer` instead of `NewtonsoftJsonSerializer`, register a new dependency of type `IJsonSerializer` during application configuration:
+Or to use `SystemTextJson.Serializer` instead of `NewtonsoftJson.Serializer`, register a new dependency of type `Json.ISerializer` during application configuration:
 
 ```fsharp
 let configureServices (services : IServiceCollection) =
     // First register all default Giraffe dependencies
     services.AddGiraffe() |> ignore
 
-    let serializationOptions = SystemTextJsonSerializer.DefaultOptions
+    let serializationOptions = SystemTextJson.Serializer.DefaultOptions
     // Optionally use `FSharp.SystemTextJson` (requires `FSharp.SystemTextJson` package reference)
     serializationOptions.Converters.Add(JsonFSharpConverter(JsonUnionEncoding.FSharpLuLike))
-    // Now register SystemTextJsonSerializer
-    this.AddSingleton<IJsonSerializer>(SystemTextJsonSerializer(SystemTextJsonSerializer.DefaultOptions)) |> ignore
+    // Now register SystemTextJson.Serializer
+    this.AddSingleton<Json.ISerializer>(SystemTextJson.Serializer(serializationOptions)) |> ignore
 ```
 
 
 #### Customizing JsonSerializerSettings
 
-You can change the default `JsonSerializerSettings` of the `NewtonsoftJsonSerializer` by registering a new instance of `NewtonsoftJsonSerializer` during application startup. For example, the [`Microsoft.FSharpLu` project](https://github.com/Microsoft/fsharplu/wiki/fsharplu.json) provides a Json.NET converter (`CompactUnionJsonConverter`) that serializes and deserializes `Option`s and discriminated unions much more succinctly. If you wanted to use it, and set the culture to German, your configuration would look something like:
+You can change the default `JsonSerializerSettings` of the `NewtonsoftJson.Serializer` by registering a new instance of `NewtonsoftJson.Serializer` during application startup. For example, the [`Microsoft.FSharpLu` project](https://github.com/Microsoft/fsharplu/wiki/fsharplu.json) provides a Json.NET converter (`CompactUnionJsonConverter`) that serializes and deserializes `Option`s and discriminated unions much more succinctly. If you wanted to use it, and set the culture to German, your configuration would look something like:
 
 ```fsharp
 let configureServices (services : IServiceCollection) =
     // First register all default Giraffe dependencies
     services.AddGiraffe() |> ignore
 
-    // Now customize only the IJsonSerializer by providing a custom
+    // Now customize only the Json.ISerializer by providing a custom
     // object of JsonSerializerSettings
     let customSettings = JsonSerializerSettings(
         Culture = CultureInfo("de-DE"))
     customSettings.Converters.Add(CompactUnionJsonConverter(true))
 
-    services.AddSingleton<IJsonSerializer>(
-        NewtonsoftJsonSerializer(customSettings)) |> ignore
+    services.AddSingleton<Json.ISerializer>(
+        NewtonsoftJson.Serializer(customSettings)) |> ignore
 
 [<EntryPoint>]
 let main _ =
@@ -2994,11 +3000,11 @@ let main _ =
 
 #### Using a different JSON serializer
 
-You can change the entire underlying JSON serializer by creating a new class which implements the `IJsonSerializer` interface:
+You can change the entire underlying JSON serializer by creating a new class which implements the `Json.ISerializer` interface:
 
 ```fsharp
 type CustomJsonSerializer() =
-    interface IJsonSerializer with
+    interface Json.ISerializer with
         // Use different JSON library ...
         member __.SerializeToString<'T>      (x : 'T) = // ...
         member __.SerializeToBytes<'T>       (x : 'T) = // ...
@@ -3016,8 +3022,8 @@ let configureServices (services : IServiceCollection) =
     // First register all default Giraffe dependencies
     services.AddGiraffe() |> ignore
 
-    // Now register your custom IJsonSerializer
-    services.AddSingleton<IJsonSerializer, CustomJsonSerializer>() |> ignore
+    // Now register your custom Json.ISerializer
+    services.AddSingleton<Json.ISerializer, CustomJsonSerializer>() |> ignore
 
 [<EntryPoint>]
 let main _ =
@@ -3044,20 +3050,20 @@ let customHandler (dataObj : obj) : HttpHandler =
 
 ### XML
 
-By default Giraffe uses the `System.Xml.Serialization.XmlSerializer` for (de-)serializing XML content. An application can modify the serializer by registering a new dependency which implements the `IXmlSerializer` interface during application startup.
+By default Giraffe uses the `System.Xml.Serialization.XmlSerializer` for (de-)serializing XML content. An application can modify the serializer by registering a new dependency which implements the `Xml.ISerializer` interface during application startup.
 
-Customizing Giraffe's XML serialization can either happen via providing a custom object of `XmlWriterSettings` when instantiating the default `DefaultXmlSerializer` or swap in an entire different XML library by creating a new class which implements the `IXmlSerializer` interface.
+Customizing Giraffe's XML serialization can either happen via providing a custom object of `XmlWriterSettings` when instantiating the default `SystemXml.Serializer` or swap in an entire different XML library by creating a new class which implements the `Xml.ISerializer` interface.
 
 #### Customizing XmlWriterSettings
 
-You can change the default `XmlWriterSettings` of the `DefaultXmlSerializer` by registering a new instance of `DefaultXmlSerializer` during application startup:
+You can change the default `XmlWriterSettings` of the `SystemXml.Serializer` by registering a new instance of `SystemXml.Serializer` during application startup:
 
 ```fsharp
 let configureServices (services : IServiceCollection) =
     // First register all default Giraffe dependencies
     services.AddGiraffe() |> ignore
 
-    // Now customize the IXmlSerializer
+    // Now customize the Xml.ISerializer
     let customSettings =
         XmlWriterSettings(
                 Encoding           = Encoding.UTF8,
@@ -3065,8 +3071,8 @@ let configureServices (services : IServiceCollection) =
                 OmitXmlDeclaration = true
             )
 
-    services.AddSingleton<IXmlSerializer>(
-        DefaultXmlSerializer(customSettings)) |> ignore
+    services.AddSingleton<Xml.ISerializer>(
+        SystemXml.Serializer(customSettings)) |> ignore
 
 [<EntryPoint>]
 let main _ =
@@ -3081,11 +3087,11 @@ let main _ =
 
 ####  Using a different XML serializer
 
-You can change the entire underlying XML serializer by creating a new class which implements the `IXmlSerializer` interface:
+You can change the entire underlying XML serializer by creating a new class which implements the `Xml.ISerializer` interface:
 
 ```fsharp
 type CustomXmlSerializer() =
-    interface IXmlSerializer with
+    interface Xml.ISerializer with
         // Use different XML library ...
         member __.Serialize (o : obj) = // ...
         member __.Deserialize<'T> (xml : string) = // ...
@@ -3098,8 +3104,8 @@ let configureServices (services : IServiceCollection) =
     // First register all default Giraffe dependencies
     services.AddGiraffe() |> ignore
 
-    // Now register your custom IXmlSerializer
-    services.AddSingleton<IXmlSerializer, CustomXmlSerializer>() |> ignore
+    // Now register your custom Xml.ISerializer
+    services.AddSingleton<Xml.ISerializer, CustomXmlSerializer>() |> ignore
 
 [<EntryPoint>]
 let main _ =
@@ -3122,6 +3128,67 @@ let customHandler (dataObj : obj) : HttpHandler =
         let serializer = ctx.GetXmlSerializer()
         let xml = serializer.Serialize dataObj
         // ... do more...
+```
+
+## Testing
+
+Testing a Giraffe application follows the concept of [ASP.NET Core testing](https://docs.microsoft.com/en-us/aspnet/core/test/middleware?view=aspnetcore-3.1).
+
+### Necessary imports:
+
+```fsharp
+open FSharp.Control.Tasks
+open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.TestHost
+open Microsoft.AspNetCore.Hosting
+open System.Net.Http
+```
+
+### Build a test host:
+
+```fsharp
+let getTestHost() =
+    WebHostBuilder()
+        .UseTestServer()
+        .Configure(Action<IApplicationBuilder> [YourApp].configureApp)
+        .ConfigureServices([YourApp].configureServices)
+        .ConfigureLogging([YourApp].configureLogging)
+        .UseUrls([YourUrl])
+```
+
+### Create a helper function to issue test requests:
+
+```fsharp
+let testRequest (request : HttpRequestMessage) =
+    let resp = task {
+        use server = new TestServer(getTestHost())
+        use client = server.CreateClient()
+        let! response = request |> client.SendAsync
+        return response
+    }
+    resp.Result
+```
+
+### Examples (using Xunit):
+
+```fsharp
+// Import needed for the code below:
+open System.Net
+
+[<Fact>]
+let ``Hello world endpoint says hello`` () =
+    let response = testRequest (new HttpRequestMessage(HttpMethod.Get, "/hello-world"))
+    let content = response.Content.ReadAsStringAsync().Result
+    Assert.Equal(response.StatusCode, HttpStatusCode.OK)
+    Assert.Equal(content, "hello")
+
+[<Fact>]
+let ``Example HTTP Post`` () =
+    let request = new HttpRequestMessage(HttpMethod.Post, "/hello-world")
+    request.Content <- "{\"JsonField\":\"JsonValue\"}"
+    let response = testRequest request
+    Assert.Equal(response.StatusCode, HttpStatusCode.OK)
+    // Check the json content
 ```
 
 ## Miscellaneous
@@ -3259,6 +3326,105 @@ let someHttpHandler : HttpHandler =
 ## Additional Features
 
 There's more features available for Giraffe web applications through additional NuGet packages:
+
+### Endpoint Routing
+
+Starting with Giraffe 5.x we introduced a new module called `Giraffe.EndpointRouting`. The endpoint routing module implements an alternative router to Giraffe's default routing functions which integrates with [ASP.NET Core's endpoint routing APIs](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0).
+
+ Given the way how ASP.NET Core's Endpoint Routing works this module comes with several benefits (and unfortunately also some minor downsides) in comparison to Giraffe's default router. The main benefit of `Giraffe.EndpointRouting` is that it nicely integrates with the rest of ASP.NET Core and can benefit from everything which Endpoint Routing makes possible. It also means that any performance improvements made to the ASP.NET Core router will directly translate to Giraffe. The downsides are that several existing routing functions couldn't be ported to `Giraffe.EndpointRouting` and routes are case-insensitive by default. Whilst this can be a problem with some applications overall the limitations are minimal and the benefits should greatly outweigh the downsides in the long term. Endpoint Routing is definitely the new preferred option of routing in ASP.NET Core and will undoubtedly see a lot of investment and improvements by the ASP.NET team over the years.
+
+ At last it is possible to have the `Giraffe.EndpointRouting` module and Giraffe's default router work side by side, benefiting from Endpoint Routing where possible and keeping the default router elsewhere.
+
+ #### Endpoint Routing Basics
+
+ In order to make use of Giraffe's endpoint routing functions one has to open the required module first:
+
+ ```fsharp
+open Giraffe.EndpointRouting
+```
+
+Giraffe's HTTP handlers remain unchanged regardless if they are used from a typical Giraffe router or the `Giraffe.EndpointRouting` module. This makes porting to the `Giraffe.EndpointRouting` module tremendously easy:
+
+```fsharp
+let handler1 : HttpHandler =
+    fun (_ : HttpFunc) (ctx : HttpContext) ->
+        ctx.WriteTextAsync "Hello World"
+```
+
+Unlike Giraffe's default router (which really is just a big `HttpHandler` function often implemented with the help of the `choose` function) the endpoint router requires a flat list of `Endpoint` functions:
+
+```fsharp
+let endpoints =
+    [
+        GET => route "/" (text "Hello World")
+        GET => routef "/%s/%i" handler2
+        GET => routef "/%s/%s/%s/%i" handler3
+        subRoute "/sub" [
+            // Not specifying a http verb means it will listen to all verbs
+            route "/test" handler1
+        ]
+    ]
+```
+
+Then the `Endpoint list` must be initialised with ASP.NET Core's `EndpointMiddleware` instead of being passed into the `GiraffeMiddleware`:
+
+```fsharp
+let configureApp (appBuilder : IApplicationBuilder) =
+    appBuilder
+        .UseRouting()
+        .UseEndpoints(fun e -> e.MapGiraffeEndpoints(endpoints))
+    |> ignore
+```
+
+The main differences are:
+
+- Additionally to `HttpHandler` functions there is a new type called `Endpoint`
+- The router is a flat list of `Endpoint` functions
+- The `GET`, `POST`, `route`, etc. functions map a conventional `HttpHandler` to an `Endpoint` function (when the `Giraffe.EndpointRouting` module has been opened)
+- The final `Endpoint list` has to be passed into ASP.NET Core's `EndpointMiddleware` instead of using the `GiraffeMiddleware`
+
+The `MapGiraffeEndpoints` extension method translates those functions into the final `RequestDelegate` functions which the `EndpointMiddleware` relies on and therefore the `Giraffe.EndpointRouting` module doesn't add any extra overhead or runtime cost to ASP.NET Core's endpoint routing resolution.
+
+#### Endpoint Routing Functions
+
+The following routing functions are available as part of the `Giraffe.EndpointRouting` module:
+
+- `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`, `TRACE`, `CONNECT`
+- `route`
+- `routef`
+- `subRoute`
+
+The `route`, `routef` and `subRoute` handlers are all case-insensitive. Other handlers such as `routex`, `subRoutef` or `choose` are not supported by the `Giraffe.EndpointRouting` module.
+
+The `choose` handler is replaced by composing an `Endpoint list`.
+
+Other routing handlers couldn't be ported like for like, but the ASP.NET Core Endpoint Routing API allows for greater control and better insight into an endpoint by exposing useful helper functions.
+
+Using the `GetRouteData` extension method one can get access to route values and data tokens from within a handler:
+
+```fsharp
+open Microsoft.AspNetCore.Routing
+
+let myHandler (foo : int, bar : string) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+
+        let routeData = ctx.GetRouteData()
+        routeData.Values     // Values produced on the current path
+        routeData.DataTokens // Tokens produced on the current path
+
+        sprintf "Yada Yada %i %s" foo bar
+        |> ctx.WriteTextAsync
+```
+
+The `GetEndpoint` extension method returns the endpoint for the currently executed path and can be used to further explore the metadata and other data attached to this endpoint:
+
+```fsharp
+let myHandler (foo : int, bar : string) : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        let endpoint = ctx.GetEndpoint()
+```
+
+For more information about ASP.NET Core Endpoint Routing please refer to the [official documentation](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0).
 
 ### TokenRouter
 

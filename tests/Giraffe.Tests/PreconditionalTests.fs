@@ -212,7 +212,7 @@ let ``HTTP GET with If-Unmodified-Since not in the future and equal to lastModif
 let ``ValidatePreconditions with If-Unmodified-Since is equal to lastModified`` () =
     let ctx = DefaultHttpContext() :> Microsoft.AspNetCore.Http.HttpContext
     ctx.Request.GetTypedHeaders().IfUnmodifiedSince <- Nullable(DateTimeOffset.Parse "Sat, 01 Jan 2000 00:00:00 GMT")
-    let result = ctx.ValidatePreconditions None (Some (DateTimeOffset.Parse "Sat, 01 Jan 2000 00:00:00 GMT"))
+    let result = ctx.ValidatePreconditions(None, (Some (DateTimeOffset.Parse "Sat, 01 Jan 2000 00:00:00 GMT")))
     match result with
     | AllConditionsMet -> ()
     | _ -> Assert.True(false, "The request should have met all pre-conditions.")

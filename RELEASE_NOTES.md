@@ -1,6 +1,73 @@
 Release Notes
 =============
 
+## 5.0.0-rc-4
+
+- Fixed bug when a `NestedEndpoint` preceded a `MultiEndpoint` in `Giraffe.EndpointRouting` (see [#452](https://github.com/giraffe-fsharp/Giraffe/issues/452))
+- Removed the sub-module `GiraffeMiddleware` from the `Giraffe.EndpointRouting` module (simply keep using the `UseGiraffe` extension method of an `IApplicationBuilder`)
+- Added an overload for `UseGiraffe` to pass in an `Endpoint list`:
+    - Before:
+        ```fsharp
+        app.UseEndpoints(fun e -> e.MapGiraffeEndpoints(endpoints))
+        ```
+    - Now:
+        ```fsharp
+        app.UseGiraffe(endpoints)
+        ```
+
+## 5.0.0-rc-3
+
+- Added `ReadBodyBufferedFromRequestAsync` extension method to buffer and read a the request body and make subsequent reads possible (see [#449](https://github.com/giraffe-fsharp/Giraffe/issues/449))
+- Changed how the serialization modules are structured:
+    - `IJsonSerializer` is now `Json.ISerializer`
+    - `Utf8JsonSerializer` is now `Utf8Json.Serializer`
+    - `NewtonsoftJsonSerializer` is now `NewtonsoftJson.Serializer`
+    - `SystemTextJsonSerializer` is now `SystemTextJson.Serializer`
+    - `IXmlSerializer` is now `Xml.ISerializer`
+    - `DefaultXmlSerializer` is now `SystemXml.Serializer`
+- Converted all `HttpContext` extension methods into C# compatible extension methods, meaning that function arguments had to be merged into tuples
+- Removed the `=>` operator from `Giraffe.EndpointRouting`
+- Changed the `GET`, `POST`, `PUT`, `HEAD`, etc. functions to accept an `Endpoint list` instead of an `Endpoint`
+    - Before: `GET => route "/foo" (text "bar")`, After: `GET [ route "/foo" (text "bar") ]`
+    - One can now compose routes easier:
+        ```fsharp
+        GET [
+            route "/a" (text "A")
+            route "/b" (text "B")
+            route "/c" (text "C")
+        ]
+        ```
+- Added `GET_HEAD` to the endpoint routing functions, which will handle a `HEAD` request for the same `GET` handler.
+
+## 5.0.0-rc-2
+
+- Fixed pre-conditions validation issue (see [#424](https://github.com/giraffe-fsharp/Giraffe/issues/424))
+- Fixed parsing issue with Guids and ShortIds in `Giraffe.EndpointRouting` (see [#447](https://github.com/giraffe-fsharp/Giraffe/issues/447))
+- Added `routexp` http handler to default router (see [#446](https://github.com/giraffe-fsharp/Giraffe/issues/446))
+
+## 5.0.0-rc-1
+
+Upgraded to .NET 5. The 5.x version of Giraffe is targeting `net5.0` and dropping support for all other target frameworks. If you cannot upgrade a project to .NET 5 yet then stay on an older version of Giraffe until you can. Giraffe has always been a .NET Core centered project and in the .NET Core world (and now .NET 5 world) there is little to no reason why a project should remain on an old .NET Core version for a long time when upgrade paths are mostly as simple as changing the `<TargetFramework>` property in an `.fsproj` file.
+
+### Summary of changes going into 5.0.0-rc-1
+
+- Only supported target framework is .NET 5
+
+- Added `Giraffe.EndpointRouting` namespace with a version of a few routing handlers which integrate with ASP.NET Core's endpoint routing API
+    - Currently supported are: `route`, `routef`, `subRoute` and HTTP verb handlers such as `GET`, `POST`, `PUT`, etc.
+    - Check the [Endpoint Routing](https://github.com/giraffe-fsharp/Giraffe/blob/v5.0.0-rc-1/DOCUMENTATION.md#edpoint-routing) documentation for more details
+    - Or check the [`EndpointRoutingApp` sample app](https://github.com/giraffe-fsharp/Giraffe/tree/v5.0.0-rc-1/samples/EndpointRoutingApp) for how to use `Giraffe.EndpointRouting`
+- Replaced `Giraffe.GiraffeViewEngine` with the standalone NuGet package `Giraffe.ViewEngine`
+- New `JsonOnlyNegotiationConfig` for setting a content negotiation policy which only supports JSON serialisation (no XML for those who don't need it)
+- Added `SystemTextJsonSerializer` which uses `System.Text.Json` for JSON serialisation when configured as the desired JSON serializer in Giraffe
+- Improved RegEx http handlers in original (non Endpoint routing) http handlers
+- Swapped Markdown docs for XML docs for all functions.
+- Added support for complex model binding (see [#416](https://github.com/giraffe-fsharp/Giraffe/issues/416))
+
+## 5.0.0-alpha-003
+
+- Enhanced Endpoint routing with a metadata list (see [PR #437](https://github.com/giraffe-fsharp/Giraffe/pull/437))
+
 ## 5.0.0-alpha-002
 
 - Swapped Markdown docs for XML docs for all functions.

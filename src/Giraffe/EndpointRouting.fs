@@ -1,55 +1,22 @@
-module Giraffe.EndpointRouting
+namespace Giraffe.EndpointRouting
 
 open System
 open System.Net
 open System.Threading.Tasks
+open System.Runtime.CompilerServices
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Routing
 open Microsoft.FSharp.Reflection
 open FSharp.Core
 open FSharp.Control.Tasks.Builders
-
-// ToDo:
-// ---------------------
-
-// mustAccept
-// routePorts
-// routex
-// routeCix
-// routeBind
-
-// Implemented
-// ---------------------
-
-// | Before                 | Now                   |
-// | ---------------------- | --------------------- |
-// | routeCi                | route                 |
-// | routeCif               | routef                |
-// | subRouteCi             | subRoute              |
-// | GET, POST, PUT, etc.   | GET, POST, PUT, ...   |
-
-// Not Supported
-// ---------------------
-
-// | Function            | Reason                   |
-// | ------------------- | ------------------------ |
-// | choose              | Not possible, endpoint routing is a flat level routing engine                     |
-// | route               | ASP.NET Core's endpoint routing doesn't support case-sensitive routes             |
-// | routef              | ASP.NET Core's endpoint routing doesn't support case-sensitive routes             |
-// | subRoute            | ASP.NET Core's endpoint routing doesn't support case-sensitive routes             |
-// | subRoutef           | Can't do. Use subRoute with a custom route template and read value from RouteData |
-// | routeStartsWith     | Use subRoute             |
-// | routeStartsWithCi   | Use subRoute             |
-// | routeStartsWithf    | Can't do, see subRoutef  |
-// | routeStartsWithCif  | Can't do, see subRoutef  |
-
+open Giraffe
 
 module private RouteTemplateBuilder =
     let private guidPattern =
-        "([0-9A-Fa-f]{8}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{4}\-[0-9A-Fa-f]{12}|[0-9A-Fa-f]{32}|[-_0-9A-Za-z]{22})"
+        "([0-9A-Fa-f]{{8}}\-[0-9A-Fa-f]{{4}}\-[0-9A-Fa-f]{{4}}\-[0-9A-Fa-f]{{4}}\-[0-9A-Fa-f]{{12}}|[0-9A-Fa-f]{{32}}|[-_0-9A-Za-z]{{22}})"
     let private shortIdPattern =
-        "([-_0-9A-Za-z]{10}[048AEIMQUYcgkosw])"
+        "([-_0-9A-Za-z]{{10}}[048AEIMQUYcgkosw])"
 
     let private getConstraint (i : int) (c : char) =
         let name = sprintf "%c%i" c i
@@ -152,136 +119,259 @@ module private RequestDelegateBuilder =
             } :> Task
         |> wrapDelegate
 
-module GiraffeMiddleware =
-    let create (handler : HttpHandler) (next : RequestDelegate) =
-        RequestDelegateBuilder.createRequestDelegate handler
-
 // ---------------------------
-// Overriding Handlers
+// Overriding Router Handlers
 // ---------------------------
 
-type HttpVerb =
-    | GET | POST | PUT | PATCH | DELETE | HEAD | OPTIONS | TRACE | CONNECT
-    | NotSpecified
+[<AutoOpen>]
+module Routers =
 
-    override this.ToString() =
-        match this with
-        | GET        -> "GET"
-        | POST       -> "POST"
-        | PUT        -> "PUT"
-        | PATCH      -> "PATCH"
-        | DELETE     -> "DELETE"
-        | HEAD       -> "HEAD"
-        | OPTIONS    -> "OPTIONS"
-        | TRACE      -> "TRACE"
-        | CONNECT    -> "CONNECT"
-        | _          -> ""
+    type HttpVerb =
+        | GET | POST | PUT | PATCH | DELETE | HEAD | OPTIONS | TRACE | CONNECT
+        | NotSpecified
 
-type RouteTemplate = string
-type RouteTemplateMappings = list<string * char>
+        override this.ToString() =
+            match this with
+            | GET        -> "GET"
+            | POST       -> "POST"
+            | PUT        -> "PUT"
+            | PATCH      -> "PATCH"
+            | DELETE     -> "DELETE"
+            | HEAD       -> "HEAD"
+            | OPTIONS    -> "OPTIONS"
+            | TRACE      -> "TRACE"
+            | CONNECT    -> "CONNECT"
+            | _          -> ""
 
-type Endpoint =
-    | SimpleEndpoint   of HttpVerb * RouteTemplate * HttpHandler
-    | TemplateEndpoint of HttpVerb * RouteTemplate * RouteTemplateMappings * (obj -> HttpHandler)
-    | NestedEndpoint   of RouteTemplate * Endpoint list
+    type RouteTemplate = string
+    type RouteTemplateMappings = list<string * char>
+    type MetadataList = obj list
 
-let inline (=>) (fx : Endpoint -> Endpoint) (x : Endpoint) = fx x
+    type Endpoint =
+        | SimpleEndpoint   of HttpVerb * RouteTemplate * HttpHandler * MetadataList
+        | TemplateEndpoint of HttpVerb * RouteTemplate * RouteTemplateMappings * (obj -> HttpHandler)  * MetadataList
+        | NestedEndpoint   of RouteTemplate * Endpoint list  * MetadataList
+        | MultiEndpoint    of Endpoint list
 
-let rec private httpVerb
-    (verb     : HttpVerb)
-    (endpoint : Endpoint) : Endpoint =
-    match endpoint with
-    | SimpleEndpoint (_, routeTemplate, requestDelegate) ->
-        SimpleEndpoint (verb, routeTemplate, requestDelegate)
-    | TemplateEndpoint(_, routeTemplate, mappings, requestDelegate) ->
-        TemplateEndpoint(verb, routeTemplate, mappings, requestDelegate)
-    | NestedEndpoint (routeTemplate, endpoints) ->
-        NestedEndpoint (routeTemplate, endpoints |> List.map (httpVerb verb))
+    let rec private applyHttpVerbToEndpoint
+        (verb     : HttpVerb)
+        (endpoint : Endpoint) : Endpoint =
+        match endpoint with
+        | SimpleEndpoint (_, routeTemplate, requestDelegate, metadata) ->
+            SimpleEndpoint (verb, routeTemplate, requestDelegate, metadata)
+        | TemplateEndpoint(_, routeTemplate, mappings, requestDelegate, metadata) ->
+            TemplateEndpoint(verb, routeTemplate, mappings, requestDelegate, metadata)
+        | NestedEndpoint (routeTemplate, endpoints, metadata) ->
+            NestedEndpoint (
+                routeTemplate,
+                endpoints
+                |> List.map (applyHttpVerbToEndpoint verb),
+                metadata)
+        | MultiEndpoint endpoints ->
+            endpoints
+            |> List.map(applyHttpVerbToEndpoint verb)
+            |> MultiEndpoint
 
-let GET     = httpVerb GET
-let POST    = httpVerb POST
-let PUT     = httpVerb PUT
-let PATCH   = httpVerb PATCH
-let DELETE  = httpVerb DELETE
-let HEAD    = httpVerb HEAD
-let OPTIONS = httpVerb OPTIONS
-let TRACE   = httpVerb TRACE
-let CONNECT = httpVerb CONNECT
+    let rec private applyHttpVerbToEndpoints
+        (verb      : HttpVerb)
+        (endpoints : Endpoint list) : Endpoint =
+        endpoints
+        |> List.map(
+            fun endpoint ->
+                match endpoint with
+                | SimpleEndpoint (_, routeTemplate, requestDelegate, metadata) ->
+                    SimpleEndpoint (verb, routeTemplate, requestDelegate, metadata)
+                | TemplateEndpoint(_, routeTemplate, mappings, requestDelegate, metadata) ->
+                    TemplateEndpoint(verb, routeTemplate, mappings, requestDelegate, metadata)
+                | NestedEndpoint (routeTemplate, endpoints, metadata) ->
+                    NestedEndpoint (
+                        routeTemplate,
+                        endpoints
+                        |> List.map (applyHttpVerbToEndpoint verb),
+                        metadata)
+                | MultiEndpoint endpoints ->
+                    applyHttpVerbToEndpoints verb endpoints
+        ) |> MultiEndpoint
 
-let route
-    (path     : string)
-    (handler  : HttpHandler) : Endpoint =
-    SimpleEndpoint (HttpVerb.NotSpecified, path, handler)
+    let rec private applyHttpVerbsToEndpoints
+        (verbs     : HttpVerb list)
+        (endpoints : Endpoint list) : Endpoint =
+        endpoints
+        |> List.map(
+            fun endpoint ->
+                match endpoint with
+                | SimpleEndpoint (_, routeTemplate, requestDelegate, metadata) ->
+                    verbs
+                    |> List.map(fun verb -> SimpleEndpoint (verb, routeTemplate, requestDelegate, metadata))
+                    |> MultiEndpoint
+                | TemplateEndpoint(_, routeTemplate, mappings, requestDelegate, metadata) ->
+                    verbs
+                    |> List.map(fun verb -> TemplateEndpoint(verb, routeTemplate, mappings, requestDelegate, metadata))
+                    |> MultiEndpoint
+                | NestedEndpoint (routeTemplate, endpoints, metadata) ->
+                    verbs
+                    |> List.map(
+                        fun verb ->
+                            NestedEndpoint (
+                                routeTemplate,
+                                endpoints
+                                |> List.map (applyHttpVerbToEndpoint verb),
+                                metadata))
+                    |> MultiEndpoint
+                | MultiEndpoint endpoints ->
+                    verbs
+                    |> List.map(fun verb -> applyHttpVerbToEndpoints verb endpoints)
+                    |> MultiEndpoint
+        ) |> MultiEndpoint
 
-let routef
-    (path         : PrintfFormat<_,_,_,_, 'T>)
-    (routeHandler : 'T -> HttpHandler) : Endpoint =
-    let template, mappings = RouteTemplateBuilder.convertToRouteTemplate path
-    let boxedHandler (o : obj) =
-        let t = o :?> 'T
-        routeHandler t
-    TemplateEndpoint (HttpVerb.NotSpecified, template, mappings, boxedHandler)
+    let GET_HEAD = applyHttpVerbsToEndpoints [ GET; HEAD ]
 
-let subRoute
-    (path      : string)
-    (endpoints : Endpoint list) : Endpoint =
-    NestedEndpoint (path, endpoints)
+    let GET     = applyHttpVerbToEndpoints GET
+    let POST    = applyHttpVerbToEndpoints POST
+    let PUT     = applyHttpVerbToEndpoints PUT
+    let PATCH   = applyHttpVerbToEndpoints PATCH
+    let DELETE  = applyHttpVerbToEndpoints DELETE
+    let HEAD    = applyHttpVerbToEndpoints HEAD
+    let OPTIONS = applyHttpVerbToEndpoints OPTIONS
+    let TRACE   = applyHttpVerbToEndpoints TRACE
+    let CONNECT = applyHttpVerbToEndpoints CONNECT
 
-let rec applyBefore
-    (httpHandler  : HttpHandler)
-    (endpoint     : Endpoint) =
-    match endpoint with
-    | SimpleEndpoint(v, p, h)      -> SimpleEndpoint(v, p, httpHandler >=> h)
-    | TemplateEndpoint(v, p, m, h) -> TemplateEndpoint(v, p, m, fun (o: obj) -> httpHandler >=> h o)
-    | NestedEndpoint(t, lst)       -> NestedEndpoint(t, List.map (applyBefore httpHandler) lst)
+    let route
+        (path     : string)
+        (handler  : HttpHandler) : Endpoint =
+        SimpleEndpoint (HttpVerb.NotSpecified, path, handler, [])
 
-let rec applyAfter
-    (httpHandler  : HttpHandler)
-    (endpoint     : Endpoint) =
-    match endpoint with
-    | SimpleEndpoint(v, p, h)      -> SimpleEndpoint(v, p, h >=> httpHandler)
-    | TemplateEndpoint(v, p, m, h) -> TemplateEndpoint(v, p, m, fun (o: obj) -> h o >=> httpHandler)
-    | NestedEndpoint(t, lst)       -> NestedEndpoint(t, List.map (applyAfter httpHandler) lst)
+    let routef
+        (path         : PrintfFormat<_,_,_,_, 'T>)
+        (routeHandler : 'T -> HttpHandler) : Endpoint =
+        let template, mappings = RouteTemplateBuilder.convertToRouteTemplate path
+        let boxedHandler (o : obj) =
+            let t = o :?> 'T
+            routeHandler t
+        TemplateEndpoint (HttpVerb.NotSpecified, template, mappings, boxedHandler, [])
+
+    let subRoute
+        (path      : string)
+        (endpoints : Endpoint list) : Endpoint =
+        NestedEndpoint (path, endpoints, [])
+
+    let rec applyBefore
+        (httpHandler  : HttpHandler)
+        (endpoint     : Endpoint) =
+        match endpoint with
+        | SimpleEndpoint(v, p, h, ml)      -> SimpleEndpoint(v, p, httpHandler >=> h, ml)
+        | TemplateEndpoint(v, p, m, h, ml) -> TemplateEndpoint(v, p, m, (fun (o: obj) -> httpHandler >=> h o), ml)
+        | NestedEndpoint(t, lst, ml)       -> NestedEndpoint(t, List.map (applyBefore httpHandler) lst, ml)
+        | MultiEndpoint(lst)               -> MultiEndpoint(List.map (applyBefore httpHandler) lst)
+
+    let rec applyAfter
+        (httpHandler  : HttpHandler)
+        (endpoint     : Endpoint) =
+        match endpoint with
+        | SimpleEndpoint(v, p, h, ml)      -> SimpleEndpoint(v, p, h >=> httpHandler, ml)
+        | TemplateEndpoint(v, p, m, h, ml) -> TemplateEndpoint(v, p, m, (fun (o: obj) -> h o >=> httpHandler), ml)
+        | NestedEndpoint(t, lst, ml)       -> NestedEndpoint(t, List.map (applyAfter httpHandler) lst, ml)
+        | MultiEndpoint(lst)               -> MultiEndpoint(List.map (applyAfter httpHandler) lst)
+
+    let rec addMetadata
+        (metadata: obj)
+        (endpoint: Endpoint) =
+        match endpoint with
+        | SimpleEndpoint(v, p, h, ml)      -> SimpleEndpoint(v, p, h, metadata::ml)
+        | TemplateEndpoint(v, p, m, h, ml) -> TemplateEndpoint(v, p, m, h, metadata::ml)
+        | NestedEndpoint(t, lst, ml)       -> NestedEndpoint(t, lst, metadata::ml)
+        | MultiEndpoint(lst)               -> MultiEndpoint(List.map (addMetadata metadata) lst)
 
 // ---------------------------
 // Middleware Extension Methods
 // ---------------------------
 
-type IEndpointRouteBuilder with
+[<Extension>]
+type EndpointRouteBuilderExtensions() =
 
-    member private this.MapSingleEndpoint (singleEndpoint : HttpVerb * RouteTemplate * RequestDelegate) =
-        let verb, routeTemplate, requestDelegate = singleEndpoint
+    [<Extension>]
+    static member private MapSingleEndpoint
+        (builder        : IEndpointRouteBuilder,
+        singleEndpoint  : HttpVerb * RouteTemplate * RequestDelegate * MetadataList) =
+
+        let verb, routeTemplate, requestDelegate, metadataList = singleEndpoint
         match verb with
-        | NotSpecified  -> this.Map(routeTemplate, requestDelegate) |> ignore
-        | _             -> this.MapMethods(routeTemplate, [ verb.ToString() ], requestDelegate) |> ignore
+        | NotSpecified  -> builder.Map(routeTemplate, requestDelegate).WithMetadata(List.toArray metadataList) |> ignore
+        | _             -> builder.MapMethods(routeTemplate, [ verb.ToString() ], requestDelegate).WithMetadata(List.toArray metadataList) |> ignore
 
-    member private this.MapNestedEndpoint (nestedEndpoint : RouteTemplate * Endpoint list) =
-        let subRouteTemplate, endpoints = nestedEndpoint
+    [<Extension>]
+    static member private MapMultiEndpoint
+        (builder      : IEndpointRouteBuilder,
+        multiEndpoint : RouteTemplate * Endpoint list * MetadataList) =
+
+        let subRouteTemplate, endpoints, parentMetadata = multiEndpoint
         let routeTemplate = sprintf "%s%s" subRouteTemplate
         endpoints
         |> List.iter (
             fun endpoint ->
                 match endpoint with
-                | SimpleEndpoint (v, t, h) ->
+                | SimpleEndpoint (v, t, h, ml) ->
                     let d = RequestDelegateBuilder.createRequestDelegate h
-                    this.MapSingleEndpoint(v, routeTemplate t, d)
-                | TemplateEndpoint(v, t, m, h) ->
+                    builder.MapSingleEndpoint(v, routeTemplate t, d, ml @ parentMetadata)
+                | TemplateEndpoint(v, t, m, h, ml) ->
                     let d = RequestDelegateBuilder.createTokenizedRequestDelegate m h
-                    this.MapSingleEndpoint(v, routeTemplate t, d)
-                | NestedEndpoint (t, e) ->
-                    this.MapNestedEndpoint(routeTemplate t, e)
+                    builder.MapSingleEndpoint(v, routeTemplate t, d, ml @ parentMetadata)
+                | NestedEndpoint (t, e, ml) ->
+                    builder.MapNestedEndpoint(routeTemplate t, e, ml @ parentMetadata)
+                | MultiEndpoint (el) ->
+                    builder.MapMultiEndpoint(subRouteTemplate, el, parentMetadata)
         )
 
-    member this.MapGiraffeEndpoints (endpoints : Endpoint list) =
+    [<Extension>]
+    static member private MapNestedEndpoint
+        (builder       : IEndpointRouteBuilder,
+        nestedEndpoint : RouteTemplate * Endpoint list * MetadataList) =
+
+        let subRouteTemplate, endpoints, parentMetadata = nestedEndpoint
+        let routeTemplate = sprintf "%s%s" subRouteTemplate
+        endpoints
+        |> List.iter (
+            fun endpoint ->
+                match endpoint with
+                | SimpleEndpoint (v, t, h, ml) ->
+                    let d = RequestDelegateBuilder.createRequestDelegate h
+                    builder.MapSingleEndpoint(v, routeTemplate t, d, ml @ parentMetadata)
+                | TemplateEndpoint(v, t, m, h, ml) ->
+                    let d = RequestDelegateBuilder.createTokenizedRequestDelegate m h
+                    builder.MapSingleEndpoint(v, routeTemplate t, d, ml @ parentMetadata)
+                | NestedEndpoint (t, e, ml) ->
+                    builder.MapNestedEndpoint(routeTemplate t, e, ml @ parentMetadata)
+                | MultiEndpoint (el) ->
+                    builder.MapMultiEndpoint(subRouteTemplate, el, parentMetadata)
+        )
+
+    [<Extension>]
+    static member MapGiraffeEndpoints
+        (builder  : IEndpointRouteBuilder,
+        endpoints : Endpoint list) =
+
         endpoints
         |> List.iter(
             fun endpoint ->
                 match endpoint with
-                | SimpleEndpoint (v, t, h)  ->
+                | SimpleEndpoint (v, t, h, ml) ->
                     let d = RequestDelegateBuilder.createRequestDelegate h
-                    this.MapSingleEndpoint (v, t, d)
-                | TemplateEndpoint(v, t, m, h) ->
+                    builder.MapSingleEndpoint (v, t, d, ml)
+                | TemplateEndpoint(v, t, m, h, ml) ->
                     let d = RequestDelegateBuilder.createTokenizedRequestDelegate m h
-                    this.MapSingleEndpoint(v, t, d)
-                | NestedEndpoint (t, e)     -> this.MapNestedEndpoint (t, e)
+                    builder.MapSingleEndpoint(v, t, d, ml)
+                | NestedEndpoint (t, e, ml) -> builder.MapNestedEndpoint (t, e, ml)
+                | MultiEndpoint (el) -> builder.MapMultiEndpoint ("", el, [])
         )
+
+[<Extension>]
+type ApplicationBuilderExtensions() =
+    /// <summary>
+    /// Uses ASP.NET Core's Endpoint Routing middleware to register Giraffe endpoints.
+    /// </summary>
+    [<Extension>]
+    static member UseGiraffe
+        (builder  : IApplicationBuilder,
+        endpoints : Endpoint list) =
+
+        builder.UseEndpoints(fun e -> e.MapGiraffeEndpoints(endpoints))
