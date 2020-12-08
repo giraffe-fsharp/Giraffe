@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 5.0.0-rc-5
+
+Replaced `TaskBuilder.fs` with `Ply` for Giraffe's `task` computation expressions. Please see [#421](https://github.com/giraffe-fsharp/Giraffe/pull/421) for more information.
+
+This was a change long in the making and has been factored into the 5.0.0 release. Ply is being actively developed by Crowded and has better exception stack traces for task computations and several performance improvements over TaskBuilder.fs.
+
 ## 5.0.0-rc-4
 
 - Fixed bug when a `NestedEndpoint` preceded a `MultiEndpoint` in `Giraffe.EndpointRouting` (see [#452](https://github.com/giraffe-fsharp/Giraffe/issues/452))
