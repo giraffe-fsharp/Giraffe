@@ -7,7 +7,7 @@ module Auth =
     open Microsoft.AspNetCore.Http
     open Microsoft.AspNetCore.Authentication
     open Microsoft.AspNetCore.Authorization
-    open FSharp.Control.Tasks.V2.ContextInsensitive
+    open FSharp.Control.Tasks.Builders
 
     /// <summary>
     /// Challenges a client to authenticate via a specific authScheme.
