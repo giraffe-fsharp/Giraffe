@@ -153,10 +153,10 @@ let webApp =
 
 Another important aspect of Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core only works with tasks out of the box).
 
-For this purpose Giraffe uses the `task {}` computation expression from the [TaskBuilder.fs](https://www.nuget.org/packages/TaskBuilder.fs/) NuGet package. Syntactically it works identical to F#'s async workflows (after opening the `FSharp.Control.Tasks.V2.ContextInsensitive` module):
+For this purpose Giraffe uses the `task {}` computation expression from the [Ply](https://www.nuget.org/packages/Ply/) NuGet package. Syntactically it works identical to F#'s async workflows (after opening the `FSharp.Control.Tasks.Builders` module):
 
 ```fsharp
-open FSharp.Control.Tasks.V2.ContextInsensitive
+open FSharp.Control.Tasks.Builders
 open Giraffe
 
 let personHandler =
@@ -167,14 +167,14 @@ let personHandler =
         }
 ```
 
-The `task {}` CE is an independent project maintained by [Robert Peele](https://github.com/rspeele), for more information please visit the official [TaskBuilder.fs](https://github.com/rspeele/TaskBuilder.fs) GitHub repository.
+The `task {}` CE is an independent project maintained by [Crowded](https://github.com/crowded), for more information please visit the official [Ply](https://github.com/crowded/ply) GitHub repository.
 
 **IMPORTANT NOTICE**
 
 If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks.V2.ContextInsensitive` namespace to resolve any type inference issues:
 
 ```fsharp
-open FSharp.Control.Tasks.V2.ContextInsensitive
+open FSharp.Control.Tasks.Builders
 ```
 
 ### Ways of creating a new HttpHandler
@@ -212,7 +212,7 @@ Because an `HttpHandler` is defined as `HttpFunc -> HttpContext -> HttpFuncResul
 The most verbose version of defining a new `HttpHandler` function is by explicitly returning a `Task<HttpContext option>`. This is useful when an async operation needs to be called from within an `HttpHandler` function:
 
 ```fsharp
-open FSharp.Control.Tasks.V2.ContextInsensitive
+open FSharp.Control.Tasks.Builders
 
 type Person = { Name : string }
 
