@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## 5.0.0-rc-6
+
+Updated `Ply` from `0.1.*` to `0.3.*`.
+
 ## 5.0.0-rc-5
 
 Replaced `TaskBuilder.fs` with `Ply` for Giraffe's `task` computation expressions. Please see [#421](https://github.com/giraffe-fsharp/Giraffe/pull/421) for more information.
