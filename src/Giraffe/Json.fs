@@ -25,7 +25,7 @@ module NewtonsoftJson =
     open System.Text
     open System.Threading.Tasks
     open Microsoft.IO
-    open FSharp.Control.Tasks.Builders
+    open FSharp.Control.Tasks
     open Newtonsoft.Json
     open Newtonsoft.Json.Serialization
 
