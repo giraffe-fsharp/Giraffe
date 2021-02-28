@@ -2965,7 +2965,7 @@ let configureServices (services : IServiceCollection) =
     // Optionally use `FSharp.SystemTextJson` (requires `FSharp.SystemTextJson` package reference)
     serializationOptions.Converters.Add(JsonFSharpConverter(JsonUnionEncoding.FSharpLuLike))
     // Now register SystemTextJson.Serializer
-    this.AddSingleton<Json.ISerializer>(SystemTextJson.Serializer(serializationOptions)) |> ignore
+    services.AddSingleton<Json.ISerializer>(SystemTextJson.Serializer(serializationOptions)) |> ignore
 ```
 
 
