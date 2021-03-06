@@ -171,7 +171,7 @@ The `task {}` CE is an independent project maintained by [Crowded](https://githu
 
 **IMPORTANT NOTICE**
 
-If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks.V2.ContextInsensitive` namespace to resolve any type inference issues:
+If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks` namespace to resolve any type inference issues:
 
 ```fsharp
 open FSharp.Control.Tasks
