@@ -4,7 +4,7 @@ open System
 open System.IO
 open System.Collections.Generic
 open Microsoft.AspNetCore.Http
-open FSharp.Control.Tasks.Builders
+open FSharp.Control.Tasks
 open Xunit
 open NSubstitute
 open Giraffe
@@ -363,7 +363,7 @@ let ``routef: GET "/foo/a%2Fb%2Bc.d%2Ce/bar" returns "a%2Fb%2Bc.d%2Ce"`` () =
 [<InlineData( "/test/hello/more", "Not found" )>]
 [<InlineData( "/TEST/hello/more", "Not found" )>]
 let ``routeStartsWith(f|Cif)`` (uri:string, expected:string) =
-    
+
     let app =
         GET >=> choose [
             routeStartsWithf "/API/%s/" (fun capture -> text ("routeStartsWithf:" + capture))

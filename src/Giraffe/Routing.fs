@@ -3,7 +3,7 @@ namespace Giraffe
 [<RequireQualifiedAccess>]
 module SubRouting =
     open Microsoft.AspNetCore.Http
-    open FSharp.Control.Tasks.Builders
+    open FSharp.Control.Tasks
 
     [<Literal>]
     let private RouteKey = "giraffe_route"
