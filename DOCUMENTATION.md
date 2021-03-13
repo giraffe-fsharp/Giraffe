@@ -1201,7 +1201,7 @@ routeBind<Blah> "/p/{foo}/{bar}(/*)" blahHandler
 
 For a complete list of valid `Regex` codes please visit the official [Regular Expression Language Reference](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference).
 
-#### routeStartsWtih
+#### routeStartsWith
 
 Sometimes it can be useful to pre-filter a route in order to enable certain functionality which should only be applied to a specific collection of routes.
 
