@@ -88,6 +88,7 @@ open System
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Hosting
+open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
 
@@ -102,7 +103,7 @@ type Startup() =
         services.AddGiraffe() |> ignore
 
     member __.Configure (app : IApplicationBuilder)
-                        (env : IHostingEnvironment)
+                        (env : IHostEnvironment)
                         (loggerFactory : ILoggerFactory) =
         // Add Giraffe to the ASP.NET Core pipeline
         app.UseGiraffe webApp

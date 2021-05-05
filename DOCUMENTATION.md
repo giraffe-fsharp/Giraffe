@@ -153,10 +153,10 @@ let webApp =
 
 Another important aspect of Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core only works with tasks out of the box).
 
-For this purpose Giraffe uses the `task {}` computation expression from the [Ply](https://www.nuget.org/packages/Ply/) NuGet package. Syntactically it works identical to F#'s async workflows (after opening the `FSharp.Control.Tasks.Builders` module):
+For this purpose Giraffe uses the `task {}` computation expression from the [Ply](https://www.nuget.org/packages/Ply/) NuGet package. Syntactically it works identical to F#'s async workflows (after opening the `FSharp.Control.Tasks` module):
 
 ```fsharp
-open FSharp.Control.Tasks.Builders
+open FSharp.Control.Tasks
 open Giraffe
 
 let personHandler =
@@ -171,10 +171,10 @@ The `task {}` CE is an independent project maintained by [Crowded](https://githu
 
 **IMPORTANT NOTICE**
 
-If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks.V2.ContextInsensitive` namespace to resolve any type inference issues:
+If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks` namespace to resolve any type inference issues:
 
 ```fsharp
-open FSharp.Control.Tasks.Builders
+open FSharp.Control.Tasks
 ```
 
 ### Ways of creating a new HttpHandler
@@ -212,7 +212,7 @@ Because an `HttpHandler` is defined as `HttpFunc -> HttpContext -> HttpFuncResul
 The most verbose version of defining a new `HttpHandler` function is by explicitly returning a `Task<HttpContext option>`. This is useful when an async operation needs to be called from within an `HttpHandler` function:
 
 ```fsharp
-open FSharp.Control.Tasks.Builders
+open FSharp.Control.Tasks
 
 type Person = { Name : string }
 
@@ -1201,7 +1201,7 @@ routeBind<Blah> "/p/{foo}/{bar}(/*)" blahHandler
 
 For a complete list of valid `Regex` codes please visit the official [Regular Expression Language Reference](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference).
 
-#### routeStartsWtih
+#### routeStartsWith
 
 Sometimes it can be useful to pre-filter a route in order to enable certain functionality which should only be applied to a specific collection of routes.
 
@@ -2377,7 +2377,7 @@ let webApp =
 
 ### Response Writing
 
-Sending a response back to a client in Giraffe can be done through a small range of `HttpContext` extension methods and and their equivalent `HttpHandler` functions.
+Sending a response back to a client in Giraffe can be done through a small range of `HttpContext` extension methods and their equivalent `HttpHandler` functions.
 
 #### Writing Bytes
 
@@ -2965,7 +2965,7 @@ let configureServices (services : IServiceCollection) =
     // Optionally use `FSharp.SystemTextJson` (requires `FSharp.SystemTextJson` package reference)
     serializationOptions.Converters.Add(JsonFSharpConverter(JsonUnionEncoding.FSharpLuLike))
     // Now register SystemTextJson.Serializer
-    this.AddSingleton<Json.ISerializer>(SystemTextJson.Serializer(serializationOptions)) |> ignore
+    services.AddSingleton<Json.ISerializer>(SystemTextJson.Serializer(serializationOptions)) |> ignore
 ```
 
 
