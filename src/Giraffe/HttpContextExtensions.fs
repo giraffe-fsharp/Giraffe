@@ -31,7 +31,7 @@ type HttpContextExtensions() =
 
     /// <summary>
     /// Gets an instance of `'T` from the request's service container.
-    /// </summary
+    /// </summary>
     /// <returns>Returns an instance of `'T`.</returns>
     [<Extension>]
     static member GetService<'T>(ctx : HttpContext) =
@@ -41,11 +41,11 @@ type HttpContextExtensions() =
         | service -> service :?> 'T
 
     /// <summary>
-    /// Gets an instance of <see cref="Microsoft.Extensions.Logging.ILogger<'T>" /> from the request's service container.
+    /// Gets an instance of <see cref="Microsoft.Extensions.Logging.ILogger{T}" /> from the request's service container.
     ///
     /// The type `'T` should represent the class or module from where the logger gets instantiated.
     /// </summary>
-    /// <returns> Returns an instance of <see cref="Microsoft.Extensions.Logging.ILogger<'T>" />.</returns>
+    /// <returns> Returns an instance of <see cref="Microsoft.Extensions.Logging.ILogger{T}" />.</returns>
     [<Extension>]
     static member GetLogger<'T>(ctx : HttpContext) =
         ctx.GetService<ILogger<'T>>()
@@ -53,6 +53,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Gets an instance of <see cref="Microsoft.Extensions.Logging.ILogger"/> from the request's service container.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="categoryName">The category name for messages produced by this logger.</param>
     /// <returns>Returns an instance of <see cref="Microsoft.Extensions.Logging.ILogger"/>.</returns>
     [<Extension>]
@@ -87,6 +88,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Sets the HTTP status code of the response.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="httpStatusCode">The status code to be set in the response. For convenience you can use the static <see cref="Microsoft.AspNetCore.Http.StatusCodes"/> class for passing in named status codes instead of using pure int values.</param>
     [<Extension>]
     static member SetStatusCode (ctx : HttpContext, httpStatusCode : int) =
@@ -95,6 +97,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Adds or sets a HTTP header in the response.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="key">The HTTP header name. For convenience you can use the static <see cref="Microsoft.Net.Http.Headers.HeaderNames"/> class for passing in strongly typed header names instead of using pure `string` values.</param>
     /// <param name="value">The value to be set. Non string values will be converted to a string using the object's ToString() method.</param>
     [<Extension>]
@@ -104,6 +107,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Sets the Content-Type HTTP header in the response.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="contentType">The mime type of the response (e.g.: application/json or text/html).</param>
     [<Extension>]
     static member SetContentType (ctx : HttpContext, contentType : string) =
@@ -112,6 +116,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Tries to get the <see cref="System.String"/> value of a HTTP header from the request.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="key">The name of the HTTP header.</param>
     /// <returns> Returns Some string if the HTTP header was present in the request, otherwise returns None.</returns>
     [<Extension>]
@@ -122,6 +127,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Retrieves the <see cref="System.String"/> value of a HTTP header from the request.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="key">The name of the HTTP header.</param>
     /// <returns>Returns Ok string if the HTTP header was present in the request, otherwise returns Error string.</returns>
     [<Extension>]
@@ -133,6 +139,7 @@ type HttpContextExtensions() =
     /// <summary>
     ///  Tries to get the <see cref="System.String"/> value of a query string parameter from the request.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="key">The name of the query string parameter.</param>
     /// <returns>Returns Some string if the parameter was present in the request's query string, otherwise returns None.</returns>
     [<Extension>]
@@ -144,6 +151,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Retrieves the <see cref="System.String"/> value of a query string parameter from the request.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="key">The name of the query string parameter.</param>
     /// <returns>Returns Ok string if the parameter was present in the request's query string, otherwise returns Error string.</returns>
     [<Extension>]
@@ -155,6 +163,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Retrieves the <see cref="System.String"/> value of a cookie from the request.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="key">The name of the cookie.</param>
     /// <returns>Returns Some string if the cookie was set, otherwise returns None.</returns>
     [<Extension>]
@@ -166,6 +175,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Retrieves the <see cref="System.String"/> value of a form parameter from the request.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="key">The name of the form parameter.</param>
     /// <returns>Returns Some string if the form parameter was set, otherwise returns None.</returns>
     [<Extension>]
@@ -180,6 +190,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Reads the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously and returns it as a <see cref="System.String"/> value.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <returns>Returns the contents of the request body as a <see cref="System.Threading.Tasks.Task{System.String}"/>.</returns>
     [<Extension>]
     static member ReadBodyFromRequestAsync(ctx : HttpContext) =
@@ -236,6 +247,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Parses all input elements from an HTML form into an object of type 'T.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="cultureInfo">An optional <see cref="System.Globalization.CultureInfo"/> element to be used when parsing culture specific data such as float, DateTime or decimal values.</param>
     /// <typeparam name="'T"></typeparam>
     /// <returns>Returns a <see cref="System.Threading.Tasks.Task{T}"/></returns>
@@ -253,6 +265,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Tries to parse all input elements from an HTML form into an object of type 'T.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="cultureInfo">An optional <see cref="System.Globalization.CultureInfo"/> element to be used when parsing culture specific data such as float, DateTime or decimal values.</param>
     /// <typeparam name="'T"></typeparam>
     /// <returns>Returns an object 'T if model binding succeeded, otherwise a <see cref="System.String"/> message containing the specific model parsing error.</returns>
@@ -270,6 +283,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Parses all parameters of a request's query string into an object of type 'T.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="cultureInfo">An optional <see cref="System.Globalization.CultureInfo"/> element to be used when parsing culture specific data such as float, DateTime or decimal values.</param>
     /// <typeparam name="'T"></typeparam>
     /// <returns>Returns an instance of type 'T</returns>
@@ -283,6 +297,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Tries to parse all parameters of a request's query string into an object of type 'T.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="cultureInfo">An optional <see cref="System.Globalization.CultureInfo"/> element to be used when parsing culture specific data such as float, DateTime or decimal values.</param>
     /// <typeparam name="'T"></typeparam>
     /// <returns>Returns an object 'T if model binding succeeded, otherwise a <see cref="System.String"/> message containing the specific model parsing error.</returns>
@@ -296,6 +311,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Parses the request body into an object of type 'T based on the request's Content-Type header.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="cultureInfo">An optional <see cref="System.Globalization.CultureInfo"/> element to be used when parsing culture specific data such as float, DateTime or decimal values.</param>
     /// <typeparam name="'T"></typeparam>
     /// <returns>Returns a <see cref="System.Threading.Tasks.Task{T}"/></returns>
@@ -321,6 +337,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Writes a byte array to the body of the HTTP response and sets the HTTP Content-Length header accordingly.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="bytes">The byte array to be send back to the client.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
     [<Extension>]
@@ -335,6 +352,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Writes an UTF-8 encoded string to the body of the HTTP response and sets the HTTP Content-Length header accordingly.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="str">The string value to be send back to the client.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
     [<Extension>]
@@ -344,6 +362,7 @@ type HttpContextExtensions() =
     /// <summary>
     /// Writes an UTF-8 encoded string to the body of the HTTP response and sets the HTTP `Content-Length` header accordingly, as well as the `Content-Type` header to `text/plain`.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="str">The string value to be send back to the client.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
     [<Extension>]
@@ -356,6 +375,7 @@ type HttpContextExtensions() =
     /// It also sets the HTTP Content-Type header to application/json and sets the Content-Length header accordingly.
     /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="Json.ISerializer"/>
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="dataObj">The object to be send back to the client.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
     [<Extension>]
@@ -370,6 +390,7 @@ type HttpContextExtensions() =
     /// It also sets the HTTP Content-Type header to application/json and sets the Transfer-Encoding header to chunked.
     /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="Json.ISerializer"/>.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="dataObj">The object to be send back to the client.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
     [<Extension>]
@@ -390,6 +411,7 @@ type HttpContextExtensions() =
     /// It also sets the HTTP Content-Type header to application/xml and sets the Content-Length header accordingly.
     /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="Xml.ISerializer"/>.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="dataObj">The object to be send back to the client.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
     [<Extension>]
@@ -403,6 +425,7 @@ type HttpContextExtensions() =
     /// Reads a HTML file from disk and writes its contents to the body of the HTTP response.
     /// It also sets the HTTP header Content-Type to text/html and sets the Content-Length header accordingly.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="filePath">A relative or absolute file path to the HTML file.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
     [<Extension>]
@@ -423,6 +446,7 @@ type HttpContextExtensions() =
     /// Writes a HTML string to the body of the HTTP response.
     /// It also sets the HTTP header Content-Type to text/html and sets the Content-Length header accordingly.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="html">The HTML string to be send back to the client.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
     [<Extension>]
@@ -433,6 +457,8 @@ type HttpContextExtensions() =
     /// <summary>
     /// <para>Compiles a `Giraffe.GiraffeViewEngine.XmlNode` object to a HTML view and writes the output to the body of the HTTP response.</para>
     /// <para>It also sets the HTTP header `Content-Type` to `text/html` and sets the `Content-Length` header accordingly.</para>
+    /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="htmlView">An `XmlNode` object to be send back to the client and which represents a valid HTML view.</param>
     /// <returns>Task of `Some HttpContext` after writing to the body of the response.</returns>
     [<Extension>]
