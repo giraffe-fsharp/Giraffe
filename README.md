@@ -296,8 +296,8 @@ All other builds, such as builds triggered by pull requests produce a NuGet pack
 - [Giraffe brings F# functional programming to ASP.Net Core](https://www.infoworld.com/article/3229005/web-development/f-and-functional-programming-come-to-asp-net-core.html) (by Paul Krill from InfoWorld)
 - [JSON Web Token with Giraffe and F#](https://medium.com/@dsincl12/json-web-token-with-giraffe-and-f-4cebe1c3ef3b) (by David Sinclair)
 - [WebSockets with Giraffe and F#](https://medium.com/@dsincl12/websockets-with-f-and-giraffe-772be829e121) (by David Sinclair)
-- [Use appsettings in a Giraffe web app](https://www.devprotocol.com/use-appsettings-in-a-giraffe-web-app/) (by Jan Tourlamain)
-- [Integrate Azure AD in your Giraffe web app](https://www.devprotocol.com/integrate-azure-ad-in-your-giraffe-web-app/) (by Jan Tourlamain)
+- [Use appsettings in a Giraffe web app](https://www.devprotocol.com/2018/04/19/use-appsettings-in-a-giraffe-web-app.html) (by Jan Tourlamain)
+- [Integrate Azure AD in your Giraffe web app](https://www.devprotocol.com/2018/08/14/integrate-azure-ad-in-your-giraffe-web-app.html) (by Jan Tourlamain)
 - [Web development in F#: Getting started](https://samueleresca.net/2018/04/web-development-in-f-getting-started/) (by Samuele Resca)
 - [Build web service using F# and ASP.NET Core](https://samueleresca.net/2018/04/build-web-service-using-f-and-asp-net-core/) (by Samuele Resca)
 

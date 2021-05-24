@@ -66,7 +66,7 @@ type HttpFunc = HttpContext -> HttpFuncResult
 type HttpHandler = HttpFunc -> HttpContext -> HttpFuncResult
 ```
 
-an `HttpHandler` is a simple function which takes two curried arguments, an `HttpFunc` and an `HttpContext`, and returns an `HttpContext` (wrapped in an `option` and `Task` workflow) when finished.
+an `HttpHandler` is a function which takes two curried arguments, an `HttpFunc` and an `HttpContext`, and returns an `HttpContext` (wrapped in an `option` and `Task` workflow) when finished.
 
 On a high level an `HttpHandler` function receives and returns an ASP.NET Core `HttpContext` object, which means every `HttpHandler` function has full control of the incoming `HttpRequest` and the resulting `HttpResponse`.
 
@@ -171,7 +171,7 @@ The `task {}` CE is an independent project maintained by [Crowded](https://githu
 
 **IMPORTANT NOTICE**
 
-If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks.V2.ContextInsensitive` namespace to resolve any type inference issues:
+If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks` namespace to resolve any type inference issues:
 
 ```fsharp
 open FSharp.Control.Tasks
@@ -290,7 +290,7 @@ In Giraffe there are three scenarios which a given `HttpHandler` can invoke:
 
 #### Continue
 
-The continue scenario is pretty much self explanatory. One handlers performs some actions on the `HttpRequest` and/or `HttpResponse` object and then invokes the `next` handler to continue with the pipeline.
+A handler performs some actions on the `HttpRequest` and/or `HttpResponse` object and then invokes the `next` handler to **continue** with the pipeline.
 
 A great example is the `setHttpHeader` handler, which sets a given HTTP header and afterwards always calls into the `next` http handler:
 
@@ -834,7 +834,7 @@ The lower case version lets you combine the `HttpHandler` function with another 
 Successful.ok (text "Hello World")
 ```
 
-This is basically a shorter (and more explicit) version of:
+This is a shorter (and more explicit) version of:
 
 ```fsharp
 setStatusCode 200 >=> text "Hello World"
@@ -1201,7 +1201,7 @@ routeBind<Blah> "/p/{foo}/{bar}(/*)" blahHandler
 
 For a complete list of valid `Regex` codes please visit the official [Regular Expression Language Reference](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference).
 
-#### routeStartsWtih
+#### routeStartsWith
 
 Sometimes it can be useful to pre-filter a route in order to enable certain functionality which should only be applied to a specific collection of routes.
 
@@ -2345,7 +2345,7 @@ The `Precondition` union type contains the following cases:
 | Case | Description and Recommended Action |
 | ---- | ---------------------------------- |
 | `NoConditionsSpecified` | No validation has taken place, because the client didn't send any conditional HTTP headers. Proceed with web request as normal. |
-| `ConditionFailed` | At least one condition couldn't be sastisfied. It is advised to return a `412` status code back to the client (you can use the `HttpContext.PreconditionFailedResponse()` method for that purpose). |
+| `ConditionFailed` | At least one condition couldn't be satisfied. It is advised to return a `412` status code back to the client (you can use the `HttpContext.PreconditionFailedResponse()` method for that purpose). |
 | `ResourceNotModified` | The resource hasn't changed since the last visit. The server can skip processing this request and return a `304` status code back to the client (you can use the `HttpContext.NotModifiedResponse()` method for that purpose). |
 | `AllConditionsMet` | All pre-conditions were satisfied. The server should continue processing the request as normal. |
 
@@ -2377,7 +2377,7 @@ let webApp =
 
 ### Response Writing
 
-Sending a response back to a client in Giraffe can be done through a small range of `HttpContext` extension methods and and their equivalent `HttpHandler` functions.
+Sending a response back to a client in Giraffe can be done through a small range of `HttpContext` extension methods and their equivalent `HttpHandler` functions.
 
 #### Writing Bytes
 
@@ -2885,7 +2885,7 @@ The `vary` parameter specifies which HTTP request headers must be respected to v
 
 #### VaryByQueryKeys
 
-The ASP.NET Core response caching middleware offers one more additional feature which is not part of the response's HTTP headers. By default, if a route is cachable then the middleware will try to return a cached response even if the query parameters were different.
+The ASP.NET Core response caching middleware offers one more additional feature which is not part of the response's HTTP headers. By default, if a route is cacheable then the middleware will try to return a cached response even if the query parameters were different.
 
 For example if a request to `/foo/bar` has been cached, then the cached version will also be returned if a request is made to `/foo/bar?query1=a` or `/foo/bar?query1=a&query2=b`.
 
@@ -2941,7 +2941,7 @@ By default Giraffe offers three `Json.ISerializer` implementations out of the bo
 | :--- | :---------- | :------ |
 | `NewtonsoftJson.Serializer` | Uses `Newtonsoft.Json` aka Json.NET for JSON (de-)serialization in Giraffe. It is the most downloaded library on NuGet, battle tested by millions of users and has great support for F# data types. Use this json serializer for maximum compatibility and easy adoption. | True |
 | `Utf8Json.Serializer` | Uses `Utf8Json` for JSON (de-)serialization in Giraffe. This is the fastest JSON serializer written in .NET with huge extensibility points and native support for directly serializing JSON content to the HTTP response stream via chunked encoding. This serializer has been specifically crafted for maximum performance and should be used when that extra perf is important. | False |
-| `SystemTextJson.Serializer` | Uses `System.Text.Json` for JSON (de-)serialization in Giraffe. `System.Text.Json` is a high performance serialization library, and aims to be the serializaion library of choice for ASP.NET Core. For better support of F# types with `System.Text.Json`, look at [FSharp.SystemTextJson](https://github.com/Tarmil/FSharp.SystemTextJson). | False |
+| `SystemTextJson.Serializer` | Uses `System.Text.Json` for JSON (de-)serialization in Giraffe. `System.Text.Json` is a high performance serialization library, and aims to be the serialization library of choice for ASP.NET Core. For better support of F# types with `System.Text.Json`, look at [FSharp.SystemTextJson](https://github.com/Tarmil/FSharp.SystemTextJson). | False |
 
 To use `Utf8Json.Serializer` instead of `NewtonsoftJson.Serializer`, register a new dependency of type `Json.ISerializer` during application configuration:
 

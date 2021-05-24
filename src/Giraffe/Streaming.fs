@@ -167,6 +167,7 @@ type StreamingExtensions() =
     ///
     /// The handler will respect any valid HTTP pre-conditions (e.g. If-Match, If-Modified-Since, etc.) and return the most appropriate response. If the optional parameters eTag and/or lastModified have been set, then it will also set the ETag and/or Last-Modified HTTP headers in the response.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="enableRangeProcessing">If enabled then the handler will respect the Range and If-Range HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.</param>
     /// <param name="stream">The stream to be send to the client.</param>
     /// <param name="eTag">An optional entity tag which identifies the exact version of the data.</param>
@@ -215,6 +216,7 @@ type StreamingExtensions() =
     ///
     /// The handler will respect any valid HTTP pre-conditions (e.g. If-Match, If-Modified-Since, etc.) and return the most appropriate response. If the optional parameters eTag and/or lastModified have been set, then it will also set the ETag and/or Last-Modified HTTP headers in the response.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="enableRangeProcessing">If enabled then the handler will respect the Range and If-Range HTTP headers of the request as well as set all necessary HTTP headers in the response to enable HTTP range processing.</param>
     /// <param name="filePath">The absolute or relative path (to ContentRoot) of the file.</param>
     /// <param name="eTag">An optional entity tag which identifies the exact version of the file.</param>
