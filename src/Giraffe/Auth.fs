@@ -7,7 +7,7 @@ module Auth =
     open Microsoft.AspNetCore.Http
     open Microsoft.AspNetCore.Authentication
     open Microsoft.AspNetCore.Authorization
-    open FSharp.Control.Tasks.Builders
+    open FSharp.Control.Tasks
 
     /// <summary>
     /// Challenges a client to authenticate via a specific authScheme.
@@ -64,8 +64,6 @@ module Auth =
     /// <summary>
     /// Validates if a <see cref="System.Security.Claims.ClaimsPrincipal"/> satisfies a certain condition. If the policy returns true then it will continue with the next function otherwise it will short circuit and execute the authFailedHandler.
     /// </summary>
-    /// <param name="policy">One or many conditions which a <see cref="System.Security.Claims.ClaimsPrincipal"/> must meet. The policy function should return true on success and false on failure.</param>
-    /// <param name="authFailedHandler">A <see cref="HttpHandler"/> function which will be executed when the policy returns false.</param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
     let authorizeUser = evaluateUserPolicy
 

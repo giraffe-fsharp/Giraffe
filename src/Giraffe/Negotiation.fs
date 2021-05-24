@@ -95,6 +95,7 @@ type NegotiationExtensions() =
     ///
     /// If the Accept header cannot be matched with one of the supported mime types from the negotiationRules then the unacceptableHandler will be invoked.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="negotiationRules">A dictionary of mime types and response writing <see cref="HttpHandler" /> functions. Each mime type must be mapped to a function which accepts an obj and returns a <see cref="HttpHandler" /> which will send a response in the associated mime type (e.g.: dict [ "application/json", json; "application/xml" , xml ]).</param>
     /// <param name="unacceptableHandler"> A <see cref="HttpHandler" /> function which will be invoked if none of the accepted mime types can be satisfied. Generally this <see cref="HttpHandler" /> would send a response with a status code of 406 Unacceptable.</param>
     /// <param name="responseObj">The object to send back to the client.</param>
@@ -133,6 +134,7 @@ type NegotiationExtensions() =
     ///
     /// The negotiation rules as well as a <see cref="HttpHandler" /> for unacceptable requests can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="INegotiationConfig"/>.
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="responseObj">The object to send back to the client.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
     [<Extension>]

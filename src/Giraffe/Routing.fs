@@ -3,7 +3,7 @@ namespace Giraffe
 [<RequireQualifiedAccess>]
 module SubRouting =
     open Microsoft.AspNetCore.Http
-    open FSharp.Control.Tasks.Builders
+    open FSharp.Control.Tasks
 
     [<Literal>]
     let private RouteKey = "giraffe_route"
@@ -301,8 +301,6 @@ module Routing =
     /// </summary>
     /// <param name="path">A part of an expected request path.</param>
     /// <param name="handler">A Giraffe <see cref="HttpHandler"/> function.</param>
-    /// <param name="next"></param>
-    /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
     let subRoute (path : string) (handler : HttpHandler) : HttpHandler =
         routeStartsWith path >=>
@@ -314,8 +312,8 @@ module Routing =
     /// </summary>
     /// <param name="path">A part of an expected request path.</param>
     /// <param name="handler">A Giraffe <see cref="HttpHandler"/> function.</param>
-    /// <param name="next"></param>
-    /// <param name="ctx"></param>
+    /// <param name="next">The next HttpFunc in the Giraffe pipeline.</param>
+    /// <param name="ctx">The current http context object.</param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
     let subRouteCi (path : string) (handler : HttpHandler) : HttpHandler =
         fun (next : HttpFunc) (ctx: HttpContext) ->

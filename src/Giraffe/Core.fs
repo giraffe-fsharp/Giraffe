@@ -7,7 +7,7 @@ module Core =
     open System.Globalization
     open Microsoft.AspNetCore.Http
     open Microsoft.Extensions.Logging
-    open FSharp.Control.Tasks.Builders
+    open FSharp.Control.Tasks
     open Giraffe.ViewEngine
 
     /// <summary>
@@ -485,6 +485,7 @@ module Core =
     /// <summary>
     /// <para>Compiles a `Giraffe.GiraffeViewEngine.XmlNode` object to a HTML view and writes the output to the body of the HTTP response.</para>
     /// <para>It also sets the HTTP header `Content-Type` to `text/html` and sets the `Content-Length` header accordingly.</para>
+    /// </summary>
     /// <param name="htmlView">An `XmlNode` object to be send back to the client and which represents a valid HTML view.</param>
     /// <returns>A Giraffe `HttpHandler` function which can be composed into a bigger web application.</returns>
     let htmlView (htmlView : XmlNode) : HttpHandler =

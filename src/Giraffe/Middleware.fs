@@ -9,7 +9,7 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.DependencyInjection.Extensions
-open FSharp.Control.Tasks.Builders
+open FSharp.Control.Tasks
 
 // ---------------------------
 // Default middleware
@@ -84,6 +84,7 @@ type ApplicationBuilderExtensions() =
     ///
     /// It is generally recommended to add the <see cref="GiraffeMiddleware" /> after the error handling, static file and any authentication middleware.
     /// </summary>
+    /// <param name="builder">The ASP.NET Core application builder.</param>
     /// <param name="handler">The Giraffe <see cref="HttpHandler" /> pipeline. The handler can be anything from a single handler to an entire web application which has been composed from many smaller handlers.</param>
     /// <returns><see cref="Microsoft.FSharp.Core.Unit"/></returns>
     [<Extension>]
@@ -95,6 +96,7 @@ type ApplicationBuilderExtensions() =
     /// <summary>
     /// Adds the <see cref="GiraffeErrorHandlerMiddleware" /> into the ASP.NET Core pipeline. The <see cref="GiraffeErrorHandlerMiddleware" /> has been configured in such a way that it only invokes the <see cref="ErrorHandler" /> when an unhandled exception bubbles up to the middleware. It therefore is recommended to add the <see cref="GiraffeErrorHandlerMiddleware" /> as the very first middleware above everything else.
     /// </summary>
+    /// <param name="builder">The ASP.NET Core application builder.</param>
     /// <param name="handler">The Giraffe <see cref="ErrorHandler" /> pipeline. The handler can be anything from a single handler to a bigger error application which has been composed from many smaller handlers.</param>
     /// <returns>Returns an <see cref="Microsoft.AspNetCore.Builder.IApplicationBuilder"/> builder object.</returns>
     [<Extension>]

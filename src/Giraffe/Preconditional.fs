@@ -8,7 +8,7 @@ open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Headers
 open Microsoft.Extensions.Primitives
 open Microsoft.Net.Http.Headers
-open FSharp.Control.Tasks.Builders
+open FSharp.Control.Tasks
 
 type Precondition =
     | NoConditionsSpecified
@@ -111,6 +111,7 @@ type PreconditionExtensions() =
     ///
     /// If-Unmodified-Since
     /// </summary>
+    /// <param name="ctx">The current http context object.</param>
     /// <param name="eTag">Optional ETag. You can use the static EntityTagHeaderValue.FromString helper method to generate a valid <see cref="EntityTagHeaderValue"/> object.</param>
     /// <param name="lastModified">Optional <see cref="System.DateTimeOffset"/> object denoting the last modified date.</param>
     /// <returns>
