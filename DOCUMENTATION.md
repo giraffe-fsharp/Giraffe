@@ -1075,9 +1075,9 @@ In the example above a request made to `https://example.org/FOO/` would return `
 If a route contains user defined parameters then the `routef` http handler can be handy:
 
 ```fsharp
-let fooHandler (first : string)
-               (last  : string)
-               (age   : int)
+let fooHandler (first : string,
+               last  : string,
+               age   : int)
                : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         (sprintf "First: %s, Last: %s, Age: %i" first last age
