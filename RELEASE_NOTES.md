@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## 5.0.0
+
+Stable release of latest 5.0.0 RC with additional XML comment fixes to comply with latest F# compiler services.
+
 ## 5.0.0-rc-6
 
 Updated `Ply` from `0.1.*` to `0.3.*`.
