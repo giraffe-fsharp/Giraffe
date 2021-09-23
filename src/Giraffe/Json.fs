@@ -29,13 +29,11 @@ module NewtonsoftJson =
     open Newtonsoft.Json
     open Newtonsoft.Json.Serialization
 
-    let recyclableMemoryStreamManager = RecyclableMemoryStreamManager()
-
     /// <summary>
     /// Default JSON serializer in Giraffe.
     /// Serializes objects to camel cased JSON code.
     /// </summary>
-    type Serializer (settings : JsonSerializerSettings) =
+    type Serializer (settings : JsonSerializerSettings, rmsManager : RecyclableMemoryStreamManager) =
         let serializer = JsonSerializer.Create settings
         let utf8EncodingWithoutBom = UTF8Encoding(false)
 
@@ -53,7 +51,7 @@ module NewtonsoftJson =
 
             member __.SerializeToStreamAsync (x : 'T) (stream : Stream) =
                 task {
-                    use memoryStream = recyclableMemoryStreamManager.GetStream()
+                    use memoryStream = rmsManager.GetStream()
                     use streamWriter = new StreamWriter(memoryStream, utf8EncodingWithoutBom)
                     use jsonTextWriter = new JsonTextWriter(streamWriter)
                     serializer.Serialize(jsonTextWriter, x)
