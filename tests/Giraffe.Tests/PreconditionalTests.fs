@@ -7,7 +7,6 @@ open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
-open FSharp.Control.Tasks
 open Xunit
 open Giraffe
 

@@ -4,6 +4,7 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
+open Microsoft.Extensions.Hosting
 open Giraffe
 open Giraffe.EndpointRouting
 
@@ -63,11 +64,15 @@ let configureServices (services : IServiceCollection) =
 
 [<EntryPoint>]
 let main args =
-    WebHost
-        .CreateDefaultBuilder(args)
-        .UseKestrel()
-        .Configure(configureApp)
-        .ConfigureServices(configureServices)
-        .Build()
-        .Run()
+    let builder = WebApplication.CreateBuilder(args)
+    configureServices builder.Services
+
+    let app = builder.Build()
+
+    if app.Environment.IsDevelopment() then
+        app.UseDeveloperExceptionPage() |> ignore
+    
+    configureApp app
+    app.Run()
+
     0

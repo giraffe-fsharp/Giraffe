@@ -8,7 +8,6 @@ open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Headers
 open Microsoft.Extensions.Primitives
 open Microsoft.Net.Http.Headers
-open FSharp.Control.Tasks
 
 type Precondition =
     | NoConditionsSpecified
