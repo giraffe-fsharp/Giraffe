@@ -150,13 +150,17 @@ let webApp =
 ```
 
 ### Tasks
+Another important aspect of Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s historic `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core only works with tasks out of the box).
 
-Another important aspect of Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core only works with tasks out of the box).
+### Tasks - Giraffe 6 and later
+Giraffe 6 targets .NET 6 and uses [F# 6's built-in task support](https://docs.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-6#task-) without any additional dependencies.
 
-For this purpose Giraffe uses the `task {}` computation expression from the [Ply](https://www.nuget.org/packages/Ply/) NuGet package. Syntactically it works identical to F#'s async workflows (after opening the `FSharp.Control.Tasks` module):
+When building web apps using Giraffe, we recommend you use this built-in support too.
+
+### Tasks - Giraffe 5
+In Giraffe 5, we use the `task {}` computation expression from the [Ply](https://www.nuget.org/packages/Ply/) NuGet package. Syntactically it works identical to F#'s async workflows (after opening the `FSharp.Control.Tasks` module):
 
 ```fsharp
-open FSharp.Control.Tasks
 open Giraffe
 
 let personHandler =
@@ -171,7 +175,7 @@ The `task {}` CE is an independent project maintained by [Crowded](https://githu
 
 **IMPORTANT NOTICE**
 
-If you have `do!` bindings in your Giraffe web application then you must open the `FSharp.Control.Tasks` namespace to resolve any type inference issues:
+If you have `do!` bindings in your Giraffe 5 web application then you must open the `FSharp.Control.Tasks` namespace to resolve any type inference issues:
 
 ```fsharp
 open FSharp.Control.Tasks
@@ -212,8 +216,6 @@ Because an `HttpHandler` is defined as `HttpFunc -> HttpContext -> HttpFuncResul
 The most verbose version of defining a new `HttpHandler` function is by explicitly returning a `Task<HttpContext option>`. This is useful when an async operation needs to be called from within an `HttpHandler` function:
 
 ```fsharp
-open FSharp.Control.Tasks
-
 type Person = { Name : string }
 
 let sayHelloWorld : HttpHandler =
@@ -3137,7 +3139,6 @@ Testing a Giraffe application follows the concept of [ASP.NET Core testing](http
 ### Necessary imports:
 
 ```fsharp
-open FSharp.Control.Tasks
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.TestHost
 open Microsoft.AspNetCore.Hosting
@@ -3927,7 +3928,6 @@ module Mapping =
 [<AutoOpen>]
 module HttpHandlers =
   open Giraffe.HttpHandlers
-  open Giraffe.Tasks
   open System.Threading.Tasks
 
   module Query =

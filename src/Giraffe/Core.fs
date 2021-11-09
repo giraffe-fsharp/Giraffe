@@ -7,7 +7,6 @@ module Core =
     open System.Globalization
     open Microsoft.AspNetCore.Http
     open Microsoft.Extensions.Logging
-    open FSharp.Control.Tasks
     open Giraffe.ViewEngine
 
     /// <summary>
