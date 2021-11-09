@@ -153,7 +153,7 @@ let webApp =
 Another important aspect of Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s historic `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core only works with tasks out of the box).
 
 ### Tasks - Giraffe 6 and later
-Giraffe 6 targets .NET 6, and utilies F# 6. This means we are able to use [F#'s built-in task support](https://docs.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-6#task-), and do not require any additional dependencies.
+Giraffe 6 targets .NET 6 and uses [F# 6's built-in task support](https://docs.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-6#task-) without any additional dependencies.
 
 When building web apps using Giraffe, we recommend you use this built-in support too.
 
