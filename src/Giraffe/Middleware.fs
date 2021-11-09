@@ -9,8 +9,6 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.DependencyInjection.Extensions
-open Microsoft.IO
-open FSharp.Control.Tasks
 
 // ---------------------------
 // Default middleware
