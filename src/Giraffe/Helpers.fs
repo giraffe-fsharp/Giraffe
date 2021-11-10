@@ -4,7 +4,6 @@ namespace Giraffe
 module Helpers =
     open System
     open System.IO
-    open FSharp.Control.Tasks
 
     /// <summary>
     /// Checks if an object is not null.

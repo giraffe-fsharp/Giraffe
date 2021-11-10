@@ -3,7 +3,6 @@ module Giraffe.Tests.AuthTests
 open System.IO
 open System.Security.Claims
 open Microsoft.AspNetCore.Http
-open FSharp.Control.Tasks
 open NSubstitute
 open Xunit
 open Giraffe
