@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## 6.0.0-alpha-1
+
+Upgraded to .NET 6 and F#'s new native `task` computation expression.
+
 ## 5.0.0
 
 Stable release of latest 5.0.0 RC with additional XML comment fixes to comply with latest F# compiler services.
