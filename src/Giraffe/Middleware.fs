@@ -9,6 +9,7 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.DependencyInjection.Extensions
+open Microsoft.IO
 
 // ---------------------------
 // Default middleware
@@ -113,7 +114,7 @@ type ServiceCollectionExtensions() =
     /// <returns>Returns an <see cref="Microsoft.Extensions.DependencyInjection.IServiceCollection"/> builder object.</returns>
     [<Extension>]
     static member AddGiraffe(svc : IServiceCollection) =
-        svc.TryAddSingleton<RecyclableMemoryStreamManager>(fun _ -> RecyclableMemoryStreamManager()) 
+        svc.TryAddSingleton<RecyclableMemoryStreamManager>(fun _ -> RecyclableMemoryStreamManager())
         svc.TryAddSingleton<Json.ISerializer>(fun sp ->
             NewtonsoftJson.Serializer(NewtonsoftJson.Serializer.DefaultSettings, sp.GetService<RecyclableMemoryStreamManager>()) :> Json.ISerializer)
         svc.TryAddSingleton<Xml.ISerializer>(fun sp ->
