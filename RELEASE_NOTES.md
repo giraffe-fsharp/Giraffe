@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 6.0.0-alpha-2
+
+- Added `setContentType` handler
+- Made the `RecyclableMemoryStreamManager` configurable through DI
+- Improved `Xml.Serializer` to also make use of the `RecyclableMemoryStreamManager`
+
 ## 6.0.0-alpha-1
 
 Upgraded to .NET 6 and F#'s new native `task` computation expression.
