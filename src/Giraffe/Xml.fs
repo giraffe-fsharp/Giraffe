@@ -13,6 +13,7 @@ module Xml =
 
 [<RequireQualifiedAccess>]
 module SystemXml =
+    open Microsoft.IO
     open System.Text
     open System.IO
     open System.Xml
@@ -22,7 +23,12 @@ module SystemXml =
     /// Default XML serializer in Giraffe.
     /// Serializes objects to UTF8 encoded indented XML code.
     /// </summary>
-    type Serializer (settings : XmlWriterSettings) =
+    type Serializer (settings : XmlWriterSettings, rmsManager : RecyclableMemoryStreamManager) =
+
+        new(settings : XmlWriterSettings) = Serializer(
+            settings,
+            recyclableMemoryStreamManager.Value)
+
         static member DefaultSettings =
             XmlWriterSettings(
                 Encoding           = Encoding.UTF8,
@@ -32,7 +38,7 @@ module SystemXml =
 
         interface Xml.ISerializer with
             member __.Serialize (o : obj) =
-                use stream = new MemoryStream()
+                use stream = if rmsManager.ThrowExceptionOnToArray then new MemoryStream() else rmsManager.GetStream("giraffe-xml-serialize")
                 use writer = XmlWriter.Create(stream, settings)
                 let serializer = XmlSerializer(o.GetType())
                 serializer.Serialize(writer, o)

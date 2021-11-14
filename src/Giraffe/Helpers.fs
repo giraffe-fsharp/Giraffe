@@ -4,6 +4,10 @@ namespace Giraffe
 module Helpers =
     open System
     open System.IO
+    open Microsoft.IO
+
+    /// <summary>Default single RecyclableMemoryStreamManager.</summary>
+    let recyclableMemoryStreamManager = Lazy<RecyclableMemoryStreamManager>()
 
     /// <summary>
     /// Checks if an object is not null.
