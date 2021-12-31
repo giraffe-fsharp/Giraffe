@@ -31,6 +31,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [File Uploads](#file-uploads)
     - [Authentication and Authorization](#authentication-and-authorization)
     - [Conditional Requests](#conditional-requests)
+    - [Request Limitation](#request-limitation)
     - [Response Writing](#response-writing)
     - [Content Negotiation](#content-negotiation)
     - [Streaming](#streaming)
@@ -2375,6 +2376,50 @@ let webApp =
         route "/"    >=> text "Hello World"
         route "/foo" >=> someHttpHandler
     ]
+```
+
+### Request Limitation
+
+The type of requests that are allowed can be guard or limited. Requests with a certain type of `Accept` or `Content-Type` header can be checked for acceptable values and a user-friendly error message is send back to the consumer automatically when the conditions are not met.
+
+Giraffe offers several http handlers that can be part of your request processing pipeline.
+
+**Accept**
+Guards http request based on its `Accept` header:
+
+```fsharp
+// Only allow http requests with an `Accept` header equals `application/json`.
+let webApp =
+  GET >=> mustAcceptAny [ "application/json" ] >=> text "Hello World"
+
+// Http request with `Accept` = `application/json`      -> pass through
+// Http request without `Accept` = `application/json    -> error 406 http response: "cannot accept request because header 'Accept' hasn't got expected MIME type"
+```
+
+**Content-Type**
+Guards http request based on its `Content-Type` header:
+
+```fsharp
+// Only allow http request with a `Content-Type` header `equals `application/json`.
+let webApp =
+  GET >=> haveContentType "application/json" >=> text "Hello World"
+
+// Http request with    `Content-Type` = `application/json`   -> pass through
+// Http request without `Content-TYpe` = `application/json`   -> error 406 http response: "cannot accept request because expected to have request header 'Content-Type'"
+```
+
+> Note: with `haveAnyContentTypes` multiple `Content-Type` headers can be passed to verify if the http request has any of the provided header values.
+
+**Content-Length**
+Guards http request based on its `Content-Length` header:
+
+```fsharp
+// Only allow http request with a `Content-Length` header less than or equal than provided maximum bytes.
+let webApp =
+  GET >=> maxContentLength 100L >=> text "Hello World"
+
+// Http request with    `Content-Length` = `45`   -> pass through
+// Http request without `Content-Length` = `3042` -> error 406 http response: "cannot accept request because header 'Content-Length' is too large"
 ```
 
 ### Response Writing

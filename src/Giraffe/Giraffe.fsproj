@@ -74,6 +74,7 @@
     <Compile Include="Streaming.fs" />
     <Compile Include="Negotiation.fs" />
     <Compile Include="HttpStatusCodeHandlers.fs" />
+    <Compile Include="RequestLimitation.fs" />
     <Compile Include="Middleware.fs" />
     <Compile Include="EndpointRouting.fs" />
   </ItemGroup>
