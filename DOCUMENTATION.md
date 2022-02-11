@@ -3357,9 +3357,11 @@ Unlike Giraffe's default router (which really is just a big `HttpHandler` functi
 ```fsharp
 let endpoints =
     [
-        GET => route "/" (text "Hello World")
-        GET => routef "/%s/%i" handler2
-        GET => routef "/%s/%s/%s/%i" handler3
+        GET [
+            route "/" (text "Hello World")
+            routef "/%s/%i" handler2
+            routef "/%s/%s/%s/%i" handler3
+        ]
         subRoute "/sub" [
             // Not specifying a http verb means it will listen to all verbs
             route "/test" handler1
