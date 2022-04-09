@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## 6.0.0
+
+- Same as 6.0.0-alpha-2
+
 ## 6.0.0-alpha-2
 
 - Added `setContentType` handler
