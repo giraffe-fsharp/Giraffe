@@ -7,7 +7,7 @@ module Helpers =
     open Microsoft.IO
 
     /// <summary>Default single RecyclableMemoryStreamManager.</summary>
-    let recyclableMemoryStreamManager = Lazy<RecyclableMemoryStreamManager>()
+    let internal recyclableMemoryStreamManager = Lazy<RecyclableMemoryStreamManager>()
 
     /// <summary>
     /// Checks if an object is not null.
