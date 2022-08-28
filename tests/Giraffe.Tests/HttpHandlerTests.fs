@@ -395,13 +395,13 @@ let ``POST with "all-medias" header type returns the first available route`` () 
     /// Reference: https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.2
     let ctx = Substitute.For<HttpContext>()
     let app =
-        choose [
-            POST >=> choose [
-                route "/any" >=> mustAccept [ "text/plain" ] >=> text "first route"
-                route "/any" >=> mustAccept [ "application/json" ] >=> json "second route"
-                route "/any" >=> mustAccept [ "text/plain"; "application/json" ] >=> text "third route" ]
-            setStatusCode 404 >=> text "Not found" ]
-        
+        CHOOSE [
+            POST |> choose [
+                ROUTE "/any" |> mustAccept [ "text/plain" ] |> text "first route"
+                ROUTE "/any" |> mustAccept [ "application/json" ] |> json "second route"
+                ROUTE "/any" |> mustAccept [ "text/plain"; "application/json" ] |> text "third route" ]
+            SET_STATUS_CODE 404 |> text "Not found" ]
+
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("*/*"))
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
@@ -420,19 +420,19 @@ let ``POST with "all-medias" header type returns the first available route`` () 
             Assert.Equal(expected, body)
             Assert.Equal("text/plain; charset=utf-8", ctx.Response |> getContentType)
     }
-        
+
 [<Fact>]
 let ``POST with an accept header type containing a fuzzy type and concrete subtype returns the first matching route`` () =
     /// Reference: https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.2
     let ctx = Substitute.For<HttpContext>()
     let app =
-        choose [
-            POST >=> choose [
-                route "/any" >=> mustAccept [ "text/plain" ] >=> text "first route"
-                route "/any" >=> mustAccept [ "application/xml" ] >=> text "<test>second route</test>"
-                route "/any" >=> mustAccept [ "text/plain"; "application/json" ] >=> text "third route" ]
-            setStatusCode 404 >=> text "Not found" ]
-        
+        CHOOSE [
+            POST |> choose [
+                ROUTE "/any" |> mustAccept [ "text/plain" ] |> text "first route"
+                ROUTE "/any" |> mustAccept [ "application/xml" ] |> text "<test>second route</test>"
+                ROUTE "/any" |> mustAccept [ "text/plain"; "application/json" ] |> text "third route" ]
+            SET_STATUS_CODE 404 |> text "Not found" ]
+
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/*"))
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore

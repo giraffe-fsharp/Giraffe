@@ -238,17 +238,18 @@ module Core =
     /// <param name="next"></param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let mustAccept (mimeTypes : string list) source : HttpHandler =
+    let mustAccept (mimeTypes : string list) (source: HttpHandler) : HttpHandler =
         let acceptedMimeTypes : MediaTypeHeaderValue list = mimeTypes |> List.map (MediaTypeHeaderValue.Parse)
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            let headers = ctx.Request.GetTypedHeaders()
-            headers.Accept
-            |> Seq.exists (fun h ->
-                acceptedMimeTypes
-                |> List.exists (fun amt -> amt.IsSubsetOf(h)))
-            |> function
-                | true  -> next ctx
-                | false -> skipPipeline
+        fun (next : HttpFunc) ->
+            fun (ctx : HttpContext) ->
+                let headers = ctx.Request.GetTypedHeaders()
+                headers.Accept
+                |> Seq.exists (fun h ->
+                    acceptedMimeTypes
+                    |> List.exists (fun amt -> amt.IsSubsetOf(h)))
+                |> function
+                    | true  -> next ctx
+                    | false -> skipPipeline
             |> source
 
     /// <summary>
