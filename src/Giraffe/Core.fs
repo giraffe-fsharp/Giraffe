@@ -7,6 +7,7 @@ module Core =
     open System.Globalization
     open Microsoft.AspNetCore.Http
     open Microsoft.Extensions.Logging
+    open Microsoft.Net.Http.Headers
     open Giraffe.ViewEngine
 
     /// <summary>
@@ -238,15 +239,16 @@ module Core =
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
     let mustAccept (mimeTypes : string list) source : HttpHandler =
-        fun (next : HttpFunc) ->
-            fun (ctx : HttpContext) ->
-                let headers = ctx.Request.GetTypedHeaders()
-                headers.Accept
-                |> Seq.map    (fun h -> h.ToString())
-                |> Seq.exists (fun h -> mimeTypes |> Seq.contains h)
-                |> function
-                    | true  -> next ctx
-                    | false -> skipPipeline
+        let acceptedMimeTypes : MediaTypeHeaderValue list = mimeTypes |> List.map (MediaTypeHeaderValue.Parse)
+        fun (next : HttpFunc) (ctx : HttpContext) ->
+            let headers = ctx.Request.GetTypedHeaders()
+            headers.Accept
+            |> Seq.exists (fun h ->
+                acceptedMimeTypes
+                |> List.exists (fun amt -> amt.IsSubsetOf(h)))
+            |> function
+                | true  -> next ctx
+                | false -> skipPipeline
             |> source
 
     /// <summary>
