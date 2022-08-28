@@ -106,10 +106,10 @@ There is no limit to how many `HttpHandler` functions can be chained with `compo
 
 ```fsharp
 let app =
-    route "/"
-    >> setHttpHeader "X-Foo" "Bar"
-    >> setStatusCode 200
-    >> setBodyFromString "Hello World"
+    ROUTE "/"
+    |> setHttpHeader "X-Foo" "Bar"
+    |> setStatusCode 200
+    |> setBodyFromString "Hello World"
 ```
 
 If you would like to learn more about the `>=>` (fish) operator then please check out [Scott Wlaschin's blog post on Railway oriented programming](http://fsharpforfunandprofit.com/posts/recipe-part2/).
@@ -120,9 +120,9 @@ The `choose` combinator function iterates through a list of `HttpHandler` functi
 
 ```fsharp
 let app =
-    choose [
-        route "/foo" >> text "Foo"
-        route "/bar" >> text "Bar"
+    CHOOSE [
+        ROUTE "/foo" >> text "Foo"
+        ROUTE "/bar" >> text "Bar"
     ]
 ```
 
@@ -143,9 +143,9 @@ A warbler will ensure that a function will get evaluated every time the route is
 let time() = System.DateTime.Now.ToString()
 
 let webApp =
-    choose [
-        route "/normal"  >> text (time())
-        route "/warbler" >> warbler (fun _ -> text (time()))
+    CHOOSE [
+        ROUTE "/normal"  >> text (time())
+        ROUTE "/warbler" >> warbler (fun _ -> text (time()))
     ]
 ```
 
@@ -379,9 +379,9 @@ Create a web application and plug it into the ASP.NET Core middleware:
 open Giraffe
 
 let webApp =
-    choose [
-        route "/ping"   >> text "pong"
-        route "/"       >> htmlFile "/pages/index.html" ]
+    CHOOSE [
+        ROUTE "/ping"   |> text "pong"
+        ROUTE "/"       |> htmlFile "/pages/index.html" ]
 
 type Startup() =
     member __.ConfigureServices (services : IServiceCollection) =
@@ -413,9 +413,9 @@ Instead of creating a `Startup` class you can also add Giraffe in a more functio
 open Giraffe
 
 let webApp =
-    choose [
-        route "/ping"   >> text "pong"
-        route "/"       >> htmlFile "/pages/index.html" ]
+    CHOOSE [
+        ROUTE "/ping"   |> text "pong"
+        ROUTE "/"       |> htmlFile "/pages/index.html" ]
 
 let configureApp (app : IApplicationBuilder) =
     // Add Giraffe to the ASP.NET Core pipeline
@@ -729,9 +729,9 @@ let notFoundHandler : HttpHandler =
     >=> RequestErrors.NOT_FOUND "Not Found"
 
 let webApp =
-    choose [
-        route "/foo" >> text "Foo"
-        route "/bar" >> text "Bar"
+    CHOOSE [
+        ROUTE "/foo" >> text "Foo"
+        ROUTE "/bar" >> text "Bar"
         notFoundHandler
     ]
 ```
@@ -764,7 +764,7 @@ let submitBarHandler : HttpHandler =
     // Do something
 
 let webApp =
-    choose [
+    CHOOSE [
         // Filters for GET requests
         GET  >=> choose [
             route "/foo" >=> text "Foo"
@@ -815,8 +815,8 @@ let someHttpHandler : HttpHandler =
 // or...
 
 let someHttpHandler : HttpHandler =
-    setStatusCode 200
-    >=> text "Hello World"
+    SET_STATUS_CODE 200
+    |> text "Hello World"
 ```
 
 Giraffe also offers a default set of pre-defined `HttpHandler` functions, which can be used to return a response with a specific HTTP status code.
@@ -859,9 +859,9 @@ let johnDoe =
         LastName  = "Doe"
     }
 
-let app = choose [
-    route `/`     >=> Successful.OK "Hello World"
-    route `/john` >=> Successful.OK johnDoe
+let app = CHOOSE [
+    ROUTE `/`     |> Successful.OK "Hello World"
+    ROUTE `/john` |> Successful.OK johnDoe
 ]
 ```
 
@@ -953,9 +953,9 @@ The simplest form of routing can be done with the `route` http handler:
 
 ```fsharp
 let webApp =
-    choose [
-        route "/foo" >=> text "Foo"
-        route "/bar" >=> text "Bar"
+    CHOOSE [
+        ROUTE "/foo" |> text "Foo"
+        ROUTE "/bar" |> text "Bar"
 
         // If none of the routes matched then return a 404
         RequestErrors.NOT_FOUND "Not Found"
@@ -970,9 +970,9 @@ This can be avoided by using the case insensitive `routeCi` http handler:
 
 ```fsharp
 let webApp =
-    choose [
-        route   "/foo" >=> text "Foo"
-        routeCi "/foo" >=> text "Bar"
+    CHOOSE [
+        ROUTE   "/foo" |> text "Foo"
+        ROUTE_CI "/foo" |> text "Bar"
 
         // If none of the routes matched then return a 404
         RequestErrors.NOT_FOUND "Not Found"
@@ -994,9 +994,9 @@ A web server might (rightfully) want to serve a different response for each rout
 
 ```fsharp
 let webApp =
-    choose [
-        route "/foo"  >=> text "Foo"
-        route "/foo/" >=> text "Bar"
+    CHOOSE [
+        ROUTE "/foo"  |> text "Foo"
+        ROUTE "/foo/" |> text "Bar"
 
         // If none of the routes matched then return a 404
         RequestErrors.NOT_FOUND "Not Found"
@@ -1007,8 +1007,8 @@ However many web applications choose to treat both routes as the same. If you wo
 
 ```fsharp
 let webApp =
-    choose [
-        routex "/foo(/?)" >=> text "Bar"
+    CHOOSE [
+        ROUTE_X "/foo(/?)" |> text "Bar"
 
         // If none of the routes matched then return a 404
         RequestErrors.NOT_FOUND "Not Found"
@@ -1026,8 +1026,8 @@ However, this example wouldn't match a request made to `https://example.org/foo/
 
 ```fsharp
 let webApp =
-    choose [
-        routex "/foo(/*)" >=> text "Bar"
+    CHOOSE [
+        ROUTE_X "/foo(/*)" |> text "Bar"
 
         // If none of the routes matched then return a 404
         RequestErrors.NOT_FOUND "Not Found"

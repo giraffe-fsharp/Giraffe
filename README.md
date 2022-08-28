@@ -93,9 +93,9 @@ open Microsoft.Extensions.DependencyInjection
 open Giraffe
 
 let webApp =
-    choose [
-        route "/ping"   >> text "pong"
-        route "/"       >> htmlFile "/pages/index.html" ]
+    CHOOSE [
+        ROUTE "/ping"   |> text "pong"
+        ROUTE "/"       |> htmlFile "/pages/index.html" ]
 
 type Startup() =
     member __.ConfigureServices (services : IServiceCollection) =
@@ -132,9 +132,9 @@ open Microsoft.Extensions.DependencyInjection
 open Giraffe
 
 let webApp =
-    choose [
-        route "/ping"   >> text "pong"
-        route "/"       >> htmlFile "/pages/index.html" ]
+    CHOOSE [
+        ROUTE "/ping"   |> text "pong"
+        ROUTE "/"       |> htmlFile "/pages/index.html" ]
 
 let configureApp (app : IApplicationBuilder) =
     // Add Giraffe to the ASP.NET Core pipeline
@@ -208,7 +208,7 @@ Running `dotnet test` from the root of the project will execute all test project
 
 ```
 dotnet test
-``` 
+```
 
 ## Contributing
 
