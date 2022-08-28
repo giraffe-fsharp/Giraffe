@@ -258,9 +258,12 @@ let streamData (enableRangeProcessing : bool)
                (stream                : Stream)
                (eTag                  : EntityTagHeaderValue option)
                (lastModified          : DateTimeOffset option)
+                (source                : HttpHandler)
                : HttpHandler =
-    fun (_ : HttpFunc) (ctx : HttpContext) ->
-        ctx.WriteStreamAsync(enableRangeProcessing, stream, eTag, lastModified)
+    fun (_ : HttpFunc) ->
+        fun (ctx : HttpContext) ->
+            ctx.WriteStreamAsync(enableRangeProcessing, stream, eTag, lastModified)
+        |> source
 
 /// <summary>
 /// Streams a file to the client.
@@ -277,6 +280,9 @@ let streamFile (enableRangeProcessing : bool)
                (filePath              : string)
                (eTag                  : EntityTagHeaderValue option)
                (lastModified          : DateTimeOffset option)
+               (source                : HttpHandler)
                : HttpHandler =
-    fun (_ : HttpFunc) (ctx : HttpContext) ->
-        ctx.WriteFileStreamAsync(enableRangeProcessing, filePath, eTag, lastModified)
+    fun (_ : HttpFunc) ->
+        fun (ctx : HttpContext) ->
+            ctx.WriteFileStreamAsync(enableRangeProcessing, filePath, eTag, lastModified)
+        |> source

@@ -48,23 +48,23 @@ module Urls =
     let rangeProcessingDisabled = "/range-processing-disabled"
 
 module WebApp =
-    let streamHandler (enableRangeProcessing : bool) : HttpHandler =
-        streamFile enableRangeProcessing "streaming.txt" None None
+    let streamHandler (enableRangeProcessing : bool) source : HttpHandler =
+        streamFile enableRangeProcessing "streaming.txt" None None source
 
     let webApp =
-        choose [
-            route Urls.rangeProcessingEnabled  >=> streamHandler true
-            route Urls.rangeProcessingDisabled >=> streamHandler false
+        CHOOSE [
+            ROUTE Urls.rangeProcessingEnabled  |> streamHandler true
+            ROUTE Urls.rangeProcessingDisabled |> streamHandler false
         ]
 
-    let errorHandler (ex : Exception) (_ : ILogger) : HttpHandler =
+    let errorHandler (ex : Exception) (_ : ILogger) : HttpHandler -> HttpHandler =
         printfn "Error: %s" ex.Message
         printfn "StackTrace:%s %s" Environment.NewLine ex.StackTrace
-        setStatusCode 500 >=> text ex.Message
+        setStatusCode 500 >> text ex.Message
 
     let configureApp _ (app : IApplicationBuilder) =
         app.UseGiraffeErrorHandler(errorHandler)
-           .UseGiraffe webApp
+           .UseGiraffe (webApp)
 
     let configureServices (services : IServiceCollection) =
         services.AddGiraffe() |> ignore

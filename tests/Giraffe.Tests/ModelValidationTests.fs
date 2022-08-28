@@ -53,15 +53,15 @@ module WebApp =
     let tryBindQueryToAdult = tryBindQuery<Adult> parsingErrorHandler culture
 
     let webApp _ =
-        choose [
-            route Urls.person
-            >=> tryBindQueryToAdult (validateModel textHandler)
+        CHOOSE [
+            ROUTE Urls.person
+            |> tryBindQueryToAdult (validateModel textHandler)
         ]
 
-    let errorHandler (ex : Exception) (_ : ILogger) : HttpHandler =
+    let errorHandler (ex : Exception) (_ : ILogger) : HttpHandler -> HttpHandler =
         printfn "Error: %s" ex.Message
         printfn "StackTrace:%s %s" Environment.NewLine ex.StackTrace
-        setStatusCode 500 >=> text ex.Message
+        setStatusCode 500 >> text ex.Message
 
     let configureApp args (app : IApplicationBuilder) =
         app.UseGiraffeErrorHandler(errorHandler)

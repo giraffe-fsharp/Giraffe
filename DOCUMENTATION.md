@@ -107,9 +107,9 @@ There is no limit to how many `HttpHandler` functions can be chained with `compo
 ```fsharp
 let app =
     route "/"
-    >=> setHttpHeader "X-Foo" "Bar"
-    >=> setStatusCode 200
-    >=> setBodyFromString "Hello World"
+    >> setHttpHeader "X-Foo" "Bar"
+    >> setStatusCode 200
+    >> setBodyFromString "Hello World"
 ```
 
 If you would like to learn more about the `>=>` (fish) operator then please check out [Scott Wlaschin's blog post on Railway oriented programming](http://fsharpforfunandprofit.com/posts/recipe-part2/).
@@ -121,8 +121,8 @@ The `choose` combinator function iterates through a list of `HttpHandler` functi
 ```fsharp
 let app =
     choose [
-        route "/foo" >=> text "Foo"
-        route "/bar" >=> text "Bar"
+        route "/foo" >> text "Foo"
+        route "/bar" >> text "Bar"
     ]
 ```
 
@@ -144,8 +144,8 @@ let time() = System.DateTime.Now.ToString()
 
 let webApp =
     choose [
-        route "/normal"  >=> text (time())
-        route "/warbler" >=> warbler (fun _ -> text (time()))
+        route "/normal"  >> text (time())
+        route "/warbler" >> warbler (fun _ -> text (time()))
     ]
 ```
 
@@ -380,8 +380,8 @@ open Giraffe
 
 let webApp =
     choose [
-        route "/ping"   >=> text "pong"
-        route "/"       >=> htmlFile "/pages/index.html" ]
+        route "/ping"   >> text "pong"
+        route "/"       >> htmlFile "/pages/index.html" ]
 
 type Startup() =
     member __.ConfigureServices (services : IServiceCollection) =
@@ -414,8 +414,8 @@ open Giraffe
 
 let webApp =
     choose [
-        route "/ping"   >=> text "pong"
-        route "/"       >=> htmlFile "/pages/index.html" ]
+        route "/ping"   >> text "pong"
+        route "/"       >> htmlFile "/pages/index.html" ]
 
 let configureApp (app : IApplicationBuilder) =
     // Add Giraffe to the ASP.NET Core pipeline
@@ -730,8 +730,8 @@ let notFoundHandler : HttpHandler =
 
 let webApp =
     choose [
-        route "/foo" >=> text "Foo"
-        route "/bar" >=> text "Bar"
+        route "/foo" >> text "Foo"
+        route "/bar" >> text "Bar"
         notFoundHandler
     ]
 ```

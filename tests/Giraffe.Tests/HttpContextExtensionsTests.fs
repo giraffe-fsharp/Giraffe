@@ -22,11 +22,13 @@ let ``GetRequestUrl returns entire URL of the HTTP request`` () =
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let testHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            text (ctx.GetRequestUrl()) next ctx
+    let testHandler source =
+        fun (next : HttpFunc) ->
+            fun (ctx : HttpContext) ->
+                text (ctx.GetRequestUrl()) id next ctx
+            |> source
 
-    let app = route "/hello" >=> testHandler
+    let app = ROUTE "/hello" |> testHandler
 
     let expected = "http://example.org:81/something/hello?a=1&b=2"
 
@@ -42,14 +44,16 @@ let ``GetRequestUrl returns entire URL of the HTTP request`` () =
 let ``TryGetRequestHeader during HTTP GET request with returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let testHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            (match ctx.TryGetRequestHeader "X-Test" with
-            | Some value -> text value
-            | None       -> setStatusCode 400 >=> text "Bad Request"
-            ) next ctx
+    let testHandler source =
+        fun (next : HttpFunc) ->
+            fun (ctx : HttpContext) ->
+                (match ctx.TryGetRequestHeader "X-Test" with
+                | Some value -> text value
+                | None       -> setStatusCode 400 >> text "Bad Request"
+                ) id next ctx
+            |> source
 
-    let app = route "/test" >=> testHandler
+    let app = ROUTE "/test" |> testHandler
 
     let headers = HeaderDictionary()
     headers.Add("X-Test", StringValues("It works!"))
@@ -72,14 +76,16 @@ let ``TryGetRequestHeader during HTTP GET request with returns correct result`` 
 let ``TryGetQueryStringValue during HTTP GET request with query string returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let testHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            (match ctx.TryGetQueryStringValue "BirthDate" with
-            | Some value -> text value
-            | None       -> setStatusCode 400 >=> text "Bad Request"
-            ) next ctx
+    let testHandler source =
+        fun (next : HttpFunc) ->
+            fun (ctx : HttpContext) ->
+                (match ctx.TryGetQueryStringValue "BirthDate" with
+                | Some value -> TEXT value
+                | None       -> SET_STATUS_CODE 400 |> text "Bad Request"
+                ) next ctx
+            |> source
 
-    let app = route "/test" >=> testHandler
+    let app = ROUTE "/test" |> testHandler
 
     let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
@@ -107,11 +113,13 @@ let ``WriteHtmlFileAsync should return html from physical folder`` () =
             Path.GetFullPath("TestFiles"),
             "index.html")
 
-    let testHandler : HttpHandler =
-        fun (_ : HttpFunc) (ctx : HttpContext) ->
-            ctx.WriteHtmlFileAsync filePath
+    let testHandler source : HttpHandler =
+        fun (_ : HttpFunc) ->
+            fun (ctx : HttpContext) ->
+                ctx.WriteHtmlFileAsync filePath
+            |> source
 
-    let app = route "/" >=> testHandler
+    let app = ROUTE "/" |> testHandler
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
@@ -131,11 +139,13 @@ let ``WriteHtmlFileAsync should return html from physical folder`` () =
 let ``WriteTextAsync with HTTP GET should return text in body`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let testHandler =
-        fun (_ : HttpFunc) (ctx : HttpContext) ->
-            ctx.WriteTextAsync "Hello World Giraffe"
+    let testHandler source =
+        fun (_ : HttpFunc) ->
+            fun (ctx : HttpContext) ->
+                ctx.WriteTextAsync "Hello World Giraffe"
+            |> source
 
-    let app = route "/" >=> testHandler
+    let app = ROUTE "/" |> testHandler
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
@@ -155,11 +165,13 @@ let ``WriteTextAsync with HTTP GET should return text in body`` () =
 let ``WriteTextAsync with HTTP HEAD should not return text in body`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let testHandler =
-        fun (_ : HttpFunc) (ctx : HttpContext) ->
-            ctx.WriteTextAsync "Hello World Giraffe"
+    let testHandler source =
+        fun (_ : HttpFunc) ->
+            fun (ctx : HttpContext) ->
+                ctx.WriteTextAsync "Hello World Giraffe"
+            |> source
 
-    let app = route "/" >=> testHandler
+    let app = ROUTE "/" |> testHandler
 
     ctx.Request.Method.ReturnsForAnyArgs "HEAD" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
@@ -179,18 +191,20 @@ let ``WriteTextAsync with HTTP HEAD should not return text in body`` () =
 let ``WriteHtmlViewAsync should add html to the context`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let testHandler =
-        fun (_ : HttpFunc) (ctx : HttpContext) ->
-            let htmlDoc =
-                html [] [
-                    head [] []
-                    body [] [
-                        h1 [] [ Text "Hello world" ]
+    let testHandler source =
+        fun (_ : HttpFunc) ->
+            fun (ctx : HttpContext) ->
+                let htmlDoc =
+                    html [] [
+                        head [] []
+                        body [] [
+                            h1 [] [ Text "Hello world" ]
+                        ]
                     ]
-                ]
-            ctx.WriteHtmlViewAsync(htmlDoc)
+                ctx.WriteHtmlViewAsync(htmlDoc)
+            |> source
 
-    let app = route "/" >=> testHandler
+    let app = ROUTE "/" |> testHandler
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore

@@ -94,8 +94,8 @@ open Giraffe
 
 let webApp =
     choose [
-        route "/ping"   >=> text "pong"
-        route "/"       >=> htmlFile "/pages/index.html" ]
+        route "/ping"   >> text "pong"
+        route "/"       >> htmlFile "/pages/index.html" ]
 
 type Startup() =
     member __.ConfigureServices (services : IServiceCollection) =
@@ -133,8 +133,8 @@ open Giraffe
 
 let webApp =
     choose [
-        route "/ping"   >=> text "pong"
-        route "/"       >=> htmlFile "/pages/index.html" ]
+        route "/ping"   >> text "pong"
+        route "/"       >> htmlFile "/pages/index.html" ]
 
 let configureApp (app : IApplicationBuilder) =
     // Add Giraffe to the ASP.NET Core pipeline

@@ -717,9 +717,9 @@ let ``tryBindQuery with complete data and list items with []`` () =
     let parsingErrorHandler err = RequestErrors.badRequest (text err)
     let bindQuery = tryBindQuery<QueryModel> parsingErrorHandler None
     let app =
-        GET >=> choose [
-            route "/query" >=> bindQuery (fun m -> text(m.ToString()))
-            setStatusCode 404 >=> text "Not found"
+        GET |> choose [
+            ROUTE "/query" |> bindQuery (fun m -> text(m.ToString()))
+            SET_STATUS_CODE 404 |> text "Not found"
         ]
 
     let expected = "Name: John Doe; Sex: Male; Numbers: 5, 3, 2"
@@ -745,9 +745,9 @@ let ``tryBindQuery with complete data and list items without []`` () =
     let parsingErrorHandler err = RequestErrors.badRequest (text err)
     let bindQuery = tryBindQuery<QueryModel> parsingErrorHandler None
     let app =
-        GET >=> choose [
-            route "/query" >=> bindQuery (fun m -> text(m.ToString()))
-            setStatusCode 404 >=> text "Not found"
+        GET |> choose [
+            ROUTE "/query" |> bindQuery (fun m -> text(m.ToString()))
+            SET_STATUS_CODE 404 |> text "Not found"
         ]
 
     let expected = "Name: John Doe; Sex: Male; Numbers: 7, 9, 0"
@@ -773,9 +773,9 @@ let ``tryBindQuery without optional data`` () =
     let parsingErrorHandler err = RequestErrors.badRequest (text err)
     let bindQuery = tryBindQuery<QueryModel> parsingErrorHandler None
     let app =
-        GET >=> choose [
-            route "/query" >=> bindQuery (fun m -> text(m.ToString()))
-            setStatusCode 404 >=> text "Not found"
+        GET |> choose [
+            ROUTE "/query" |> bindQuery (fun m -> text(m.ToString()))
+            SET_STATUS_CODE 404 |> text "Not found"
         ]
 
     let expected = "Name: John Doe; Sex: Male; Numbers: --"
@@ -801,9 +801,9 @@ let ``tryBindQuery with incomplete data`` () =
     let parsingErrorHandler err = RequestErrors.badRequest (text err)
     let bindQuery = tryBindQuery<QueryModel> parsingErrorHandler None
     let app =
-        GET >=> choose [
-            route "/query" >=> bindQuery (fun m -> text(m.ToString()))
-            setStatusCode 404 >=> text "Not found"
+        GET |> choose [
+            ROUTE "/query" |> bindQuery (fun m -> text(m.ToString()))
+            SET_STATUS_CODE 404 |> text "Not found"
         ]
 
     let expected = "Missing value for required property FirstName."
@@ -829,9 +829,9 @@ let ``tryBindQuery with complete data but baldy formated list items`` () =
     let parsingErrorHandler err = RequestErrors.badRequest (text err)
     let bindQuery = tryBindQuery<QueryModel> parsingErrorHandler None
     let app =
-        GET >=> choose [
-            route "/query" >=> bindQuery (fun m -> text(m.ToString()))
-            setStatusCode 404 >=> text "Not found"
+        GET |> choose [
+            ROUTE "/query" |> bindQuery (fun m -> text(m.ToString()))
+            SET_STATUS_CODE 404 |> text "Not found"
         ]
 
     let expected = "Could not parse value 'wrong' to type System.Int32."
@@ -863,8 +863,8 @@ let ``BindJsonAsync test`` (settings) =
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
         POST
-        >=> route "/json"
-        >=> bindJson<Customer> outputCustomer
+        |> route "/json"
+        |> bindJson<Customer> outputCustomer
 
     let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
     let stream = new MemoryStream()
@@ -900,8 +900,8 @@ let ``BindXmlAsync test`` () =
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
         POST
-        >=> route "/xml"
-        >=> bindXml<Customer> outputCustomer
+        |> route "/xml"
+        |> bindXml<Customer> outputCustomer
 
     let postContent = "<Customer><Name>John Doe</Name><IsVip>true</IsVip><BirthDate>1990-04-20</BirthDate><Balance>150000.5</Balance><LoyaltyPoints>137</LoyaltyPoints></Customer>"
     let stream = new MemoryStream()
@@ -936,8 +936,8 @@ let ``BindFormAsync test`` () =
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
         POST
-        >=> route "/form"
-        >=> bindForm<Customer> None outputCustomer
+        |> route "/form"
+        |> bindForm<Customer> None outputCustomer
 
     let headers = HeaderDictionary()
     headers.Add("Content-Type", StringValues("application/x-www-form-urlencoded"))
@@ -971,12 +971,14 @@ let ``BindFormAsync test`` () =
 let ``BindQueryString test`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let queryHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            let model = ctx.BindQueryString<Customer>()
-            text (model.ToString()) next ctx
+    let queryHandler (source: HttpHandler) : HttpHandler =
+        fun (next : HttpFunc) ->
+            fun (ctx : HttpContext) ->
+                let model = ctx.BindQueryString<Customer>()
+                text (model.ToString()) id next ctx
+            |> source
 
-    let app = GET >=> route "/query" >=> queryHandler
+    let app = GET |> route "/query" |> queryHandler
 
     let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
@@ -999,12 +1001,14 @@ let ``BindQueryString test`` () =
 let ``BindQueryString culture specific test`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let queryHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            let model = ctx.BindQueryString<Customer>(CultureInfo.CreateSpecificCulture("en-GB"))
-            text (model.ToString()) next ctx
+    let queryHandler source =
+        fun (next : HttpFunc) ->
+            fun (ctx : HttpContext) ->
+                let model = ctx.BindQueryString<Customer>(CultureInfo.CreateSpecificCulture("en-GB"))
+                text (model.ToString()) id next ctx
+            |> source
 
-    let app = GET >=> route "/query" >=> queryHandler
+    let app = GET |> route "/query" |> queryHandler
 
     let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=12/04/1998 12:34:56&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
@@ -1026,14 +1030,16 @@ let ``BindQueryString culture specific test`` () =
 [<Fact>]
 let ``BindQueryString with option property test`` () =
     let testRoute queryStr expected =
-        let queryHandlerWithSome next (ctx : HttpContext) =
-            task {
-                let model = ctx.BindQueryString<ModelWithOption>()
-                Assert.Equal(expected, model)
-                return! setStatusCode 200 next ctx
-            }
+        let queryHandlerWithSome source next =
+            fun (ctx : HttpContext) ->
+                task {
+                    let model = ctx.BindQueryString<ModelWithOption>()
+                    Assert.Equal(expected, model)
+                    return! setStatusCode 200 id next ctx
+                }
+            |> source
 
-        let app = GET >=> route "/" >=> queryHandlerWithSome
+        let app = GET |> route "/" |> queryHandlerWithSome
 
         let ctx = Substitute.For<HttpContext>()
         let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
@@ -1053,14 +1059,16 @@ let ``BindQueryString with option property test`` () =
 [<Fact>]
 let ``BindQueryString with nullable property test`` () =
     let testRoute queryStr expected =
-        let queryHandlerWithSome next (ctx : HttpContext) =
-            task {
-                let model = ctx.BindQueryString<ModelWithNullable>()
-                Assert.Equal(expected, model)
-                return! setStatusCode 200 next ctx
-            }
+        let queryHandlerWithSome (source: HttpHandler) next =
+            fun (ctx : HttpContext) ->
+                task {
+                    let model = ctx.BindQueryString<ModelWithNullable>()
+                    Assert.Equal(expected, model)
+                    return! setStatusCode 200 id next ctx
+                }
+            |> source
 
-        let app = GET >=> route "/" >=> queryHandlerWithSome
+        let app = GET |> route "/" |> queryHandlerWithSome
 
         let ctx = Substitute.For<HttpContext>()
         let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
@@ -1085,8 +1093,8 @@ let ``BindModelAsync with JSON content returns correct result`` (settings) =
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
-        route "/auto"
-        >=> bindModel<Customer> None outputCustomer
+        ROUTE "/auto"
+        |> bindModel<Customer> None outputCustomer
 
     let contentType = "application/json"
     let postContent = "{ \"name\": \"John Doe\", \"isVip\": true, \"birthDate\": \"1990-04-20\", \"balance\": 150000.5, \"loyaltyPoints\": 137 }"
@@ -1124,8 +1132,9 @@ let ``BindModelAsync with JSON content that uses custom serialization settings r
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
-        route "/auto"
-        >=> bindModel<Customer> None outputCustomer
+        empty
+        |> route "/auto"
+        |> bindModel<Customer> None outputCustomer
 
     let contentType = "application/json"
     let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
@@ -1162,8 +1171,9 @@ let ``BindModelAsync with XML content returns correct result`` () =
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
-        route "/auto"
-        >=> bindModel<Customer> None outputCustomer
+        empty
+        |> route "/auto"
+        |> bindModel<Customer> None outputCustomer
 
     let contentType = "application/xml"
     let postContent = "<Customer><Name>John Doe</Name><IsVip>true</IsVip><BirthDate>1990-04-20</BirthDate><Balance>150000.5</Balance><LoyaltyPoints>137</LoyaltyPoints></Customer>"
@@ -1199,8 +1209,9 @@ let ``BindModelAsync with FORM content returns correct result`` () =
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
-        route "/auto"
-        >=> bindModel<Customer> None outputCustomer
+        empty
+        |> route "/auto"
+        |> bindModel<Customer> None outputCustomer
 
     let contentType = "application/x-www-form-urlencoded"
     let headers = HeaderDictionary()
@@ -1239,8 +1250,9 @@ let ``BindModelAsync with culture aware form content returns correct result`` ()
     let outputCustomer (c : Customer) = text (c.ToString())
     let english = CultureInfo.CreateSpecificCulture("en-GB")
     let app =
-        route "/auto"
-        >=> bindModel<Customer> (Some english) outputCustomer
+        empty
+        |> route "/auto"
+        |> bindModel<Customer> (Some english) outputCustomer
 
     let contentType = "application/x-www-form-urlencoded"
     let headers = HeaderDictionary()
@@ -1280,8 +1292,9 @@ let ``BindModelAsync with JSON content and a specific charset returns correct re
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
-        route "/auto"
-        >=> bindModel<Customer> None outputCustomer
+        empty
+        |> route "/auto"
+        |> bindModel<Customer> None outputCustomer
 
     let contentType = "application/json; charset=utf-8"
     let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
@@ -1317,8 +1330,9 @@ let ``BindModelAsync during HTTP GET request with query string returns correct r
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
-        route "/auto"
-        >=> bindModel<Customer> None outputCustomer
+        empty
+        |> route "/auto"
+        |> bindModel<Customer> None outputCustomer
 
     let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
@@ -1344,8 +1358,9 @@ let ``BindModelAsync during HTTP GET request with culture aware query string ret
     let outputCustomer (c : Customer) = text (c.ToString())
     let english = CultureInfo.CreateSpecificCulture("en-GB")
     let app =
-        route "/auto"
-        >=> bindModel<Customer> (Some english) outputCustomer
+        empty
+        |> route "/auto"
+        |> bindModel<Customer> (Some english) outputCustomer
 
     let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=15/06/2013 06:00:00&Balance=150000.5&LoyaltyPoints=137"
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr

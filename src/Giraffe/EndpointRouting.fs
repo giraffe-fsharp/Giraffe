@@ -237,16 +237,16 @@ module Routers =
 
     let route
         (path     : string)
-        (handler  : HttpHandler) : Endpoint =
-        SimpleEndpoint (HttpVerb.NotSpecified, path, handler, [])
+        (handler  : HttpHandler -> HttpHandler) : Endpoint =
+        SimpleEndpoint (HttpVerb.NotSpecified, path, handler id, [])
 
     let routef
         (path         : PrintfFormat<_,_,_,_, 'T>)
-        (routeHandler : 'T -> HttpHandler) : Endpoint =
+        (routeHandler : 'T -> HttpHandler -> HttpHandler) : Endpoint =
         let template, mappings = RouteTemplateBuilder.convertToRouteTemplate path
         let boxedHandler (o : obj) =
             let t = o :?> 'T
-            routeHandler t
+            routeHandler t id
         TemplateEndpoint (HttpVerb.NotSpecified, template, mappings, boxedHandler, [])
 
     let subRoute
@@ -258,8 +258,8 @@ module Routers =
         (httpHandler  : HttpHandler)
         (endpoint     : Endpoint) =
         match endpoint with
-        | SimpleEndpoint(v, p, h, ml)      -> SimpleEndpoint(v, p, httpHandler >=> h, ml)
-        | TemplateEndpoint(v, p, m, h, ml) -> TemplateEndpoint(v, p, m, (fun (o: obj) -> httpHandler >=> h o), ml)
+        | SimpleEndpoint(v, p, h, ml)      -> SimpleEndpoint(v, p, httpHandler >> h, ml)
+        | TemplateEndpoint(v, p, m, h, ml) -> TemplateEndpoint(v, p, m, (fun (o: obj) -> httpHandler >> h o), ml)
         | NestedEndpoint(t, lst, ml)       -> NestedEndpoint(t, List.map (applyBefore httpHandler) lst, ml)
         | MultiEndpoint(lst)               -> MultiEndpoint(List.map (applyBefore httpHandler) lst)
 
@@ -267,8 +267,8 @@ module Routers =
         (httpHandler  : HttpHandler)
         (endpoint     : Endpoint) =
         match endpoint with
-        | SimpleEndpoint(v, p, h, ml)      -> SimpleEndpoint(v, p, h >=> httpHandler, ml)
-        | TemplateEndpoint(v, p, m, h, ml) -> TemplateEndpoint(v, p, m, (fun (o: obj) -> h o >=> httpHandler), ml)
+        | SimpleEndpoint(v, p, h, ml)      -> SimpleEndpoint(v, p, h >> httpHandler, ml)
+        | TemplateEndpoint(v, p, m, h, ml) -> TemplateEndpoint(v, p, m, (fun (o: obj) -> h o >> httpHandler), ml)
         | NestedEndpoint(t, lst, ml)       -> NestedEndpoint(t, List.map (applyAfter httpHandler) lst, ml)
         | MultiEndpoint(lst)               -> MultiEndpoint(List.map (applyAfter httpHandler) lst)
 

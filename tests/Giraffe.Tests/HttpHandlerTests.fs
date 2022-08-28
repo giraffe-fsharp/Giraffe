@@ -48,11 +48,20 @@ let ``GET "/json" returns json object`` (settings) =
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
     let app =
-        GET >=> choose [
-            route "/"     >=> text "Hello World"
-            route "/foo"  >=> text "bar"
-            route "/json" >=> json { Foo = "john"; Bar = "doe"; Age = 30 }
-            setStatusCode 404 >=> text "Not found" ]
+        GET
+        |> choose [
+            ROUTE "/"
+            |> text "Hello World"
+
+            ROUTE "/foo"
+            |> text "bar"
+
+            ROUTE "/json"
+            |> json { Foo = "john"; Bar = "doe"; Age = 30 }
+
+            SET_STATUS_CODE 404
+            |> text "Not found"
+        ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
@@ -74,11 +83,11 @@ let ``GET "/json" with custom json settings returns json object`` (settings) =
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
     let app =
-        GET >=> choose [
-            route "/"     >=> text "Hello World"
-            route "/foo"  >=> text "bar"
-            route "/json" >=> json { Foo = "john"; Bar = "doe"; Age = 30 }
-            setStatusCode 404 >=> text "Not found" ]
+        GET |> choose [
+            ROUTE "/"     |> text "Hello World"
+            ROUTE "/foo"  |> text "bar"
+            ROUTE "/json" |> json { Foo = "john"; Bar = "doe"; Age = 30 }
+            SET_STATUS_CODE 404 |> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
@@ -107,11 +116,11 @@ let ``GET "/jsonChunked" returns json object`` (size: int, settings) =
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
     let app =
-        GET >=> choose [
-            route "/"     >=> text "Hello World"
-            route "/foo"  >=> text "bar"
-            route "/jsonChunked" >=> json ( Array.replicate size { Foo = "john"; Bar = "doe"; Age = 30 } )
-            setStatusCode 404 >=> text "Not found" ]
+        GET |> choose [
+            ROUTE "/"     |> text "Hello World"
+            ROUTE "/foo"  |> text "bar"
+            ROUTE "/jsonChunked" |> json ( Array.replicate size { Foo = "john"; Bar = "doe"; Age = 30 } )
+            SET_STATUS_CODE 404 |> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/jsonChunked")) |> ignore
@@ -144,11 +153,11 @@ let ``GET "/jsonChunked" with custom json settings returns json object`` (size: 
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
     let app =
-        GET >=> choose [
-            route "/"     >=> text "Hello World"
-            route "/foo"  >=> text "bar"
-            route "/jsonChunked" >=> json ( Array.replicate size { Foo = "john"; Bar = "doe"; Age = 30 } )
-            setStatusCode 404 >=> text "Not found" ]
+        GET |> choose [
+            ROUTE "/"     |> text "Hello World"
+            ROUTE "/foo"  |> text "bar"
+            ROUTE "/jsonChunked" |> json ( Array.replicate size { Foo = "john"; Bar = "doe"; Age = 30 } )
+            SET_STATUS_CODE 404 |> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/jsonChunked")) |> ignore
@@ -171,14 +180,14 @@ let ``GET "/jsonChunked" with custom json settings returns json object`` (size: 
 let ``POST "/post/1" returns "1"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        choose [
-            GET >=> choose [
-                route "/"     >=> text "Hello World"
-                route "/foo"  >=> text "bar" ]
-            POST >=> choose [
-                route "/post/1" >=> text "1"
-                route "/post/2" >=> text "2" ]
-            setStatusCode 404 >=> text "Not found" ]
+        CHOOSE [
+            GET |> choose [
+                ROUTE "/"     |> text "Hello World"
+                ROUTE "/foo"  |> text "bar" ]
+            POST |> choose [
+                ROUTE "/post/1" |> text "1"
+                ROUTE "/post/2" |> text "2" ]
+            SET_STATUS_CODE 404 |> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/post/1")) |> ignore
@@ -197,14 +206,14 @@ let ``POST "/post/1" returns "1"`` () =
 let ``POST "/post/2" returns "2"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        choose [
-            GET >=> choose [
-                route "/"     >=> text "Hello World"
-                route "/foo"  >=> text "bar" ]
-            POST >=> choose [
-                route "/post/1" >=> text "1"
-                route "/post/2" >=> text "2" ]
-            setStatusCode 404 >=> text "Not found" ]
+        CHOOSE [
+            GET |> choose [
+                ROUTE "/"     |> text "Hello World"
+                ROUTE "/foo"  |> text "bar" ]
+            POST |> choose [
+                ROUTE "/post/1" |> text "1"
+                ROUTE "/post/2" |> text "2" ]
+            SET_STATUS_CODE 404 |> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/post/2")) |> ignore
@@ -223,14 +232,14 @@ let ``POST "/post/2" returns "2"`` () =
 let ``PUT "/post/2" returns 404 "Not found"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        choose [
-            GET >=> choose [
-                route "/"     >=> text "Hello World"
-                route "/foo"  >=> text "bar" ]
-            POST >=> choose [
-                route "/post/1" >=> text "1"
-                route "/post/2" >=> text "2" ]
-            setStatusCode 404 >=> text "Not found" ]
+        CHOOSE [
+            GET |> choose [
+                ROUTE "/"     |> text "Hello World"
+                ROUTE "/foo"  |> text "bar" ]
+            POST |> choose [
+                ROUTE "/post/1" |> text "1"
+                ROUTE "/post/2" |> text "2" ]
+            SET_STATUS_CODE 404 |> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "PUT" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/post/2")) |> ignore
@@ -252,15 +261,15 @@ let ``PUT "/post/2" returns 404 "Not found"`` () =
 let ``POST "/text" with supported Accept header returns "text"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        choose [
-            GET >=> choose [
-                route "/"     >=> text "Hello World"
-                route "/foo"  >=> text "bar" ]
-            POST >=> choose [
-                route "/text"   >=> mustAccept [ "text/plain" ] >=> text "text"
-                route "/json"   >=> mustAccept [ "application/json" ] >=> json "json"
-                route "/either" >=> mustAccept [ "text/plain"; "application/json" ] >=> text "either" ]
-            setStatusCode 404 >=> text "Not found" ]
+        CHOOSE [
+            GET |> choose [
+                ROUTE "/"     |> text "Hello World"
+                ROUTE "/foo"  |> text "bar" ]
+            POST |> choose [
+                ROUTE "/text"   |> mustAccept [ "text/plain" ] |> text "text"
+                ROUTE "/json"   |> mustAccept [ "application/json" ] |> json "json"
+                ROUTE "/either" |> mustAccept [ "text/plain"; "application/json" ] |> text "either" ]
+            SET_STATUS_CODE 404 |> text "Not found" ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("text/plain"))
@@ -286,15 +295,15 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx ( Newtonsoft None )
     let app =
-        choose [
-            GET >=> choose [
-                route "/"     >=> text "Hello World"
-                route "/foo"  >=> text "bar" ]
-            POST >=> choose [
-                route "/text"   >=> mustAccept [ "text/plain" ] >=> text "text"
-                route "/json"   >=> mustAccept [ "application/json" ] >=> json "json"
-                route "/either" >=> mustAccept [ "text/plain"; "application/json" ] >=> text "either" ]
-            setStatusCode 404 >=> text "Not found" ]
+        CHOOSE [
+            GET |> choose [
+                ROUTE "/"     |> text "Hello World"
+                ROUTE "/foo"  |> text "bar" ]
+            POST |> choose [
+                ROUTE "/text"   |> mustAccept [ "text/plain" ] |> text "text"
+                ROUTE "/json"   |> mustAccept [ "application/json" ] |> json "json"
+                ROUTE "/either" |> mustAccept [ "text/plain"; "application/json" ] |> text "either" ]
+            SET_STATUS_CODE 404 |> text "Not found" ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/json"))
@@ -319,15 +328,15 @@ let ``POST "/json" with supported Accept header returns "json"`` () =
 let ``POST "/either" with supported Accept header returns "either"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        choose [
-            GET >=> choose [
-                route "/"     >=> text "Hello World"
-                route "/foo"  >=> text "bar" ]
-            POST >=> choose [
-                route "/text"   >=> mustAccept [ "text/plain" ] >=> text "text"
-                route "/json"   >=> mustAccept [ "application/json" ] >=> json "json"
-                route "/either" >=> mustAccept [ "text/plain"; "application/json" ] >=> text "either" ]
-            setStatusCode 404 >=> text "Not found" ]
+        CHOOSE [
+            GET |> choose [
+                ROUTE "/"     |> text "Hello World"
+                ROUTE "/foo"  |> text "bar" ]
+            POST |> choose [
+                ROUTE "/text"   |> mustAccept [ "text/plain" ] |> text "text"
+                ROUTE "/json"   |> mustAccept [ "application/json" ] |> json "json"
+                ROUTE "/either" |> mustAccept [ "text/plain"; "application/json" ] |> text "either" ]
+            SET_STATUS_CODE 404 |> text "Not found" ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/json"))
@@ -352,15 +361,15 @@ let ``POST "/either" with supported Accept header returns "either"`` () =
 let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        choose [
-            GET >=> choose [
-                route "/"     >=> text "Hello World"
-                route "/foo"  >=> text "bar" ]
-            POST >=> choose [
-                route "/text"   >=> mustAccept [ "text/plain" ] >=> text "text"
-                route "/json"   >=> mustAccept [ "application/json" ] >=> json "json"
-                route "/either" >=> mustAccept [ "text/plain"; "application/json" ] >=> text "either" ]
-            setStatusCode 404 >=> text "Not found" ]
+        CHOOSE [
+            GET |> choose [
+                ROUTE "/"     |> text "Hello World"
+                ROUTE "/foo"  |> text "bar" ]
+            POST |> choose [
+                ROUTE "/text"   |> mustAccept [ "text/plain" ] |> text "text"
+                ROUTE "/json"   |> mustAccept [ "application/json" ] |> json "json"
+                ROUTE "/either" |> mustAccept [ "text/plain"; "application/json" ] |> text "either" ]
+            SET_STATUS_CODE 404 |> text "Not found" ]
 
     let headers = HeaderDictionary()
     headers.Add("Accept", StringValues("application/xml"))
@@ -398,13 +407,13 @@ let ``GET "/person" returns rendered HTML view`` () =
     let johnDoe = { Foo = "John"; Bar = "Doe"; Age = 30 }
 
     let app =
-        choose [
-            GET >=> choose [
-                route "/"          >=> text "Hello World"
-                route "/person"    >=> (personView johnDoe |> htmlView) ]
-            POST >=> choose [
-                route "/post/1"    >=> text "1" ]
-            setStatusCode 404      >=> text "Not found" ]
+        CHOOSE [
+            GET |> choose [
+                ROUTE "/"          |> text "Hello World"
+                ROUTE "/person"    |> (personView johnDoe |> htmlView) ]
+            POST |> choose [
+                ROUTE "/post/1"    |> text "1" ]
+            SET_STATUS_CODE 404      |> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/person")) |> ignore
@@ -427,9 +436,9 @@ let ``Warbler function should execute inner function each time`` () =
     let ctx = Substitute.For<HttpContext>()
     let inner() = Guid.NewGuid().ToString()
     let app =
-        GET >=> choose [
-            route "/foo"  >=> text (inner())
-            route "/foo2" >=> warbler (fun _ -> text (inner())) ]
+        GET |> choose [
+            ROUTE "/foo"  |> text (inner())
+            ROUTE "/foo2" |> warbler (fun _ -> text (inner())) ]
         <| next
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -465,10 +474,10 @@ let ``Warbler function should execute inner function each time`` () =
 let ``GET "/redirect" redirect to "/" `` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        GET >=> choose [
-            route "/"         >=> text "Hello World"
-            route "/redirect" >=> redirectTo false "/"
-            setStatusCode 404 >=> text "Not found" ]
+        GET |> choose [
+            ROUTE "/"         |> text "Hello World"
+            ROUTE "/redirect" |> redirectTo false "/"
+            SET_STATUS_CODE 404 |> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/redirect")) |> ignore
@@ -486,10 +495,10 @@ let ``GET "/redirect" redirect to "/" `` () =
 let ``POST "/redirect" redirect to "/" `` () =
     let ctx = Substitute.For<HttpContext>()
     let app =
-        POST >=> choose [
-            route "/"         >=> text "Hello World"
-            route "/redirect" >=> redirectTo true "/"
-            setStatusCode 404 >=> text "Not found" ]
+        POST |> choose [
+            ROUTE "/"         |> text "Hello World"
+            ROUTE "/redirect" |> redirectTo true "/"
+            SET_STATUS_CODE 404 |> text "Not found" ]
 
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/redirect")) |> ignore
@@ -554,11 +563,11 @@ let getNegotiationTestHttpContext
     ctx
 
 let negotiationTestApp =
-    GET >=> choose [
-        route "/"     >=> text "Hello World"
-        route "/foo"  >=> text "bar"
-        route "/auto" >=> negotiate johnDoe
-        setStatusCode 404 >=> text "Not found" ]
+    GET |> choose [
+        ROUTE "/"     |> text "Hello World"
+        ROUTE "/foo"  |> text "bar"
+        ROUTE "/auto" |> negotiate johnDoe
+        SET_STATUS_CODE 404 |> text "Not found" ]
 
 let runNegotiationTest (ctx : HttpContext) (expectedString : string) (testChecks : HttpContext -> unit) =
     task {

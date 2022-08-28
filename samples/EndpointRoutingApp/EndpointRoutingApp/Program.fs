@@ -1,4 +1,4 @@
-﻿open System
+open System
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
@@ -8,20 +8,25 @@ open Microsoft.Extensions.Hosting
 open Giraffe
 open Giraffe.EndpointRouting
 
-let handler1 : HttpHandler =
-    fun (_ : HttpFunc) (ctx : HttpContext) ->
-        ctx.WriteTextAsync "Hello World"
+let handler1 source : HttpHandler =
+    fun (_ : HttpFunc) ->
+        fun (ctx : HttpContext) ->
+            ctx.WriteTextAsync "Hello World"
+        |> source
 
-let handler2 (firstName : string, age : int) : HttpHandler =
-    fun (_ : HttpFunc) (ctx : HttpContext) ->
-        sprintf "Hello %s, you are %i years old." firstName age
-        |> ctx.WriteTextAsync
+let handler2 (firstName : string, age : int) source : HttpHandler =
+    fun (_ : HttpFunc) ->
+        fun (ctx : HttpContext) ->
+            sprintf "Hello %s, you are %i years old." firstName age
+            |> ctx.WriteTextAsync
+        |> source
 
-let handler3 (a : string, b : string, c : string, d : int) : HttpHandler =
-    fun (_ : HttpFunc) (ctx : HttpContext) ->
-        sprintf "Hello %s %s %s %i" a b c d
-        |> ctx.WriteTextAsync
-
+let handler3 (a : string, b : string, c : string, d : int) source : HttpHandler =
+    fun (_ : HttpFunc) ->
+        fun (ctx : HttpContext) ->
+            sprintf "Hello %s %s %s %i" a b c d
+            |> ctx.WriteTextAsync
+        |> source
 let endpoints =
     [
         subRoute "/foo" [
@@ -45,9 +50,8 @@ let endpoints =
         ]
     ]
 
-let notFoundHandler =
-    "Not Found"
-    |> text
+let notFoundHandler : HttpHandler =
+    TEXT "Not Found"
     |> RequestErrors.notFound
 
 let configureApp (appBuilder : IApplicationBuilder) =
@@ -71,7 +75,7 @@ let main args =
 
     if app.Environment.IsDevelopment() then
         app.UseDeveloperExceptionPage() |> ignore
-    
+
     configureApp app
     app.Run()
 

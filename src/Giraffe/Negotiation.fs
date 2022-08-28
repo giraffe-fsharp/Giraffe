@@ -24,20 +24,22 @@ type INegotiationConfig =
     /// dict [ "application/json", json; "application/xml" , xml ]
     /// </code>
     /// </example>
-    abstract member Rules : IDictionary<string, obj -> HttpHandler>
+    abstract member Rules : IDictionary<string, obj -> (HttpHandler -> HttpHandler)>
 
     /// <summary>
     /// A <see cref="HttpHandler" /> function which will be invoked if none of the accepted mime types can be satisfied. Generally this <see cref="HttpHandler" /> would send a response with a status code of 406 Unacceptable.
     /// </summary>
     /// <returns></returns>
-    abstract member UnacceptableHandler : HttpHandler
+    abstract member UnacceptableHandler : (HttpHandler -> HttpHandler)
 
-let private unacceptableHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-    (setStatusCode 406
-    >=> ((ctx.Request.Headers.["Accept"]).ToString()
-        |> sprintf "%s is unacceptable by the server."
-        |> text)) next ctx
+let private unacceptableHandler (source: HttpHandler) =
+    fun (next : HttpFunc) ->
+        fun (ctx : HttpContext) ->
+            (setStatusCode 406
+            >> ((ctx.Request.Headers.["Accept"]).ToString()
+                |> sprintf "%s is unacceptable by the server."
+                |> text )) source next ctx
+        |> source
 
 /// <summary>
 /// The default implementation of <see cref="INegotiationConfig."/>
@@ -56,7 +58,7 @@ let private unacceptableHandler =
 /// </summary>
 type DefaultNegotiationConfig() =
     interface INegotiationConfig with
-        member __.Rules =
+        member _.Rules =
             dict [
                 "*/*"             , json
                 "application/json", json
@@ -64,7 +66,7 @@ type DefaultNegotiationConfig() =
                 "text/xml"        , xml
                 "text/plain"      , fun x -> x.ToString() |> text
             ]
-        member __.UnacceptableHandler = unacceptableHandler
+        member _.UnacceptableHandler = unacceptableHandler
 
 
 /// <summary>
@@ -77,12 +79,12 @@ type DefaultNegotiationConfig() =
 /// </summary>
 type JsonOnlyNegotiationConfig() =
     interface INegotiationConfig with
-        member __.Rules =
+        member _.Rules =
             dict [
                 "*/*"             , json
                 "application/json", json
             ]
-        member __.UnacceptableHandler = unacceptableHandler
+        member _.UnacceptableHandler = unacceptableHandler
 
 // ---------------------------
 // HttpContext extensions
@@ -99,17 +101,19 @@ type NegotiationExtensions() =
     /// <param name="negotiationRules">A dictionary of mime types and response writing <see cref="HttpHandler" /> functions. Each mime type must be mapped to a function which accepts an obj and returns a <see cref="HttpHandler" /> which will send a response in the associated mime type (e.g.: dict [ "application/json", json; "application/xml" , xml ]).</param>
     /// <param name="unacceptableHandler"> A <see cref="HttpHandler" /> function which will be invoked if none of the accepted mime types can be satisfied. Generally this <see cref="HttpHandler" /> would send a response with a status code of 406 Unacceptable.</param>
     /// <param name="responseObj">The object to send back to the client.</param>
+    /// <param name="source">The upstream handler.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
     [<Extension>]
     static member NegotiateWithAsync
         (ctx                : HttpContext,
-        negotiationRules    : IDictionary<string, obj -> HttpHandler>,
-        unacceptableHandler : HttpHandler,
-        responseObj         : obj) =
+        negotiationRules    : IDictionary<string, obj -> (HttpHandler -> HttpHandler)>,
+        unacceptableHandler : HttpHandler -> HttpHandler,
+        responseObj         : obj,
+        source              : HttpHandler) =
         let acceptedMimeTypes = (ctx.Request.GetTypedHeaders()).Accept
         if isNull acceptedMimeTypes || acceptedMimeTypes.Count = 0 then
             let kv = negotiationRules |> Seq.head
-            kv.Value responseObj earlyReturn ctx
+            kv.Value responseObj source earlyReturn ctx
         else
             let mutable mimeType    = Unchecked.defaultof<_>
             let mutable bestQuality = Double.NegativeInfinity
@@ -125,9 +129,9 @@ type NegotiationExtensions() =
                         mimeType    <- x
 
             if isNull mimeType then
-                unacceptableHandler earlyReturn ctx
+                unacceptableHandler source earlyReturn ctx
             else
-                negotiationRules.[mimeType.MediaType.Value] responseObj earlyReturn ctx
+                negotiationRules.[mimeType.MediaType.Value] responseObj source earlyReturn ctx
 
     /// <summary>
     /// Sends a response back to the client based on the request's Accept header.
@@ -136,11 +140,12 @@ type NegotiationExtensions() =
     /// </summary>
     /// <param name="ctx">The current http context object.</param>
     /// <param name="responseObj">The object to send back to the client.</param>
+    /// <param name="source">The upstream handler.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
     [<Extension>]
-    static member NegotiateAsync (ctx : HttpContext, responseObj : obj) =
+    static member NegotiateAsync (ctx : HttpContext, responseObj : obj, source: HttpHandler) =
         let config = ctx.GetService<INegotiationConfig>()
-        ctx.NegotiateWithAsync(config.Rules, config.UnacceptableHandler, responseObj)
+        ctx.NegotiateWithAsync(config.Rules, config.UnacceptableHandler, responseObj, source)
 
 // ---------------------------
 // HttpHandler functions
@@ -154,14 +159,18 @@ type NegotiationExtensions() =
 /// <param name="negotiationRules">A dictionary of mime types and response writing <see cref="HttpHandler" /> functions. Each mime type must be mapped to a function which accepts an obj and returns a <see cref="HttpHandler" /> which will send a response in the associated mime type (e.g.: dict [ "application/json", json; "application/xml" , xml ]).</param>
 /// <param name="unacceptableHandler">A <see cref="HttpHandler" /> function which will be invoked if none of the accepted mime types can be satisfied. Generally this <see cref="HttpHandler" /> would send a response with a status code of 406 Unacceptable.</param>
 /// <param name="responseObj">The object to send back to the client.</param>
-/// <param name="ctx"></param>
+/// <param name="source"></param>
 /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
-let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>)
-                  (unacceptableHandler : HttpHandler)
+let negotiateWith (negotiationRules    : IDictionary<string, obj -> (HttpHandler -> HttpHandler)>)
+                  (unacceptableHandler : HttpHandler -> HttpHandler)
                   (responseObj         : obj)
+                  (source              : HttpHandler)
                   : HttpHandler =
-    fun (_ : HttpFunc) (ctx : HttpContext) ->
-        ctx.NegotiateWithAsync(negotiationRules, unacceptableHandler, responseObj)
+    fun (_ : HttpFunc) ->
+        fun (ctx : HttpContext) ->
+            ctx.NegotiateWithAsync(negotiationRules, unacceptableHandler, responseObj, source)
+
+        |> source
 
 /// <summary>
 /// Sends a response back to the client based on the request's Accept header.
@@ -169,8 +178,10 @@ let negotiateWith (negotiationRules    : IDictionary<string, obj -> HttpHandler>
 /// The negotiation rules as well as a <see cref="HttpHandler" /> for unacceptable requests can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="INegotiationConfig"/>.
 /// </summary>
 /// <param name="responseObj">The object to send back to the client.</param>
-/// <param name="ctx"></param>
+/// <param name="source"></param>
 /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
-let negotiate (responseObj : obj) : HttpHandler =
-    fun (_ : HttpFunc) (ctx : HttpContext) ->
-        ctx.NegotiateAsync responseObj
+let negotiate (responseObj : obj) (source: HttpHandler) : HttpHandler =
+    fun (_ : HttpFunc) ->
+        fun (ctx : HttpContext) ->
+            ctx.NegotiateAsync(responseObj, source)
+        |> source

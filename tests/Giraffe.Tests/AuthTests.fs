@@ -37,8 +37,8 @@ module TestApp =
                 | Anonymous       -> ClaimsPrincipal (ClaimsIdentity ())
                 | Authenticated c -> ClaimsPrincipal (ClaimsIdentity (c, "foo"))
 
-    let private accessDenied = setStatusCode 401 >=> text Response.AccessDenied
-    let private ok content   = setStatusCode 200 >=> text content
+    let private accessDenied = setStatusCode 401 >> text Response.AccessDenied
+    let private ok content   = setStatusCode 200 >> text content
 
     let private mustBeLoggedIn = requiresAuthentication accessDenied
     let private mustBeAdmin = requiresRole "admin" accessDenied
@@ -48,12 +48,12 @@ module TestApp =
     let private mustBeJohn = authorizeUser isJohn accessDenied
 
     let app =
-        GET >=> choose [
-            route Route.Anonymous       >=> ok Response.Anonymous
-            route Route.Authenticated   >=> mustBeLoggedIn        >=> ok Response.Authenticated
-            route Route.AdminOnly       >=> mustBeAdmin           >=> ok Response.AdminOnly
-            route Route.AdminOrOperator >=> mustBeOperatorOrAdmin >=> ok Response.AdminOrOperator
-            route Route.JohnOnly        >=> mustBeJohn            >=> ok Response.JohnOnly
+        GET |> choose [
+            ROUTE Route.Anonymous       |> ok Response.Anonymous
+            ROUTE Route.Authenticated   |> mustBeLoggedIn        |> ok Response.Authenticated
+            ROUTE Route.AdminOnly       |> mustBeAdmin           |> ok Response.AdminOnly
+            ROUTE Route.AdminOrOperator |> mustBeOperatorOrAdmin |> ok Response.AdminOrOperator
+            ROUTE Route.JohnOnly        |> mustBeJohn            |> ok Response.JohnOnly
         ]
 
 [<AutoOpen>]

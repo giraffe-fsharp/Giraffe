@@ -12,7 +12,7 @@ module ModelValidation =
         ///
         /// If the object has a valid state then the function should return the object, otherwise it should return a `HttpHandler` function which is ought to return an error response back to a client.
         /// </summary>
-        abstract member Validate : unit -> Result<'T, HttpHandler>
+        abstract member Validate : unit -> Result<'T, HttpHandler -> HttpHandler>
 
     /// <summary>
     /// Validates an object of type 'T where 'T must have implemented interface <see cref="IModelValidation{T}"/>.
@@ -23,7 +23,7 @@ module ModelValidation =
     /// <param name="model">An instance of type 'T, where 'T must implement interface <see cref="IModelValidation{T}"/>.</param>
     /// <typeparam name="'T"></typeparam>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let validateModel<'T when 'T :> IModelValidation<'T>> (f : 'T -> HttpHandler) (model : 'T) : HttpHandler =
+    let validateModel<'T when 'T :> IModelValidation<'T>> (f : 'T -> HttpHandler ->HttpHandler) (model : 'T) : HttpHandler -> HttpHandler =
         match model.Validate() with
         | Ok _      -> f model
         | Error err -> err

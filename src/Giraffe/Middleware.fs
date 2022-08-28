@@ -45,7 +45,7 @@ type GiraffeMiddleware (next          : RequestDelegate,
                     ctx.Request.Path.ToString(),
                     elapsedMs)
 
-            if (result.IsNone) then
+            if result.IsNone then
                 return! next.Invoke ctx
         }
 
@@ -66,7 +66,7 @@ type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
                 let logger = loggerFactory.CreateLogger<GiraffeErrorHandlerMiddleware>()
                 try
                     let func = (Some >> Task.FromResult)
-                    let! _ = errorHandler ex logger func ctx
+                    let! _ = errorHandler ex logger id func ctx
                     return ()
                 with ex2 ->
                     logger.LogError(EventId(0), ex,  "An unhandled exception has occurred while executing the request.")

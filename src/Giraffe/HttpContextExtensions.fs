@@ -5,6 +5,7 @@ open System.IO
 open System.Text
 open System.Globalization
 open System.Runtime.CompilerServices
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Extensions
 open Microsoft.AspNetCore.Hosting
@@ -340,7 +341,7 @@ type HttpContextExtensions() =
     /// <param name="bytes">The byte array to be send back to the client.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
     [<Extension>]
-    static member WriteBytesAsync (ctx : HttpContext, bytes : byte[]) =
+    static member WriteBytesAsync (ctx : HttpContext, bytes : byte[]) : Task<HttpContext option> =
         task {
             ctx.SetHttpHeader(HeaderNames.ContentLength, bytes.Length)
             if ctx.Request.Method <> HttpMethods.Head then
