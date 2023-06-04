@@ -219,7 +219,7 @@ type HttpContextExtensions() =
         }
 
     /// <summary>
-    /// Uses the <see cref="Json.ISerializer"/> to deserializes the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously into an object of type 'T.
+    /// Uses the <see cref="Json.ISerializer"/> to deserialize the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously into an object of type 'T.
     /// </summary>
     /// <typeparam name="'T"></typeparam>
     /// <returns>Retruns a <see cref="System.Threading.Tasks.Task{T}"/></returns>
@@ -231,7 +231,7 @@ type HttpContextExtensions() =
         }
 
     /// <summary>
-    /// Uses the <see cref="Xml.ISerializer"/> to deserializes the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously into an object of type 'T.
+    /// Uses the <see cref="Xml.ISerializer"/> to deserialize the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously into an object of type 'T.
     /// </summary>
     /// <typeparam name="'T"></typeparam>
     /// <returns>Retruns a <see cref="System.Threading.Tasks.Task{T}"/></returns>
