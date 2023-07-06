@@ -26,7 +26,9 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/giraffe-fsharp/Giraffe</RepositoryUrl>
-
+    
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile> <!--https://docs.microsoft.com/en-gb/nuget/reference/msbuild-targets#packagereadmefile -->
     <!-- SourceLink settings -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -36,10 +38,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="../../giraffe-64x64.png">
-      <Pack>true</Pack>
-      <PackagePath>$(PackageIconUrl)</PackagePath>
-    </None>
+    <None Include="$(MSBuildThisFileDirectory)../../giraffe-64x64.png" Pack="true" PackagePath="$(PackageIconUrl)"/>
+    <None Include="$(MSBuildThisFileDirectory)../../README.md" Pack="true" PackagePath="/"/>    
+    <None Include="$(MSBuildThisFileDirectory)../../LICENSE" Pack="true" PackagePath="/"/>   
+
   </ItemGroup>
 
   <ItemGroup>

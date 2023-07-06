@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-## 6.1.0 - 2023-07-05
+## 6.1.0-beta001 - 2023-07-05
 
 - [Updating github workflow file to use nuget-acceptable version numbers for packaging](https://github.com/giraffe-fsharp/Giraffe/pull/517) - Credits @Banashek
 - [Updating mimetype accept header parsing to use builtin aspnet parse/methods](https://github.com/giraffe-fsharp/Giraffe/pull/516) - Credits @Banashek
@@ -12,7 +12,6 @@ Release Notes
 - [RFC-compliant Content-Length handling for 1xx, 204 and 205 responses and CONNECT requests](https://github.com/giraffe-fsharp/Giraffe/pull/541) - Credits @retendo
 - [Fix spelling in docs for BindJsonAsync and BindXmlAsync](https://github.com/giraffe-fsharp/Giraffe/pull/539) - Credits @onpikono
 - [Restore 6.0 as TFM](https://github.com/giraffe-fsharp/Giraffe/pull/542) - Credits @TheAngryByrd
-
 
 ## 6.0.0
 
