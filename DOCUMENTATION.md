@@ -2942,21 +2942,9 @@ By default Giraffe offers three `Json.ISerializer` implementations out of the bo
 | Name | Description | Default |
 | :--- | :---------- | :------ |
 | `NewtonsoftJson.Serializer` | Uses `Newtonsoft.Json` aka Json.NET for JSON (de-)serialization in Giraffe. It is the most downloaded library on NuGet, battle tested by millions of users and has great support for F# data types. Use this json serializer for maximum compatibility and easy adoption. | True |
-| `Utf8Json.Serializer` | Uses `Utf8Json` for JSON (de-)serialization in Giraffe. This is the fastest JSON serializer written in .NET with huge extensibility points and native support for directly serializing JSON content to the HTTP response stream via chunked encoding. This serializer has been specifically crafted for maximum performance and should be used when that extra perf is important. | False |
 | `SystemTextJson.Serializer` | Uses `System.Text.Json` for JSON (de-)serialization in Giraffe. `System.Text.Json` is a high performance serialization library, and aims to be the serialization library of choice for ASP.NET Core. For better support of F# types with `System.Text.Json`, look at [FSharp.SystemTextJson](https://github.com/Tarmil/FSharp.SystemTextJson). | False |
 
-To use `Utf8Json.Serializer` instead of `NewtonsoftJson.Serializer`, register a new dependency of type `Json.ISerializer` during application configuration:
-
-```fsharp
-let configureServices (services : IServiceCollection) =
-    // First register all default Giraffe dependencies
-    services.AddGiraffe() |> ignore
-
-    // Now register Utf8Json.Serializer
-    this.AddSingleton<Json.ISerializer>(Utf8Json.Serializer(Utf8Json.Serializer.DefaultResolver)) |> ignore
-```
-
-Or to use `SystemTextJson.Serializer` instead of `NewtonsoftJson.Serializer`, register a new dependency of type `Json.ISerializer` during application configuration:
+To use `SystemTextJson.Serializer` instead of `NewtonsoftJson.Serializer`, register a new dependency of type `Json.ISerializer` during application configuration:
 
 ```fsharp
 let configureServices (services : IServiceCollection) =
@@ -2969,7 +2957,6 @@ let configureServices (services : IServiceCollection) =
     // Now register SystemTextJson.Serializer
     services.AddSingleton<Json.ISerializer>(SystemTextJson.Serializer(serializationOptions)) |> ignore
 ```
-
 
 #### Customizing JsonSerializerSettings
 

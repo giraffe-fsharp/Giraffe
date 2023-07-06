@@ -81,46 +81,6 @@ module NewtonsoftJson =
                 }
 
 [<RequireQualifiedAccess>]
-module Utf8Json =
-    open System.IO
-    open System.Text
-    open System.Threading.Tasks
-    open Utf8Json
-
-    /// <summary>
-    /// <see cref="Utf8Json.Serializer" /> is an alternative serializer with
-    /// great performance and supports true chunked transfer encoding.
-    ///
-    /// It uses Utf8Json as the underlying JSON serializer to (de-)serialize
-    /// JSON content. Utf8Json is currently
-    /// the fastest JSON serializer for .NET.
-    /// </summary>
-    /// <remarks>https://github.com/neuecc/Utf8Json</remarks>
-    type Serializer (resolver : IJsonFormatterResolver) =
-
-        static member DefaultResolver = Utf8Json.Resolvers.StandardResolver.CamelCase
-
-        interface Json.ISerializer with
-            member __.SerializeToString (x : 'T) =
-                JsonSerializer.ToJsonString (x, resolver)
-
-            member __.SerializeToBytes (x : 'T) =
-                JsonSerializer.Serialize (x, resolver)
-
-            member __.SerializeToStreamAsync (x : 'T) (stream : Stream) =
-                JsonSerializer.SerializeAsync(stream, x, resolver)
-
-            member __.Deserialize<'T> (json : string) : 'T =
-                let bytes = Encoding.UTF8.GetBytes json
-                JsonSerializer.Deserialize(bytes, resolver)
-
-            member __.Deserialize<'T> (bytes : byte array) : 'T =
-                JsonSerializer.Deserialize(bytes, resolver)
-
-            member __.DeserializeAsync<'T> (stream : Stream) : Task<'T> =
-                JsonSerializer.DeserializeAsync(stream, resolver)
-
-[<RequireQualifiedAccess>]
 module SystemTextJson =
     open System
     open System.IO
