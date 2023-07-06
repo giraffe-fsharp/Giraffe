@@ -29,9 +29,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 7.0.100
+          dotnet-version: |
+            6.x
+            7.x
       - name: Restore
         run: dotnet restore
       - name: Build
@@ -73,9 +75,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 7.0.100
+          dotnet-version: |
+            6.x
+            7.x
       - name: Create Release NuGet package
         run: |
           arrTag=(${GITHUB_REF//\// })
