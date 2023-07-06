@@ -334,7 +334,13 @@ type HttpContextExtensions() =
         }
 
     /// <summary>
-    /// Writes a byte array to the body of the HTTP response and sets the HTTP Content-Length header accordingly.
+    /// Writes a byte array to the body of the HTTP response and sets the HTTP Content-Length header accordingly.<br />
+    /// <br />
+    /// There are exceptions to be taken care of according to the RFC.<br />
+    /// 1. Don't send Content-Length headers on 1xx and 204 responses and on 2xx responses to CONNECT requests (https://httpwg.org/specs/rfc7230.html#rfc.section.3.3.2)<br />
+    /// 2. Don't send non-zero Content-Length headers for 205 responses (https://httpwg.org/specs/rfc7231.html#rfc.section.6.3.6)<br />
+    /// <br />
+    /// Since .NET 7 these rules are enforced by Kestrel (https://github.com/dotnet/aspnetcore/pull/43103)
     /// </summary>
     /// <param name="ctx">The current http context object.</param>
     /// <param name="bytes">The byte array to be send back to the client.</param>
@@ -342,7 +348,15 @@ type HttpContextExtensions() =
     [<Extension>]
     static member WriteBytesAsync (ctx : HttpContext, bytes : byte[]) =
         task {
-            ctx.SetHttpHeader(HeaderNames.ContentLength, bytes.Length)
+            let canIncludeContentLengthHeader =
+                match ctx.Response.StatusCode, ctx.Request.Method with
+                | statusCode, _ when statusCode |> is1xxStatusCode || statusCode = 204 -> false
+                | statusCode, method when method = "CONNECT" && statusCode |> is2xxStatusCode -> false
+                | _ -> true
+            let is205StatusCode = ctx.Response.StatusCode = 205
+            if canIncludeContentLengthHeader then
+                let contentLength = if is205StatusCode then 0 else bytes.Length
+                ctx.SetHttpHeader(HeaderNames.ContentLength, contentLength)
             if ctx.Request.Method <> HttpMethods.Head then
                 do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length)
             return Some ctx
