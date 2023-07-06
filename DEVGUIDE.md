@@ -14,7 +14,7 @@ This used as a guide for maintainers and developers for building and release thi
 4. Make a new tag
     1. `git tag v6.0.0-beta001`
 5. Push changes
-    1. `git push --atomic origin main v6.0.0-beta001`
+    1. `git push --atomic origin develop v6.0.0-beta001`
 6. Create a [new release](https://github.com/giraffe-fsharp/Giraffe/releases) on GitHub
     1. Choose the tag you just pushed
     2. Title the release the same as the version
