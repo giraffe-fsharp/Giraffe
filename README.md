@@ -307,6 +307,7 @@ If you have blogged about Giraffe, demonstrating a useful topic or some other ti
 
 - [Getting Started with ASP.NET Core Giraffe](https://www.youtube.com/watch?v=HyRzsPZ0f0k&t=461s) (by Ody Mbegbu)
 - [Nikeza - Building the Backend with F#](https://www.youtube.com/watch?v=lANg1kn835s) (by Let's Code .NET)
+- [Build a Simple Web API with F# + Giraffe](https://www.youtube.com/watch?v=yDBpd07SdHE) (by HAMY LABS)
 
 ## License
 
@@ -314,7 +315,7 @@ If you have blogged about Giraffe, demonstrating a useful topic or some other ti
 
 ## Contact and Slack Channel
 
-If you have any further questions feel free to reach out to me via any of the mentioned social media on [https://dusted.codes/about](https://dusted.codes/about) or join the `#giraffe` Slack channel in the [Functional Programming Slack Team](https://functionalprogramming.slack.com/). Please use [this link](https://fpchat-invite.herokuapp.com/) to request an invitation to the Functional Programming Slack Team if you don't have an account registered yet.
+If you have any further questions feel free to reach out to me via any of the mentioned social media on [https://dusted.codes/about](https://dusted.codes/about) or join the `#giraffe` Slack channel in the [Functional Programming Slack Team](https://functionalprogramming.slack.com/). Please use [this link](https://fpslack.com/) to request an invitation to the Functional Programming Slack Team if you don't have an account registered yet.
 
 ## Support
 

@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
     <AssemblyName>Giraffe.Tests</AssemblyName>
   </PropertyGroup>
 
@@ -32,14 +32,22 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
-  <ItemGroup>
+ <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0'">
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="6.0.*" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.*" />
+ </ItemGroup>
+
+
+ <ItemGroup Condition=" '$(TargetFramework)' == 'net7.0'">
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="7.0.*" />
+ </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.*" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.*" />
     <PackageReference Include="System.Net.Http" Version="4.3.*" />
     <PackageReference Include="xunit" Version="2.4.*" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.*" />
-    <PackageReference Include="NSubstitute" Version="4.2.*" />
+    <PackageReference Include="NSubstitute" Version="4.4.*" />
   </ItemGroup>
 
   <ItemGroup>
