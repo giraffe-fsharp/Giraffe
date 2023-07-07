@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## 6.2.0-beta001 - 2023-07-06
+
+- [remove Utf8Json support](https://github.com/giraffe-fsharp/Giraffe/pull/543) - Credits @jcmrva
+
 ## 6.1.0 - 2023-07-05
 
 - [Updating github workflow file to use nuget-acceptable version numbers for packaging](https://github.com/giraffe-fsharp/Giraffe/pull/517) - Credits @Banashek
