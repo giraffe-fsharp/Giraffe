@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-## 6.2.0-beta001 - 2023-07-06
+## 6.2.0 - 2023-07-06
 
 - [remove Utf8Json support](https://github.com/giraffe-fsharp/Giraffe/pull/543) - Credits @jcmrva
 
