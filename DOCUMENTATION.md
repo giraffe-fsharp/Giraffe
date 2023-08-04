@@ -2760,7 +2760,7 @@ let someHandler : HttpHandler =
             // Do stuff
             return! ctx.WriteStreamAsync(
                 true, // enableRangeProcessing
-                someStream, 
+                someStream,
                 None, // eTag
                 None) // lastModified
         }
