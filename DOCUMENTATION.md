@@ -2758,11 +2758,11 @@ let someHandler : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Do stuff
-            return! ctx.WriteStreamAsync
-                true // enableRangeProcessing
-                someStream
-                None // eTag
-                None // lastModified
+            return! ctx.WriteStreamAsync(
+                true, // enableRangeProcessing
+                someStream,
+                None, // eTag
+                None) // lastModified
         }
 
 // or...
@@ -2783,11 +2783,11 @@ let someHandler : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Do stuff
-            return! ctx.WriteFileStreamAsync
-                true // enableRangeProcessing
-                "large-file.zip"
-                None // eTag
-                None // lastModified
+            return! ctx.WriteFileStreamAsync(
+                true, // enableRangeProcessing
+                "large-file.zip",
+                None, // eTag
+                None) // lastModified
         }
 
 // or...
