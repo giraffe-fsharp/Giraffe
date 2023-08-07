@@ -13,6 +13,7 @@ module Json =
     type ISerializer =
         abstract member SerializeToString<'T>       : 'T -> string
         abstract member SerializeToBytes<'T>        : 'T -> byte array
+        abstract member SerializeToBytes<'T>        : obj * 'T -> byte array
         abstract member SerializeToStreamAsync<'T>  : 'T -> Stream -> Task
 
         abstract member Deserialize<'T>             : string -> 'T
@@ -50,6 +51,10 @@ module NewtonsoftJson =
 
             member __.SerializeToBytes (x : 'T) =
                 JsonConvert.SerializeObject(x, settings)
+                |> Encoding.UTF8.GetBytes
+
+            member __.SerializeToBytes (customSettings,x : 'T) =
+                JsonConvert.SerializeObject(x, (customSettings :?> JsonSerializerSettings))
                 |> Encoding.UTF8.GetBytes
 
             member __.SerializeToStreamAsync (x : 'T) (stream : Stream) =
@@ -109,6 +114,9 @@ module SystemTextJson =
 
             member __.SerializeToBytes (x : 'T) =
                 JsonSerializer.SerializeToUtf8Bytes(x, options)
+
+            member __.SerializeToBytes (customOptions,x : 'T) =
+                JsonSerializer.SerializeToUtf8Bytes(x, (customOptions :?> JsonSerializerOptions))
 
             member __.SerializeToStreamAsync (x : 'T) (stream : Stream) =
                 JsonSerializer.SerializeAsync(stream, x, options)

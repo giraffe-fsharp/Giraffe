@@ -399,6 +399,22 @@ type HttpContextExtensions() =
         |> ctx.WriteBytesAsync
 
     /// <summary>
+    /// Serializes an object to JSON and writes the output to the body of the HTTP response.
+    /// It also sets the HTTP Content-Type header to application/json and sets the Content-Length header accordingly.
+    /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="Json.ISerializer"/>
+    /// </summary>
+    /// <param name="ctx">The current http context object.</param>
+    /// <param name="customSettings">Custom Settings for the JSON serializer.</param>
+    /// <param name="dataObj">The object to be send back to the client.</param>
+    /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
+    [<Extension>]
+    static member WriteJsonAsync<'T> (ctx : HttpContext, customSettings, dataObj : 'T) =
+        ctx.SetContentType "application/json; charset=utf-8"
+        let serializer = ctx.GetJsonSerializer()
+        serializer.SerializeToBytes(customSettings, dataObj)
+        |> ctx.WriteBytesAsync
+
+    /// <summary>
     /// Serializes an object to JSON and writes the output to the body of the HTTP response using chunked transfer encoding.
     /// It also sets the HTTP Content-Type header to application/json and sets the Transfer-Encoding header to chunked.
     /// The JSON serializer can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="Json.ISerializer"/>.
