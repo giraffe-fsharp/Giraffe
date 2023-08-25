@@ -61,12 +61,20 @@ type HttpContextExtensions() =
         loggerFactory.CreateLogger categoryName
 
     /// <summary>
-    /// Gets an instance of <see cref="Microsoft.Extensions.Hosting.IHostingEnvironment"/> from the request's service container.
+    /// This function is deprecated and it's going to be removed in future releases! Gets an instance of <see cref="Microsoft.Extensions.Hosting.IHostingEnvironment"/> from the request's service container.
     /// </summary>
     /// <returns>Returns an instance of <see cref="Microsoft.Extensions.Hosting.IHostingEnvironment"/>.</returns>
     [<Extension>]
     static member GetHostingEnvironment(ctx : HttpContext) =
         ctx.GetService<IHostingEnvironment>()
+
+    /// <summary>
+    /// Gets an instance of <see cref="Microsoft.AspNetCore.Hosting.IWebHostEnvironment"/> from the request's service container.
+    /// </summary>
+    /// <returns>Returns an instance of <see cref="Microsoft.AspNetCore.Hosting.IWebHostEnvironment"/>.</returns>
+    [<Extension>]
+    static member GetWebHostEnvironment(ctx : HttpContext) =
+        ctx.GetService<IWebHostEnvironment>()
 
     /// <summary>
     /// Gets an instance of <see cref="Giraffe.Serialization.Json.ISerializer"/> from the request's service container.
@@ -448,7 +456,7 @@ type HttpContextExtensions() =
                 match Path.IsPathRooted filePath with
                 | true  -> filePath
                 | false ->
-                    let env = ctx.GetHostingEnvironment()
+                    let env = ctx.GetWebHostEnvironment()
                     Path.Combine(env.ContentRootPath, filePath)
             ctx.SetContentType "text/html; charset=utf-8"
             let! html = readFileAsStringAsync filePath
