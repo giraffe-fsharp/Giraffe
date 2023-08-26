@@ -60,8 +60,9 @@ type HttpContextExtensions() =
         let loggerFactory = ctx.GetService<ILoggerFactory>()
         loggerFactory.CreateLogger categoryName
 
+    [<Obsolete("Please use `GetWebHostEnvironment` as a replacement for `GetHostingEnvironment`. In the next major version this function will be removed.")>]
     /// <summary>
-    /// This function is deprecated and it's going to be removed in future releases! Gets an instance of <see cref="Microsoft.Extensions.Hosting.IHostingEnvironment"/> from the request's service container.
+    /// Gets an instance of <see cref="Microsoft.Extensions.Hosting.IHostingEnvironment"/> from the request's service container.
     /// </summary>
     /// <returns>Returns an instance of <see cref="Microsoft.Extensions.Hosting.IHostingEnvironment"/>.</returns>
     [<Extension>]
