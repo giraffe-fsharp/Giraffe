@@ -15,7 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{9E64
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EndpointRoutingApp", "EndpointRoutingApp", "{B9B26DDC-608C-42FE-9AB9-6CF0EE4920CD}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "EndpointRoutingApp", "samples\EndpointRoutingApp\EndpointRoutingApp\EndpointRoutingApp.fsproj", "{0E15F922-7A44-4116-9DAB-FAEB94392FEC}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "EndpointRoutingApp", "samples\EndpointRoutingApp\EndpointRoutingApp.fsproj", "{0E15F922-7A44-4116-9DAB-FAEB94392FEC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_root", "_root", "{FADD8661-7ADD-42BA-B3BF-F8C8DB70BE00}"
 ProjectSection(SolutionItems) = preProject
