@@ -7,23 +7,23 @@ open FsHttp
 // Fsi.disableDebugLogs()
 
 type QueryParams = (string * obj) list
+type Url = Url of string
+type Title = Title of string
 
-let URLMap =
-    [ ("not_cached", "http://localhost:5000/cached/not")
-      ("public_cached", "http://localhost:5000/cached/public")
-      ("private_cached", "http://localhost:5000/cached/private")
-      ("public_cached_no_vary_by_query_keys", "http://localhost:5000/cached/vary/not")
-      ("cached_vary_by_query_keys", "http://localhost:5000/cached/vary/yes") ]
-    |> Map.ofList
-
-let waitForOneSecond () =
-    let OneSecond = 1000 // ms
-    Threading.Thread.Sleep OneSecond
+let urls =
+    {| notCached = Url "http://localhost:5000/cached/not"
+       publicCached = Url "http://localhost:5000/cached/public"
+       privateCached = Url "http://localhost:5000/cached/private"
+       publicCachedNoVaryByQueryKeys = Url "http://localhost:5000/cached/vary/not"
+       cachedVaryByQueryKeys = Url "http://localhost:5000/cached/vary/yes" |}
 
 let queryParams1: QueryParams = [ ("query1", "a"); ("query2", "b") ]
 let queryParams2: QueryParams = [ ("query1", "c"); ("query2", "d") ]
 
-let makeRequest (url: string) (queryParams: list<string * obj>) =
+let waitForOneSecond () =
+    do Threading.Thread.Sleep(TimeSpan.FromSeconds 1)
+
+let makeRequest (Url url: Url) (queryParams: QueryParams) =
     let response =
         http {
             GET url
@@ -36,67 +36,48 @@ let makeRequest (url: string) (queryParams: list<string * obj>) =
     printfn "%s" response
     printfn ""
 
-let printRunTitle (title: string) =
+let printRunTitle (Title title: Title) =
     printfn "-----------------------------------"
     printfn "%s" title
     printfn ""
 
-let printTimeTaken (totalSeconds: float) =
+let printTimeTaken (duration: TimeSpan) =
     printfn "The time it took to finish:"
-    printfn "%.2f seconds" totalSeconds
+    printfn "%.2f seconds" duration.TotalSeconds
     printfn ""
 
-let runFiveRequests (title: string) (url: string) =
-    printRunTitle (title)
+let run (qps: QueryParams list) (title: Title) (url: Url) =
+    printRunTitle title
 
     let stopWatch = Diagnostics.Stopwatch.StartNew()
 
-    for _ in [ 1..5 ] do
-        makeRequest url [] |> waitForOneSecond
+    for queryParams in qps do
+        makeRequest url queryParams |> waitForOneSecond
 
     stopWatch.Stop()
-    printTimeTaken stopWatch.Elapsed.TotalSeconds
+    printTimeTaken stopWatch.Elapsed
+
+let runFiveRequests =
+    run
+        [ for _ in 1..5 do
+              [] ]
 
 let testPublicCachedNoVaryByQueryKeys () =
-    printRunTitle "Testing the /cached/vary/not endpoint"
-
-    let url = URLMap.Item "public_cached_no_vary_by_query_keys"
-
-    let stopWatch = Diagnostics.Stopwatch.StartNew()
-
-    makeRequest url queryParams1 |> waitForOneSecond
-
-    makeRequest url queryParams1 |> waitForOneSecond
-
-    makeRequest url queryParams2 |> waitForOneSecond
-
-    makeRequest url queryParams2 |> waitForOneSecond
-
-    stopWatch.Stop()
-    printTimeTaken stopWatch.Elapsed.TotalSeconds
+    let allQueryParams = [ queryParams1; queryParams1; queryParams2; queryParams2 ]
+    let title = Title "Testing the /cached/vary/not endpoint"
+    let url = urls.publicCachedNoVaryByQueryKeys
+    run allQueryParams title url
 
 let testCachedVaryByQueryKeys () =
-    printRunTitle "Testing the /cached/vary/yes endpoint"
-
-    let url = URLMap.Item "cached_vary_by_query_keys"
-
-    let stopWatch = Diagnostics.Stopwatch.StartNew()
-
-    makeRequest url queryParams1 |> waitForOneSecond
-
-    makeRequest url queryParams1 |> waitForOneSecond
-
-    makeRequest url queryParams2 |> waitForOneSecond
-
-    makeRequest url queryParams2 |> waitForOneSecond
-
-    stopWatch.Stop()
-    printTimeTaken stopWatch.Elapsed.TotalSeconds
+    let allQueryParams = [ queryParams1; queryParams1; queryParams2; queryParams2 ]
+    let title = Title "Testing the /cached/vary/yes endpoint"
+    let url = urls.cachedVaryByQueryKeys
+    run allQueryParams title url
 
 let main () =
-    runFiveRequests ("Testing the /cached/not endpoint") (URLMap.Item "not_cached")
-    runFiveRequests ("Testing the /cached/public endpoint") (URLMap.Item "public_cached")
-    runFiveRequests ("Testing the /cached/private endpoint") (URLMap.Item "private_cached")
+    runFiveRequests (Title "Testing the /cached/not endpoint") urls.notCached
+    runFiveRequests (Title "Testing the /cached/public endpoint") urls.publicCached
+    runFiveRequests (Title "Testing the /cached/private endpoint") urls.privateCached
     testPublicCachedNoVaryByQueryKeys ()
     testCachedVaryByQueryKeys ()
 
