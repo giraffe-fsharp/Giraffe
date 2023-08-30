@@ -3,6 +3,9 @@
 open System
 open FsHttp
 
+// Uncomment if you don't want FsHttp debug logs to polute the terminal
+// Fsi.disableDebugLogs()
+
 type QueryParams = (string * obj) list
 
 let URLMap =
