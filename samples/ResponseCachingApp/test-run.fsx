@@ -3,7 +3,7 @@
 open System
 open FsHttp
 
-// Uncomment if you don't want FsHttp debug logs to polute the terminal
+// Uncomment if you don't want FsHttp debug logs
 // Fsi.disableDebugLogs()
 
 type QueryParams = (string * obj) list
