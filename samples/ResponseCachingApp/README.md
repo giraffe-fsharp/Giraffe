@@ -15,13 +15,10 @@ dotnet run --project samples/ResponseCachingApp/
 # It will start the server listening to port 5000
 ```
 
-Now, you can use the `test-run.sh` script (Linux):
+Now, you can use the `test-run.fsx` script:
 
 ```bash
-# Add execution permission to the script
-chmod +x samples/ResponseCachingApp/test-run.sh
-
-./samples/ResponseCachingApp/test-run.sh
+dotnet fsi samples/ResponseCachingApp/test-run.fsx
 ```
 
 And the expected result:
@@ -30,63 +27,131 @@ And the expected result:
 # -----------------------------------
 # Testing the /cached/not endpoint
 
-# Hello World -> DateTime: 8/30/2023 9:10:01 AM
-# Hello World -> DateTime: 8/30/2023 9:10:07 AM
-# Hello World -> DateTime: 8/30/2023 9:10:13 AM
-# Hello World -> DateTime: 8/30/2023 9:10:19 AM
-# Hello World -> DateTime: 8/30/2023 9:10:25 AM
+# Sending request GET http://localhost:5000/cached/not ...
+# 200 (OK) (GET http://localhost:5000/cached/not)
+# Hello World -> DateTime: 8/30/2023 5:06:00 PM
 
-# real	0m30,110s
-# user	0m0,034s
-# sys	0m0,067s
+# Sending request GET http://localhost:5000/cached/not ...
+# 200 (OK) (GET http://localhost:5000/cached/not)
+# Hello World -> DateTime: 8/30/2023 5:06:06 PM
+
+# Sending request GET http://localhost:5000/cached/not ...
+# 200 (OK) (GET http://localhost:5000/cached/not)
+# Hello World -> DateTime: 8/30/2023 5:06:12 PM
+
+# Sending request GET http://localhost:5000/cached/not ...
+# 200 (OK) (GET http://localhost:5000/cached/not)
+# Hello World -> DateTime: 8/30/2023 5:06:18 PM
+
+# Sending request GET http://localhost:5000/cached/not ...
+# 200 (OK) (GET http://localhost:5000/cached/not)
+# Hello World -> DateTime: 8/30/2023 5:06:24 PM
+
+# The time it took to finish:
+# 30.47 seconds
+
 # -----------------------------------
 # Testing the /cached/public endpoint
 
-# Hello World -> DateTime: 8/30/2023 9:10:31 AM
-# Hello World -> DateTime: 8/30/2023 9:10:31 AM
-# Hello World -> DateTime: 8/30/2023 9:10:31 AM
-# Hello World -> DateTime: 8/30/2023 9:10:31 AM
-# Hello World -> DateTime: 8/30/2023 9:10:31 AM
+# Sending request GET http://localhost:5000/cached/public ...
+# 200 (OK) (GET http://localhost:5000/cached/public)
+# Hello World -> DateTime: 8/30/2023 5:06:30 PM
 
-# real	0m10,116s
-# user	0m0,043s
-# sys	0m0,060s
+# Sending request GET http://localhost:5000/cached/public ...
+# 200 (OK) (GET http://localhost:5000/cached/public)
+# Hello World -> DateTime: 8/30/2023 5:06:30 PM
+
+# Sending request GET http://localhost:5000/cached/public ...
+# 200 (OK) (GET http://localhost:5000/cached/public)
+# Hello World -> DateTime: 8/30/2023 5:06:30 PM
+
+# Sending request GET http://localhost:5000/cached/public ...
+# 200 (OK) (GET http://localhost:5000/cached/public)
+# Hello World -> DateTime: 8/30/2023 5:06:30 PM
+
+# Sending request GET http://localhost:5000/cached/public ...
+# 200 (OK) (GET http://localhost:5000/cached/public)
+# Hello World -> DateTime: 8/30/2023 5:06:30 PM
+
+# The time it took to finish:
+# 10.29 seconds
+
 # -----------------------------------
 # Testing the /cached/private endpoint
 
-# Hello World -> DateTime: 8/30/2023 9:10:41 AM
-# Hello World -> DateTime: 8/30/2023 9:10:47 AM
-# Hello World -> DateTime: 8/30/2023 9:10:53 AM
-# Hello World -> DateTime: 8/30/2023 9:10:59 AM
-# Hello World -> DateTime: 8/30/2023 9:11:05 AM
+# Sending request GET http://localhost:5000/cached/private ...
+# 200 (OK) (GET http://localhost:5000/cached/private)
+# Hello World -> DateTime: 8/30/2023 5:06:40 PM
 
-# real	0m30,144s
-# user	0m0,031s
-# sys	0m0,082s
+# Sending request GET http://localhost:5000/cached/private ...
+# 200 (OK) (GET http://localhost:5000/cached/private)
+# Hello World -> DateTime: 8/30/2023 5:06:46 PM
+
+# Sending request GET http://localhost:5000/cached/private ...
+# 200 (OK) (GET http://localhost:5000/cached/private)
+# Hello World -> DateTime: 8/30/2023 5:06:53 PM
+
+# Sending request GET http://localhost:5000/cached/private ...
+# 200 (OK) (GET http://localhost:5000/cached/private)
+# Hello World -> DateTime: 8/30/2023 5:06:59 PM
+
+# Sending request GET http://localhost:5000/cached/private ...
+# 200 (OK) (GET http://localhost:5000/cached/private)
+# Hello World -> DateTime: 8/30/2023 5:07:05 PM
+
+# The time it took to finish:
+# 30.37 seconds
+
 # -----------------------------------
 # Testing the /cached/vary/not endpoint
 
-# Parameters: query1 a query2 b -> DateTime: 8/30/2023 9:11:11 AM
-# Parameters: query1 a query2 b -> DateTime: 8/30/2023 9:11:11 AM
-# Parameters: query1 a query2 b -> DateTime: 8/30/2023 9:11:11 AM
-# Parameters: query1 a query2 b -> DateTime: 8/30/2023 9:11:11 AM
+# Sending request GET http://localhost:5000/cached/vary/not?query1=a&query2=b ...
+# 200 (OK) (GET http://localhost:5000/cached/vary/not?query1=a&query2=b)
+# Parameters: query1 a query2 b -> DateTime: 8/30/2023 5:07:11 PM
 
-# real	0m9,109s
-# user	0m0,052s
-# sys	0m0,053s
+# Sending request GET http://localhost:5000/cached/vary/not?query1=a&query2=b ...
+# 200 (OK) (GET http://localhost:5000/cached/vary/not?query1=a&query2=b)
+# Parameters: query1 a query2 b -> DateTime: 8/30/2023 5:07:11 PM
+
+# Sending request GET http://localhost:5000/cached/vary/not?query1=c&query2=d ...
+# 200 (OK) (GET http://localhost:5000/cached/vary/not?query1=c&query2=d)
+# Parameters: query1 a query2 b -> DateTime: 8/30/2023 5:07:11 PM
+
+# Sending request GET http://localhost:5000/cached/vary/not?query1=c&query2=d ...
+# 200 (OK) (GET http://localhost:5000/cached/vary/not?query1=c&query2=d)
+# Parameters: query1 a query2 b -> DateTime: 8/30/2023 5:07:11 PM
+
+# The time it took to finish:
+# 9.22 seconds
+
 # -----------------------------------
 # Testing the /cached/vary/yes endpoint
 
-# Parameters: query1 a query2 b -> DateTime: 8/30/2023 9:11:21 AM
-# Parameters: query1 a query2 b -> DateTime: 8/30/2023 9:11:21 AM
-# Parameters: query1 c query2 d -> DateTime: 8/30/2023 9:11:28 AM
-# Parameters: query1 c query2 d -> DateTime: 8/30/2023 9:11:28 AM
+# Sending request GET http://localhost:5000/cached/vary/yes?query1=a&query2=b ...
+# 200 (OK) (GET http://localhost:5000/cached/vary/yes?query1=a&query2=b)
+# Parameters: query1 a query2 b -> DateTime: 8/30/2023 5:07:20 PM
 
-# real	0m14,105s
-# user	0m0,043s
-# sys	0m0,056s
+# Sending request GET http://localhost:5000/cached/vary/yes?query1=a&query2=b ...
+# 200 (OK) (GET http://localhost:5000/cached/vary/yes?query1=a&query2=b)
+# Parameters: query1 a query2 b -> DateTime: 8/30/2023 5:07:20 PM
+
+# Sending request GET http://localhost:5000/cached/vary/yes?query1=c&query2=d ...
+# 200 (OK) (GET http://localhost:5000/cached/vary/yes?query1=c&query2=d)
+# Parameters: query1 c query2 d -> DateTime: 8/30/2023 5:07:27 PM
+
+# Sending request GET http://localhost:5000/cached/vary/yes?query1=c&query2=d ...
+# 200 (OK) (GET http://localhost:5000/cached/vary/yes?query1=c&query2=d)
+# Parameters: query1 c query2 d -> DateTime: 8/30/2023 5:07:27 PM
+
+# The time it took to finish:
+# 14.22 seconds
 ```
 
 Notice that at this example, the cache worked properly only for the `/cached/public` and `/cached/vary/yes` endpoints, as expected. You can read the documentation presented before to understand why.
 
 One last information, notice that the server will inform whenever the response was cached or not, just check the logs.
+
+For example:
+
+* If the response was cached: `The response has been cached.` and `Serving response from cache.`;
+* If the response was not cached: `The response could not be cached for this request.` and `No cached response available for this request.`.
