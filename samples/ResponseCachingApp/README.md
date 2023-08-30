@@ -30,41 +30,63 @@ And the expected result:
 # -----------------------------------
 # Testing the /cached/not endpoint
 
-# Hello World -> DateTime: 8/29/2023 8:00:28 PM
-# Hello World -> DateTime: 8/29/2023 8:00:34 PM
-# Hello World -> DateTime: 8/29/2023 8:00:40 PM
-# Hello World -> DateTime: 8/29/2023 8:00:46 PM
-# Hello World -> DateTime: 8/29/2023 8:00:52 PM
+# Hello World -> DateTime: 8/30/2023 9:10:01 AM
+# Hello World -> DateTime: 8/30/2023 9:10:07 AM
+# Hello World -> DateTime: 8/30/2023 9:10:13 AM
+# Hello World -> DateTime: 8/30/2023 9:10:19 AM
+# Hello World -> DateTime: 8/30/2023 9:10:25 AM
 
-# real	0m30,126s
-# user	0m0,063s
-# sys	0m0,052s
+# real	0m30,110s
+# user	0m0,034s
+# sys	0m0,067s
 # -----------------------------------
 # Testing the /cached/public endpoint
 
-# Hello World -> DateTime: 8/29/2023 8:00:58 PM
-# Hello World -> DateTime: 8/29/2023 8:00:58 PM
-# Hello World -> DateTime: 8/29/2023 8:00:58 PM
-# Hello World -> DateTime: 8/29/2023 8:00:58 PM
-# Hello World -> DateTime: 8/29/2023 8:00:58 PM
+# Hello World -> DateTime: 8/30/2023 9:10:31 AM
+# Hello World -> DateTime: 8/30/2023 9:10:31 AM
+# Hello World -> DateTime: 8/30/2023 9:10:31 AM
+# Hello World -> DateTime: 8/30/2023 9:10:31 AM
+# Hello World -> DateTime: 8/30/2023 9:10:31 AM
 
-# real	0m10,072s
-# user	0m0,025s
-# sys	0m0,040s
+# real	0m10,116s
+# user	0m0,043s
+# sys	0m0,060s
 # -----------------------------------
 # Testing the /cached/private endpoint
 
-# Hello World -> DateTime: 8/29/2023 8:01:09 PM
-# Hello World -> DateTime: 8/29/2023 8:01:15 PM
-# Hello World -> DateTime: 8/29/2023 8:01:21 PM
-# Hello World -> DateTime: 8/29/2023 8:01:27 PM
-# Hello World -> DateTime: 8/29/2023 8:01:33 PM
+# Hello World -> DateTime: 8/30/2023 9:10:41 AM
+# Hello World -> DateTime: 8/30/2023 9:10:47 AM
+# Hello World -> DateTime: 8/30/2023 9:10:53 AM
+# Hello World -> DateTime: 8/30/2023 9:10:59 AM
+# Hello World -> DateTime: 8/30/2023 9:11:05 AM
 
-# real	0m30,120s
+# real	0m30,144s
+# user	0m0,031s
+# sys	0m0,082s
+# -----------------------------------
+# Testing the /cached/vary/not endpoint
+
+# Parameters: query1 a query2 b -> DateTime: 8/30/2023 9:11:11 AM
+# Parameters: query1 a query2 b -> DateTime: 8/30/2023 9:11:11 AM
+# Parameters: query1 a query2 b -> DateTime: 8/30/2023 9:11:11 AM
+# Parameters: query1 a query2 b -> DateTime: 8/30/2023 9:11:11 AM
+
+# real	0m9,109s
 # user	0m0,052s
-# sys	0m0,060s
+# sys	0m0,053s
+# -----------------------------------
+# Testing the /cached/vary/yes endpoint
+
+# Parameters: query1 a query2 b -> DateTime: 8/30/2023 9:11:21 AM
+# Parameters: query1 a query2 b -> DateTime: 8/30/2023 9:11:21 AM
+# Parameters: query1 c query2 d -> DateTime: 8/30/2023 9:11:28 AM
+# Parameters: query1 c query2 d -> DateTime: 8/30/2023 9:11:28 AM
+
+# real	0m14,105s
+# user	0m0,043s
+# sys	0m0,056s
 ```
 
-Notice that at this example, the cache worked only for the `/cached/public` endpoint, as expected. You can read the documentation presented before to understand why.
+Notice that at this example, the cache worked properly only for the `/cached/public` and `/cached/vary/yes` endpoints, as expected. You can read the documentation presented before to understand why.
 
 One last information, notice that the server will inform whenever the response was cached or not, just check the logs.

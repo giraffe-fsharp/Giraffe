@@ -10,7 +10,7 @@ set -euo pipefail
 function test_not_cached {
     for counter in {1..5}
     do
-        curl localhost:5000/cached/not
+        curl "localhost:5000/cached/not"
         echo
         sleep 1
     done
@@ -19,7 +19,7 @@ function test_not_cached {
 function test_public_cached {
     for counter in {1..5}
     do
-        curl localhost:5000/cached/public
+        curl "localhost:5000/cached/public"
         echo
         sleep 1
     done
@@ -28,10 +28,40 @@ function test_public_cached {
 function test_private_cached {
     for counter in {1..5}
     do
-        curl localhost:5000/cached/private
+        curl "localhost:5000/cached/private"
         echo
         sleep 1
     done
+}
+
+function test_public_cached_no_vary_by_query_keys {
+    curl "localhost:5000/cached/vary/not?query1=a&query2=b"
+    echo
+    sleep 1
+    curl "localhost:5000/cached/vary/not?query1=a&query2=b"
+    echo
+    sleep 1
+    curl "localhost:5000/cached/vary/not?query1=c&query2=d"
+    echo
+    sleep 1
+    curl "localhost:5000/cached/vary/not?query1=c&query2=d"
+    echo
+    sleep 1
+}
+
+function test_cached_vary_by_query_keys {
+    curl "localhost:5000/cached/vary/yes?query1=a&query2=b"
+    echo
+    sleep 1
+    curl "localhost:5000/cached/vary/yes?query1=a&query2=b"
+    echo
+    sleep 1
+    curl "localhost:5000/cached/vary/yes?query1=c&query2=d"
+    echo
+    sleep 1
+    curl "localhost:5000/cached/vary/yes?query1=c&query2=d"
+    echo
+    sleep 1
 }
 
 echo "-----------------------------------"
@@ -49,3 +79,13 @@ echo "-----------------------------------"
 echo "Testing the /cached/private endpoint"
 echo
 time test_private_cached
+
+echo "-----------------------------------"
+echo "Testing the /cached/vary/not endpoint"
+echo
+time test_public_cached_no_vary_by_query_keys
+
+echo "-----------------------------------"
+echo "Testing the /cached/vary/yes endpoint"
+echo
+time test_cached_vary_by_query_keys
