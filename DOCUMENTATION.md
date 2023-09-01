@@ -3325,7 +3325,7 @@ At last it is possible to have the `Giraffe.EndpointRouting` module and Giraffe'
 
 Notice that the usage of `Giraffe.EndpointRouting` is recommended, as described in [this issue](https://github.com/giraffe-fsharp/Giraffe/issues/534).
 
- #### Endpoint Routing Basics
+#### Endpoint Routing Basics
 
 In order to make use of Giraffe's endpoint routing functions one has to open the required module first:
 
