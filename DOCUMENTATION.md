@@ -501,12 +501,12 @@ There's a handful more extension methods available to retrieve a few default dep
 
 ASP.NET Core has built in support for [working with multiple environments](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/environments) and [configuration management](https://docs.microsoft.com/en-gb/aspnet/core/fundamentals/configuration/?tabs=basicconfiguration), which both work out of the box with Giraffe.
 
-Additionally Giraffe exposes a `GetHostingEnvironment()` extension method which can be used to easier retrieve an `IHostingEnvironment` object from within an `HttpHandler` function:
+Additionally Giraffe exposes a `GetWebHostEnvironment()` extension method which can be used to easier retrieve an `IWebHostEnvironment` object from within an `HttpHandler` function:
 
 ```fsharp
 let someHttpHandler : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        let env = ctx.GetHostingEnvironment()
+        let env = ctx.GetWebHostEnvironment()
         // Do something with `env`...
         // Return a Task<HttpContext option>
 ```
