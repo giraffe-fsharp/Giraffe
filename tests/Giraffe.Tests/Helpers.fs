@@ -103,32 +103,22 @@ let createHost (configureApp      : 'Tuple -> IApplicationBuilder -> unit)
         .ConfigureServices(Action<IServiceCollection> configureServices)
 
 type MockJsonSettings =
-    | Newtonsoft     of JsonSerializerSettings option
     | SystemTextJson of JsonSerializerOptions  option
 
 let mockJson (ctx : HttpContext) (settings : MockJsonSettings) =
 
     match settings with
-    | Newtonsoft settings ->
-        let jsonSettings =
-            defaultArg settings NewtonsoftJson.Serializer.DefaultSettings
-        ctx.RequestServices
-           .GetService(typeof<Json.ISerializer>)
-           .Returns(NewtonsoftJson.Serializer(jsonSettings))
-        |> ignore
-
     | SystemTextJson settings ->
         let jsonOptions =
-            defaultArg settings SystemTextJson.Serializer.DefaultOptions
+            defaultArg settings Json.Serializer.DefaultOptions
         ctx.RequestServices
            .GetService(typeof<Json.ISerializer>)
-           .Returns(SystemTextJson.Serializer(jsonOptions))
+           .Returns(Json.Serializer(jsonOptions))
         |> ignore
 
 type JsonSerializersData =
 
     static member DefaultSettings = [
-            Newtonsoft None
             SystemTextJson None
         ]
 
@@ -136,7 +126,6 @@ type JsonSerializersData =
 
     static member PreserveCaseSettings =
         [
-            Newtonsoft (Some (JsonSerializerSettings()))
             SystemTextJson (Some (JsonSerializerOptions()))
         ]
 
