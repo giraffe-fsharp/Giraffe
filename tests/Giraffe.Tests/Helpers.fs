@@ -16,8 +16,6 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
 open Xunit
 open NSubstitute
-open System.Text.Json
-open Newtonsoft.Json
 open Giraffe
 
 // ---------------------------------
@@ -102,34 +100,12 @@ let createHost (configureApp      : 'Tuple -> IApplicationBuilder -> unit)
         .Configure(Action<IApplicationBuilder> (configureApp args))
         .ConfigureServices(Action<IServiceCollection> configureServices)
 
-type MockJsonSettings =
-    | SystemTextJson of JsonSerializerOptions  option
+let mockJson (ctx : HttpContext) =
 
-let mockJson (ctx : HttpContext) (settings : MockJsonSettings) =
-
-    match settings with
-    | SystemTextJson settings ->
-        let jsonOptions =
-            defaultArg settings Json.Serializer.DefaultOptions
-        ctx.RequestServices
-           .GetService(typeof<Json.ISerializer>)
-           .Returns(Json.Serializer(jsonOptions))
-        |> ignore
-
-type JsonSerializersData =
-
-    static member DefaultSettings = [
-            SystemTextJson None
-        ]
-
-    static member DefaultData = JsonSerializersData.DefaultSettings |> toTheoryData
-
-    static member PreserveCaseSettings =
-        [
-            SystemTextJson (Some (JsonSerializerOptions()))
-        ]
-
-    static member PreserveCaseData = JsonSerializersData.PreserveCaseSettings |> toTheoryData
+    ctx.RequestServices
+        .GetService(typeof<Json.ISerializer>)
+        .Returns(Json.Serializer(Json.Serializer.DefaultOptions))
+    |> ignore
 
 type NegotiationConfigWithExpectedResult = {
     NegotiationConfig : INegotiationConfig
