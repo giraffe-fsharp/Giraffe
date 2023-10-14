@@ -854,11 +854,10 @@ let ``tryBindQuery with complete data but baldy formated list items`` () =
 // HttpContext Model Binding Tests
 // ---------------------------------
 
-[<Theory>]
-[<MemberData("PreserveCaseData", MemberType = typedefof<JsonSerializersData>)>]
-let ``BindJsonAsync test`` (settings) =
+[<Fact>]
+let ``BindJsonAsync test`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx settings
+    mockJson ctx
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
@@ -866,7 +865,7 @@ let ``BindJsonAsync test`` (settings) =
         >=> route "/json"
         >=> bindJson<Customer> outputCustomer
 
-    let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
+    let postContent = "{ \"name\": \"John Doe\", \"isVip\": true, \"birthDate\": \"1990-04-20\", \"balance\": 150000.5, \"loyaltyPoints\": 137 }"
     let stream = new MemoryStream()
     let writer = new StreamWriter(stream, Encoding.UTF8)
     writer.Write postContent
@@ -1077,11 +1076,10 @@ let ``BindQueryString with nullable property test`` () =
         return!  testRoute "?NullableInt=&NullableDateTime=" { NullableInt = Nullable<_>(); NullableDateTime = Nullable<_>() }
     }
 
-[<Theory>]
-[<MemberData("DefaultData", MemberType = typedefof<JsonSerializersData>)>]
-let ``BindModelAsync with JSON content returns correct result`` (settings) =
+[<Fact>]
+let ``BindModelAsync with JSON content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx settings
+    mockJson ctx
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
@@ -1090,45 +1088,6 @@ let ``BindModelAsync with JSON content returns correct result`` (settings) =
 
     let contentType = "application/json"
     let postContent = "{ \"name\": \"John Doe\", \"isVip\": true, \"birthDate\": \"1990-04-20\", \"balance\": 150000.5, \"loyaltyPoints\": 137 }"
-    let stream = new MemoryStream()
-    let writer = new StreamWriter(stream, Encoding.UTF8)
-    writer.Write postContent
-    writer.Flush()
-    stream.Position <- 0L
-
-    let headers = HeaderDictionary()
-    headers.Add("Content-Type", StringValues(contentType))
-    headers.Add("Content-Length", StringValues(stream.Length.ToString()))
-    ctx.Request.ContentType.ReturnsForAnyArgs contentType |> ignore
-    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
-    ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    ctx.Request.Body  <- stream
-
-    let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
-
-    task {
-        let! result = app (Some >> Task.FromResult) ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
-[<Theory>]
-[<MemberData("PreserveCaseData", MemberType = typedefof<JsonSerializersData>)>]
-let ``BindModelAsync with JSON content that uses custom serialization settings returns correct result`` (settings) =
-    let ctx = Substitute.For<HttpContext>()
-    mockJson ctx settings
-
-    let outputCustomer (c : Customer) = text (c.ToString())
-    let app =
-        route "/auto"
-        >=> bindModel<Customer> None outputCustomer
-
-    let contentType = "application/json"
-    let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
     let stream = new MemoryStream()
     let writer = new StreamWriter(stream, Encoding.UTF8)
     writer.Write postContent
@@ -1272,11 +1231,10 @@ let ``BindModelAsync with culture aware form content returns correct result`` ()
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-[<Theory>]
-[<MemberData("PreserveCaseData", MemberType = typedefof<JsonSerializersData>)>]
-let ``BindModelAsync with JSON content and a specific charset returns correct result`` (settings) =
+[<Fact>]
+let ``BindModelAsync with JSON content and a specific charset returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx settings
+    mockJson ctx
 
     let outputCustomer (c : Customer) = text (c.ToString())
     let app =
@@ -1284,7 +1242,7 @@ let ``BindModelAsync with JSON content and a specific charset returns correct re
         >=> bindModel<Customer> None outputCustomer
 
     let contentType = "application/json; charset=utf-8"
-    let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
+    let postContent = "{ \"name\": \"John Doe\", \"isVip\": true, \"birthDate\": \"1990-04-20\", \"balance\": 150000.5, \"loyaltyPoints\": 137 }"
     let stream = new MemoryStream()
     let writer = new StreamWriter(stream, Encoding.UTF8)
     writer.Write postContent

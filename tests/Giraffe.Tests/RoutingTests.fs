@@ -88,7 +88,7 @@ let ``route: GET "/FOO" returns 404 "Not found"`` () =
 [<Fact>]
 let ``GET "/JSON" returns "BaR"`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx (SystemTextJson None)
+    mockJson ctx
     let app =
         GET >=> choose [
             route   "/"       >=> text "Hello World"
@@ -464,7 +464,7 @@ let ``routef: GET "/foo/bar/baz/qux" returns 404 "Not found"`` () =
 [<Fact>]
 let ``POST "/POsT/1" returns "1"`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx (SystemTextJson None)
+    mockJson ctx
     let app =
         choose [
             GET >=> choose [
@@ -490,7 +490,7 @@ let ``POST "/POsT/1" returns "1"`` () =
 [<Fact>]
 let ``POST "/POsT/523" returns "523"`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx (SystemTextJson None)
+    mockJson ctx
     let app =
         choose [
             GET >=> choose [
@@ -1136,7 +1136,7 @@ let ``subRoutef: GET "/en/10/api/Julia" returns "Hello Julia! Lang: en, Version:
 [<Fact>]
 let ``subRouteCi: Non-filtering handler after subRouteCi is called`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx (SystemTextJson None)
+    mockJson ctx
     let app =
         GET >=> choose [
             subRouteCi "/foo" (text "subroute /foo")
@@ -1159,7 +1159,7 @@ let ``subRouteCi: Non-filtering handler after subRouteCi is called`` () =
 [<Fact>]
 let ``subRouteCi: Nested route after subRouteCi is called`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx (SystemTextJson None)
+    mockJson ctx
     let app =
         GET >=> choose [
             subRouteCi "/foo" (
@@ -1183,7 +1183,7 @@ let ``subRouteCi: Nested route after subRouteCi is called`` () =
 [<Fact>]
 let ``subRouteCi: Nested route after subRouteCi is still case sensitive`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx (SystemTextJson None)
+    mockJson ctx
     let app =
         GET >=> choose [
             subRouteCi "/foo" (
@@ -1210,7 +1210,7 @@ let ``subRouteCi: Nested route after subRouteCi is still case sensitive`` () =
 [<Fact>]
 let ``subRouteCi: Nested routeCi after subRouteCi is called`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx (SystemTextJson None)
+    mockJson ctx
     let app =
         GET >=> choose [
             subRouteCi "/foo" (
