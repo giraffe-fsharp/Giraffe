@@ -104,29 +104,11 @@ let createHost (configureApp      : 'Tuple -> IApplicationBuilder -> unit)
         .ConfigureServices(Action<IServiceCollection> configureServices)
 
 type MockJsonSettings =
-    | Newtonsoft     of JsonSerializerSettings option
-    | Utf8           of IJsonFormatterResolver option
     | SystemTextJson of JsonSerializerOptions  option
 
 let mockJson (ctx : HttpContext) (settings : MockJsonSettings) =
 
     match settings with
-    | Newtonsoft settings ->
-        let jsonSettings =
-            defaultArg settings NewtonsoftJson.Serializer.DefaultSettings
-        ctx.RequestServices
-           .GetService(typeof<Json.ISerializer>)
-           .Returns(NewtonsoftJson.Serializer(jsonSettings))
-        |> ignore
-
-    | Utf8 settings ->
-        let resolver =
-            defaultArg settings Utf8Json.Serializer.DefaultResolver
-        ctx.RequestServices
-           .GetService(typeof<Json.ISerializer>)
-           .Returns(Utf8Json.Serializer(resolver))
-        |> ignore
-
     | SystemTextJson settings ->
         let jsonOptions =
             defaultArg settings SystemTextJson.Serializer.DefaultOptions
@@ -138,8 +120,6 @@ let mockJson (ctx : HttpContext) (settings : MockJsonSettings) =
 type JsonSerializersData =
 
     static member DefaultSettings = [
-            Utf8 None;
-            Newtonsoft None
             SystemTextJson None
         ]
 
@@ -147,8 +127,6 @@ type JsonSerializersData =
 
     static member PreserveCaseSettings =
         [
-            Utf8 (Some Utf8Json.Resolvers.StandardResolver.Default)
-            Newtonsoft (Some (JsonSerializerSettings()))
             SystemTextJson (Some (JsonSerializerOptions()))
         ]
 
