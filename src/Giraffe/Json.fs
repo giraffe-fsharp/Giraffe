@@ -22,7 +22,7 @@ module Json =
         abstract member DeserializeAsync<'T>        : Stream -> Task<'T>
 
     /// <summary>
-    /// <see cref="SystemTextJson.Serializer" /> is the default <see cref="Json.ISerializer"/> in Giraffe.
+    /// <see cref="Serializer" /> is the default <see cref="Json.ISerializer"/> in Giraffe.
     ///
     /// It uses <see cref="System.Text.Json"/> as the underlying JSON serializer to (de-)serialize
     /// JSON content.
