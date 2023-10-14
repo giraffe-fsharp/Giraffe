@@ -254,6 +254,9 @@ module Routers =
         (endpoints : Endpoint list) : Endpoint =
         NestedEndpoint (path, endpoints, [])
 
+    let wildcard =
+        route "{*_}"
+
     let rec applyBefore
         (httpHandler  : HttpHandler)
         (endpoint     : Endpoint) =
