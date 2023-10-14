@@ -110,10 +110,10 @@ let mockJson (ctx : HttpContext) (settings : MockJsonSettings) =
     match settings with
     | SystemTextJson settings ->
         let jsonOptions =
-            defaultArg settings SystemTextJson.Serializer.DefaultOptions
+            defaultArg settings Json.Serializer.DefaultOptions
         ctx.RequestServices
            .GetService(typeof<Json.ISerializer>)
-           .Returns(SystemTextJson.Serializer(jsonOptions))
+           .Returns(Json.Serializer(jsonOptions))
         |> ignore
 
 type JsonSerializersData =

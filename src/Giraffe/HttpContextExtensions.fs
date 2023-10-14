@@ -222,7 +222,7 @@ type HttpContextExtensions() =
     /// Uses the <see cref="Json.ISerializer"/> to deserialize the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously into an object of type 'T.
     /// </summary>
     /// <typeparam name="'T"></typeparam>
-    /// <returns>Retruns a <see cref="System.Threading.Tasks.Task{T}"/></returns>
+    /// <returns>Returns a <see cref="System.Threading.Tasks.Task{T}"/></returns>
     [<Extension>]
     static member BindJsonAsync<'T>(ctx : HttpContext) =
         task {
