@@ -2,7 +2,9 @@ namespace Giraffe
 
 [<RequireQualifiedAccess>]
 module Json =
+    open System
     open System.IO
+    open System.Text.Json
     open System.Threading.Tasks
 
     /// <summary>
@@ -19,14 +21,6 @@ module Json =
         abstract member Deserialize<'T>             : byte[] -> 'T
         abstract member DeserializeAsync<'T>        : Stream -> Task<'T>
 
-[<RequireQualifiedAccess>]
-module SystemTextJson =
-    open System
-    open System.IO
-    open System.Text
-    open System.Text.Json
-    open System.Threading.Tasks
-
     /// <summary>
     /// <see cref="SystemTextJson.Serializer" /> is the default <see cref="Json.ISerializer"/> in Giraffe.
     ///
@@ -42,7 +36,7 @@ module SystemTextJson =
                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
            )
 
-        interface Json.ISerializer with
+        interface ISerializer with
             member __.SerializeToString (x : 'T) =
                 JsonSerializer.Serialize(x,  options)
 
