@@ -284,7 +284,7 @@ let ``POST "/text" with supported Accept header returns "text"`` () =
 [<Fact>]
 let ``POST "/json" with supported Accept header returns "json"`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx ( Newtonsoft None )
+    mockJson ctx ( SystemTextJson None )
     let app =
         choose [
             GET >=> choose [
@@ -643,7 +643,7 @@ let JsonReturningAcceptHeaderCases =
 [<Theory>]
 [<MemberData("JsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "application/json" returns JSON object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) false (StringValues("application/json"))
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (SystemTextJson None)) false (StringValues("application/json"))
     let testChecks (context : HttpContext) =
         let body = getBody context
         Assert.Equal(johnDoeAsJson, body)
@@ -654,7 +654,7 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
 [<Theory>]
 [<MemberData("JsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/json" returns JSON object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) false (StringValues("application/xml; q=0.9, application/json"))
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (SystemTextJson None)) false (StringValues("application/xml; q=0.9, application/json"))
     let testChecks (context : HttpContext) =
         Assert.Equal(config.StatusCode, context.Response.StatusCode)
         if context.Response.StatusCode = 200 then
@@ -690,7 +690,7 @@ let XmlJsonReturningAcceptHeaderCases =
 [<Theory>]
 [<MemberData("XmlJsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "application/xml, application/json" returns XML object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) true (StringValues("application/xml, application/json"))
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (SystemTextJson None)) true (StringValues("application/xml, application/json"))
     let testChecks (context : HttpContext) =
         Assert.Equal(config.StatusCode, context.Response.StatusCode)
         if context.Response.StatusCode = 200 && config.ReturnContentType = "application/xml; charset=utf-8" then
@@ -702,7 +702,7 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
 [<Theory>]
 [<MemberData("JsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "application/json, application/xml" returns JSON object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) false (StringValues("application/json, application/xml"))
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (SystemTextJson None)) false (StringValues("application/json, application/xml"))
     let testChecks (context : HttpContext) =
         Assert.Equal(config.StatusCode, context.Response.StatusCode)
         if context.Response.StatusCode = 200 then
@@ -714,7 +714,7 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
 [<Theory>]
 [<MemberData("XmlJsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xml" returns XML object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) true (StringValues("application/json; q=0.5, application/xml"))
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (SystemTextJson None)) true (StringValues("application/json; q=0.5, application/xml"))
     let testChecks (context : HttpContext) =
         Assert.Equal(config.StatusCode, context.Response.StatusCode)
         if context.Response.StatusCode = 200 && config.ReturnContentType = "application/xml; charset=utf-8" then
@@ -726,7 +726,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
 [<Theory>]
 [<MemberData("XmlJsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xml; q=0.6" returns XML object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) true (StringValues("application/json; q=0.5, application/xml; q=0.6"))
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (SystemTextJson None)) true (StringValues("application/json; q=0.5, application/xml; q=0.6"))
     let testChecks (context : HttpContext) =
         Assert.Equal(config.StatusCode, context.Response.StatusCode)
         if context.Response.StatusCode = 200 && config.ReturnContentType = "application/xml; charset=utf-8" then
@@ -776,7 +776,7 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` (co
 [<Theory>]
 [<MemberData("JsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" without an Accept header returns a JSON object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) false StringValues.Empty
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (SystemTextJson None)) false StringValues.Empty
     let testChecks (ctx : HttpContext) =
         Assert.Equal(config.StatusCode, ctx.Response.StatusCode)
         if ctx.Response.StatusCode = 200 then
