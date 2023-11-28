@@ -8,9 +8,9 @@ module SubRouting =
     let private RouteKey = "giraffe_route"
 
     let getSavedPartialPath (ctx : HttpContext) =
-        if ctx.Items.ContainsKey RouteKey
-        then ctx.Items.Item RouteKey |> string |> strOption
-        else None
+        match ctx.Items.TryGetValue RouteKey with
+        | true, route -> route |> string |> strOption
+        | false, _ -> None
 
     let getNextPartOfPath (ctx : HttpContext) =
         match getSavedPartialPath ctx with
