@@ -249,5 +249,5 @@ let printBytes (bytes : byte[]) =
 let shouldBeEmpty (bytes : byte[]) =
     Assert.True(bytes.Length.Equals 0)
 
-let shouldEqual expected actual =
+let shouldEqual (expected: string) actual =
     Assert.Equal(expected, actual)
