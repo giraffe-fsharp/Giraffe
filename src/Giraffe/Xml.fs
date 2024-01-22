@@ -38,7 +38,7 @@ module SystemXml =
 
         interface Xml.ISerializer with
             member __.Serialize (o : obj) =
-                use stream = if rmsManager.ThrowExceptionOnToArray then new MemoryStream() else rmsManager.GetStream("giraffe-xml-serialize")
+                use stream = if rmsManager.Settings.ThrowExceptionOnToArray then new MemoryStream() else rmsManager.GetStream("giraffe-xml-serialize")
                 use writer = XmlWriter.Create(stream, settings)
                 let serializer = XmlSerializer(o.GetType())
                 serializer.Serialize(writer, o)
