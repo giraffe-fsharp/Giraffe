@@ -221,12 +221,13 @@ module ModelParser =
 
         if tryResolveComplexType then
             let pattern = lowerCasedPropName |> Regex.Escape |> sprintf @"%s\.(\w+)"
+            let patternLookup = Regex(pattern)
 
             let dictData =
                 data
-                |> Seq.filter (fun item -> Regex.IsMatch(item.Key, pattern))
+                |> Seq.filter (fun item -> patternLookup.IsMatch item.Key)
                 |> Seq.map (fun item ->
-                    let matchedData = Regex.Match(item.Key, pattern)
+                    let matchedData = patternLookup.Match item.Key
                     let key = matchedData.Groups.[1].Value
                     let value = item.Value
                     key, value
@@ -262,14 +263,14 @@ module ModelParser =
         if prop.PropertyType.IsArray then
             let lowerCasedPropName = prop.Name.ToLowerInvariant()
             let pattern = lowerCasedPropName |> Regex.Escape |> sprintf @"%s\[(\d+)\]\.(\w+)"
-
+            let patternLookup = Regex(pattern)
             let innerType = prop.PropertyType.GetElementType()
 
             let seqOfObjects =
                 data
-                |> Seq.filter (fun item -> Regex.IsMatch(item.Key, pattern))
+                |> Seq.filter (fun item -> patternLookup.IsMatch item.Key)
                 |> Seq.map (fun item ->
-                    let matchedData = Regex.Match(item.Key, pattern)
+                    let matchedData = patternLookup.Match item.Key
 
                     let index = matchedData.Groups.[1].Value
                     let key = matchedData.Groups.[2].Value
