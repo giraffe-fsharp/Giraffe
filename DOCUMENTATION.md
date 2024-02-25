@@ -3319,13 +3319,15 @@ There's more features available for Giraffe web applications through additional 
 
 Starting with Giraffe 5.x we introduced a new module called `Giraffe.EndpointRouting`. The endpoint routing module implements an alternative router to Giraffe's default routing functions which integrates with [ASP.NET Core's endpoint routing APIs](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0).
 
- Given the way how ASP.NET Core's Endpoint Routing works this module comes with several benefits (and unfortunately also some minor downsides) in comparison to Giraffe's default router. The main benefit of `Giraffe.EndpointRouting` is that it nicely integrates with the rest of ASP.NET Core and can benefit from everything which Endpoint Routing makes possible. It also means that any performance improvements made to the ASP.NET Core router will directly translate to Giraffe. The downsides are that several existing routing functions couldn't be ported to `Giraffe.EndpointRouting` and routes are case-insensitive by default. Whilst this can be a problem with some applications overall the limitations are minimal and the benefits should greatly outweigh the downsides in the long term. Endpoint Routing is definitely the new preferred option of routing in ASP.NET Core and will undoubtedly see a lot of investment and improvements by the ASP.NET team over the years.
+Given the way how ASP.NET Core's Endpoint Routing works this module comes with several benefits (and unfortunately also some minor downsides) in comparison to Giraffe's default router. The main benefit of `Giraffe.EndpointRouting` is that it nicely integrates with the rest of ASP.NET Core and can benefit from everything which Endpoint Routing makes possible. It also means that any performance improvements made to the ASP.NET Core router will directly translate to Giraffe. The downsides are that several existing routing functions couldn't be ported to `Giraffe.EndpointRouting` and routes are case-insensitive by default. Whilst this can be a problem with some applications overall the limitations are minimal and the benefits should greatly outweigh the downsides in the long term. Endpoint Routing is definitely the new preferred option of routing in ASP.NET Core and will undoubtedly see a lot of investment and improvements by the ASP.NET team over the years.
 
- At last it is possible to have the `Giraffe.EndpointRouting` module and Giraffe's default router work side by side, benefiting from Endpoint Routing where possible and keeping the default router elsewhere.
+At last it is possible to have the `Giraffe.EndpointRouting` module and Giraffe's default router work side by side, benefiting from Endpoint Routing where possible and keeping the default router elsewhere.
 
- #### Endpoint Routing Basics
+Notice that the usage of `Giraffe.EndpointRouting` is recommended, as described in [this issue](https://github.com/giraffe-fsharp/Giraffe/issues/534).
 
- In order to make use of Giraffe's endpoint routing functions one has to open the required module first:
+#### Endpoint Routing Basics
+
+In order to make use of Giraffe's endpoint routing functions one has to open the required module first:
 
  ```fsharp
 open Giraffe.EndpointRouting
