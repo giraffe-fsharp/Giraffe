@@ -1,6 +1,16 @@
 Release Notes
 =============
 
+## 6.3.0-alpha-1 - 2024-02-26
+
+- [No need to build so many Regex](https://github.com/giraffe-fsharp/Giraffe/pull/568) - Credits @Thorium
+- [Minor code optimisation](https://github.com/giraffe-fsharp/Giraffe/pull/567) - Credits @Thorium
+- [Fix requiresAuthentication for null user identity](https://github.com/giraffe-fsharp/Giraffe/pull/557) - Credits @rslopes
+- [Add explicitly the statement that the usage of Giraffe.EndpointRouting is recommended](https://github.com/giraffe-fsharp/Giraffe/pull/556) - Credits @64J0
+- [Add an example app using the cache features](https://github.com/giraffe-fsharp/Giraffe/pull/553) - Credits @64J0
+- [Change sample EndpointRoutingApp level](https://github.com/giraffe-fsharp/Giraffe/pull/549) - Credits @64J0
+- [Add GetWebHostEnvironment function and add deprecation warning to GetHostingEnvironment](https://github.com/giraffe-fsharp/Giraffe/pull/547) - Credits @64J0
+
 ## 6.2.0 - 2023-07-06
 
 - [remove Utf8Json support](https://github.com/giraffe-fsharp/Giraffe/pull/543) - Credits @jcmrva
