@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## 6.3.0 - 2024-03-01
+
+- Same as 6.3.0
+
 ## 6.3.0-alpha-1 - 2024-02-26
 
 - [No need to build so many Regex](https://github.com/giraffe-fsharp/Giraffe/pull/568) - Credits @Thorium
