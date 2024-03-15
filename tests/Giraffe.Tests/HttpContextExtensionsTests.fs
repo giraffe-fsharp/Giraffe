@@ -197,7 +197,7 @@ let ``WriteBytesAsync should not return Content-Length in header on 100`` () =
         match result with
         | None -> assertFail "Result was expected to be non-empty"
         | Some ctx ->
-            Assert.Empty(ctx.Response.Headers["Content-Length"])
+            Assert.Null(ctx.Response.Headers.ContentLength)
     }
 
 [<Fact>]
@@ -221,7 +221,7 @@ let ``WriteBytesAsync should not return Content-Length in header on 204`` () =
         match result with
         | None -> assertFail "Result was expected to be non-empty"
         | Some ctx ->
-            Assert.Empty(ctx.Response.Headers["Content-Length"])
+            Assert.Null(ctx.Response.Headers.ContentLength)
     }
 
 [<Fact>]
@@ -245,7 +245,7 @@ let ``WriteBytesAsync with HTTP CONNECT should not return Content-Length in head
         match result with
         | None -> assertFail "Result was expected to be non-empty"
         | Some ctx ->
-            Assert.Empty(ctx.Response.Headers["Content-Length"])
+            Assert.Null(ctx.Response.Headers.ContentLength)
     }
 
 [<Fact>]
