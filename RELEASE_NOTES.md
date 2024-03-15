@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-## 6.4.0 - 2024-03-10
+## 6.4.0-alpha-1 - 2024-03-10
 
 - [Upgrade to .NET 8](https://github.com/giraffe-fsharp/Giraffe/pull/527) - Credits @Banashek @fpellet
 
