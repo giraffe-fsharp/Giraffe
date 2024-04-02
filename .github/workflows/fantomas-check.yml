@@ -2,7 +2,8 @@ name: Fantomas check
 
 on:
   pull_request:
-    paths: [ 'samples/*' ]
+    paths: 
+      - 'samples/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
