@@ -15,11 +15,11 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        CHECK_FOLDER: ['samples/']
+        CHECK_FOLDER: [ 'samples/' ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Restore packages
         run: dotnet tool restore
       - name: Run Fantomas
-        run: dotnet fantomas --check "${CHECK_FOLDER}"
+        run: dotnet fantomas --check "${{ matrix.CHECK_FOLDER }}"
