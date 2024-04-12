@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 6.4.0 - 2024-04-12
+
+- [Upgrade to .NET 8](https://github.com/giraffe-fsharp/Giraffe/pull/527) - Credits @Banashek @fpellet
+- [Improve CI by updating actions version and avoid concurrent jobs for the same PR](https://github.com/giraffe-fsharp/Giraffe/pull/582) - Credits @64J0
+- [Add Fantomas validation to CI](https://github.com/giraffe-fsharp/Giraffe/pull/587) - Credits @64J0
+
 ## 6.4.0-alpha-1 - 2024-03-10
 
 - [Upgrade to .NET 8](https://github.com/giraffe-fsharp/Giraffe/pull/527) - Credits @Banashek @fpellet
