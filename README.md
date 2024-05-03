@@ -51,7 +51,7 @@ You can think of [Giraffe](https://www.nuget.org/packages/Giraffe) as the functi
 The easiest way to get started with Giraffe is by installing the [`giraffe-template`](https://www.nuget.org/packages/giraffe-template) package, which adds a new template to your `dotnet new` command line tool:
 
 ```
-dotnet new -i "giraffe-template::*"
+dotnet new install "giraffe-template::*"
 ```
 
 Afterwards you can create a new Giraffe application by running `dotnet new giraffe`.
