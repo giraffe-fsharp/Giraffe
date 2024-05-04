@@ -304,6 +304,7 @@ If you have blogged about Giraffe, demonstrating a useful topic or some other ti
 - [Getting Started with ASP.NET Core Giraffe](https://www.youtube.com/watch?v=HyRzsPZ0f0k&t=461s) (by Ody Mbegbu)
 - [Nikeza - Building the Backend with F#](https://www.youtube.com/watch?v=lANg1kn835s) (by Let's Code .NET)
 - [Build a Simple Web API with F# + Giraffe](https://www.youtube.com/watch?v=yDBpd07SdHE) (by HAMY LABS)
+- [Pipeline-oriented programming - Scott Wlaschin - NDC Porto 2023](https://www.youtube.com/watch?v=ipceTuJlw-M) (by Scott Wlaschin)
 
 ## License
 
