@@ -88,7 +88,6 @@ jobs:
             6.x
             7.x
             8.x
-      # TODO extract the release tag
       - name: Create Release NuGet package
         run: |
           arrTag=(${GITHUB_REF//\// })
