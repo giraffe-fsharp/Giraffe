@@ -267,15 +267,11 @@ If you have any further questions please let me know.
 
 You can file an [issue on GitHub](https://github.com/giraffe-fsharp/Giraffe/issues/new) or contact me via [https://dusted.codes/about](https://dusted.codes/about).
 
-## Nightly builds and NuGet feed
+## NuGet feed
 
 All official release packages are published to the official and public NuGet feed.
 
-Nightly builds (builds from the `develop` branch) produce unofficial pre-release packages which can be pulled from the [project's NuGet feed on GitHub](https://github.com/orgs/giraffe-fsharp/packages).
-
-These packages are being tagged with the Workflow's run number as the package version.
-
-All other builds, such as builds triggered by pull requests produce a NuGet package which can be downloaded as an artifact from the individual GitHub action.
+Builds triggered by pull requests produce a NuGet package which can be downloaded as an artifact from the individual GitHub action.
 
 ## Blog posts
 
