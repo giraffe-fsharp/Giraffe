@@ -217,7 +217,7 @@ Help and feedback is always welcome and pull requests get accepted.
 ### TL;DR
 
 - First open an issue to discuss your changes
-- After your change has been formally approved please submit your PR **against the develop branch**
+- After your change has been formally approved please submit your PR **against the master branch**
 - Please follow the code convention by examining existing code
 - Add/modify the `README.md` as required
 - Add/modify unit tests as required
@@ -257,9 +257,9 @@ let someHttpHandler : HttpHandler =
 
 If you intend to add or change an existing `HttpHandler` then please update the `README.md` file to reflect these changes there as well. If applicable unit tests must be added or updated and the project must successfully build before a pull request can be accepted.
 
-### Submit a pull request against develop
+### Submit a pull request against master
 
-The `develop` branch is the main and only branch which should be used for all pull requests. A merge into `develop` means that your changes are scheduled to go live with the very next release, which could happen any time from the same day up to a couple weeks (depending on priorities and urgency).
+The `master` branch is the main and only branch which should be used for all pull requests. A merge into `master` means that your changes are scheduled to go live with the very next release, which could happen any time from the same day up to a couple weeks (depending on priorities and urgency).
 
 Only pull requests which pass all build checks and comply with the general coding guidelines can be approved.
 
