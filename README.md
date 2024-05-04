@@ -265,7 +265,7 @@ Only pull requests which pass all build checks and comply with the general codin
 
 If you have any further questions please let me know.
 
-You can file an [issue on GitHub](https://github.com/giraffe-fsharp/Giraffe/issues/new) or contact me via [https://dusted.codes/about](https://dusted.codes/about).
+You can file an [issue on GitHub](https://github.com/giraffe-fsharp/Giraffe/issues/new), start a [discussion on GitHub](https://github.com/giraffe-fsharp/Giraffe/discussions), or contact me via [https://dusted.codes/about](https://dusted.codes/about).
 
 ## NuGet feed
 
