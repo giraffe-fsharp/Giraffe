@@ -323,12 +323,12 @@ For more information please see [issue #347](https://github.com/giraffe-fsharp/G
 
 #### New features
 
-- Support for short GUIDs and short IDs (aka YouTube IDs) [in route arguments](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#routef) and [query string parameters](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#short-guids-and-short-ids).
+- Support for short GUIDs and short IDs (aka YouTube IDs) [in route arguments](https://github.com/giraffe-fsharp/Giraffe/blob/main/DOCUMENTATION.md#routef) and [query string parameters](https://github.com/giraffe-fsharp/Giraffe/blob/main/DOCUMENTATION.md#short-guids-and-short-ids).
 - Enabled [SourceLink](https://github.com/dotnet/sourcelink/) support for Giraffe source code (thanks [Cameron Taggart](https://github.com/ctaggart))! For more information check out [Adding SourceLink to your .NET Core Library](https://carlos.mendible.com/2018/08/25/adding-sourcelink-to-your-net-core-library/).
-- Added a new JSON serializer called `Utf8JsonSerializer`. This type uses the [Utf8 JSON serializer library](https://github.com/neuecc/Utf8Json/), which is currently the fastest JSON serializer for .NET. `NewtonsoftJsonSerializer` is still the default JSON serializer in Giraffe (for stability and backwards compatibility), but `Utf8JsonSerializer` can be swapped in via [ASP.NET Core's dependency injection API](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#json). The new `Utf8JsonnSerializer` is significantly faster (especially when sending chunked responses) than `NewtonsoftJsonSerializer`.
-- Added a new `HttpContext` extension method for chunked JSON transfers: `WriteJsonChunkedAsync<'T> (dataObj : 'T)`. This new `HttpContext` method can write content directly to the HTTP response stream without buffering into a byte array first (see [Writing JSON](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#writing-json)).
+- Added a new JSON serializer called `Utf8JsonSerializer`. This type uses the [Utf8 JSON serializer library](https://github.com/neuecc/Utf8Json/), which is currently the fastest JSON serializer for .NET. `NewtonsoftJsonSerializer` is still the default JSON serializer in Giraffe (for stability and backwards compatibility), but `Utf8JsonSerializer` can be swapped in via [ASP.NET Core's dependency injection API](https://github.com/giraffe-fsharp/Giraffe/blob/main/DOCUMENTATION.md#json). The new `Utf8JsonnSerializer` is significantly faster (especially when sending chunked responses) than `NewtonsoftJsonSerializer`.
+- Added a new `HttpContext` extension method for chunked JSON transfers: `WriteJsonChunkedAsync<'T> (dataObj : 'T)`. This new `HttpContext` method can write content directly to the HTTP response stream without buffering into a byte array first (see [Writing JSON](https://github.com/giraffe-fsharp/Giraffe/blob/main/DOCUMENTATION.md#writing-json)).
 - Added a new `jsonChunked` http handler. This handler is the equivalent http handler version of the `WriteJsonChunkedAsync` extension method.
-- Added first class support for [ASP.NET Core's response caching](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#response-caching) feature.
+- Added first class support for [ASP.NET Core's response caching](https://github.com/giraffe-fsharp/Giraffe/blob/main/DOCUMENTATION.md#response-caching) feature.
 
 #### Special thanks
 
@@ -369,9 +369,9 @@ Changed the `task {}` CE to load from `FSharp.Control.Tasks.V2.ContextInsensitiv
 
 #### New features
 
-- Added `subRoutef` http handler (see [subRoutef](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#subroutef))
-- Added `routex` and `routeCix` http handler (see [routex](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#routex))
-- Improved model binding (see [Model Binding](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#model-binding))
+- Added `subRoutef` http handler (see [subRoutef](https://github.com/giraffe-fsharp/Giraffe/blob/main/DOCUMENTATION.md#subroutef))
+- Added `routex` and `routeCix` http handler (see [routex](https://github.com/giraffe-fsharp/Giraffe/blob/main/DOCUMENTATION.md#routex))
+- Improved model binding (see [Model Binding](https://github.com/giraffe-fsharp/Giraffe/blob/main/DOCUMENTATION.md#model-binding))
     - Fixed issues: [#121](https://github.com/giraffe-fsharp/Giraffe/issues/121), [#206](https://github.com/giraffe-fsharp/Giraffe/issues/206)
     - Added a `TryBindFormAsync` and a `TryBindQueryString` `HttpContext` extension methods
     - Added new `HttpHandler` functions to offer a more functional API for model binding:
@@ -382,7 +382,7 @@ Changed the `task {}` CE to load from `FSharp.Control.Tasks.V2.ContextInsensitiv
         - `bindQuery<'T>`
         - `tryBindQuery<'T>`
         - `bindModel<'T>`
-- Added new [Model Validation](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#model-validation) API
+- Added new [Model Validation](https://github.com/giraffe-fsharp/Giraffe/blob/main/DOCUMENTATION.md#model-validation) API
 
 To see an example of the new features you can check the official [Giraffe 1.1.0 release blog post](https://dusted.codes/giraffe-110-more-routing-handlers-better-model-binding-and-brand-new-model-validation-api).
 
@@ -399,11 +399,11 @@ This release has many minor breaking changes and a few bigger features. Please r
 
 #### New features
 
-- JSON and XML serialization is now configurable through Dependency Injection (see [Serialization](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#serialization))
-- Added new features to validate conditional HTTP headers before processing a web request (see [Conditional Requests](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#conditional-requests))
-- Added streaming capabilities (see [Streaming](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#streaming))
+- JSON and XML serialization is now configurable through Dependency Injection (see [Serialization](https://github.com/giraffe-fsharp/Giraffe/blob/main/DOCUMENTATION.md#serialization))
+- Added new features to validate conditional HTTP headers before processing a web request (see [Conditional Requests](https://github.com/giraffe-fsharp/Giraffe/blob/main/DOCUMENTATION.md#conditional-requests))
+- Added streaming capabilities (see [Streaming](https://github.com/giraffe-fsharp/Giraffe/blob/main/DOCUMENTATION.md#streaming))
 - Added `HEAD`, `OPTIONS`, `TRACE`, `CONNECT` http handlers
-- Added more `HttpContext` extension methods to create parity between response writing methods and `HttpHandler` functions (see [Response Writing](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#response-writing) and [Content Negotiation](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#content-negotiation))
+- Added more `HttpContext` extension methods to create parity between response writing methods and `HttpHandler` functions (see [Response Writing](https://github.com/giraffe-fsharp/Giraffe/blob/main/DOCUMENTATION.md#response-writing) and [Content Negotiation](https://github.com/giraffe-fsharp/Giraffe/blob/main/DOCUMENTATION.md#content-negotiation))
 - Added detailed XML docs to all public facing functions for better Intellisense support
 - The `Giraffe.Common` module auto opens now
 
