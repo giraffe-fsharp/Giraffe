@@ -4,8 +4,8 @@ This documentation must be used as a guide for maintainers and developers for bu
 
 ## Release Process
 
-1. Checkout `master` branch
-    1. `git checkout master`
+1. Checkout `main` branch
+    1. `git checkout main`
 2. Add a new entry at the top of the RELEASE_NOTES.md with a version and a date.
     1. If possible link to the relevant issues and PRs and credit the author of the PRs
 3. Create a new commit
@@ -14,7 +14,7 @@ This documentation must be used as a guide for maintainers and developers for bu
 4. Make a new tag
     1. `git tag v6.0.0-beta001`
 5. Push changes
-    1. `git push --atomic origin master v6.0.0-beta001`
+    1. `git push --atomic origin main v6.0.0-beta001`
 6. Create a [new pre-release](https://github.com/giraffe-fsharp/Giraffe/releases) on GitHub
     1. Choose the tag you just pushed
     2. Title the pre-release the same as the version
