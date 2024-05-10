@@ -13,7 +13,7 @@ open Giraffe
 
 module private RouteTemplateBuilder =
     let private guidPattern =
-        "([0-9A-Fa-f]{{8}}\-[0-9A-Fa-f]{{4}}\-[0-9A-Fa-f]{{4}}\-[0-9A-Fa-f]{{4}}\-[0-9A-Fa-f]{{12}}|[0-9A-Fa-f]{{32}}|[-_0-9A-Za-z]{{22}})"
+        "^[0-9A-Fa-f]{{8}}-[0-9A-Fa-f]{{4}}-[0-9A-Fa-f]{{4}}-[0-9A-Fa-f]{{4}}-[0-9A-Fa-f]{{12}}$|^[0-9A-Fa-f]{{32}}$|^[-_0-9A-Za-z]{{22}}$"
     let private shortIdPattern =
         "([-_0-9A-Za-z]{{10}}[048AEIMQUYcgkosw])"
 
