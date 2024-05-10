@@ -21,7 +21,7 @@ open System.Net.Http
 [<InlineData("8b3557db-fa-c0c90785e", "Not Found")>]
 [<InlineData("does-not-make-sense", "Not Found")>]
 [<InlineData("1", "Not Found")>]
-let ``routef: GET "/try-a-guid/%O" returns "Success: ..."`` (potentialGuid: string, expected: string) =
+let ``routef: GET "/try-a-guid/%O" returns "Success: ..." or "Not Found"`` (potentialGuid: string, expected: string) =
     task {
         let endpoints: Endpoint list =
             [ GET
