@@ -18,7 +18,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 - [About](#about)
 - [Getting Started](#getting-started)
-- [Documentation](https://github.com/giraffe-fsharp/Giraffe/blob/main/DOCUMENTATION.md)
+- [Documentation](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md)
 - [Sample applications](#sample-applications)
 - [Benchmarks](#benchmarks)
 - [Building and developing](#building-and-developing)
@@ -158,7 +158,7 @@ let main _ =
     0
 ```
 
-For more information please check the official [Giraffe documentation](https://github.com/giraffe-fsharp/Giraffe/blob/main/DOCUMENTATION.md).
+For more information please check the official [Giraffe documentation](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md).
 
 ## Sample applications
 
@@ -217,7 +217,7 @@ Help and feedback is always welcome and pull requests get accepted.
 ### TL;DR
 
 - First open an issue to discuss your changes
-- After your change has been formally approved please submit your PR **against the main branch**
+- After your change has been formally approved please submit your PR **against the master branch**
 - Please follow the code convention by examining existing code
 - Add/modify the `README.md` as required
 - Add/modify unit tests as required
@@ -257,9 +257,9 @@ let someHttpHandler : HttpHandler =
 
 If you intend to add or change an existing `HttpHandler` then please update the `README.md` file to reflect these changes there as well. If applicable unit tests must be added or updated and the project must successfully build before a pull request can be accepted.
 
-### Submit a pull request against main
+### Submit a pull request against master
 
-The `main` branch is the main and only branch which should be used for all pull requests. A merge into `main` means that your changes are scheduled to go live with the very next release, which could happen any time from the same day up to a couple weeks (depending on priorities and urgency).
+The `master` branch is the main and only branch which should be used for all pull requests. A merge into `master` means that your changes are scheduled to go live with the very next release, which could happen any time from the same day up to a couple weeks (depending on priorities and urgency).
 
 Only pull requests which pass all build checks and comply with the general coding guidelines can be approved.
 
@@ -308,7 +308,7 @@ If you have blogged about Giraffe, demonstrating a useful topic or some other ti
 
 ## License
 
-[Apache 2.0](https://raw.githubusercontent.com/giraffe-fsharp/Giraffe/main/LICENSE)
+[Apache 2.0](https://raw.githubusercontent.com/giraffe-fsharp/Giraffe/master/LICENSE)
 
 ## Contact and Slack Channel
 
