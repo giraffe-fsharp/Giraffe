@@ -1,8 +1,6 @@
-name: .NET Core
+name: Publish
 
 on:
-  push:
-  pull_request:
   release:
     types:
       - published
@@ -22,15 +20,9 @@ env:
   NUGET_FEED: https://api.nuget.org/v3/index.json
   NUGET_KEY: ${{ secrets.NUGET_KEY }}
 
-# Kill other jobs when we trigger this workflow by sending new commits
-# to the PR.
-# https://stackoverflow.com/a/72408109
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 jobs:
   build:
+    name: Build the project
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -66,8 +58,9 @@ jobs:
           path: ./src/${{ env.PROJECT_NAME }}/bin/Release/*.nupkg
 
   prerelease:
+    name: Publish a pre-release version
     needs: build
-    if: github.ref == 'refs/heads/develop'
+    if: github.event.release.prerelease == true
     runs-on: ubuntu-latest
     steps:
       - name: Download Artifact
@@ -82,8 +75,9 @@ jobs:
           done
           
   deploy:
+    name: Publish a release version
     needs: build
-    if: github.event_name == 'release'
+    if: github.event.release.prerelease == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
