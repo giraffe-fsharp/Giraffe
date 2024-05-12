@@ -1,6 +1,7 @@
 name: Publish
 
 on:
+  push:
   release:
     types:
       - published
@@ -60,7 +61,7 @@ jobs:
   prerelease:
     name: Publish a pre-release version
     needs: build
-    if: github.event.release.prerelease == true
+    # if: github.event.release.prerelease == true
     runs-on: ubuntu-latest
     steps:
       - name: Download Artifact
@@ -69,8 +70,11 @@ jobs:
           name: nupkg
       - name: Push to GitHub Feed
         run: |
+          ls -lr ./nupkg/
+
           for f in ./nupkg/*.nupkg
           do
+            echo $f
             curl -vX PUT -u "$GITHUB_USER:$GITHUB_TOKEN" -F package=@$f $GITHUB_FEED
           done
           
