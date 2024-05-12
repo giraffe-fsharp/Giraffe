@@ -1,7 +1,6 @@
 name: Publish
 
 on:
-  push:
   release:
     types:
       - published
@@ -61,7 +60,7 @@ jobs:
   prerelease:
     name: Publish a pre-release version
     needs: build
-    # if: github.event.release.prerelease == true
+    if: github.event.release.prerelease == true
     runs-on: ubuntu-latest
     steps:
       - name: Download Artifact
@@ -71,41 +70,39 @@ jobs:
           path: ./nupkg
       - name: Push to GitHub Feed
         run: |
-          ls -lr ./nupkg/
-
           for f in ./nupkg/*.nupkg
           do
             echo $f
             curl -vX PUT -u "$GITHUB_USER:$GITHUB_TOKEN" -F package=@$f $GITHUB_FEED
           done
           
-  # deploy:
-  #   name: Publish a release version
-  #   needs: build
-  #   if: github.event.release.prerelease == false
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Setup .NET Core
-  #       uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: |
-  #           6.x
-  #           7.x
-  #           8.x
-  #     - name: Create Release NuGet package
-  #       run: |
-  #         arrTag=(${GITHUB_REF//\// })
-  #         VERSION="${arrTag[2]}"
-  #         echo Version: $VERSION
-  #         VERSION="${VERSION//v}"
-  #         echo Clean Version: $VERSION
-  #         dotnet pack -v normal -c Release --include-symbols --include-source -p:PackageVersion=$VERSION -o nupkg src/$PROJECT_NAME/$PROJECT_NAME.*proj
-  #     - name: Push to GitHub Feed
-  #       run: |
-  #         for f in ./nupkg/*.nupkg
-  #         do
-  #           curl -vX PUT -u "$GITHUB_USER:$GITHUB_TOKEN" -F package=@$f $GITHUB_FEED
-  #         done
-  #     - name: Push to NuGet Feed
-  #       run: dotnet nuget push ./nupkg/*.nupkg --source $NUGET_FEED --skip-duplicate --api-key $NUGET_KEY
+  deploy:
+    name: Publish a release version
+    needs: build
+    if: github.event.release.prerelease == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            6.x
+            7.x
+            8.x
+      - name: Create Release NuGet package
+        run: |
+          arrTag=(${GITHUB_REF//\// })
+          VERSION="${arrTag[2]}"
+          echo Version: $VERSION
+          VERSION="${VERSION//v}"
+          echo Clean Version: $VERSION
+          dotnet pack -v normal -c Release --include-symbols --include-source -p:PackageVersion=$VERSION -o nupkg src/$PROJECT_NAME/$PROJECT_NAME.*proj
+      - name: Push to GitHub Feed
+        run: |
+          for f in ./nupkg/*.nupkg
+          do
+            curl -vX PUT -u "$GITHUB_USER:$GITHUB_TOKEN" -F package=@$f $GITHUB_FEED
+          done
+      - name: Push to NuGet Feed
+        run: dotnet nuget push ./nupkg/*.nupkg --source $NUGET_FEED --skip-duplicate --api-key $NUGET_KEY
