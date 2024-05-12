@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 6.4.1-alpha-1 - 2024-05-12
+
+- [Update README.md giraffe-template installation command](https://github.com/giraffe-fsharp/Giraffe/pull/591) - Credits @dbrattli
+- [Change dev instructions and CI](https://github.com/giraffe-fsharp/Giraffe/pull/593) - Credits @64J0
+- [Fix EndpointRouting Guid regex + tests](https://github.com/giraffe-fsharp/Giraffe/pull/594) - Credits @64J0
+
 ## 6.4.0 - 2024-04-12
 
 - [Upgrade to .NET 8](https://github.com/giraffe-fsharp/Giraffe/pull/527) - Credits @Banashek @fpellet
