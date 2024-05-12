@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## 6.4.1-alpha-2 - 2024-05-12
+
+- [Hotfix pre-release workflow](https://github.com/giraffe-fsharp/Giraffe/pull/595) - Credits @64J0
+
 ## 6.4.1-alpha-1 - 2024-05-12
 
 - [Update README.md giraffe-template installation command](https://github.com/giraffe-fsharp/Giraffe/pull/591) - Credits @dbrattli
