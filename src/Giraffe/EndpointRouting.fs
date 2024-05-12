@@ -12,8 +12,12 @@ open FSharp.Core
 open Giraffe
 
 module private RouteTemplateBuilder =
+    // We use this regex route constraint to be compatible with Giraffe's default router,
+    // which supports ShortGuid's.
+    // More information on ASP.NET route constraints:
+    // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-8.0#route-constraints
     let private guidPattern =
-        "([0-9A-Fa-f]{{8}}\-[0-9A-Fa-f]{{4}}\-[0-9A-Fa-f]{{4}}\-[0-9A-Fa-f]{{4}}\-[0-9A-Fa-f]{{12}}|[0-9A-Fa-f]{{32}}|[-_0-9A-Za-z]{{22}})"
+        "^[0-9A-Fa-f]{{8}}-[0-9A-Fa-f]{{4}}-[0-9A-Fa-f]{{4}}-[0-9A-Fa-f]{{4}}-[0-9A-Fa-f]{{12}}$|^[0-9A-Fa-f]{{32}}$|^[-_0-9A-Za-z]{{22}}$"
     let private shortIdPattern =
         "([-_0-9A-Za-z]{{10}}[048AEIMQUYcgkosw])"
 
