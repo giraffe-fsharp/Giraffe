@@ -1,6 +1,7 @@
 name: Publish
 
 on:
+  push:
   release:
     types:
       - published
@@ -67,12 +68,12 @@ jobs:
           echo Clean Version: $VERSION
 
           dotnet pack -v normal -c Release --include-symbols --include-source -p:PackageVersion=$VERSION -o nupkg src/$PROJECT_NAME/$PROJECT_NAME.*proj
-      - name: Push to GitHub Feed
-        run: |
-          for f in ./nupkg/*.nupkg
-          do
-            echo $f
-            curl -vX PUT -u "$GITHUB_USER:$GITHUB_TOKEN" -F package=@$f $GITHUB_FEED
-          done
-      - name: Push to NuGet Feed
-        run: dotnet nuget push ./nupkg/*.nupkg --source $NUGET_FEED --skip-duplicate --api-key $NUGET_KEY
+      # - name: Push to GitHub Feed
+      #   run: |
+      #     for f in ./nupkg/*.nupkg
+      #     do
+      #       echo $f
+      #       curl -vX PUT -u "$GITHUB_USER:$GITHUB_TOKEN" -F package=@$f $GITHUB_FEED
+      #     done
+      # - name: Push to NuGet Feed
+      #   run: dotnet nuget push ./nupkg/*.nupkg --source $NUGET_FEED --skip-duplicate --api-key $NUGET_KEY
