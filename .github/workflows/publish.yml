@@ -27,7 +27,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        os: [ ubuntu-latest ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -64,8 +64,9 @@ jobs:
           VERSION="${arrTag[2]}"
           echo Version: $VERSION
           
-          VERSION="${VERSION//v}"
-          echo Clean Version: $VERSION
+          # VERSION="${VERSION//v}"
+          # echo Clean Version: $VERSION
+          VERSION="6.4.1-alpha-2"
 
           dotnet pack -v normal -c Release --include-symbols --include-source -p:PackageVersion=$VERSION -o nupkg src/$PROJECT_NAME/$PROJECT_NAME.*proj
       # - name: Push to GitHub Feed
