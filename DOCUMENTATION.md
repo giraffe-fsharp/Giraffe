@@ -3034,6 +3034,32 @@ let main _ =
     0
 ```
 
+#### Customizing JsonSerializerSettings
+
+You can change the default `JsonSerializerSettings` of a JSON serializer by registering a new instance of `Json.ISerializer` during application startup. For example, the [`Microsoft.FSharpLu` project](https://github.com/Microsoft/fsharplu/wiki/fsharplu.json) provides a Newtonsoft JSON converter (`CompactUnionJsonConverter`) that serializes and deserializes `Option`s and discriminated unions much more succinctly. If you wanted to use it, and set the culture to German, your configuration would look something like:
+
+ ```fsharp
+ let configureServices (services : IServiceCollection) =
+     // First register all default Giraffe dependencies
+     services.AddGiraffe() |> ignore
+     // Now customize only the Json.ISerializer by providing a custom
+     // object of JsonSerializerSettings
+     let customSettings = JsonSerializerSettings(
+         Culture = CultureInfo("de-DE"))
+     customSettings.Converters.Add(CompactUnionJsonConverter(true))
+     services.AddSingleton<Json.ISerializer>(
+         NewtonsoftJson.Serializer(customSettings)) |> ignore
+ [<EntryPoint>]
+ let main _ =
+     WebHost.CreateDefaultBuilder()
+         .Configure(Action<IApplicationBuilder> configureApp)
+         .ConfigureServices(configureServices)
+         .ConfigureLogging(configureLogging)
+         .Build()
+         .Run()
+     0
+ ```
+
 #### Retrieving the JSON serializer from a custom HttpHandler
 
 If you need you retrieve the registered JSON serializer from a custom `HttpHandler` function then you can do this with the `GetJsonSerializer` extension method:
