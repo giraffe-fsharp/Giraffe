@@ -1,6 +1,40 @@
 Release Notes
 =============
 
+## 6.4.1-alpha-2 - 2024-05-12
+
+- [Hotfix pre-release workflow](https://github.com/giraffe-fsharp/Giraffe/pull/595) - Credits @64J0
+
+## 6.4.1-alpha-1 - 2024-05-12
+
+- [Update README.md giraffe-template installation command](https://github.com/giraffe-fsharp/Giraffe/pull/591) - Credits @dbrattli
+- [Change dev instructions and CI](https://github.com/giraffe-fsharp/Giraffe/pull/593) - Credits @64J0
+- [Fix EndpointRouting Guid regex + tests](https://github.com/giraffe-fsharp/Giraffe/pull/594) - Credits @64J0
+
+## 6.4.0 - 2024-04-12
+
+- [Upgrade to .NET 8](https://github.com/giraffe-fsharp/Giraffe/pull/527) - Credits @Banashek @fpellet
+- [Improve CI by updating actions version and avoid concurrent jobs for the same PR](https://github.com/giraffe-fsharp/Giraffe/pull/582) - Credits @64J0
+- [Add Fantomas validation to CI](https://github.com/giraffe-fsharp/Giraffe/pull/587) - Credits @64J0
+
+## 6.4.0-alpha-1 - 2024-03-10
+
+- [Upgrade to .NET 8](https://github.com/giraffe-fsharp/Giraffe/pull/527) - Credits @Banashek @fpellet
+
+## 6.3.0 - 2024-03-01
+
+- Same as 6.3.0
+
+## 6.3.0-alpha-1 - 2024-02-26
+
+- [No need to build so many Regex](https://github.com/giraffe-fsharp/Giraffe/pull/568) - Credits @Thorium
+- [Minor code optimisation](https://github.com/giraffe-fsharp/Giraffe/pull/567) - Credits @Thorium
+- [Fix requiresAuthentication for null user identity](https://github.com/giraffe-fsharp/Giraffe/pull/557) - Credits @rslopes
+- [Add explicitly the statement that the usage of Giraffe.EndpointRouting is recommended](https://github.com/giraffe-fsharp/Giraffe/pull/556) - Credits @64J0
+- [Add an example app using the cache features](https://github.com/giraffe-fsharp/Giraffe/pull/553) - Credits @64J0
+- [Change sample EndpointRoutingApp level](https://github.com/giraffe-fsharp/Giraffe/pull/549) - Credits @64J0
+- [Add GetWebHostEnvironment function and add deprecation warning to GetHostingEnvironment](https://github.com/giraffe-fsharp/Giraffe/pull/547) - Credits @64J0
+
 ## 6.2.0 - 2023-07-06
 
 - [remove Utf8Json support](https://github.com/giraffe-fsharp/Giraffe/pull/543) - Credits @jcmrva
