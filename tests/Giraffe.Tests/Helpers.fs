@@ -16,8 +16,6 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
 open Xunit
 open NSubstitute
-open System.Text.Json
-open Newtonsoft.Json
 open Giraffe
 
 // ---------------------------------
@@ -102,45 +100,12 @@ let createHost (configureApp      : 'Tuple -> IApplicationBuilder -> unit)
         .Configure(Action<IApplicationBuilder> (configureApp args))
         .ConfigureServices(Action<IServiceCollection> configureServices)
 
-type MockJsonSettings =
-    | Newtonsoft     of JsonSerializerSettings option
-    | SystemTextJson of JsonSerializerOptions  option
+let mockJson (ctx : HttpContext) =
 
-let mockJson (ctx : HttpContext) (settings : MockJsonSettings) =
-
-    match settings with
-    | Newtonsoft settings ->
-        let jsonSettings =
-            defaultArg settings NewtonsoftJson.Serializer.DefaultSettings
-        ctx.RequestServices
-           .GetService(typeof<Json.ISerializer>)
-           .Returns(NewtonsoftJson.Serializer(jsonSettings))
-        |> ignore
-
-    | SystemTextJson settings ->
-        let jsonOptions =
-            defaultArg settings SystemTextJson.Serializer.DefaultOptions
-        ctx.RequestServices
-           .GetService(typeof<Json.ISerializer>)
-           .Returns(SystemTextJson.Serializer(jsonOptions))
-        |> ignore
-
-type JsonSerializersData =
-
-    static member DefaultSettings = [
-            Newtonsoft None
-            SystemTextJson None
-        ]
-
-    static member DefaultData = JsonSerializersData.DefaultSettings |> toTheoryData
-
-    static member PreserveCaseSettings =
-        [
-            Newtonsoft (Some (JsonSerializerSettings()))
-            SystemTextJson (Some (JsonSerializerOptions()))
-        ]
-
-    static member PreserveCaseData = JsonSerializersData.PreserveCaseSettings |> toTheoryData
+    ctx.RequestServices
+        .GetService(typeof<Json.ISerializer>)
+        .Returns(Json.Serializer(Json.Serializer.DefaultOptions))
+    |> ignore
 
 type NegotiationConfigWithExpectedResult = {
     NegotiationConfig : INegotiationConfig
