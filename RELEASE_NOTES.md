@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## 6.4.1-alpha-3 - 2024-05-14
+
+- [Fix pre-release/release workflows](https://github.com/giraffe-fsharp/Giraffe/pull/596) - Credits @64J0
+
 ## 6.4.1-alpha-2 - 2024-05-12
 
 - [Hotfix pre-release workflow](https://github.com/giraffe-fsharp/Giraffe/pull/595) - Credits @64J0
