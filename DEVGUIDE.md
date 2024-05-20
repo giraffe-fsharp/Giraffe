@@ -10,7 +10,7 @@ This documentation must be used as a guide for maintainers and developers for bu
     1. If possible link to the relevant issues and PRs and credit the author of the PRs
 3. Create a new commit
     1. `git add RELEASE_NOTES.md`
-    2. `git commit -m "Release 6.0.0-beta001"`
+    2. `git commit -m "Release 6.0.0-beta001"`. Notice that the pre-release versioning scheme is semantic versioning (SemVer), so each section of the pre-release part is compared separately, and purely-numeric sections are compared as integers. For example, if you eventually release `v6.4.1-alpha-9` and `v6.4.1-alpha-10`, the `alpha-9` version will be ranked higher on Nuget. Keep this in mind and prefer the alphaXXX/betaXXX structure, where XXX are integers starting from 001 to 999. First mentioned at this PR comment: [link](https://github.com/giraffe-fsharp/Giraffe/pull/596#issuecomment-2111097042).
 4. Make a new tag
     1. `git tag v6.0.0-beta001`
 5. Push changes
