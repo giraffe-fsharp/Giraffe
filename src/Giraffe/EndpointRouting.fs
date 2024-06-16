@@ -11,7 +11,7 @@ open Microsoft.FSharp.Reflection
 open FSharp.Core
 open Giraffe
 
-module private RouteTemplateBuilder =
+module RouteTemplateBuilder =
     // We use this regex route constraint to be compatible with Giraffe's default router,
     // which supports ShortGuid's.
     // More information on ASP.NET route constraints:
