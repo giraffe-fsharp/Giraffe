@@ -276,15 +276,19 @@ module Routers =
         | NestedEndpoint(t, lst, ce)       -> NestedEndpoint(t, List.map (applyAfter httpHandler) lst, ce)
         | MultiEndpoint(lst)               -> MultiEndpoint(List.map (applyAfter httpHandler) lst)
 
-    let rec configureEndpoint (f: ConfigureEndpoint) (endpoint: Endpoint) =
+    let rec configureEndpoint
+        (f            : ConfigureEndpoint)
+        (endpoint     : Endpoint) =
         match endpoint with
         | SimpleEndpoint(v, p, h, ce)      -> SimpleEndpoint(v, p, h, ce >> f)
         | TemplateEndpoint(v, p, m, h, ce) -> TemplateEndpoint(v, p, m, h, ce >> f)
         | NestedEndpoint(t, lst, ce)       -> NestedEndpoint(t, lst, ce >> f)
         | MultiEndpoint(lst)               -> MultiEndpoint(List.map (configureEndpoint f) lst)
-
-    let addMetadata (metadata: obj) =
-        configureEndpoint _.WithMetadata(metadata)
+        
+    let addMetadata
+        (metadata     : obj)
+        (endpoint     : Endpoint) =
+        endpoint |> configureEndpoint _.WithMetadata(metadata)
 
 // ---------------------------
 // Middleware Extension Methods
