@@ -367,7 +367,7 @@ type HttpContextExtensions() =
                 let contentLength = if is205StatusCode then 0 else bytes.Length
                 ctx.SetHttpHeader(HeaderNames.ContentLength, contentLength)
             if ctx.Request.Method <> HttpMethods.Head then
-                do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length)
+                do! ctx.Response.Body.WriteAsync(bytes.AsMemory(0, bytes.Length))
             return Some ctx
         }
 
