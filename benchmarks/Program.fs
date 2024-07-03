@@ -30,7 +30,7 @@ let testHandler__v2 (handlerReturn: byte array) : HttpHandler =
 [<MemoryDiagnoser>]
 type WriteBytesAsync() =
     
-    [<Params (100, 500, 1000)>] 
+    [<Params (100, 500, 1000, 5000)>] 
     member val ListSize : int = 0 with get, set
 
     member self.handlerReturn : byte array =
@@ -38,11 +38,19 @@ type WriteBytesAsync() =
 
     [<Benchmark(Baseline = true)>]
     member self.V1 () =
-        testHandler__v1 (self.handlerReturn) (mockHttpFunc) (mockCtx)
+        task {
+            let! _res = testHandler__v1 (self.handlerReturn) (mockHttpFunc) (mockCtx)
+
+            return ()
+        }
 
     [<Benchmark>]
     member self.V2 () =
-        testHandler__v2 (self.handlerReturn) (mockHttpFunc) (mockCtx)
+        task {
+            let! _res = testHandler__v2 (self.handlerReturn) (mockHttpFunc) (mockCtx)
+
+            return ()
+        }
 
 [<EntryPoint>]
 let main (_args: string[]) : int =
