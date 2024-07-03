@@ -371,6 +371,23 @@ type HttpContextExtensions() =
             return Some ctx
         }
 
+    [<Extension>]
+    static member OptimizedWriteBytesAsync (ctx : HttpContext, bytes : byte[]) =
+        task {
+            let canIncludeContentLengthHeader =
+                match ctx.Response.StatusCode, ctx.Request.Method with
+                | statusCode, _ when statusCode |> is1xxStatusCode || statusCode = 204 -> false
+                | statusCode, method when method = "CONNECT" && statusCode |> is2xxStatusCode -> false
+                | _ -> true
+            let is205StatusCode = ctx.Response.StatusCode = 205
+            if canIncludeContentLengthHeader then
+                let contentLength = if is205StatusCode then 0 else bytes.Length
+                ctx.SetHttpHeader(HeaderNames.ContentLength, contentLength)
+            if ctx.Request.Method <> HttpMethods.Head then
+                do! ctx.Response.Body.WriteAsync(bytes.AsMemory(0, bytes.Length))
+            return Some ctx
+        }
+
     /// <summary>
     /// Writes an UTF-8 encoded string to the body of the HTTP response and sets the HTTP Content-Length header accordingly.
     /// </summary>
