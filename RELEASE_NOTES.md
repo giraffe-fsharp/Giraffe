@@ -1,6 +1,17 @@
 Release Notes
 =============
 
+## 7.0.0-alpha-001 - 2024-07-08
+
+- [Add ability to Configure Endpoints via IEndpointConventionBuilder](https://github.com/giraffe-fsharp/Giraffe/pull/599) - Credits @mrtz-j
+    - This PR enables us to reuse some of the built-in OpenApi generation to generate OpenApi schemas from code.
+    - There's an example mentioned at the PR description, and a complete sample project available at [this repository](https://github.com/mrtz-j/Giraffe.OpenApi).
+    - It was inspired by [Oxpecker](https://github.com/Lanayx/Oxpecker) from @Lanayx.
+- [Improve DEVGUIDE with SemVer pre-release observation](https://github.com/giraffe-fsharp/Giraffe/pull/597) - Credits @64J0
+- [Promote System.Text.Json as default JSON serializer](https://github.com/giraffe-fsharp/Giraffe/pull/563) - Credits @esbenbjerre
+    - This PR removes the [Newtonsoft JSON](https://github.com/JamesNK/Newtonsoft.Json) serializer and promotes System.Text.Json as the default.
+    - The [JSON section](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#json) of the documentation was updated, showing how someone could configure the project to use the Newtonsoft JSON again.
+
 ## 6.4.1-alpha-3 - 2024-05-14
 
 - [Fix pre-release/release workflows](https://github.com/giraffe-fsharp/Giraffe/pull/596) - Credits @64J0
