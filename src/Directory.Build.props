@@ -1,0 +1,17 @@
+<Project>
+    <ItemGroup>
+        <!-- Analyzers -->
+        <PackageReference Include="FSharp.Analyzers.Build" Version="0.3.0">
+        <IncludeAssets>build</IncludeAssets>
+        <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="G-Research.FSharp.Analyzers" Version="0.10.0">
+        <IncludeAssets>analyzers</IncludeAssets>
+        <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Ionide.Analyzers" Version="0.11.0">
+        <IncludeAssets>analyzers</IncludeAssets>
+        <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+    </ItemGroup>
+</Project>
