@@ -1,6 +1,15 @@
 Release Notes
 =============
 
+## 7.0.0 - 2024-07-15
+
+Combination of the tags:
+
+- [6.4.1-alpha-1](https://github.com/giraffe-fsharp/Giraffe/releases/tag/v6.4.1-alpha-1)
+- [6.4.1-alpha-2](https://github.com/giraffe-fsharp/Giraffe/releases/tag/v6.4.1-alpha-2)
+- [6.4.1-alpha-3](https://github.com/giraffe-fsharp/Giraffe/releases/tag/v6.4.1-alpha-3)
+- [7.0.0-alpha-001](https://github.com/giraffe-fsharp/Giraffe/releases/tag/v7.0.0-alpha-001)
+
 ## 7.0.0-alpha-001 - 2024-07-08
 
 - [Add ability to Configure Endpoints via IEndpointConventionBuilder](https://github.com/giraffe-fsharp/Giraffe/pull/599) - Credits @mrtz-j
