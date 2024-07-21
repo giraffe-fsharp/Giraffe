@@ -20,6 +20,7 @@ Combination of the tags:
 - [Promote System.Text.Json as default JSON serializer](https://github.com/giraffe-fsharp/Giraffe/pull/563) - Credits @esbenbjerre
     - This PR removes the [Newtonsoft JSON](https://github.com/JamesNK/Newtonsoft.Json) serializer and promotes System.Text.Json as the default.
     - The [JSON section](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#json) of the documentation was updated, showing how someone could configure the project to use the Newtonsoft JSON again.
+    - `NewtonsoftJson` and `SystemTextJson` modules were removed.
 
 ## 6.4.1-alpha-3 - 2024-05-14
 
