@@ -39,3 +39,29 @@ jobs:
         run: dotnet build -c Release --no-restore
       - name: Test
         run: dotnet test -c Release
+
+  analyzers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.x
+      - name: Restore tools
+        run: dotnet tool restore
+      - name: Build solution
+        run: dotnet build -c Release Giraffe.sln
+      
+      - name: Run Analyzers
+        run: dotnet msbuild /t:AnalyzeFSharpProject src/Giraffe/Giraffe.fsproj
+        # This is important, you want to continue your Action even if you found problems.
+        # As you always want the report to upload
+        continue-on-error: true
+      # checkout code, build, run analyzers, ...
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          # You can also specify the path to a folder for `sarif_file`
+          sarif_file: ./src/Giraffe/analysis.sarif
