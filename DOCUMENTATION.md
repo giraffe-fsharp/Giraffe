@@ -3049,6 +3049,7 @@ You can change the default `JsonSerializerSettings` of a JSON serializer by regi
      customSettings.Converters.Add(CompactUnionJsonConverter(true))
      services.AddSingleton<Json.ISerializer>(
          NewtonsoftJson.Serializer(customSettings)) |> ignore
+
  [<EntryPoint>]
  let main _ =
      WebHost.CreateDefaultBuilder()
