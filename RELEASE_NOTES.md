@@ -12,6 +12,13 @@ Combination of the tags:
 
 ## 7.0.0-alpha-001 - 2024-07-08
 
+#### Breaking changes
+
+- `NewtonsoftJson` and `SystemTextJson` modules were removed by PR [Promote System.Text.Json as default JSON serializer](https://github.com/giraffe-fsharp/Giraffe/pull/563).
+    - Check the updated JSON documentation section to know more: [link](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#json). Notice that there we have instructions on how to setup `NewtonsoftJson` back if you need.
+
+#### Other updates
+
 - [Add ability to Configure Endpoints via IEndpointConventionBuilder](https://github.com/giraffe-fsharp/Giraffe/pull/599) - Credits @mrtz-j
     - This PR enables us to reuse some of the built-in OpenApi generation to generate OpenApi schemas from code.
     - There's an example mentioned at the PR description, and a complete sample project available at [this repository](https://github.com/mrtz-j/Giraffe.OpenApi).
@@ -20,7 +27,6 @@ Combination of the tags:
 - [Promote System.Text.Json as default JSON serializer](https://github.com/giraffe-fsharp/Giraffe/pull/563) - Credits @esbenbjerre
     - This PR removes the [Newtonsoft JSON](https://github.com/JamesNK/Newtonsoft.Json) serializer and promotes System.Text.Json as the default.
     - The [JSON section](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#json) of the documentation was updated, showing how someone could configure the project to use the Newtonsoft JSON again.
-    - `NewtonsoftJson` and `SystemTextJson` modules were removed.
 
 ## 6.4.1-alpha-3 - 2024-05-14
 
