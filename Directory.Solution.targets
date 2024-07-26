@@ -1,0 +1,9 @@
+<Project>
+    <ItemGroup>
+        <ProjectsToAnalyze Include="src/**/*.fsproj" />
+    </ItemGroup>
+
+    <Target Name="AnalyzeSolution">
+        <MSBuild Projects="@(ProjectsToAnalyze)" Targets="AnalyzeFSharpProject" />
+    </Target>
+</Project>
