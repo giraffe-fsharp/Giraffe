@@ -36,6 +36,9 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 If you'd like to learn more about the motivation of this project please read my [blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) (some code samples in this blog post might be outdated today).
 
+> [!TIP]
+> Check the [release notes](./RELEASE_NOTES.md) document to know how the system is evolving, and to get more information about breaking changes.
+
 ### Who is it for?
 
 [Giraffe](https://www.nuget.org/packages/Giraffe) is intended for developers who want to build rich web applications on top of ASP.NET Core in a functional first approach. ASP.NET Core is a powerful web platform which has support by Microsoft and a huge developer community behind it and Giraffe is aimed at F# developers who want to benefit from that eco system.
