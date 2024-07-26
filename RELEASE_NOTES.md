@@ -1,6 +1,87 @@
 Release Notes
 =============
 
+## 7.0.0 - 2024-07-15
+
+Combination of the tags:
+
+- [6.4.1-alpha-1](https://github.com/giraffe-fsharp/Giraffe/releases/tag/v6.4.1-alpha-1)
+- [6.4.1-alpha-2](https://github.com/giraffe-fsharp/Giraffe/releases/tag/v6.4.1-alpha-2)
+- [6.4.1-alpha-3](https://github.com/giraffe-fsharp/Giraffe/releases/tag/v6.4.1-alpha-3)
+- [7.0.0-alpha-001](https://github.com/giraffe-fsharp/Giraffe/releases/tag/v7.0.0-alpha-001)
+
+## 7.0.0-alpha-001 - 2024-07-08
+
+#### Breaking changes
+
+- `NewtonsoftJson` and `SystemTextJson` modules are removed, the latter is now module `Json`, NewtonSoft is not supported anymore, see PR [Promote System.Text.Json as default JSON serializer](https://github.com/giraffe-fsharp/Giraffe/pull/563).
+    - For more information, check the updated JSON documentation section: [link](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#json). This has instructions on how to setup `NewtonsoftJson` back if you need to keep it for your project.
+
+#### Other updates
+
+- [Add ability to Configure Endpoints via IEndpointConventionBuilder](https://github.com/giraffe-fsharp/Giraffe/pull/599) - Credits @mrtz-j
+    - This PR enables us to reuse some of the built-in OpenApi generation to generate OpenApi schemas from code.
+    - There's an example mentioned at the PR description, and a complete sample project available at [this repository](https://github.com/mrtz-j/Giraffe.OpenApi).
+    - It was inspired by [Oxpecker](https://github.com/Lanayx/Oxpecker) from @Lanayx.
+- [Improve DEVGUIDE with SemVer pre-release observation](https://github.com/giraffe-fsharp/Giraffe/pull/597) - Credits @64J0
+- [Promote System.Text.Json as default JSON serializer](https://github.com/giraffe-fsharp/Giraffe/pull/563) - Credits @esbenbjerre
+    - This PR removes the [Newtonsoft JSON](https://github.com/JamesNK/Newtonsoft.Json) serializer and promotes System.Text.Json as the default.
+    - The [JSON section](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#json) of the documentation was updated, showing how someone could configure the project to use the Newtonsoft JSON again.
+
+## 6.4.1-alpha-3 - 2024-05-14
+
+- [Fix pre-release/release workflows](https://github.com/giraffe-fsharp/Giraffe/pull/596) - Credits @64J0
+
+## 6.4.1-alpha-2 - 2024-05-12
+
+- [Hotfix pre-release workflow](https://github.com/giraffe-fsharp/Giraffe/pull/595) - Credits @64J0
+
+## 6.4.1-alpha-1 - 2024-05-12
+
+- [Update README.md giraffe-template installation command](https://github.com/giraffe-fsharp/Giraffe/pull/591) - Credits @dbrattli
+- [Change dev instructions and CI](https://github.com/giraffe-fsharp/Giraffe/pull/593) - Credits @64J0
+- [Fix EndpointRouting Guid regex + tests](https://github.com/giraffe-fsharp/Giraffe/pull/594) - Credits @64J0
+
+## 6.4.0 - 2024-04-12
+
+- [Upgrade to .NET 8](https://github.com/giraffe-fsharp/Giraffe/pull/527) - Credits @Banashek @fpellet
+- [Improve CI by updating actions version and avoid concurrent jobs for the same PR](https://github.com/giraffe-fsharp/Giraffe/pull/582) - Credits @64J0
+- [Add Fantomas validation to CI](https://github.com/giraffe-fsharp/Giraffe/pull/587) - Credits @64J0
+
+## 6.4.0-alpha-1 - 2024-03-10
+
+- [Upgrade to .NET 8](https://github.com/giraffe-fsharp/Giraffe/pull/527) - Credits @Banashek @fpellet
+
+## 6.3.0 - 2024-03-01
+
+- Same as 6.3.0
+
+## 6.3.0-alpha-1 - 2024-02-26
+
+- [No need to build so many Regex](https://github.com/giraffe-fsharp/Giraffe/pull/568) - Credits @Thorium
+- [Minor code optimisation](https://github.com/giraffe-fsharp/Giraffe/pull/567) - Credits @Thorium
+- [Fix requiresAuthentication for null user identity](https://github.com/giraffe-fsharp/Giraffe/pull/557) - Credits @rslopes
+- [Add explicitly the statement that the usage of Giraffe.EndpointRouting is recommended](https://github.com/giraffe-fsharp/Giraffe/pull/556) - Credits @64J0
+- [Add an example app using the cache features](https://github.com/giraffe-fsharp/Giraffe/pull/553) - Credits @64J0
+- [Change sample EndpointRoutingApp level](https://github.com/giraffe-fsharp/Giraffe/pull/549) - Credits @64J0
+- [Add GetWebHostEnvironment function and add deprecation warning to GetHostingEnvironment](https://github.com/giraffe-fsharp/Giraffe/pull/547) - Credits @64J0
+
+## 6.2.0 - 2023-07-06
+
+- [remove Utf8Json support](https://github.com/giraffe-fsharp/Giraffe/pull/543) - Credits @jcmrva
+
+## 6.1.0 - 2023-07-05
+
+- [Updating github workflow file to use nuget-acceptable version numbers for packaging](https://github.com/giraffe-fsharp/Giraffe/pull/517) - Credits @Banashek
+- [Updating mimetype accept header parsing to use builtin aspnet parse/methods](https://github.com/giraffe-fsharp/Giraffe/pull/516) - Credits @Banashek
+- [Make recyclableMemoryStreamManager internal](https://github.com/giraffe-fsharp/Giraffe/pull/514) - Credits @kerams
+- [Upgrade to .NET 7](https://github.com/giraffe-fsharp/Giraffe/pull/527) - Credits @epoyraz
+- [Documentation: Add another tutorial video to README](https://github.com/giraffe-fsharp/Giraffe/pull/533) - Credits @SIRHAMY
+- [Fixed Slack invite link](https://github.com/giraffe-fsharp/Giraffe/pull/531) - Credits @anpin
+- [RFC-compliant Content-Length handling for 1xx, 204 and 205 responses and CONNECT requests](https://github.com/giraffe-fsharp/Giraffe/pull/541) - Credits @retendo
+- [Fix spelling in docs for BindJsonAsync and BindXmlAsync](https://github.com/giraffe-fsharp/Giraffe/pull/539) - Credits @onpikono
+- [Restore 6.0 as TFM](https://github.com/giraffe-fsharp/Giraffe/pull/542) - Credits @TheAngryByrd
+
 ## 6.0.0
 
 - Same as 6.0.0-alpha-2

@@ -73,7 +73,7 @@ module Auth =
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
     let requiresAuthentication (authFailedHandler : HttpHandler) : HttpHandler =
         authorizeUser
-            (fun user -> isNotNull user && user.Identity.IsAuthenticated)
+            (fun user -> isNotNull user && isNotNull user.Identity && user.Identity.IsAuthenticated)
             authFailedHandler
 
     /// <summary>

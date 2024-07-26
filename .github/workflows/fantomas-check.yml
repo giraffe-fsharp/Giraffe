@@ -1,0 +1,25 @@
+name: Fantomas check
+
+on:
+  pull_request:
+    paths: 
+      - 'samples/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fantomas-check:
+    name: Fantomas check the
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        CHECK_FOLDER: [ 'samples/' ]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Restore packages
+        run: dotnet tool restore
+      - name: Run Fantomas
+        run: dotnet fantomas --check "${{ matrix.CHECK_FOLDER }}"

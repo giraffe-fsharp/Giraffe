@@ -60,6 +60,7 @@ type HttpContextExtensions() =
         let loggerFactory = ctx.GetService<ILoggerFactory>()
         loggerFactory.CreateLogger categoryName
 
+    [<Obsolete("Please use `GetWebHostEnvironment` as a replacement for `GetHostingEnvironment`. In the next major version this function will be removed.")>]
     /// <summary>
     /// Gets an instance of <see cref="Microsoft.Extensions.Hosting.IHostingEnvironment"/> from the request's service container.
     /// </summary>
@@ -67,6 +68,14 @@ type HttpContextExtensions() =
     [<Extension>]
     static member GetHostingEnvironment(ctx : HttpContext) =
         ctx.GetService<IHostingEnvironment>()
+
+    /// <summary>
+    /// Gets an instance of <see cref="Microsoft.AspNetCore.Hosting.IWebHostEnvironment"/> from the request's service container.
+    /// </summary>
+    /// <returns>Returns an instance of <see cref="Microsoft.AspNetCore.Hosting.IWebHostEnvironment"/>.</returns>
+    [<Extension>]
+    static member GetWebHostEnvironment(ctx : HttpContext) =
+        ctx.GetService<IWebHostEnvironment>()
 
     /// <summary>
     /// Gets an instance of <see cref="Giraffe.Serialization.Json.ISerializer"/> from the request's service container.
@@ -219,10 +228,10 @@ type HttpContextExtensions() =
         }
 
     /// <summary>
-    /// Uses the <see cref="Json.ISerializer"/> to deserializes the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously into an object of type 'T.
+    /// Uses the <see cref="Json.ISerializer"/> to deserialize the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously into an object of type 'T.
     /// </summary>
     /// <typeparam name="'T"></typeparam>
-    /// <returns>Retruns a <see cref="System.Threading.Tasks.Task{T}"/></returns>
+    /// <returns>Returns a <see cref="System.Threading.Tasks.Task{T}"/></returns>
     [<Extension>]
     static member BindJsonAsync<'T>(ctx : HttpContext) =
         task {
@@ -231,7 +240,7 @@ type HttpContextExtensions() =
         }
 
     /// <summary>
-    /// Uses the <see cref="Xml.ISerializer"/> to deserializes the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously into an object of type 'T.
+    /// Uses the <see cref="Xml.ISerializer"/> to deserialize the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously into an object of type 'T.
     /// </summary>
     /// <typeparam name="'T"></typeparam>
     /// <returns>Retruns a <see cref="System.Threading.Tasks.Task{T}"/></returns>
@@ -334,7 +343,13 @@ type HttpContextExtensions() =
         }
 
     /// <summary>
-    /// Writes a byte array to the body of the HTTP response and sets the HTTP Content-Length header accordingly.
+    /// Writes a byte array to the body of the HTTP response and sets the HTTP Content-Length header accordingly.<br />
+    /// <br />
+    /// There are exceptions to be taken care of according to the RFC.<br />
+    /// 1. Don't send Content-Length headers on 1xx and 204 responses and on 2xx responses to CONNECT requests (https://httpwg.org/specs/rfc7230.html#rfc.section.3.3.2)<br />
+    /// 2. Don't send non-zero Content-Length headers for 205 responses (https://httpwg.org/specs/rfc7231.html#rfc.section.6.3.6)<br />
+    /// <br />
+    /// Since .NET 7 these rules are enforced by Kestrel (https://github.com/dotnet/aspnetcore/pull/43103)
     /// </summary>
     /// <param name="ctx">The current http context object.</param>
     /// <param name="bytes">The byte array to be send back to the client.</param>
@@ -342,7 +357,15 @@ type HttpContextExtensions() =
     [<Extension>]
     static member WriteBytesAsync (ctx : HttpContext, bytes : byte[]) =
         task {
-            ctx.SetHttpHeader(HeaderNames.ContentLength, bytes.Length)
+            let canIncludeContentLengthHeader =
+                match ctx.Response.StatusCode, ctx.Request.Method with
+                | statusCode, _ when statusCode |> is1xxStatusCode || statusCode = 204 -> false
+                | statusCode, method when method = "CONNECT" && statusCode |> is2xxStatusCode -> false
+                | _ -> true
+            let is205StatusCode = ctx.Response.StatusCode = 205
+            if canIncludeContentLengthHeader then
+                let contentLength = if is205StatusCode then 0 else bytes.Length
+                ctx.SetHttpHeader(HeaderNames.ContentLength, contentLength)
             if ctx.Request.Method <> HttpMethods.Head then
                 do! ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length)
             return Some ctx
@@ -434,7 +457,7 @@ type HttpContextExtensions() =
                 match Path.IsPathRooted filePath with
                 | true  -> filePath
                 | false ->
-                    let env = ctx.GetHostingEnvironment()
+                    let env = ctx.GetWebHostEnvironment()
                     Path.Combine(env.ContentRootPath, filePath)
             ctx.SetContentType "text/html; charset=utf-8"
             let! html = readFileAsStringAsync filePath

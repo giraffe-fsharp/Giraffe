@@ -36,6 +36,9 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 
 If you'd like to learn more about the motivation of this project please read my [blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) (some code samples in this blog post might be outdated today).
 
+> [!TIP]
+> Check the [release notes](./RELEASE_NOTES.md) document to know how the system is evolving, and to get more information about breaking changes.
+
 ### Who is it for?
 
 [Giraffe](https://www.nuget.org/packages/Giraffe) is intended for developers who want to build rich web applications on top of ASP.NET Core in a functional first approach. ASP.NET Core is a powerful web platform which has support by Microsoft and a huge developer community behind it and Giraffe is aimed at F# developers who want to benefit from that eco system.
@@ -51,7 +54,7 @@ You can think of [Giraffe](https://www.nuget.org/packages/Giraffe) as the functi
 The easiest way to get started with Giraffe is by installing the [`giraffe-template`](https://www.nuget.org/packages/giraffe-template) package, which adds a new template to your `dotnet new` command line tool:
 
 ```
-dotnet new -i "giraffe-template::*"
+dotnet new install "giraffe-template::*"
 ```
 
 Afterwards you can create a new Giraffe application by running `dotnet new giraffe`.
@@ -217,7 +220,7 @@ Help and feedback is always welcome and pull requests get accepted.
 ### TL;DR
 
 - First open an issue to discuss your changes
-- After your change has been formally approved please submit your PR **against the develop branch**
+- After your change has been formally approved please submit your PR **against the master branch**
 - Please follow the code convention by examining existing code
 - Add/modify the `README.md` as required
 - Add/modify unit tests as required
@@ -257,25 +260,21 @@ let someHttpHandler : HttpHandler =
 
 If you intend to add or change an existing `HttpHandler` then please update the `README.md` file to reflect these changes there as well. If applicable unit tests must be added or updated and the project must successfully build before a pull request can be accepted.
 
-### Submit a pull request against develop
+### Submit a pull request against master
 
-The `develop` branch is the main and only branch which should be used for all pull requests. A merge into `develop` means that your changes are scheduled to go live with the very next release, which could happen any time from the same day up to a couple weeks (depending on priorities and urgency).
+The `master` branch is the main and only branch which should be used for all pull requests. A merge into `master` means that your changes are scheduled to go live with the very next release, which could happen any time from the same day up to a couple weeks (depending on priorities and urgency).
 
 Only pull requests which pass all build checks and comply with the general coding guidelines can be approved.
 
 If you have any further questions please let me know.
 
-You can file an [issue on GitHub](https://github.com/giraffe-fsharp/Giraffe/issues/new) or contact me via [https://dusted.codes/about](https://dusted.codes/about).
+You can file an [issue on GitHub](https://github.com/giraffe-fsharp/Giraffe/issues/new), start a [discussion on GitHub](https://github.com/giraffe-fsharp/Giraffe/discussions), or contact me via [https://dusted.codes/about](https://dusted.codes/about).
 
-## Nightly builds and NuGet feed
+## NuGet feed
 
 All official release packages are published to the official and public NuGet feed.
 
-Nightly builds (builds from the `develop` branch) produce unofficial pre-release packages which can be pulled from the [project's NuGet feed on GitHub](https://github.com/orgs/giraffe-fsharp/packages).
-
-These packages are being tagged with the Workflow's run number as the package version.
-
-All other builds, such as builds triggered by pull requests produce a NuGet package which can be downloaded as an artifact from the individual GitHub action.
+Builds triggered by pull requests produce a NuGet package which can be downloaded as an artifact from the individual GitHub action.
 
 ## Blog posts
 
@@ -307,6 +306,8 @@ If you have blogged about Giraffe, demonstrating a useful topic or some other ti
 
 - [Getting Started with ASP.NET Core Giraffe](https://www.youtube.com/watch?v=HyRzsPZ0f0k&t=461s) (by Ody Mbegbu)
 - [Nikeza - Building the Backend with F#](https://www.youtube.com/watch?v=lANg1kn835s) (by Let's Code .NET)
+- [Build a Simple Web API with F# + Giraffe](https://www.youtube.com/watch?v=yDBpd07SdHE) (by HAMY LABS)
+- [Pipeline-oriented programming - Scott Wlaschin - NDC Porto 2023](https://www.youtube.com/watch?v=ipceTuJlw-M) (by Scott Wlaschin)
 
 ## License
 
@@ -314,7 +315,7 @@ If you have blogged about Giraffe, demonstrating a useful topic or some other ti
 
 ## Contact and Slack Channel
 
-If you have any further questions feel free to reach out to me via any of the mentioned social media on [https://dusted.codes/about](https://dusted.codes/about) or join the `#giraffe` Slack channel in the [Functional Programming Slack Team](https://functionalprogramming.slack.com/). Please use [this link](https://fpchat-invite.herokuapp.com/) to request an invitation to the Functional Programming Slack Team if you don't have an account registered yet.
+If you have any further questions feel free to reach out to me via any of the mentioned social media on [https://dusted.codes/about](https://dusted.codes/about) or join the `#giraffe` Slack channel in the [Functional Programming Slack Team](https://functionalprogramming.slack.com/). Please use [this link](https://fpslack.com/) to request an invitation to the Functional Programming Slack Team if you don't have an account registered yet.
 
 ## Support
 

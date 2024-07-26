@@ -2,6 +2,7 @@ module Giraffe.Tests.HttpContextExtensionsTests
 
 open System
 open System.IO
+open System.Text
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Primitives
@@ -173,6 +174,102 @@ let ``WriteTextAsync with HTTP HEAD should not return text in body`` () =
         match result with
         | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``WriteBytesAsync should not return Content-Length in header on 100`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let testHandler =
+        fun (_ : HttpFunc) (ctx : HttpContext) ->
+            ctx.WriteBytesAsync (Encoding.UTF8.GetBytes "")
+
+    let app = route "/" >=> testHandler
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+    ctx.Response.StatusCode.ReturnsForAnyArgs 100 |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None -> assertFail "Result was expected to be non-empty"
+        | Some ctx ->
+            Assert.Null(ctx.Response.Headers.ContentLength)
+    }
+
+[<Fact>]
+let ``WriteBytesAsync should not return Content-Length in header on 204`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let testHandler =
+        fun (_ : HttpFunc) (ctx : HttpContext) ->
+            ctx.WriteBytesAsync (Encoding.UTF8.GetBytes "")
+
+    let app = route "/" >=> testHandler
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+    ctx.Response.StatusCode.ReturnsForAnyArgs 204 |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None -> assertFail "Result was expected to be non-empty"
+        | Some ctx ->
+            Assert.Null(ctx.Response.Headers.ContentLength)
+    }
+
+[<Fact>]
+let ``WriteBytesAsync with HTTP CONNECT should not return Content-Length in header on status code 200`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let testHandler =
+        fun (_ : HttpFunc) (ctx : HttpContext) ->
+            ctx.WriteBytesAsync (Encoding.UTF8.GetBytes "")
+
+    let app = route "/" >=> testHandler
+
+    ctx.Request.Method.ReturnsForAnyArgs "CONNECT" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+    ctx.Response.StatusCode.ReturnsForAnyArgs 200 |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None -> assertFail "Result was expected to be non-empty"
+        | Some ctx ->
+            Assert.Null(ctx.Response.Headers.ContentLength)
+    }
+
+[<Fact>]
+let ``WriteBytesAsync should return Content-Length 0 in header on 205`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let testHandler =
+        fun (_ : HttpFunc) (ctx : HttpContext) ->
+            ctx.WriteBytesAsync (Encoding.UTF8.GetBytes "Hello World")
+
+    let app = route "/" >=> testHandler
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+    ctx.Response.StatusCode.ReturnsForAnyArgs 205 |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None -> assertFail "Result was expected to be non-empty"
+        | Some ctx ->
+            Assert.True(ctx.Response.Headers["Content-Length"].ToString() = "0")
     }
 
 [<Fact>]

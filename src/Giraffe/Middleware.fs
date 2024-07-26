@@ -115,8 +115,8 @@ type ServiceCollectionExtensions() =
     [<Extension>]
     static member AddGiraffe(svc : IServiceCollection) =
         svc.TryAddSingleton<RecyclableMemoryStreamManager>(fun _ -> RecyclableMemoryStreamManager())
-        svc.TryAddSingleton<Json.ISerializer>(fun sp ->
-            NewtonsoftJson.Serializer(NewtonsoftJson.Serializer.DefaultSettings, sp.GetService<RecyclableMemoryStreamManager>()) :> Json.ISerializer)
+        svc.TryAddSingleton<Json.ISerializer>(fun _ ->
+            Json.Serializer(Json.Serializer.DefaultOptions) :> Json.ISerializer)
         svc.TryAddSingleton<Xml.ISerializer>(fun sp ->
             SystemXml.Serializer(SystemXml.Serializer.DefaultSettings, sp.GetService<RecyclableMemoryStreamManager>()) :> Xml.ISerializer)
         svc.TryAddSingleton<INegotiationConfig, DefaultNegotiationConfig>()

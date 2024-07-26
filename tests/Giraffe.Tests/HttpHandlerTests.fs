@@ -42,11 +42,10 @@ type Person =
 // Tests
 // ---------------------------------
 
-[<Theory>]
-[<MemberData("DefaultData", MemberType = typedefof<JsonSerializersData>)>]
-let ``GET "/json" returns json object`` (settings) =
+[<Fact>]
+let ``GET "/json" returns json object`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx settings
+    mockJson ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -67,45 +66,18 @@ let ``GET "/json" returns json object`` (settings) =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-[<Theory>]
-[<MemberData("PreserveCaseData", MemberType = typedefof<JsonSerializersData>)>]
-let ``GET "/json" with custom json settings returns json object`` (settings) =
-
-    let ctx = Substitute.For<HttpContext>()
-    mockJson ctx settings
-    let app =
-        GET >=> choose [
-            route "/"     >=> text "Hello World"
-            route "/foo"  >=> text "bar"
-            route "/json" >=> json { Foo = "john"; Bar = "doe"; Age = 30 }
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-    let expected = "{\"Foo\":\"john\",\"Bar\":\"doe\",\"Age\":30}"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
-
 let DefaultMocksWithSize =
     [
         let ``powers of two`` = [ 1..10 ] |> List.map (pown 2)
         for size in ``powers of two`` do
-        for setting in JsonSerializersData.DefaultSettings do
-            yield size, setting
-    ] |> toTheoryData2
+            yield size
+    ] |> toTheoryData
 
 [<Theory>]
 [<MemberData("DefaultMocksWithSize")>]
-let ``GET "/jsonChunked" returns json object`` (size: int, settings) =
+let ``GET "/jsonChunked" returns json object`` (size: int) =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx settings
+    mockJson ctx
     let app =
         GET >=> choose [
             route "/"     >=> text "Hello World"
@@ -134,38 +106,8 @@ let CamelCasedMocksWithSize =
     [
         let ``powers of two`` = [1..10] |> List.map (pown 2)
         for size in ``powers of two`` do
-        for setting in JsonSerializersData.PreserveCaseSettings do
-            yield size ,setting
-    ] |> toTheoryData2
-
-[<Theory>]
-[<MemberData("CamelCasedMocksWithSize")>]
-let ``GET "/jsonChunked" with custom json settings returns json object`` (size: int, settings) =
-    let ctx = Substitute.For<HttpContext>()
-    mockJson ctx settings
-    let app =
-        GET >=> choose [
-            route "/"     >=> text "Hello World"
-            route "/foo"  >=> text "bar"
-            route "/jsonChunked" >=> json ( Array.replicate size { Foo = "john"; Bar = "doe"; Age = 30 } )
-            setStatusCode 404 >=> text "Not found" ]
-
-    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/jsonChunked")) |> ignore
-    ctx.Response.Body <- new MemoryStream()
-
-    let expected =
-        let o = "{\"Foo\":\"john\",\"Bar\":\"doe\",\"Age\":30}"
-        let os = Array.replicate size o |> String.concat ","
-        "[" +  os + "]"
-
-    task {
-        let! result = app next ctx
-
-        match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
-        | Some ctx -> Assert.Equal(expected, getBody ctx)
-    }
+            yield size
+    ] |> toTheoryData
 
 [<Fact>]
 let ``POST "/post/1" returns "1"`` () =
@@ -284,7 +226,7 @@ let ``POST "/text" with supported Accept header returns "text"`` () =
 [<Fact>]
 let ``POST "/json" with supported Accept header returns "json"`` () =
     let ctx = Substitute.For<HttpContext>()
-    mockJson ctx ( Newtonsoft None )
+    mockJson ctx
     let app =
         choose [
             GET >=> choose [
@@ -379,6 +321,68 @@ let ``POST "/either" with unsupported Accept header returns 404 "Not found"`` ()
             let body = getBody ctx
             Assert.Equal(expected, body)
             Assert.Equal(404, ctx.Response.StatusCode)
+    }
+
+[<Fact>]
+let ``POST with "all-medias" header type returns the first available route`` () =
+    /// Reference: https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.2
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        choose [
+            POST >=> choose [
+                route "/any" >=> mustAccept [ "text/plain" ] >=> text "first route"
+                route "/any" >=> mustAccept [ "application/json" ] >=> json "second route"
+                route "/any" >=> mustAccept [ "text/plain"; "application/json" ] >=> text "third route" ]
+            setStatusCode 404 >=> text "Not found" ]
+        
+    let headers = HeaderDictionary()
+    headers.Add("Accept", StringValues("*/*"))
+    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/any")) |> ignore
+    ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "first route"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None -> assertFail $"Result was expected to be %s{expected}"
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal("text/plain; charset=utf-8", ctx.Response |> getContentType)
+    }
+        
+[<Fact>]
+let ``POST with an accept header type containing a fuzzy type and concrete subtype returns the first matching route`` () =
+    /// Reference: https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.2
+    let ctx = Substitute.For<HttpContext>()
+    let app =
+        choose [
+            POST >=> choose [
+                route "/any" >=> mustAccept [ "text/plain" ] >=> text "first route"
+                route "/any" >=> mustAccept [ "application/xml" ] >=> text "<test>second route</test>"
+                route "/any" >=> mustAccept [ "text/plain"; "application/json" ] >=> text "third route" ]
+            setStatusCode 404 >=> text "Not found" ]
+        
+    let headers = HeaderDictionary()
+    headers.Add("Accept", StringValues("application/*"))
+    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/any")) |> ignore
+    ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "<test>second route</test>"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None -> assertFail $"Result was expected to be %s{expected}"
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal("text/plain; charset=utf-8", ctx.Response |> getContentType)
     }
 
 [<Fact>]
@@ -531,7 +535,6 @@ let johnDoeAsText = @"First name: John, Last name: Doe, Birth date: 1990-07-12, 
 
 let getNegotiationTestHttpContext
     (negotiationConfig : INegotiationConfig)
-    (jsonSettings : MockJsonSettings option)
     (shouldMockXml : bool)
     (acceptHeaders : StringValues)
     =
@@ -540,7 +543,7 @@ let getNegotiationTestHttpContext
     let headers = HeaderDictionary()
     headers.Add("Accept", acceptHeaders)
 
-    jsonSettings |> Option.iter(fun settings -> mockJson ctx settings)
+    mockJson ctx
     if shouldMockXml then mockXml ctx
     mockNegotiation ctx negotiationConfig
 
@@ -581,7 +584,7 @@ let JsonReturningAcceptHeaderCases =
 [<Theory>]
 [<MemberData("JsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "application/json" returns JSON object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) false (StringValues("application/json"))
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig false (StringValues("application/json"))
     let testChecks (context : HttpContext) =
         let body = getBody context
         Assert.Equal(johnDoeAsJson, body)
@@ -592,7 +595,7 @@ let ``Get "/auto" with Accept header of "application/json" returns JSON object``
 [<Theory>]
 [<MemberData("JsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "application/xml; q=0.9, application/json" returns JSON object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) false (StringValues("application/xml; q=0.9, application/json"))
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig false (StringValues("application/xml; q=0.9, application/json"))
     let testChecks (context : HttpContext) =
         Assert.Equal(config.StatusCode, context.Response.StatusCode)
         if context.Response.StatusCode = 200 then
@@ -610,7 +613,7 @@ let XmlReturningAcceptHeaderCases =
 [<Theory>]
 [<MemberData("XmlReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "application/xml" returns XML object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig None true (StringValues("application/xml"))
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig true (StringValues("application/xml"))
     let testChecks (context : HttpContext) =
         Assert.Equal(config.StatusCode, context.Response.StatusCode)
         if context.Response.StatusCode = 200 then
@@ -628,7 +631,7 @@ let XmlJsonReturningAcceptHeaderCases =
 [<Theory>]
 [<MemberData("XmlJsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "application/xml, application/json" returns XML object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) true (StringValues("application/xml, application/json"))
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig true (StringValues("application/xml, application/json"))
     let testChecks (context : HttpContext) =
         Assert.Equal(config.StatusCode, context.Response.StatusCode)
         if context.Response.StatusCode = 200 && config.ReturnContentType = "application/xml; charset=utf-8" then
@@ -640,7 +643,7 @@ let ``Get "/auto" with Accept header of "application/xml, application/json" retu
 [<Theory>]
 [<MemberData("JsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "application/json, application/xml" returns JSON object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) false (StringValues("application/json, application/xml"))
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig false (StringValues("application/json, application/xml"))
     let testChecks (context : HttpContext) =
         Assert.Equal(config.StatusCode, context.Response.StatusCode)
         if context.Response.StatusCode = 200 then
@@ -652,7 +655,7 @@ let ``Get "/auto" with Accept header of "application/json, application/xml" retu
 [<Theory>]
 [<MemberData("XmlJsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xml" returns XML object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) true (StringValues("application/json; q=0.5, application/xml"))
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig true (StringValues("application/json; q=0.5, application/xml"))
     let testChecks (context : HttpContext) =
         Assert.Equal(config.StatusCode, context.Response.StatusCode)
         if context.Response.StatusCode = 200 && config.ReturnContentType = "application/xml; charset=utf-8" then
@@ -664,7 +667,7 @@ let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xm
 [<Theory>]
 [<MemberData("XmlJsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "application/json; q=0.5, application/xml; q=0.6" returns XML object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) true (StringValues("application/json; q=0.5, application/xml; q=0.6"))
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig true (StringValues("application/json; q=0.5, application/xml; q=0.6"))
     let testChecks (context : HttpContext) =
         Assert.Equal(config.StatusCode, context.Response.StatusCode)
         if context.Response.StatusCode = 200 && config.ReturnContentType = "application/xml; charset=utf-8" then
@@ -682,7 +685,7 @@ let TextReturningAcceptHeaderCases =
 [<Theory>]
 [<MemberData("TextReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "text/plain; q=0.7, application/xml; q=0.6" returns text object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig None false (StringValues("text/plain; q=0.7, application/xml; q=0.6"))
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig false (StringValues("text/plain; q=0.7, application/xml; q=0.6"))
     let testChecks (context : HttpContext) =
         Assert.Equal(config.StatusCode, context.Response.StatusCode)
         if context.Response.StatusCode = 200 then
@@ -700,7 +703,7 @@ let HtmlReturningAcceptHeaderCases =
 [<Theory>]
 [<MemberData("HtmlReturningAcceptHeaderCases")>]
 let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig None false (StringValues("text/html"))
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig false (StringValues("text/html"))
 
     let expected = "text/html is unacceptable by the server."
     let testChecks (context : HttpContext) =
@@ -714,7 +717,7 @@ let ``Get "/auto" with Accept header of "text/html" returns a 406 response`` (co
 [<Theory>]
 [<MemberData("JsonReturningAcceptHeaderCases")>]
 let ``Get "/auto" without an Accept header returns a JSON object`` (config : NegotiationConfigWithExpectedResult) =
-    let ctx = getNegotiationTestHttpContext config.NegotiationConfig (Some (Newtonsoft None)) false StringValues.Empty
+    let ctx = getNegotiationTestHttpContext config.NegotiationConfig false StringValues.Empty
     let testChecks (ctx : HttpContext) =
         Assert.Equal(config.StatusCode, ctx.Response.StatusCode)
         if ctx.Response.StatusCode = 200 then
