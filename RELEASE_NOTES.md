@@ -14,7 +14,7 @@ Combination of the tags:
 
 #### Breaking changes
 
-- `NewtonsoftJson` and `SystemTextJson` modules were removed by PR [Promote System.Text.Json as default JSON serializer](https://github.com/giraffe-fsharp/Giraffe/pull/563).
+- `NewtonsoftJson` and `SystemTextJson` modules are removed, the latter is now module `Json`, NewtonSoft is not supported anymore, see PR [Promote System.Text.Json as default JSON serializer](https://github.com/giraffe-fsharp/Giraffe/pull/563).
     - Check the updated JSON documentation section to know more: [link](https://github.com/giraffe-fsharp/Giraffe/blob/master/DOCUMENTATION.md#json). Notice that there we have instructions on how to setup `NewtonsoftJson` back if you need.
 
 #### Other updates
