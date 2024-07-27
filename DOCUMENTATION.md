@@ -2971,10 +2971,6 @@ For example, one could define a `Newtonsoft.Json` serializer:
          let serializer = JsonSerializer.Create settings
          let utf8EncodingWithoutBom = UTF8Encoding(false)
 
-         new(settings : JsonSerializerSettings) = Serializer(
-             settings,
-             recyclableMemoryStreamManager.Value)
-
          static member DefaultSettings =
              JsonSerializerSettings(
                  ContractResolver = CamelCasePropertyNamesContractResolver())
@@ -3024,7 +3020,8 @@ let configureServices (services : IServiceCollection) =
     services.AddGiraffe() |> ignore
 
     // Now register your custom Json.ISerializer
-    services.AddSingleton<Json.ISerializer, NewtonsoftJson.Serializer>() |> ignore
+    services.AddSingleton<Json.ISerializer>(fun serviceProvider ->
+            NewtonsoftJson.Serializer(JsonSerializerSettings(), serviceProvider.GetService<Microsoft.IO.RecyclableMemoryStreamManager>()) :> Json.ISerializer) |> ignore
 
 [<EntryPoint>]
 let main _ =
