@@ -66,6 +66,76 @@ let ``GET "/json" returns json object`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
+type ResponseWithFsharpType = {
+    ValueA: string option
+    ValueB: JsonUnionCaseDummy
+}
+and JsonUnionCaseDummy =
+    | JsonUnionCaseDummyA of int
+    | JsonUnionCaseDummyB
+[<Fact>]
+let ``GET "/json" returns json object with fsharp type`` () =
+    let ctx = Substitute.For<HttpContext>()
+    ctx.RequestServices
+        .GetService(typeof<Json.ISerializer>)
+        .Returns(Json.FsharpFriendlySerializer())
+    |> ignore
+    
+    let app =
+        GET >=> choose [
+            route "/"     >=> text "Hello World"
+            route "/foo"  >=> text "bar"
+            route "/json" >=> json { ValueA = Some "hello"; ValueB = JsonUnionCaseDummyA 42 }
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = """{"ValueA":"hello","ValueB":{"Case":"JsonUnionCaseDummyA","Fields":[42]}}"""
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let content = getBody ctx
+            Assert.Equal(expected, content)
+    }
+    
+[<Fact>]
+let ``GET "/json" returns json object with fsharp type and use custom config`` () =
+    let ctx = Substitute.For<HttpContext>()
+    let customConfig =
+        System.Text.Json.Serialization.JsonFSharpOptions.Default()
+            .WithUnionTagNamingPolicy(System.Text.Json.JsonNamingPolicy.CamelCase)
+    ctx.RequestServices
+        .GetService(typeof<Json.ISerializer>)
+        .Returns(Json.FsharpFriendlySerializer(customConfig, Json.Serializer.DefaultOptions))
+    |> ignore
+    
+    let app =
+        GET >=> choose [
+            route "/"     >=> text "Hello World"
+            route "/foo"  >=> text "bar"
+            route "/json" >=> json { ValueA = Some "hello"; ValueB = JsonUnionCaseDummyA 42 }
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = """{"valueA":"hello","valueB":{"Case":"jsonUnionCaseDummyA","Fields":[42]}}"""
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let content = getBody ctx
+            Assert.Equal(expected, content)
+    }
+    
 let DefaultMocksWithSize =
     [
         let ``powers of two`` = [ 1..10 ] |> List.map (pown 2)
