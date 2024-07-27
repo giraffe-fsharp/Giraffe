@@ -2935,6 +2935,9 @@ Please visit the [Giraffe.ViewEngine](https://github.com/giraffe-fsharp/Giraffe.
 
 By default Giraffe uses `System.Text.Json` for (de-)serializing JSON content. An application can modify the default serializer by registering a new dependency which implements the `Json.ISerializer` interface during application startup.
 
+It's possible to use a serializer compatible with Fsharp types: `Json.FsharpFriendlySerializer` instead of `Json.Serializer`.  
+This uses `FSharp.SystemTextJson` to customize `System.Text.Json`.
+
 #### Using a different JSON serializer
 
 You can change the entire underlying JSON serializer by creating a new class which implements the `Json.ISerializer` interface:
