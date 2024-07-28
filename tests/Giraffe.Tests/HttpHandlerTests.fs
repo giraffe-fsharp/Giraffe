@@ -73,8 +73,9 @@ type ResponseWithFsharpType = {
 and JsonUnionCaseDummy =
     | JsonUnionCaseDummyA of int
     | JsonUnionCaseDummyB
+
 [<Fact>]
-let ``GET "/json" returns json object with fsharp type`` () =
+let ``GET "/json" returns json object with fsharp type (JsonUnionCaseDummyA)`` () =
     let ctx = Substitute.For<HttpContext>()
     ctx.RequestServices
         .GetService(typeof<Json.ISerializer>)
@@ -92,6 +93,36 @@ let ``GET "/json" returns json object with fsharp type`` () =
     ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
     ctx.Response.Body <- new MemoryStream()
     let expected = """{"ValueA":"hello","ValueB":{"Case":"JsonUnionCaseDummyA","Fields":[42]}}"""
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None     -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let content = getBody ctx
+            Assert.Equal(expected, content)
+    }
+
+[<Fact>]
+let ``GET "/json" returns json object with fsharp type (JsonUnionCaseDummyB)`` () =
+    let ctx = Substitute.For<HttpContext>()
+    ctx.RequestServices
+        .GetService(typeof<Json.ISerializer>)
+        .Returns(Json.FsharpFriendlySerializer())
+    |> ignore
+    
+    let app =
+        GET >=> choose [
+            route "/"     >=> text "Hello World"
+            route "/foo"  >=> text "bar"
+            route "/json" >=> json { ValueA = Some "hello"; ValueB = JsonUnionCaseDummyB }
+            setStatusCode 404 >=> text "Not found" ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = """{"ValueA":"hello","ValueB":{"Case":"JsonUnionCaseDummyB"}}"""
 
     task {
         let! result = app next ctx
