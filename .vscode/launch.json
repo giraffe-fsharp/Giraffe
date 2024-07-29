@@ -5,11 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET Core Launch GoogleAuthApp (console)",
+            "name": ".NET Core Launch EndpointRoutingApp (console)",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build GoogleAuthApp",
-            "program": "${workspaceFolder}/samples/GoogleAuthApp/GoogleAuthApp/bin/Debug/netcoreapp2.2/GoogleAuthApp.dll",
+            "preLaunchTask": "build EndpointRoutingApp",
+            "program": "${workspaceFolder}/samples/EndpointRoutingApp/bin/Debug/net8.0/EndpointRoutingApp.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
@@ -18,11 +18,11 @@
             "justMyCode": false
         },
         {
-            "name": ".NET Core Launch IdentityApp (console)",
+            "name": ".NET Core Launch NewtonsoftJson (console)",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build IdentityApp",
-            "program": "${workspaceFolder}/samples/IdentityApp/IdentityApp/bin/Debug/netcoreapp2.2/IdentityApp.dll",
+            "preLaunchTask": "build NewtonsoftJson",
+            "program": "${workspaceFolder}/samples/NewtonsoftJson/bin/Debug/net8.0/NewtonsoftJson.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
@@ -31,36 +31,16 @@
             "justMyCode": false
         },
         {
-            "name": ".NET Core Launch JwtApp (console)",
+            "name": ".NET Core Launch ResponseCachingApp (console)",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build JwtApp",
-            "program": "${workspaceFolder}/samples/JwtApp/JwtApp/bin/Debug/netcoreapp2.2/JwtApp.dll",
+            "preLaunchTask": "build ResponseCachingApp",
+            "program": "${workspaceFolder}/samples/ResponseCachingApp/bin/Debug/net7.0/ResponseCachingApp.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
             "internalConsoleOptions": "openOnSessionStart",
             "stopAtEntry": false,
-            "justMyCode": false
-        },
-        {
-            "name": ".NET Core Launch SampleApp (console)",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build SampleApp",
-            "program": "${workspaceFolder}/samples/SampleApp/SampleApp/bin/Debug/netcoreapp2.2/SampleApp.dll",
-            "args": [],
-            "cwd": "${workspaceFolder}",
-            "console": "internalConsole",
-            "internalConsoleOptions": "openOnSessionStart",
-            "stopAtEntry": false,
-            "justMyCode": false
-        },
-        {
-            "name": ".NET Core Attach",
-            "type": "coreclr",
-            "request": "attach",
-            "processId": "${command:pickProcess}",
             "justMyCode": false
         }
     ]
