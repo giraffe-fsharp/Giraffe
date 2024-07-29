@@ -2405,7 +2405,7 @@ let webApp =
   GET >=> haveContentType "application/json" >=> text "Hello World"
 
 // Http request with    `Content-Type` = `application/json`   -> pass through
-// Http request without `Content-TYpe` = `application/json`   -> error 406 http response: "cannot accept request because expected to have request header 'Content-Type'"
+// Http request without `Content-Type` = `application/json`   -> error 406 http response: "cannot accept request because expected to have request header 'Content-Type'"
 ```
 
 > Note: with `haveAnyContentTypes` multiple `Content-Type` headers can be passed to verify if the http request has any of the provided header values.
