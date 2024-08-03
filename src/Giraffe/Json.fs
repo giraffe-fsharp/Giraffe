@@ -6,6 +6,7 @@ module Json =
     open System.IO
     open System.Text.Json
     open System.Threading.Tasks
+    open System.Text.Json.Serialization
 
     /// <summary>
     /// Interface defining JSON serialization methods.
@@ -54,3 +55,19 @@ module Json =
 
             member __.DeserializeAsync<'T> (stream : Stream) : Task<'T> =
                 JsonSerializer.DeserializeAsync<'T>(stream, options).AsTask()
+    
+    module FsharpFriendlySerializer =
+        let DefaultOptions =
+           JsonFSharpOptions.Default()
+        
+        let private appendJsonFSharpOptions (fsharpOptions: JsonFSharpOptions) (jsonOptions: JsonSerializerOptions) =
+            jsonOptions.Converters.Add(JsonFSharpConverter(fsharpOptions))
+            jsonOptions
+        
+        let buildConfig (fsharpOptions: JsonFSharpOptions option) (jsonOptions: JsonSerializerOptions option) =
+            jsonOptions
+            |> Option.defaultValue (JsonSerializerOptions())
+            |> appendJsonFSharpOptions (fsharpOptions |> Option.defaultValue DefaultOptions)
+    
+    type FsharpFriendlySerializer (?fsharpOptions: JsonFSharpOptions, ?jsonOptions: JsonSerializerOptions) =
+        inherit Serializer(FsharpFriendlySerializer.buildConfig fsharpOptions jsonOptions)

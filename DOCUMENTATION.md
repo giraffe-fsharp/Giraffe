@@ -2980,6 +2980,8 @@ Please visit the [Giraffe.ViewEngine](https://github.com/giraffe-fsharp/Giraffe.
 
 By default Giraffe uses `System.Text.Json` for (de-)serializing JSON content. An application can modify the default serializer by registering a new dependency which implements the `Json.ISerializer` interface during application startup.
 
+It's possible to use a serializer compatible with Fsharp types: `Json.FsharpFriendlySerializer` instead of `Json.Serializer` (C#-like). This uses `FSharp.SystemTextJson` to customize `System.Text.Json`.
+
 #### Using a different JSON serializer
 
 You can change the entire underlying JSON serializer by creating a new class which implements the `Json.ISerializer` interface:
@@ -3012,10 +3014,6 @@ For example, one could define a `Newtonsoft.Json` serializer:
      type Serializer (settings : JsonSerializerSettings, rmsManager : RecyclableMemoryStreamManager) =
          let serializer = JsonSerializer.Create settings
          let utf8EncodingWithoutBom = UTF8Encoding(false)
-
-         new(settings : JsonSerializerSettings) = Serializer(
-             settings,
-             recyclableMemoryStreamManager.Value)
 
          static member DefaultSettings =
              JsonSerializerSettings(
@@ -3066,7 +3064,8 @@ let configureServices (services : IServiceCollection) =
     services.AddGiraffe() |> ignore
 
     // Now register your custom Json.ISerializer
-    services.AddSingleton<Json.ISerializer, NewtonsoftJson.Serializer>() |> ignore
+    services.AddSingleton<Json.ISerializer>(fun serviceProvider ->
+            NewtonsoftJson.Serializer(JsonSerializerSettings(), serviceProvider.GetService<Microsoft.IO.RecyclableMemoryStreamManager>()) :> Json.ISerializer) |> ignore
 
 [<EntryPoint>]
 let main _ =
@@ -3078,6 +3077,8 @@ let main _ =
         .Run()
     0
 ```
+
+Check this [samples/NewtonsoftJson](https://github.com/giraffe-fsharp/Giraffe/tree/master/samples/NewtonsoftJson) project to find this code in a working program.
 
 #### Customizing JsonSerializerSettings
 
