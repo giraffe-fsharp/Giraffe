@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+## 7.0.1 - 2024-08-27
+
+- [Add F# Analyzers](https://github.com/giraffe-fsharp/Giraffe/pull/603) - Credits @1eyewonder
+- [Add F# compatible json serializer](https://github.com/giraffe-fsharp/Giraffe/pull/609) - Credits @fpellet
+    - Add F# compatible json serializer with `FSharp.SystemTextJson`: `Json.FsharpFriendlySerializer`
+- [Update .vscode samples debug configuration](https://github.com/giraffe-fsharp/Giraffe/pull/610) - Credits @64J0
+
 ## 7.0.0 - 2024-07-15
 
 Combination of the tags:
