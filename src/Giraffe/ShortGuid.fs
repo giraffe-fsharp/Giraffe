@@ -29,22 +29,18 @@ module ShortGuid =
     /// </summary>
     /// <param name="guid">The <see cref="System.Guid" />  to be converted into a short GUID.</param>
     /// <returns>Returns a 22 character long URL encoded short GUID string.</returns>
-    let fromGuid (guid : Guid) =
+    let fromGuid (guid: Guid) =
         guid.ToByteArray()
         |> Convert.ToBase64String
-        |> (fun str ->
-            str.Replace("/", "_")
-               .Replace("+", "-")
-               .Substring(0, 22))
+        |> (fun str -> str.Replace("/", "_").Replace("+", "-").Substring(0, 22))
 
     /// <summary>
     /// Converts a 22 character short GUID string into the matching <see cref="System.Guid" />.
     /// </summary>
     /// <param name="shortGuid">The short GUID string to be converted into a <see cref="System.Guid" />.</param>
     /// <returns>Returns a <see cref="System.Guid" /> object.</returns>
-    let toGuid (shortGuid : string) =
-        shortGuid.Replace("_", "/")
-                 .Replace("-", "+")
+    let toGuid (shortGuid: string) =
+        shortGuid.Replace("_", "/").Replace("-", "+")
         |> (fun str -> str + "==")
         |> Convert.FromBase64String
         |> Guid
@@ -78,31 +74,34 @@ module ShortId =
     /// </summary>
     /// <param name="id">The uint64 to be converted into a short ID.</param>
     /// <returns>Returns a 11 character long URL encoded short ID string.</returns>
-    let fromUInt64 (id : uint64) =
+    let fromUInt64 (id: uint64) =
         BitConverter.GetBytes id
         |> (fun arr ->
             match BitConverter.IsLittleEndian with
-            | true  -> Array.Reverse arr; arr
-            | false -> arr)
+            | true ->
+                Array.Reverse arr
+                arr
+            | false -> arr
+        )
         |> Convert.ToBase64String
-        |> (fun str ->
-            str.Remove(11, 1)
-               .Replace("/", "_")
-               .Replace("+", "-"))
+        |> (fun str -> str.Remove(11, 1).Replace("/", "_").Replace("+", "-"))
 
     /// <summary>
     /// Converts a 11 character short ID string into the matching uint64 value.
     /// </summary>
     /// <param name="shortId">The short ID string to be converted into a uint64 value.</param>
     /// <returns>The short ID string to be converted into a uint64 value.</returns>
-    let toUInt64 (shortId : string) =
+    let toUInt64 (shortId: string) =
         let bytes =
-            shortId.Replace("_", "/")
-                   .Replace("-", "+")
+            shortId.Replace("_", "/").Replace("-", "+")
             |> (fun str -> str + "=")
             |> Convert.FromBase64String
             |> (fun arr ->
                 match BitConverter.IsLittleEndian with
-                | true  -> Array.Reverse arr; arr
-                | false -> arr)
-        BitConverter.ToUInt64 (bytes, 0)
+                | true ->
+                    Array.Reverse arr
+                    arr
+                | false -> arr
+            )
+
+        BitConverter.ToUInt64(bytes, 0)

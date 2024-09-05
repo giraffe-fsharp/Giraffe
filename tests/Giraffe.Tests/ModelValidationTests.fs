@@ -16,61 +16,69 @@ open Giraffe
 [<CLIMutable>]
 type Adult =
     {
-        FirstName  : string
-        MiddleName : string option
-        LastName   : string
-        Age        : int
+        FirstName: string
+        MiddleName: string option
+        LastName: string
+        Age: int
     }
+
     override this.ToString() =
-        sprintf "Name: %s%s %s, Age: %i"
+        sprintf
+            "Name: %s%s %s, Age: %i"
             this.FirstName
-            (if this.MiddleName.IsSome then " " + this.MiddleName.Value else "")
+            (if this.MiddleName.IsSome then
+                 " " + this.MiddleName.Value
+             else
+                 "")
             this.LastName
             this.Age
 
     member this.HasErrors() =
-        if      this.FirstName.Length < 3  then Some "First name is too short."
-        else if this.FirstName.Length > 50 then Some "First name is too long."
-        else if this.LastName.Length  < 3  then Some "Last name is too short."
-        else if this.LastName.Length  > 50 then Some "Last name is too long."
-        else if this.Age < 18              then Some "Person must be an adult (age >= 18)."
-        else if this.Age > 150             then Some "Person must be a human being."
-        else None
+        if this.FirstName.Length < 3 then
+            Some "First name is too short."
+        else if this.FirstName.Length > 50 then
+            Some "First name is too long."
+        else if this.LastName.Length < 3 then
+            Some "Last name is too short."
+        else if this.LastName.Length > 50 then
+            Some "Last name is too long."
+        else if this.Age < 18 then
+            Some "Person must be an adult (age >= 18)."
+        else if this.Age > 150 then
+            Some "Person must be a human being."
+        else
+            None
 
     interface IModelValidation<Adult> with
         member this.Validate() =
             match this.HasErrors() with
-            | Some msg -> Error (RequestErrors.badRequest (text msg))
-            | None     -> Ok this
+            | Some msg -> Error(RequestErrors.badRequest (text msg))
+            | None -> Ok this
 
 module Urls =
-    let person  = "/person"
+    let person = "/person"
 
 module WebApp =
-    let textHandler (x : obj) = text (x.ToString())
+    let textHandler (x: obj) = text (x.ToString())
     let parsingErrorHandler err = RequestErrors.badRequest (text err)
     let culture = None
     let tryBindQueryToAdult = tryBindQuery<Adult> parsingErrorHandler culture
 
     let webApp _ =
-        choose [
-            route Urls.person
-            >=> tryBindQueryToAdult (validateModel textHandler)
-        ]
+        choose [ route Urls.person >=> tryBindQueryToAdult (validateModel textHandler) ]
 
-    let errorHandler (ex : Exception) (_ : ILogger) : HttpHandler =
+    let errorHandler (ex: Exception) (_: ILogger) : HttpHandler =
         printfn "Error: %s" ex.Message
         printfn "StackTrace:%s %s" Environment.NewLine ex.StackTrace
         setStatusCode 500 >=> text ex.Message
 
-    let configureApp args (app : IApplicationBuilder) =
-        app.UseGiraffeErrorHandler(errorHandler)
-           .UseGiraffe(webApp args)
+    let configureApp args (app: IApplicationBuilder) =
+        app.UseGiraffeErrorHandler(errorHandler).UseGiraffe(webApp args)
 
-    let configureServices (services : IServiceCollection) =
-        services.AddGiraffe() |> ignore
+    let configureServices (services: IServiceCollection) = services.AddGiraffe() |> ignore
 
-let makeRequest req = makeRequest WebApp.configureApp WebApp.configureServices req
+let makeRequest req =
+    makeRequest WebApp.configureApp WebApp.configureServices req
 
 // ---------------------------------
 // Tests
@@ -80,28 +88,16 @@ let makeRequest req = makeRequest WebApp.configureApp WebApp.configureServices r
 let ``validateModel with valid model`` () =
     task {
         let url = sprintf "%s?firstName=John&lastName=Doe&age=35" Urls.person
-        let! response =
-            createRequest HttpMethod.Get url
-            |> makeRequest (None, None)
-        let! content =
-            response
-            |> isStatus HttpStatusCode.OK
-            |> readText
-        content
-        |> shouldEqual "Name: John Doe, Age: 35"
+        let! response = createRequest HttpMethod.Get url |> makeRequest (None, None)
+        let! content = response |> isStatus HttpStatusCode.OK |> readText
+        content |> shouldEqual "Name: John Doe, Age: 35"
     }
 
 [<Fact>]
 let ``validateModel with invalid model`` () =
     task {
         let url = sprintf "%s?firstName=John&lastName=Doe&age=17" Urls.person
-        let! response =
-            createRequest HttpMethod.Get url
-            |> makeRequest (None, None)
-        let! content =
-            response
-            |> isStatus HttpStatusCode.BadRequest
-            |> readText
-        content
-        |> shouldEqual "Person must be an adult (age >= 18)."
+        let! response = createRequest HttpMethod.Get url |> makeRequest (None, None)
+        let! content = response |> isStatus HttpStatusCode.BadRequest |> readText
+        content |> shouldEqual "Person must be an adult (age >= 18)."
     }

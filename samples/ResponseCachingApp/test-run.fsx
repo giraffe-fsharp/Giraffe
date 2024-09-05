@@ -11,11 +11,13 @@ type Url = Url of string
 type Title = Title of string
 
 let urls =
-    {| notCached = Url "http://localhost:5000/cached/not"
-       publicCached = Url "http://localhost:5000/cached/public"
-       privateCached = Url "http://localhost:5000/cached/private"
-       publicCachedNoVaryByQueryKeys = Url "http://localhost:5000/cached/vary/not"
-       cachedVaryByQueryKeys = Url "http://localhost:5000/cached/vary/yes" |}
+    {|
+        notCached = Url "http://localhost:5000/cached/not"
+        publicCached = Url "http://localhost:5000/cached/public"
+        privateCached = Url "http://localhost:5000/cached/private"
+        publicCachedNoVaryByQueryKeys = Url "http://localhost:5000/cached/vary/not"
+        cachedVaryByQueryKeys = Url "http://localhost:5000/cached/vary/yes"
+    |}
 
 let queryParams1: QueryParams = [ ("query1", "a"); ("query2", "b") ]
 let queryParams2: QueryParams = [ ("query1", "c"); ("query2", "d") ]
@@ -59,8 +61,10 @@ let run (qps: QueryParams list) (title: Title) (url: Url) =
 
 let runFiveRequests =
     run
-        [ for _ in 1..5 do
-              [] ]
+        [
+            for _ in 1..5 do
+                []
+        ]
 
 let testPublicCachedNoVaryByQueryKeys () =
     let allQueryParams = [ queryParams1; queryParams1; queryParams2; queryParams2 ]

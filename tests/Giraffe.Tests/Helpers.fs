@@ -24,27 +24,33 @@ open Giraffe
 
 let toTheoryData xs =
     let data = new TheoryData<_>()
-    for x in xs do data.Add x
+
+    for x in xs do
+        data.Add x
+
     data
 
 let toTheoryData2 xs =
-    let data = new TheoryData<_,_>()
-    for (a,b) in xs do data.Add(a,b)
+    let data = new TheoryData<_, _>()
+
+    for (a, b) in xs do
+        data.Add(a, b)
+
     data
 
-let waitForDebuggerToAttach() =
+let waitForDebuggerToAttach () =
     printfn "Waiting for debugger to attach."
     printfn "Press enter when debugger is attached in order to continue test execution..."
     Console.ReadLine() |> ignore
 
-let removeNewLines (html : string) : string =
+let removeNewLines (html: string) : string =
     html.Replace(Environment.NewLine, String.Empty)
 
-let createETag (eTag : string) =
-    Some (Microsoft.Net.Http.Headers.EntityTagHeaderValue.FromString false eTag)
+let createETag (eTag: string) =
+    Some(Microsoft.Net.Http.Headers.EntityTagHeaderValue.FromString false eTag)
 
-let createWeakETag (eTag : string) =
-    Some (Microsoft.Net.Http.Headers.EntityTagHeaderValue.FromString true eTag)
+let createWeakETag (eTag: string) =
+    Some(Microsoft.Net.Http.Headers.EntityTagHeaderValue.FromString true eTag)
 
 // ---------------------------------
 // Assert functions
@@ -57,29 +63,23 @@ let assertFailf format args =
     Assert.True(false, msg)
 
 module XmlAssert =
-    let rec normalize (element : XElement) =
+    let rec normalize (element: XElement) =
         if element.HasElements then
             XElement(
                 element.Name,
-                element.Attributes()
+                element
+                    .Attributes()
                     .Where(fun a -> a.Name.Namespace = XNamespace.Xmlns)
                     .OrderBy(fun a -> a.Name.ToString()),
-                element.Elements()
+                element
+                    .Elements()
                     .OrderBy(fun a -> a.Name.ToString())
-                    .Select(fun e -> normalize(e))
+                    .Select(fun e -> normalize (e))
             )
         elif element.IsEmpty then
-            XElement(
-                element.Name,
-                element.Attributes()
-                    .OrderBy(fun a -> a.Name.ToString())
-              )
-         else
-            XElement(
-                element.Name,
-                element.Attributes()
-                    .OrderBy(fun a -> a.Name.ToString()), element.Value
-               )
+            XElement(element.Name, element.Attributes().OrderBy(fun a -> a.Name.ToString()))
+        else
+            XElement(element.Name, element.Attributes().OrderBy(fun a -> a.Name.ToString()), element.Value)
 
     let equals expectedXml actualXml =
         let expectedXElement = XElement.Parse expectedXml |> normalize
@@ -90,50 +90,53 @@ module XmlAssert =
 // Test server/client setup
 // ---------------------------------
 
-let next : HttpFunc = Some >> Task.FromResult
+let next: HttpFunc = Some >> Task.FromResult
 
-let createHost (configureApp      : 'Tuple -> IApplicationBuilder -> unit)
-               (configureServices : IServiceCollection -> unit)
-               (args              : 'Tuple) =
+let createHost
+    (configureApp: 'Tuple -> IApplicationBuilder -> unit)
+    (configureServices: IServiceCollection -> unit)
+    (args: 'Tuple)
+    =
     (WebHostBuilder())
         .UseContentRoot(Path.GetFullPath("TestFiles"))
-        .Configure(Action<IApplicationBuilder> (configureApp args))
+        .Configure(Action<IApplicationBuilder>(configureApp args))
         .ConfigureServices(Action<IServiceCollection> configureServices)
 
-let mockJson (ctx : HttpContext) =
+let mockJson (ctx: HttpContext) =
 
     ctx.RequestServices
         .GetService(typeof<Json.ISerializer>)
         .Returns(Json.Serializer(Json.Serializer.DefaultOptions))
     |> ignore
 
-type NegotiationConfigWithExpectedResult = {
-    NegotiationConfig : INegotiationConfig
-    StatusCode : int
-    ReturnContentType : string
-}
+type NegotiationConfigWithExpectedResult =
+    {
+        NegotiationConfig: INegotiationConfig
+        StatusCode: int
+        ReturnContentType: string
+    }
 
-let mockXml (ctx : HttpContext) =
+let mockXml (ctx: HttpContext) =
     ctx.RequestServices
-       .GetService(typeof<Xml.ISerializer>)
-       .Returns(SystemXml.Serializer(SystemXml.Serializer.DefaultSettings))
+        .GetService(typeof<Xml.ISerializer>)
+        .Returns(SystemXml.Serializer(SystemXml.Serializer.DefaultSettings))
     |> ignore
 
-let mockNegotiation (ctx : HttpContext) (negotiationConfig : INegotiationConfig) =
+let mockNegotiation (ctx: HttpContext) (negotiationConfig: INegotiationConfig) =
     ctx.RequestServices
-       .GetService(typeof<INegotiationConfig>)
-       .Returns(negotiationConfig)
+        .GetService(typeof<INegotiationConfig>)
+        .Returns(negotiationConfig)
     |> ignore
 
 // ---------------------------------
 // Compose web request functions
 // ---------------------------------
 
-let createRequest (method : HttpMethod) (path : string) =
+let createRequest (method: HttpMethod) (path: string) =
     let url = "http://127.0.0.1" + path
     new HttpRequestMessage(method, url)
 
-let makeRequest configureApp configureServices args (request : HttpRequestMessage) =
+let makeRequest configureApp configureServices args (request: HttpRequestMessage) =
     task {
         use server = new TestServer(createHost configureApp configureServices args)
         use client = server.CreateClient()
@@ -141,7 +144,7 @@ let makeRequest configureApp configureServices args (request : HttpRequestMessag
         return response
     }
 
-let addHeader (key : string) (value : string) (request : HttpRequestMessage) =
+let addHeader (key: string) (value: string) (request: HttpRequestMessage) =
     request.Headers.Add(key, value)
     request
 
@@ -149,70 +152,69 @@ let addHeader (key : string) (value : string) (request : HttpRequestMessage) =
 // Validate response functions
 // ---------------------------------
 
-let getContentType (response : HttpResponse) =
-    response.Headers.["Content-Type"].[0]
+let getContentType (response: HttpResponse) = response.Headers.["Content-Type"].[0]
 
-let getStatusCode (ctx : HttpContext) =
-    ctx.Response.StatusCode
+let getStatusCode (ctx: HttpContext) = ctx.Response.StatusCode
 
-let isStatus (code : HttpStatusCode) (response : HttpResponseMessage) =
+let isStatus (code: HttpStatusCode) (response: HttpResponseMessage) =
     Assert.Equal(code, response.StatusCode)
     response
 
-let containsHeader (flag : bool) (name : string) (response : HttpResponseMessage) =
+let containsHeader (flag: bool) (name: string) (response: HttpResponseMessage) =
     match flag with
-    | true  -> Assert.True(response.Headers.Contains name)
+    | true -> Assert.True(response.Headers.Contains name)
     | false -> Assert.False(response.Headers.Contains name)
+
     response
 
-let containsContentHeader (flag : bool) (name : string) (response : HttpResponseMessage) =
+let containsContentHeader (flag: bool) (name: string) (response: HttpResponseMessage) =
     match flag with
-    | true  -> Assert.True(response.Content.Headers.Contains name)
+    | true -> Assert.True(response.Content.Headers.Contains name)
     | false -> Assert.False(response.Content.Headers.Contains name)
+
     response
 
-let hasContentLength (length : int64) (response : HttpResponseMessage) =
+let hasContentLength (length: int64) (response: HttpResponseMessage) =
     Assert.True(response.Content.Headers.ContentLength.HasValue)
     Assert.Equal(length, response.Content.Headers.ContentLength.Value)
     response
 
-let hasAcceptRanges (value : string) (response : HttpResponseMessage) =
+let hasAcceptRanges (value: string) (response: HttpResponseMessage) =
     Assert.Equal(value, response.Headers.AcceptRanges.ToString())
     response
 
-let hasContentRange (value : string) (response : HttpResponseMessage) =
+let hasContentRange (value: string) (response: HttpResponseMessage) =
     Assert.Equal(value, response.Content.Headers.ContentRange.ToString())
     response
 
-let hasETag (eTag : string) (response : HttpResponseMessage) =
+let hasETag (eTag: string) (response: HttpResponseMessage) =
     Assert.Equal(eTag, (response.Headers.ETag.ToString()))
     response
 
-let hasLastModified (lastModified : DateTimeOffset) (response : HttpResponseMessage) =
+let hasLastModified (lastModified: DateTimeOffset) (response: HttpResponseMessage) =
     Assert.True(response.Content.Headers.LastModified.HasValue)
     Assert.Equal(lastModified, response.Content.Headers.LastModified.Value)
     response
 
-let getBody (ctx : HttpContext) =
+let getBody (ctx: HttpContext) =
     ctx.Response.Body.Position <- 0L
     use reader = new StreamReader(ctx.Response.Body, Encoding.UTF8)
     reader.ReadToEnd()
 
-let readText (response : HttpResponseMessage) =
-    response.Content.ReadAsStringAsync()
+let readText (response: HttpResponseMessage) = response.Content.ReadAsStringAsync()
 
-let readBytes (response : HttpResponseMessage) =
-    response.Content.ReadAsByteArrayAsync()
+let readBytes (response: HttpResponseMessage) = response.Content.ReadAsByteArrayAsync()
 
-let printBytes (bytes : byte[]) =
-    bytes |> Array.fold (
-        fun (s : string) (b : byte) ->
+let printBytes (bytes: byte[]) =
+    bytes
+    |> Array.fold
+        (fun (s: string) (b: byte) ->
             match s.Length with
             | 0 -> sprintf "%i" b
-            | _ -> sprintf "%s,%i" s b) ""
+            | _ -> sprintf "%s,%i" s b
+        )
+        ""
 
-let shouldBeEmpty (bytes : byte[]) =
-    Assert.True(bytes.Length.Equals 0)
+let shouldBeEmpty (bytes: byte[]) = Assert.True(bytes.Length.Equals 0)
 
-let shouldEqual (expected: string) actual =
-    Assert.Equal(expected, actual)
+let shouldEqual (expected: string) actual = Assert.Equal(expected, actual)

@@ -17,15 +17,13 @@ module ResponseCaching =
     /// </summary>
     type CacheDirective =
         | NoCache
-        | Public  of TimeSpan
+        | Public of TimeSpan
         | Private of TimeSpan
 
     let private noCacheHeader = CacheControlHeaderValue(NoCache = true, NoStore = true)
 
     let inline private cacheHeader isPublic duration =
-        CacheControlHeaderValue(
-            Public = isPublic,
-            MaxAge = Nullable duration)
+        CacheControlHeaderValue(Public = isPublic, MaxAge = Nullable duration)
 
     /// <summary>
     /// Enables (or suppresses) response caching by clients and proxy servers.
@@ -39,26 +37,30 @@ module ResponseCaching =
     /// <param name="next"></param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let responseCaching (directive       : CacheDirective)
-                        (vary            : string option)
-                        (varyByQueryKeys : string array option) : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+    let responseCaching
+        (directive: CacheDirective)
+        (vary: string option)
+        (varyByQueryKeys: string array option)
+        : HttpHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
 
             let tHeaders = ctx.Response.GetTypedHeaders()
-            let headers  = ctx.Response.Headers
+            let headers = ctx.Response.Headers
 
             match directive with
             | NoCache ->
-                tHeaders.CacheControl           <- noCacheHeader
-                headers.[ HeaderNames.Pragma ]  <- StringValues [| "no-cache" |]
-                headers.[ HeaderNames.Expires ] <- StringValues [| "-1" |]
-            | Public duration  -> tHeaders.CacheControl <- cacheHeader true duration
+                tHeaders.CacheControl <- noCacheHeader
+                headers.[HeaderNames.Pragma] <- StringValues [| "no-cache" |]
+                headers.[HeaderNames.Expires] <- StringValues [| "-1" |]
+            | Public duration -> tHeaders.CacheControl <- cacheHeader true duration
             | Private duration -> tHeaders.CacheControl <- cacheHeader false duration
 
-            if vary.IsSome then headers.[HeaderNames.Vary] <- StringValues [| vary.Value |]
+            if vary.IsSome then
+                headers.[HeaderNames.Vary] <- StringValues [| vary.Value |]
 
             if varyByQueryKeys.IsSome then
                 let responseCachingFeature = ctx.Features.Get<IResponseCachingFeature>()
+
                 if isNotNull responseCachingFeature then
                     responseCachingFeature.VaryByQueryKeys <- varyByQueryKeys.Value
 
@@ -68,7 +70,7 @@ module ResponseCaching =
     /// Disables response caching by clients and proxy servers.
     /// </summary>
     /// <returns>A Giraffe `HttpHandler` function which can be composed into a bigger web application.</returns>
-    let noResponseCaching : HttpHandler = responseCaching NoCache None None
+    let noResponseCaching: HttpHandler = responseCaching NoCache None None
 
     /// <summary>
     /// Enables response caching for clients only.
@@ -78,8 +80,8 @@ module ResponseCaching =
     /// <param name="seconds">Specifies the duration (in seconds) for which the response may be cached.</param>
     /// <param name="vary">Optionally specify which HTTP headers have to match in order to return a cached response (e.g. Accept and/or Accept-Encoding).</param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let privateResponseCaching (seconds : int) (vary : string option) : HttpHandler =
-        responseCaching (Private (TimeSpan.FromSeconds(float seconds))) vary None
+    let privateResponseCaching (seconds: int) (vary: string option) : HttpHandler =
+        responseCaching (Private(TimeSpan.FromSeconds(float seconds))) vary None
 
     /// <summary>
     /// Enables response caching for clients and proxy servers.
@@ -91,5 +93,5 @@ module ResponseCaching =
     /// <param name="seconds">Specifies the duration (in seconds) for which the response may be cached.</param>
     /// <param name="vary">Optionally specify which HTTP headers have to match in order to return a cached response (e.g. `Accept` and/or `Accept-Encoding`).</param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let publicResponseCaching (seconds : int) (vary : string option) : HttpHandler =
-        responseCaching (Public (TimeSpan.FromSeconds(float seconds))) vary None
+    let publicResponseCaching (seconds: int) (vary: string option) : HttpHandler =
+        responseCaching (Public(TimeSpan.FromSeconds(float seconds))) vary None

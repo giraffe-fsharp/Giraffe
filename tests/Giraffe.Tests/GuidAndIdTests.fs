@@ -8,7 +8,7 @@ open Giraffe
 // Short Guid Tests
 // ---------------------------------
 
-let rndInt64 (rand : Random) =
+let rndInt64 (rand: Random) =
     let buffer = Array.zeroCreate 8
     rand.NextBytes buffer
     BitConverter.ToUInt64(buffer, 0)
@@ -24,8 +24,8 @@ let ``Short Guids translate to correct long Guids`` () =
     testCases
     |> List.iter (fun (shortGuid, expectedGuid) ->
         let guid = ShortGuid.toGuid shortGuid
-        Assert.Equal(expectedGuid, guid)
-        |> ignore)
+        Assert.Equal(expectedGuid, guid) |> ignore
+    )
 
 [<Fact>]
 let ``Long Guids translate to correct short Guids`` () =
@@ -38,47 +38,41 @@ let ``Long Guids translate to correct short Guids`` () =
     testCases
     |> List.iter (fun (shortGuid, longGuid) ->
         let guid = ShortGuid.fromGuid longGuid
-        Assert.Equal(shortGuid, guid)
-        |> ignore)
+        Assert.Equal(shortGuid, guid) |> ignore
+    )
 
 [<Fact>]
 let ``Short Guids are always 22 characters long`` () =
-    let testCases =
-        [ 0..10 ]
-        |> List.map (fun _ -> Guid.NewGuid())
+    let testCases = [ 0..10 ] |> List.map (fun _ -> Guid.NewGuid())
 
     testCases
     |> List.iter (fun guid ->
         let shortGuid = ShortGuid.fromGuid guid
-        Assert.Equal(22, shortGuid.Length)
-        |> ignore)
+        Assert.Equal(22, shortGuid.Length) |> ignore
+    )
 
 [<Fact>]
 let ``Short Ids are always 11 characters long`` () =
     let rand = new Random()
-    let testCases =
-        [ 0..10 ]
-        |> List.map (fun _ -> rndInt64 rand)
+    let testCases = [ 0..10 ] |> List.map (fun _ -> rndInt64 rand)
 
     testCases
     |> List.iter (fun id ->
         let shortId = ShortId.fromUInt64 id
-        Assert.Equal(11, shortId.Length)
-        |> ignore)
+        Assert.Equal(11, shortId.Length) |> ignore
+    )
 
 [<Fact>]
 let ``Short Ids translate correctly back and forth`` () =
     let rand = new Random()
-    let testCases =
-        [ 0..10 ]
-        |> List.map (fun _ -> rndInt64 rand)
+    let testCases = [ 0..10 ] |> List.map (fun _ -> rndInt64 rand)
 
     testCases
     |> List.iter (fun origId ->
         let shortId = ShortId.fromUInt64 origId
         let id = ShortId.toUInt64 shortId
-        Assert.Equal(origId, id)
-        |> ignore)
+        Assert.Equal(origId, id) |> ignore
+    )
 
 [<Fact>]
 let ``Short Ids translate to correct uint64 values`` () =
@@ -93,8 +87,8 @@ let ``Short Ids translate to correct uint64 values`` () =
     testCases
     |> List.iter (fun (shortId, id) ->
         let result = ShortId.toUInt64 shortId
-        Assert.Equal(id, result)
-        |> ignore)
+        Assert.Equal(id, result) |> ignore
+    )
 
 [<Fact>]
 let ``UInt64 values translate to correct short IDs`` () =
@@ -109,5 +103,5 @@ let ``UInt64 values translate to correct short IDs`` () =
     testCases
     |> List.iter (fun (shortId, id) ->
         let result = ShortId.fromUInt64 id
-        Assert.Equal(shortId, result)
-        |> ignore)
+        Assert.Equal(shortId, result) |> ignore
+    )

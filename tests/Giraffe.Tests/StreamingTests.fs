@@ -16,27 +16,27 @@ open Giraffe
 // ### TEXT REPRESENTATION
 // ---------------------------------
 
-    // 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
+// 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
 
 
 // ### BYTE REPRESENTATION
 // ---------------------------------
 
-    // 48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90
+// 48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90
 
 
 // ### TABULAR BYTE REPRESENTATION
 // ---------------------------------
 
-    // 0  ,1  ,2  ,3  ,4  ,5  ,6  ,7  ,8  ,9
-    // ----------------------------------------
-    // 48 ,49 ,50 ,51 ,52 ,53 ,54 ,55 ,56 ,57
-    // 97 ,98 ,99 ,100,101,102,103,104,105,106
-    // 107,108,109,110,111,112,113,114,115,116
-    // 117,118,119,120,121,122,65 ,66 ,67 ,68
-    // 69 ,70 ,71 ,72 ,73 ,74 ,75 ,76 ,77 ,78
-    // 79 ,80 ,81 ,82 ,83 ,84 ,85 ,86 ,87 ,88
-    // 89 ,90
+// 0  ,1  ,2  ,3  ,4  ,5  ,6  ,7  ,8  ,9
+// ----------------------------------------
+// 48 ,49 ,50 ,51 ,52 ,53 ,54 ,55 ,56 ,57
+// 97 ,98 ,99 ,100,101,102,103,104,105,106
+// 107,108,109,110,111,112,113,114,115,116
+// 117,118,119,120,121,122,65 ,66 ,67 ,68
+// 69 ,70 ,71 ,72 ,73 ,74 ,75 ,76 ,77 ,78
+// 79 ,80 ,81 ,82 ,83 ,84 ,85 ,86 ,87 ,88
+// 89 ,90
 
 
 // ---------------------------------
@@ -44,30 +44,28 @@ open Giraffe
 // ---------------------------------
 
 module Urls =
-    let rangeProcessingEnabled  = "/range-processing-enabled"
+    let rangeProcessingEnabled = "/range-processing-enabled"
     let rangeProcessingDisabled = "/range-processing-disabled"
 
 module WebApp =
-    let streamHandler (enableRangeProcessing : bool) : HttpHandler =
+    let streamHandler (enableRangeProcessing: bool) : HttpHandler =
         streamFile enableRangeProcessing "streaming.txt" None None
 
     let webApp =
         choose [
-            route Urls.rangeProcessingEnabled  >=> streamHandler true
+            route Urls.rangeProcessingEnabled >=> streamHandler true
             route Urls.rangeProcessingDisabled >=> streamHandler false
         ]
 
-    let errorHandler (ex : Exception) (_ : ILogger) : HttpHandler =
+    let errorHandler (ex: Exception) (_: ILogger) : HttpHandler =
         printfn "Error: %s" ex.Message
         printfn "StackTrace:%s %s" Environment.NewLine ex.StackTrace
         setStatusCode 500 >=> text ex.Message
 
-    let configureApp _ (app : IApplicationBuilder) =
-        app.UseGiraffeErrorHandler(errorHandler)
-           .UseGiraffe webApp
+    let configureApp _ (app: IApplicationBuilder) =
+        app.UseGiraffeErrorHandler(errorHandler).UseGiraffe webApp
 
-    let configureServices (services : IServiceCollection) =
-        services.AddGiraffe() |> ignore
+    let configureServices (services: IServiceCollection) = services.AddGiraffe() |> ignore
 
 let makeRequest = makeRequest WebApp.configureApp WebApp.configureServices ()
 
@@ -78,9 +76,8 @@ let makeRequest = makeRequest WebApp.configureApp WebApp.configureServices ()
 [<Fact>]
 let ``HTTP GET entire file with range processing disabled`` () =
     task {
-        let! response =
-            createRequest HttpMethod.Get Urls.rangeProcessingDisabled
-            |> makeRequest
+        let! response = createRequest HttpMethod.Get Urls.rangeProcessingDisabled |> makeRequest
+
         let! content =
             response
             |> isStatus HttpStatusCode.OK
@@ -88,6 +85,7 @@ let ``HTTP GET entire file with range processing disabled`` () =
             |> containsContentHeader false "Content-Range"
             |> hasContentLength 62L
             |> readText
+
         content
         |> shouldEqual "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     }
@@ -95,9 +93,8 @@ let ``HTTP GET entire file with range processing disabled`` () =
 [<Fact>]
 let ``HTTP GET entire file with range processing enabled`` () =
     task {
-        let! response =
-            createRequest HttpMethod.Get Urls.rangeProcessingEnabled
-            |> makeRequest
+        let! response = createRequest HttpMethod.Get Urls.rangeProcessingEnabled |> makeRequest
+
         let! content =
             response
             |> isStatus HttpStatusCode.OK
@@ -105,6 +102,7 @@ let ``HTTP GET entire file with range processing enabled`` () =
             |> containsContentHeader false "Content-Range"
             |> hasContentLength 62L
             |> readText
+
         content
         |> shouldEqual "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     }
@@ -112,9 +110,8 @@ let ``HTTP GET entire file with range processing enabled`` () =
 [<Fact>]
 let ``HTTP HEAD entire file with range processing disabled`` () =
     task {
-        let! response =
-            createRequest HttpMethod.Head Urls.rangeProcessingDisabled
-            |> makeRequest
+        let! response = createRequest HttpMethod.Head Urls.rangeProcessingDisabled |> makeRequest
+
         let! content =
             response
             |> isStatus HttpStatusCode.OK
@@ -122,16 +119,15 @@ let ``HTTP HEAD entire file with range processing disabled`` () =
             |> containsContentHeader false "Content-Range"
             |> hasContentLength 62L
             |> readText
-        content
-        |> shouldEqual ""
+
+        content |> shouldEqual ""
     }
 
 [<Fact>]
 let ``HTTP HEAD entire file with range processing enabled`` () =
     task {
-        let! response =
-            createRequest HttpMethod.Head Urls.rangeProcessingEnabled
-            |> makeRequest
+        let! response = createRequest HttpMethod.Head Urls.rangeProcessingEnabled |> makeRequest
+
         let! content =
             response
             |> isStatus HttpStatusCode.OK
@@ -139,8 +135,8 @@ let ``HTTP HEAD entire file with range processing enabled`` () =
             |> containsContentHeader false "Content-Range"
             |> hasContentLength 62L
             |> readText
-        content
-        |> shouldEqual ""
+
+        content |> shouldEqual ""
     }
 
 [<Fact>]
@@ -150,6 +146,7 @@ let ``HTTP HEAD part of file with range processing enabled`` () =
             createRequest HttpMethod.Head Urls.rangeProcessingEnabled
             |> addHeader "Range" "bytes=0-9"
             |> makeRequest
+
         let! content =
             response
             |> isStatus HttpStatusCode.PartialContent
@@ -157,8 +154,8 @@ let ``HTTP HEAD part of file with range processing enabled`` () =
             |> hasContentRange "bytes 0-9/62"
             |> hasContentLength 10L
             |> readBytes
-        content
-        |> shouldBeEmpty
+
+        content |> shouldBeEmpty
     }
 
 [<Fact>]
@@ -168,6 +165,7 @@ let ``HTTP GET part of file with range processing enabled`` () =
             createRequest HttpMethod.Get Urls.rangeProcessingEnabled
             |> addHeader "Range" "bytes=0-9"
             |> makeRequest
+
         let! content =
             response
             |> isStatus HttpStatusCode.PartialContent
@@ -175,9 +173,8 @@ let ``HTTP GET part of file with range processing enabled`` () =
             |> hasContentRange "bytes 0-9/62"
             |> hasContentLength 10L
             |> readBytes
-        content
-        |> printBytes
-        |> shouldEqual "48,49,50,51,52,53,54,55,56,57"
+
+        content |> printBytes |> shouldEqual "48,49,50,51,52,53,54,55,56,57"
     }
 
 [<Fact>]
@@ -187,6 +184,7 @@ let ``HTTP GET middle part of file with range processing enabled`` () =
             createRequest HttpMethod.Get Urls.rangeProcessingEnabled
             |> addHeader "Range" "bytes=12-26"
             |> makeRequest
+
         let! content =
             response
             |> isStatus HttpStatusCode.PartialContent
@@ -194,6 +192,7 @@ let ``HTTP GET middle part of file with range processing enabled`` () =
             |> hasContentRange "bytes 12-26/62"
             |> hasContentLength 15L
             |> readBytes
+
         content
         |> printBytes
         |> shouldEqual "99,100,101,102,103,104,105,106,107,108,109,110,111,112,113"
@@ -206,6 +205,7 @@ let ``HTTP GET with range without end and range processing enabled`` () =
             createRequest HttpMethod.Get Urls.rangeProcessingEnabled
             |> addHeader "Range" "bytes=20-"
             |> makeRequest
+
         let! content =
             response
             |> isStatus HttpStatusCode.PartialContent
@@ -213,9 +213,11 @@ let ``HTTP GET with range without end and range processing enabled`` () =
             |> hasContentRange "bytes 20-61/62"
             |> hasContentLength 42L
             |> readBytes
+
         content
         |> printBytes
-        |> shouldEqual "107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90"
+        |> shouldEqual
+            "107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90"
     }
 
 [<Fact>]
@@ -225,6 +227,7 @@ let ``HTTP GET middle part of file with range processing disabled`` () =
             createRequest HttpMethod.Get Urls.rangeProcessingDisabled
             |> addHeader "Range" "bytes=12-26"
             |> makeRequest
+
         let! content =
             response
             |> isStatus HttpStatusCode.OK
@@ -232,9 +235,11 @@ let ``HTTP GET middle part of file with range processing disabled`` () =
             |> containsContentHeader false "Content-Range"
             |> hasContentLength 62L
             |> readBytes
+
         content
         |> printBytes
-        |> shouldEqual "48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90"
+        |> shouldEqual
+            "48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90"
     }
 
 [<Fact>]
@@ -244,6 +249,7 @@ let ``HTTP HEAD middle part of file with range processing disabled`` () =
             createRequest HttpMethod.Head Urls.rangeProcessingDisabled
             |> addHeader "Range" "bytes=12-26"
             |> makeRequest
+
         let! content =
             response
             |> isStatus HttpStatusCode.OK
@@ -251,8 +257,8 @@ let ``HTTP HEAD middle part of file with range processing disabled`` () =
             |> containsContentHeader false "Content-Range"
             |> hasContentLength 62L
             |> readBytes
-        content
-        |> shouldBeEmpty
+
+        content |> shouldBeEmpty
     }
 
 [<Fact>]
@@ -262,6 +268,7 @@ let ``HTTP GET with invalid range and with range processing enabled`` () =
             createRequest HttpMethod.Get Urls.rangeProcessingEnabled
             |> addHeader "Range" "bytes=63-70"
             |> makeRequest
+
         let! content =
             response
             |> isStatus HttpStatusCode.RequestedRangeNotSatisfiable
@@ -269,8 +276,8 @@ let ``HTTP GET with invalid range and with range processing enabled`` () =
             |> hasContentRange "bytes */62"
             |> containsContentHeader false "Content-Length"
             |> readBytes
-        content
-        |> shouldBeEmpty
+
+        content |> shouldBeEmpty
     }
 
 [<Fact>]
@@ -280,6 +287,7 @@ let ``HTTP HEAD with invalid range and with range processing enabled`` () =
             createRequest HttpMethod.Head Urls.rangeProcessingEnabled
             |> addHeader "Range" "bytes=63-70"
             |> makeRequest
+
         let! content =
             response
             |> isStatus HttpStatusCode.RequestedRangeNotSatisfiable
@@ -287,8 +295,8 @@ let ``HTTP HEAD with invalid range and with range processing enabled`` () =
             |> hasContentRange "bytes */62"
             |> containsContentHeader false "Content-Length"
             |> readBytes
-        content
-        |> shouldBeEmpty
+
+        content |> shouldBeEmpty
     }
 
 [<Fact>]
@@ -298,6 +306,7 @@ let ``HTTP GET with invalid range and with range processing disabled`` () =
             createRequest HttpMethod.Get Urls.rangeProcessingDisabled
             |> addHeader "Range" "bytes=63-70"
             |> makeRequest
+
         let! content =
             response
             |> isStatus HttpStatusCode.OK
@@ -305,9 +314,11 @@ let ``HTTP GET with invalid range and with range processing disabled`` () =
             |> containsContentHeader false "Content-Range"
             |> hasContentLength 62L
             |> readBytes
+
         content
         |> printBytes
-        |> shouldEqual "48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90"
+        |> shouldEqual
+            "48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90"
     }
 
 [<Fact>]
@@ -317,6 +328,7 @@ let ``HTTP GET with multiple ranges and with range processing enabled`` () =
             createRequest HttpMethod.Get Urls.rangeProcessingEnabled
             |> addHeader "Range" "bytes=5-10, 20-25, 40-"
             |> makeRequest
+
         let! content =
             response
             |> isStatus HttpStatusCode.OK
@@ -324,7 +336,9 @@ let ``HTTP GET with multiple ranges and with range processing enabled`` () =
             |> containsContentHeader false "Content-Range"
             |> hasContentLength 62L
             |> readBytes
+
         content
         |> printBytes
-        |> shouldEqual "48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90"
+        |> shouldEqual
+            "48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90"
     }

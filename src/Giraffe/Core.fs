@@ -49,17 +49,17 @@ module Core =
     /// </code>
     /// </example>
     /// <returns>Returns a <see cref="HttpHandler"/> function.</returns>
-    let inline warbler f (next : HttpFunc) (ctx : HttpContext) = f (next, ctx) next ctx
+    let inline warbler f (next: HttpFunc) (ctx: HttpContext) = f (next, ctx) next ctx
 
     /// <summary>
     /// Use skipPipeline to shortcircuit the <see cref="HttpHandler"/> pipeline and return None to the surrounding <see cref="HttpHandler"/> or the Giraffe middleware (which would subsequently invoke the next middleware as a result of it).
     /// </summary>
-    let skipPipeline : HttpFuncResult = Task.FromResult None
+    let skipPipeline: HttpFuncResult = Task.FromResult None
 
     /// <summary>
     /// Use earlyReturn to shortcircuit the <see cref="HttpHandler"/> pipeline and return Some HttpContext to the surrounding <see cref="HttpHandler"/> or the Giraffe middleware (which would subsequently end the pipeline by returning the response back to the client).
     /// </summary>
-    let earlyReturn : HttpFunc = Some >> Task.FromResult
+    let earlyReturn: HttpFunc = Some >> Task.FromResult
 
     // ---------------------------
     // Convenience Handlers
@@ -72,15 +72,15 @@ module Core =
     /// <param name="next"></param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let handleContext (contextMap : HttpContext -> HttpFuncResult) : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+    let handleContext (contextMap: HttpContext -> HttpFuncResult) : HttpHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
             task {
                 match! contextMap ctx with
                 | Some c ->
                     match c.Response.HasStarted with
-                    | true  -> return  Some c
+                    | true -> return Some c
                     | false -> return! next c
-                | None      -> return  None
+                | None -> return None
             }
 
     // ---------------------------
@@ -96,12 +96,13 @@ module Core =
     /// <param name="handler2"></param>
     /// <param name="final"></param>
     /// <returns>A <see cref="HttpFunc"/>.</returns>
-    let compose (handler1 : HttpHandler) (handler2 : HttpHandler) : HttpHandler =
-        fun (final : HttpFunc) ->
+    let compose (handler1: HttpHandler) (handler2: HttpHandler) : HttpHandler =
+        fun (final: HttpFunc) ->
             let func = final |> handler2 |> handler1
-            fun (ctx : HttpContext) ->
+
+            fun (ctx: HttpContext) ->
                 match ctx.Response.HasStarted with
-                | true  -> final ctx
+                | true -> final ctx
                 | false -> func ctx
 
     /// <summary>
@@ -116,16 +117,17 @@ module Core =
     /// <param name="funcs"></param>
     /// <param name="ctx"></param>
     /// <returns>A <see cref="HttpFuncResult"/>.</returns>
-    let rec private chooseHttpFunc (funcs : HttpFunc list) : HttpFunc =
-        fun (ctx : HttpContext) ->
+    let rec private chooseHttpFunc (funcs: HttpFunc list) : HttpFunc =
+        fun (ctx: HttpContext) ->
             task {
                 match funcs with
                 | [] -> return None
                 | func :: tail ->
                     let! result = func ctx
+
                     match result with
                     | Some c -> return Some c
-                    | None   -> return! chooseHttpFunc tail ctx
+                    | None -> return! chooseHttpFunc tail ctx
             }
 
     /// <summary>
@@ -135,11 +137,10 @@ module Core =
     /// <param name="handlers"></param>
     /// <param name="next"></param>
     /// <returns>A <see cref="HttpFunc"/>.</returns>
-    let choose (handlers : HttpHandler list) : HttpHandler =
-        fun (next : HttpFunc) ->
+    let choose (handlers: HttpHandler list) : HttpHandler =
+        fun (next: HttpFunc) ->
             let funcs = handlers |> List.map (fun h -> h next)
-            fun (ctx : HttpContext) ->
-                chooseHttpFunc funcs ctx
+            fun (ctx: HttpContext) -> chooseHttpFunc funcs ctx
 
     // ---------------------------
     // Default HttpHandlers
@@ -152,23 +153,24 @@ module Core =
     /// <param name="next"></param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let private httpVerb (validate : string -> bool) : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            if validate ctx.Request.Method
-            then next ctx
-            else skipPipeline
+    let private httpVerb (validate: string -> bool) : HttpHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
+            if validate ctx.Request.Method then
+                next ctx
+            else
+                skipPipeline
 
-    let GET     : HttpHandler = httpVerb HttpMethods.IsGet
-    let POST    : HttpHandler = httpVerb HttpMethods.IsPost
-    let PUT     : HttpHandler = httpVerb HttpMethods.IsPut
-    let PATCH   : HttpHandler = httpVerb HttpMethods.IsPatch
-    let DELETE  : HttpHandler = httpVerb HttpMethods.IsDelete
-    let HEAD    : HttpHandler = httpVerb HttpMethods.IsHead
-    let OPTIONS : HttpHandler = httpVerb HttpMethods.IsOptions
-    let TRACE   : HttpHandler = httpVerb HttpMethods.IsTrace
-    let CONNECT : HttpHandler = httpVerb HttpMethods.IsConnect
+    let GET: HttpHandler = httpVerb HttpMethods.IsGet
+    let POST: HttpHandler = httpVerb HttpMethods.IsPost
+    let PUT: HttpHandler = httpVerb HttpMethods.IsPut
+    let PATCH: HttpHandler = httpVerb HttpMethods.IsPatch
+    let DELETE: HttpHandler = httpVerb HttpMethods.IsDelete
+    let HEAD: HttpHandler = httpVerb HttpMethods.IsHead
+    let OPTIONS: HttpHandler = httpVerb HttpMethods.IsOptions
+    let TRACE: HttpHandler = httpVerb HttpMethods.IsTrace
+    let CONNECT: HttpHandler = httpVerb HttpMethods.IsConnect
 
-    let GET_HEAD : HttpHandler = choose [ GET; HEAD ]
+    let GET_HEAD: HttpHandler = choose [ GET; HEAD ]
 
     /// <summary>
     /// Clears the current <see cref="Microsoft.AspNetCore.Http.HttpResponse"/> object.
@@ -177,8 +179,8 @@ module Core =
     /// <param name="next"></param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let clearResponse : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+    let clearResponse: HttpHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
             ctx.Response.Clear()
             next ctx
 
@@ -201,8 +203,8 @@ module Core =
     /// <param name="next"></param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let setStatusCode (statusCode : int) : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+    let setStatusCode (statusCode: int) : HttpHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
             ctx.SetStatusCode statusCode
             next ctx
 
@@ -214,8 +216,8 @@ module Core =
     /// <param name="next"></param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let setHttpHeader (key : string) (value : obj) : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+    let setHttpHeader (key: string) (value: obj) : HttpHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
             ctx.SetHttpHeader(key, value)
             next ctx
 
@@ -227,16 +229,17 @@ module Core =
     /// <param name="next"></param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let mustAccept (mimeTypes : string list) : HttpHandler =
-        let acceptedMimeTypes : MediaTypeHeaderValue list = mimeTypes |> List.map (MediaTypeHeaderValue.Parse)
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+    let mustAccept (mimeTypes: string list) : HttpHandler =
+        let acceptedMimeTypes: MediaTypeHeaderValue list =
+            mimeTypes |> List.map (MediaTypeHeaderValue.Parse)
+
+        fun (next: HttpFunc) (ctx: HttpContext) ->
             let headers = ctx.Request.GetTypedHeaders()
+
             headers.Accept
-            |> Seq.exists (fun h ->
-                acceptedMimeTypes
-                |> List.exists (fun amt -> amt.IsSubsetOf(h)))
+            |> Seq.exists (fun h -> acceptedMimeTypes |> List.exists (fun amt -> amt.IsSubsetOf(h)))
             |> function
-                | true  -> next ctx
+                | true -> next ctx
                 | false -> skipPipeline
 
     /// <summary>
@@ -247,10 +250,10 @@ module Core =
     /// <param name="next"></param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let redirectTo (permanent : bool) (location : string) : HttpHandler  =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+    let redirectTo (permanent: bool) (location: string) : HttpHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
             ctx.Response.Redirect(location, permanent)
-            Task.FromResult (Some ctx)
+            Task.FromResult(Some ctx)
 
     // ---------------------------
     // Model binding functions
@@ -264,8 +267,8 @@ module Core =
     /// <param name="ctx"></param>
     /// <typeparam name="'T"></typeparam>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let bindJson<'T> (f : 'T -> HttpHandler) : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+    let bindJson<'T> (f: 'T -> HttpHandler) : HttpHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
             task {
                 let! model = ctx.BindJsonAsync<'T>()
                 return! f model next ctx
@@ -279,8 +282,8 @@ module Core =
     /// <param name="ctx"></param>
     /// <typeparam name="'T"></typeparam>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let bindXml<'T> (f : 'T -> HttpHandler) : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+    let bindXml<'T> (f: 'T -> HttpHandler) : HttpHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
             task {
                 let! model = ctx.BindXmlAsync<'T>()
                 return! f model next ctx
@@ -295,13 +298,14 @@ module Core =
     /// <param name="ctx"></param>
     /// <typeparam name="'T"></typeparam>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let bindForm<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+    let bindForm<'T> (culture: CultureInfo option) (f: 'T -> HttpHandler) : HttpHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
             task {
                 let! model =
                     match culture with
                     | Some c -> ctx.BindFormAsync<'T> c
-                    | None   -> ctx.BindFormAsync<'T>()
+                    | None -> ctx.BindFormAsync<'T>()
+
                 return! f model next ctx
             }
 
@@ -315,19 +319,24 @@ module Core =
     /// <param name="ctx"></param>
     /// <typeparam name="'T"></typeparam>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let tryBindForm<'T> (parsingErrorHandler : string -> HttpHandler)
-                        (culture             : CultureInfo option)
-                        (successHandler      : 'T -> HttpHandler) : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+    let tryBindForm<'T>
+        (parsingErrorHandler: string -> HttpHandler)
+        (culture: CultureInfo option)
+        (successHandler: 'T -> HttpHandler)
+        : HttpHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
             task {
                 let! result =
                     match culture with
                     | Some c -> ctx.TryBindFormAsync<'T> c
-                    | None   -> ctx.TryBindFormAsync<'T>()
+                    | None -> ctx.TryBindFormAsync<'T>()
+
                 return!
                     (match result with
-                    | Error msg -> parsingErrorHandler msg
-                    | Ok model  -> successHandler model) next ctx
+                     | Error msg -> parsingErrorHandler msg
+                     | Ok model -> successHandler model)
+                        next
+                        ctx
             }
 
     /// <summary>
@@ -339,12 +348,13 @@ module Core =
     /// <param name="ctx"></param>
     /// <typeparam name="'T"></typeparam>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let bindQuery<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+    let bindQuery<'T> (culture: CultureInfo option) (f: 'T -> HttpHandler) : HttpHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
             let model =
                 match culture with
                 | Some c -> ctx.BindQueryString<'T> c
-                | None   -> ctx.BindQueryString<'T>()
+                | None -> ctx.BindQueryString<'T>()
+
             f model next ctx
 
     /// <summary>
@@ -357,17 +367,22 @@ module Core =
     /// <param name="ctx"></param>
     /// <typeparam name="'T"></typeparam>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let tryBindQuery<'T> (parsingErrorHandler : string -> HttpHandler)
-                         (culture             : CultureInfo option)
-                         (successHandler      : 'T -> HttpHandler) : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+    let tryBindQuery<'T>
+        (parsingErrorHandler: string -> HttpHandler)
+        (culture: CultureInfo option)
+        (successHandler: 'T -> HttpHandler)
+        : HttpHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
             let result =
                 match culture with
                 | Some c -> ctx.TryBindQueryString<'T> c
-                | None   -> ctx.TryBindQueryString<'T>()
+                | None -> ctx.TryBindQueryString<'T>()
+
             (match result with
-            | Error msg -> parsingErrorHandler msg
-            | Ok model  -> successHandler model) next ctx
+             | Error msg -> parsingErrorHandler msg
+             | Ok model -> successHandler model)
+                next
+                ctx
 
     /// <summary>
     /// Parses a HTTP payload into an instance of type 'T.
@@ -379,13 +394,14 @@ module Core =
     /// <param name="ctx"></param>
     /// <typeparam name="'T"></typeparam>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let bindModel<'T> (culture : CultureInfo option) (f : 'T -> HttpHandler) : HttpHandler =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+    let bindModel<'T> (culture: CultureInfo option) (f: 'T -> HttpHandler) : HttpHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
             task {
                 let! model =
                     match culture with
                     | Some c -> ctx.BindModelAsync<'T> c
-                    | None   -> ctx.BindModelAsync<'T>()
+                    | None -> ctx.BindModelAsync<'T>()
+
                 return! f model next ctx
             }
 
@@ -404,35 +420,33 @@ module Core =
     /// **Output**
     ///
     /// A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.
-
     /// <summary>
     /// Writes a byte array to the body of the HTTP response and sets the HTTP Content-Length header accordingly.
     /// </summary>
     /// <param name="bytes">The byte array to be send back to the client.</param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
-    let setBody (bytes : byte array) : HttpHandler =
-        fun (_ : HttpFunc) (ctx : HttpContext) ->
-            ctx.WriteBytesAsync bytes
+    let setBody (bytes: byte array) : HttpHandler =
+        fun (_: HttpFunc) (ctx: HttpContext) -> ctx.WriteBytesAsync bytes
 
     /// <summary>
     /// Writes an UTF-8 encoded string to the body of the HTTP response and sets the HTTP Content-Length header accordingly.
     /// </summary>
     /// <param name="str">The string value to be send back to the client.</param>
     /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
-    let setBodyFromString (str : string) : HttpHandler =
+    let setBodyFromString (str: string) : HttpHandler =
         let bytes = Encoding.UTF8.GetBytes str
-        fun (_ : HttpFunc) (ctx : HttpContext) ->
-            ctx.WriteBytesAsync bytes
+        fun (_: HttpFunc) (ctx: HttpContext) -> ctx.WriteBytesAsync bytes
 
     /// <summary>
     /// Writes an UTF-8 encoded string to the body of the HTTP response and sets the HTTP Content-Length header accordingly, as well as the Content-Type header to text/plain.
     /// </summary>
     /// <param name="str">The string value to be send back to the client.</param>
     /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
-    let text (str : string) : HttpHandler =
+    let text (str: string) : HttpHandler =
         let bytes = Encoding.UTF8.GetBytes str
-        fun (_ : HttpFunc) (ctx : HttpContext) ->
+
+        fun (_: HttpFunc) (ctx: HttpContext) ->
             ctx.SetContentType "text/plain; charset=utf-8"
             ctx.WriteBytesAsync bytes
 
@@ -445,9 +459,8 @@ module Core =
     /// <param name="ctx"></param>
     /// <typeparam name="'T"></typeparam>
     /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
-    let json<'T> (dataObj : 'T) : HttpHandler =
-        fun (_ : HttpFunc) (ctx : HttpContext) ->
-            ctx.WriteJsonAsync dataObj
+    let json<'T> (dataObj: 'T) : HttpHandler =
+        fun (_: HttpFunc) (ctx: HttpContext) -> ctx.WriteJsonAsync dataObj
 
     /// <summary>
     /// Serializes an object to JSON and writes the output to the body of the HTTP response using chunked transfer encoding.
@@ -457,9 +470,8 @@ module Core =
     /// <param name="dataObj">The object to be send back to the client.</param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
-    let jsonChunked<'T> (dataObj : 'T) : HttpHandler =
-        fun (_ : HttpFunc) (ctx : HttpContext) ->
-            ctx.WriteJsonChunkedAsync dataObj
+    let jsonChunked<'T> (dataObj: 'T) : HttpHandler =
+        fun (_: HttpFunc) (ctx: HttpContext) -> ctx.WriteJsonChunkedAsync dataObj
 
     /// <summary>
     /// Serializes an object to XML and writes the output to the body of the HTTP response.
@@ -469,9 +481,8 @@ module Core =
     /// <param name="dataObj">The object to be send back to the client.</param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
-    let xml (dataObj : obj) : HttpHandler =
-        fun (_ : HttpFunc) (ctx : HttpContext) ->
-            ctx.WriteXmlAsync dataObj
+    let xml (dataObj: obj) : HttpHandler =
+        fun (_: HttpFunc) (ctx: HttpContext) -> ctx.WriteXmlAsync dataObj
 
     /// <summary>
     /// Reads a HTML file from disk and writes its contents to the body of the HTTP response.
@@ -480,9 +491,8 @@ module Core =
     /// <param name="filePath">A relative or absolute file path to the HTML file.</param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
-    let htmlFile (filePath : string) : HttpHandler =
-        fun (_ : HttpFunc) (ctx : HttpContext) ->
-            ctx.WriteHtmlFileAsync filePath
+    let htmlFile (filePath: string) : HttpHandler =
+        fun (_: HttpFunc) (ctx: HttpContext) -> ctx.WriteHtmlFileAsync filePath
 
     /// <summary>
     /// Writes a HTML string to the body of the HTTP response.
@@ -490,9 +500,10 @@ module Core =
     /// </summary>
     /// <param name="html">The HTML string to be send back to the client.</param>
     /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
-    let htmlString (html : string) : HttpHandler =
+    let htmlString (html: string) : HttpHandler =
         let bytes = Encoding.UTF8.GetBytes html
-        fun (_ : HttpFunc) (ctx : HttpContext) ->
+
+        fun (_: HttpFunc) (ctx: HttpContext) ->
             ctx.SetContentType "text/html; charset=utf-8"
             ctx.WriteBytesAsync bytes
 
@@ -502,8 +513,9 @@ module Core =
     /// </summary>
     /// <param name="htmlView">An `XmlNode` object to be send back to the client and which represents a valid HTML view.</param>
     /// <returns>A Giraffe `HttpHandler` function which can be composed into a bigger web application.</returns>
-    let htmlView (htmlView : XmlNode) : HttpHandler =
+    let htmlView (htmlView: XmlNode) : HttpHandler =
         let bytes = RenderView.AsBytes.htmlDocument htmlView
-        fun (_ : HttpFunc) (ctx : HttpContext) ->
+
+        fun (_: HttpFunc) (ctx: HttpContext) ->
             ctx.SetContentType "text/html; charset=utf-8"
             ctx.WriteBytesAsync bytes
