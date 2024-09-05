@@ -150,12 +150,12 @@ type PreconditionExtensions() =
             | ConditionFailed -> ConditionFailed
             | ResourceNotModified -> ResourceNotModified
 
-        // Set ETag and Last-Modified in the response
-        if eTag.IsSome then
-            responseHeaders.ETag <- eTag.Value
+        // Set ETag in the response
+        eTag |> Option.iter (fun eTagValue -> responseHeaders.ETag <- eTagValue)
 
-        if lastModified.IsSome then
-            responseHeaders.LastModified <- Nullable(lastModified.Value.CutOffMs())
+        // Set Last-Modified in the response
+        lastModified
+        |> Option.iter (fun lastModifiedValue -> responseHeaders.LastModified <- Nullable(lastModifiedValue.CutOffMs()))
 
         // Validate headers in correct precedence
         // RFC: https://tools.ietf.org/html/rfc7232#section-6
