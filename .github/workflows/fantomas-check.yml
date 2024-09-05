@@ -4,6 +4,8 @@ on:
   pull_request:
     paths: 
       - 'samples/**'
+      - 'src/**'
+      - 'tests/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -11,15 +13,15 @@ concurrency:
 
 jobs:
   fantomas-check:
-    name: Fantomas check the
+    name: Code format check
     runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        CHECK_FOLDER: [ 'samples/' ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Restore packages
         run: dotnet tool restore
       - name: Run Fantomas
-        run: dotnet fantomas --check "${{ matrix.CHECK_FOLDER }}"
+        run: dotnet fantomas --check src samples tests
+      - name: log failure
+        if: failure()
+        run: echo "Some files need formatting, please run 'dotnet fantomas src samples tests'"
