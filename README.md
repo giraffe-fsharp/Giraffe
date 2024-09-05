@@ -235,25 +235,10 @@ Please be aware that Giraffe strictly aims to remain as light as possible while 
 
 ### Code conventions
 
-When making changes please use existing code as a guideline for coding style and documentation. For example add spaces when creating tuples (`(a,b)` --> `(a, b)`), annotating variable types (`str:string` --> `str : string`) or other language constructs.
+We use [Fantomas](https://fsprojects.github.io/fantomas/docs/index.html) to ensure consistent code formatting across the project. Before committing, format your code by running the following command:
 
-Examples:
-
-```fsharp
-let someHttpHandler:HttpHandler =
-    fun (ctx:HttpContext) next -> task {
-        // Some work
-    }
-```
-
-should be:
-
-```fsharp
-let someHttpHandler : HttpHandler =
-    fun (ctx : HttpContext) (next : HttpFunc) ->
-        task {
-            // Some work
-        }
+```bash
+dotnet fantomas src samples tests
 ```
 
 ### Keep documentation and unit tests up to date

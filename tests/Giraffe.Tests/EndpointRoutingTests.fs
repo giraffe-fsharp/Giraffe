@@ -26,29 +26,27 @@ open System.Net.Http
 let ``routef: GET "/try-a-guid/%O" returns "Success: ..." or "Not Found"`` (potentialGuid: string, expected: string) =
     task {
         let endpoints: Endpoint list =
-            [ GET
-                  [ route "/" (text "Hello World")
+            [
+                GET [
+                    route "/" (text "Hello World")
                     route "/foo" (text "bar")
-                    routef "/try-a-guid/%O" (fun (guid: Guid) -> text $"Success: {guid}") ] ]
+                    routef "/try-a-guid/%O" (fun (guid: Guid) -> text $"Success: {guid}")
+                ]
+            ]
 
         let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
 
         let configureApp (app: IApplicationBuilder) =
-            app.UseRouting()
-               .UseGiraffe(endpoints)
-               .UseGiraffe(notFoundHandler)
+            app.UseRouting().UseGiraffe(endpoints).UseGiraffe(notFoundHandler)
 
         let configureServices (services: IServiceCollection) =
             services.AddRouting().AddGiraffe() |> ignore
 
-        let request = 
-            createRequest HttpMethod.Get $"/try-a-guid/{potentialGuid}"
+        let request = createRequest HttpMethod.Get $"/try-a-guid/{potentialGuid}"
 
-        let! response = 
-            makeRequest (fun () -> configureApp) configureServices () request
+        let! response = makeRequest (fun () -> configureApp) configureServices () request
 
-        let! content = 
-            response |> readText
+        let! content = response |> readText
 
         content |> shouldEqual expected
     }

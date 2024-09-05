@@ -1,0 +1,9 @@
+root = true
+
+[*.{fs,fsi,fsx}]
+end_of_line = lf
+fsharp_multiline_bracket_style = aligned
+fsharp_multi_line_lambda_closing_newline = true
+
+[{tests,samples}/**/*.fs]
+fsharp_experimental_elmish = true

@@ -10,19 +10,39 @@ open Giraffe
 [<AutoOpen>]
 module TestApp =
     module Route =
-        let [<Literal>] Anonymous       = "/anonymous"
-        let [<Literal>] Authenticated   = "/authenticated"
-        let [<Literal>] AdminOnly       = "/admin-only"
-        let [<Literal>] AdminOrOperator = "/admin-or-operator"
-        let [<Literal>] JohnOnly        = "/john-only"
+        [<Literal>]
+        let Anonymous = "/anonymous"
+
+        [<Literal>]
+        let Authenticated = "/authenticated"
+
+        [<Literal>]
+        let AdminOnly = "/admin-only"
+
+        [<Literal>]
+        let AdminOrOperator = "/admin-or-operator"
+
+        [<Literal>]
+        let JohnOnly = "/john-only"
 
     module Response =
-        let [<Literal>] Anonymous       = "Hi, stranger"
-        let [<Literal>] Authenticated   = "Hi, should I know you?"
-        let [<Literal>] AdminOnly       = "Hi, admin"
-        let [<Literal>] AdminOrOperator = "Hi, are you admin or operator?"
-        let [<Literal>] JohnOnly        = "Hi, John"
-        let [<Literal>] AccessDenied    = "Access Denied"
+        [<Literal>]
+        let Anonymous = "Hi, stranger"
+
+        [<Literal>]
+        let Authenticated = "Hi, should I know you?"
+
+        [<Literal>]
+        let AdminOnly = "Hi, admin"
+
+        [<Literal>]
+        let AdminOrOperator = "Hi, are you admin or operator?"
+
+        [<Literal>]
+        let JohnOnly = "Hi, John"
+
+        [<Literal>]
+        let AccessDenied = "Access Denied"
 
     type ExpectedResponse =
         | Unauthorized
@@ -31,29 +51,34 @@ module TestApp =
     type User =
         | Anonymous
         | Authenticated of Claim list
-        with
-            member x.AsClaimsPrincipal =
-                match x with
-                | Anonymous       -> ClaimsPrincipal (ClaimsIdentity ())
-                | Authenticated c -> ClaimsPrincipal (ClaimsIdentity (c, "foo"))
+
+        member x.AsClaimsPrincipal =
+            match x with
+            | Anonymous -> ClaimsPrincipal(ClaimsIdentity())
+            | Authenticated c -> ClaimsPrincipal(ClaimsIdentity(c, "foo"))
 
     let private accessDenied = setStatusCode 401 >=> text Response.AccessDenied
-    let private ok content   = setStatusCode 200 >=> text content
+    let private ok content = setStatusCode 200 >=> text content
 
     let private mustBeLoggedIn = requiresAuthentication accessDenied
     let private mustBeAdmin = requiresRole "admin" accessDenied
-    let private mustBeOperatorOrAdmin = requiresRoleOf ["admin"; "operator"] accessDenied
 
-    let private isJohn (user : ClaimsPrincipal) = user.HasClaim (ClaimTypes.Name, "John")
+    let private mustBeOperatorOrAdmin =
+        requiresRoleOf [ "admin"; "operator" ] accessDenied
+
+    let private isJohn (user: ClaimsPrincipal) = user.HasClaim(ClaimTypes.Name, "John")
     let private mustBeJohn = authorizeUser isJohn accessDenied
 
     let app =
-        GET >=> choose [
-            route Route.Anonymous       >=> ok Response.Anonymous
-            route Route.Authenticated   >=> mustBeLoggedIn        >=> ok Response.Authenticated
-            route Route.AdminOnly       >=> mustBeAdmin           >=> ok Response.AdminOnly
-            route Route.AdminOrOperator >=> mustBeOperatorOrAdmin >=> ok Response.AdminOrOperator
-            route Route.JohnOnly        >=> mustBeJohn            >=> ok Response.JohnOnly
+        GET
+        >=> choose [
+            route Route.Anonymous >=> ok Response.Anonymous
+            route Route.Authenticated >=> mustBeLoggedIn >=> ok Response.Authenticated
+            route Route.AdminOnly >=> mustBeAdmin >=> ok Response.AdminOnly
+            route Route.AdminOrOperator
+            >=> mustBeOperatorOrAdmin
+            >=> ok Response.AdminOrOperator
+            route Route.JohnOnly >=> mustBeJohn >=> ok Response.JohnOnly
         ]
 
 [<AutoOpen>]
@@ -61,29 +86,24 @@ module TestData =
 
     let noClaims = []
 
-    let mkName name =
-        [ Claim (ClaimTypes.Name, name) ]
+    let mkName name = [ Claim(ClaimTypes.Name, name) ]
 
-    let adminWithoutName =
-        [ Claim (ClaimTypes.Role, "admin") ]
+    let adminWithoutName = [ Claim(ClaimTypes.Role, "admin") ]
 
-    let operatorWithoutName =
-        [ Claim (ClaimTypes.Role, "operator") ]
+    let operatorWithoutName = [ Claim(ClaimTypes.Role, "operator") ]
 
     let mkAdmin name =
-        [ Claim (ClaimTypes.Name, name)
-          Claim (ClaimTypes.Role, "admin") ]
+        [ Claim(ClaimTypes.Name, name); Claim(ClaimTypes.Role, "admin") ]
 
     let mkOperator name =
-        [ Claim (ClaimTypes.Name, name)
-          Claim (ClaimTypes.Role, "operator") ]
+        [ Claim(ClaimTypes.Name, name); Claim(ClaimTypes.Role, "operator") ]
 
-let testAuthentication (givenUser : User) givenRoute expected =
+let testAuthentication (givenUser: User) givenRoute expected =
     task {
         let ctx = Substitute.For<HttpContext>()
-        ctx.Response.Body <- new MemoryStream ()
+        ctx.Response.Body <- new MemoryStream()
         ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-        ctx.Request.Path.ReturnsForAnyArgs (PathString (givenRoute)) |> ignore
+        ctx.Request.Path.ReturnsForAnyArgs(PathString(givenRoute)) |> ignore
         // Not injecting ClaimsPrincipal in generator with intention.
         // This is workaround to get nice pretty print in case test fails
         ctx.User <- givenUser.AsClaimsPrincipal
@@ -91,12 +111,12 @@ let testAuthentication (givenUser : User) givenRoute expected =
         let expectedStatusCode, expectedContent =
             match expected with
             | Unauthorized -> 401, Response.AccessDenied
-            | Ok content   -> 200, content
+            | Ok content -> 200, content
 
         let! result = app next ctx
 
         match result with
-        | None     -> assertFailf "It was expected that the result would be %s" expectedContent
+        | None -> assertFailf "It was expected that the result would be %s" expectedContent
         | Some ctx ->
             Assert.Equal(expectedStatusCode, getStatusCode ctx)
             Assert.Equal(expectedContent, getBody ctx)
@@ -128,7 +148,7 @@ let ``Authenticated user with no claims can access anonymous route`` () =
 
 [<Fact>]
 let ``Authenticated user who is not an admin or operator or John can access anonymous route`` () =
-    testAuthentication (Authenticated (mkName "Bill")) Route.Anonymous (Ok Response.Anonymous)
+    testAuthentication (Authenticated(mkName "Bill")) Route.Anonymous (Ok Response.Anonymous)
 
 [<Fact>]
 let ``Authenticated user with no claims can access authenticated route`` () =
@@ -136,7 +156,7 @@ let ``Authenticated user with no claims can access authenticated route`` () =
 
 [<Fact>]
 let ``Authenticated user who is not an admin or operator or John can access authenticated route`` () =
-    testAuthentication (Authenticated (mkName "Bill")) Route.Authenticated (Ok Response.Authenticated)
+    testAuthentication (Authenticated(mkName "Bill")) Route.Authenticated (Ok Response.Authenticated)
 
 [<Fact>]
 let ``Authenticated user with no claims cannot access admin only route`` () =
@@ -144,7 +164,7 @@ let ``Authenticated user with no claims cannot access admin only route`` () =
 
 [<Fact>]
 let ``Authenticated user who is not an admin or operator or John cannot access admin only route`` () =
-    testAuthentication (Authenticated (mkName "Bill")) Route.AdminOnly Unauthorized
+    testAuthentication (Authenticated(mkName "Bill")) Route.AdminOnly Unauthorized
 
 [<Fact>]
 let ``Authenticated user with no claims cannot access admin or operator route`` () =
@@ -152,7 +172,7 @@ let ``Authenticated user with no claims cannot access admin or operator route`` 
 
 [<Fact>]
 let ``Authenticated user who is not an admin or operator or John cannot access admin or operator route`` () =
-    testAuthentication (Authenticated (mkName "Bill")) Route.AdminOrOperator Unauthorized
+    testAuthentication (Authenticated(mkName "Bill")) Route.AdminOrOperator Unauthorized
 
 [<Fact>]
 let ``Authenticated user with no claims cannot access john only route`` () =
@@ -160,11 +180,11 @@ let ``Authenticated user with no claims cannot access john only route`` () =
 
 [<Fact>]
 let ``Authenticated user who is not an admin or operator or John cannot access john only route`` () =
-    testAuthentication (Authenticated (mkName "Bill")) Route.JohnOnly Unauthorized
+    testAuthentication (Authenticated(mkName "Bill")) Route.JohnOnly Unauthorized
 
 [<Fact>]
 let ``Admin who is not John can access anonymous route`` () =
-    testAuthentication (Authenticated (mkAdmin "Susan")) Route.Anonymous (Ok Response.Anonymous)
+    testAuthentication (Authenticated(mkAdmin "Susan")) Route.Anonymous (Ok Response.Anonymous)
 
 [<Fact>]
 let ``Admin without name can access anonymous route`` () =
@@ -172,7 +192,7 @@ let ``Admin without name can access anonymous route`` () =
 
 [<Fact>]
 let ``Admin who is not John can access authenticated route`` () =
-    testAuthentication (Authenticated (mkAdmin "Susan")) Route.Authenticated (Ok Response.Authenticated)
+    testAuthentication (Authenticated(mkAdmin "Susan")) Route.Authenticated (Ok Response.Authenticated)
 
 [<Fact>]
 let ``Admin without name can access authenticated route`` () =
@@ -180,7 +200,7 @@ let ``Admin without name can access authenticated route`` () =
 
 [<Fact>]
 let ``Admin who is not John can access admin only route`` () =
-    testAuthentication (Authenticated (mkAdmin "Susan")) Route.AdminOnly (Ok Response.AdminOnly)
+    testAuthentication (Authenticated(mkAdmin "Susan")) Route.AdminOnly (Ok Response.AdminOnly)
 
 [<Fact>]
 let ``Admin without name can access admin only route`` () =
@@ -188,7 +208,7 @@ let ``Admin without name can access admin only route`` () =
 
 [<Fact>]
 let ``Admin who is not John can access admin or operator only route`` () =
-    testAuthentication (Authenticated (mkAdmin "Susan")) Route.AdminOrOperator (Ok Response.AdminOrOperator)
+    testAuthentication (Authenticated(mkAdmin "Susan")) Route.AdminOrOperator (Ok Response.AdminOrOperator)
 
 [<Fact>]
 let ``Admin without name can access admin or operator only route`` () =
@@ -196,7 +216,7 @@ let ``Admin without name can access admin or operator only route`` () =
 
 [<Fact>]
 let ``Admin who is not John cannot access john only route`` () =
-    testAuthentication (Authenticated (mkAdmin "Susan")) Route.JohnOnly Unauthorized
+    testAuthentication (Authenticated(mkAdmin "Susan")) Route.JohnOnly Unauthorized
 
 [<Fact>]
 let ``Admin without name cannot access john only route`` () =
@@ -204,7 +224,7 @@ let ``Admin without name cannot access john only route`` () =
 
 [<Fact>]
 let ``Operator who is not John can access anonymous route`` () =
-    testAuthentication (Authenticated (mkOperator "Kate")) Route.Anonymous (Ok Response.Anonymous)
+    testAuthentication (Authenticated(mkOperator "Kate")) Route.Anonymous (Ok Response.Anonymous)
 
 [<Fact>]
 let ``Operator without name can access anonymous route`` () =
@@ -212,7 +232,7 @@ let ``Operator without name can access anonymous route`` () =
 
 [<Fact>]
 let ``Operator who is not John can access authenticated route`` () =
-    testAuthentication (Authenticated (mkOperator "Kate")) Route.Authenticated (Ok Response.Authenticated)
+    testAuthentication (Authenticated(mkOperator "Kate")) Route.Authenticated (Ok Response.Authenticated)
 
 [<Fact>]
 let ``Operator without name can access authenticated route`` () =
@@ -220,7 +240,7 @@ let ``Operator without name can access authenticated route`` () =
 
 [<Fact>]
 let ``Operator who is not John cannot access admin only route`` () =
-    testAuthentication (Authenticated (mkOperator "Kate")) Route.AdminOnly Unauthorized
+    testAuthentication (Authenticated(mkOperator "Kate")) Route.AdminOnly Unauthorized
 
 [<Fact>]
 let ``Operator without name cannot access admin only route`` () =
@@ -228,7 +248,7 @@ let ``Operator without name cannot access admin only route`` () =
 
 [<Fact>]
 let ``Operator who is not John can access admin or operator route`` () =
-    testAuthentication (Authenticated (mkOperator "Kate")) Route.AdminOrOperator (Ok Response.AdminOrOperator)
+    testAuthentication (Authenticated(mkOperator "Kate")) Route.AdminOrOperator (Ok Response.AdminOrOperator)
 
 [<Fact>]
 let ``Operator without name can access admin or operator route`` () =
@@ -236,7 +256,7 @@ let ``Operator without name can access admin or operator route`` () =
 
 [<Fact>]
 let ``Operator who is not John cannot access john only route`` () =
-    testAuthentication (Authenticated (mkOperator "Kate")) Route.JohnOnly Unauthorized
+    testAuthentication (Authenticated(mkOperator "Kate")) Route.JohnOnly Unauthorized
 
 [<Fact>]
 let ``Operator without name cannot access john only route`` () =
@@ -244,60 +264,60 @@ let ``Operator without name cannot access john only route`` () =
 
 [<Fact>]
 let ``John without a role can access anonymous route`` () =
-    testAuthentication (Authenticated (mkName "John")) Route.Anonymous (Ok Response.Anonymous)
+    testAuthentication (Authenticated(mkName "John")) Route.Anonymous (Ok Response.Anonymous)
 
 [<Fact>]
 let ``John without a role can access authenticated route`` () =
-    testAuthentication (Authenticated (mkName "John")) Route.Authenticated (Ok Response.Authenticated)
+    testAuthentication (Authenticated(mkName "John")) Route.Authenticated (Ok Response.Authenticated)
 
 [<Fact>]
 let ``John without a role cannot access admin only route`` () =
-    testAuthentication (Authenticated (mkName "John")) Route.AdminOnly Unauthorized
+    testAuthentication (Authenticated(mkName "John")) Route.AdminOnly Unauthorized
 
 [<Fact>]
 let ``John without a role cannot access admin or operator route`` () =
-    testAuthentication (Authenticated (mkName "John")) Route.AdminOrOperator Unauthorized
+    testAuthentication (Authenticated(mkName "John")) Route.AdminOrOperator Unauthorized
 
 [<Fact>]
 let ``John without a role can access john only route`` () =
-    testAuthentication (Authenticated (mkName "John")) Route.JohnOnly (Ok Response.JohnOnly)
+    testAuthentication (Authenticated(mkName "John")) Route.JohnOnly (Ok Response.JohnOnly)
 
 [<Fact>]
 let ``John who is an admin can access anonymous route`` () =
-    testAuthentication (Authenticated (mkAdmin "John")) Route.Anonymous (Ok Response.Anonymous)
+    testAuthentication (Authenticated(mkAdmin "John")) Route.Anonymous (Ok Response.Anonymous)
 
 [<Fact>]
 let ``John who is an admin can access authenticated route`` () =
-    testAuthentication (Authenticated (mkAdmin "John")) Route.Authenticated (Ok Response.Authenticated)
+    testAuthentication (Authenticated(mkAdmin "John")) Route.Authenticated (Ok Response.Authenticated)
 
 [<Fact>]
 let ``John who is an admin can access admin only route`` () =
-    testAuthentication (Authenticated (mkAdmin "John")) Route.AdminOnly (Ok Response.AdminOnly)
+    testAuthentication (Authenticated(mkAdmin "John")) Route.AdminOnly (Ok Response.AdminOnly)
 
 [<Fact>]
 let ``John who is an admin can access admin or operator route`` () =
-    testAuthentication (Authenticated (mkAdmin "John")) Route.AdminOrOperator (Ok Response.AdminOrOperator)
+    testAuthentication (Authenticated(mkAdmin "John")) Route.AdminOrOperator (Ok Response.AdminOrOperator)
 
 [<Fact>]
 let ``John who is an admin can access john only route`` () =
-    testAuthentication (Authenticated (mkAdmin "John")) Route.JohnOnly (Ok Response.JohnOnly)
+    testAuthentication (Authenticated(mkAdmin "John")) Route.JohnOnly (Ok Response.JohnOnly)
 
 [<Fact>]
 let ``John who is an operator can access anonymous route`` () =
-    testAuthentication (Authenticated (mkOperator "John")) Route.Anonymous (Ok Response.Anonymous)
+    testAuthentication (Authenticated(mkOperator "John")) Route.Anonymous (Ok Response.Anonymous)
 
 [<Fact>]
 let ``John who is an operator can access authenticated route`` () =
-    testAuthentication (Authenticated (mkOperator "John")) Route.Authenticated (Ok Response.Authenticated)
+    testAuthentication (Authenticated(mkOperator "John")) Route.Authenticated (Ok Response.Authenticated)
 
 [<Fact>]
 let ``John who is an operator cannot access admin only route`` () =
-    testAuthentication (Authenticated (mkOperator "John")) Route.AdminOnly Unauthorized
+    testAuthentication (Authenticated(mkOperator "John")) Route.AdminOnly Unauthorized
 
 [<Fact>]
 let ``John who is an operator can access admin or operator route`` () =
-    testAuthentication (Authenticated (mkOperator "John")) Route.AdminOrOperator (Ok Response.AdminOrOperator)
+    testAuthentication (Authenticated(mkOperator "John")) Route.AdminOrOperator (Ok Response.AdminOrOperator)
 
 [<Fact>]
 let ``John who is an operator can access john only route`` () =
-    testAuthentication (Authenticated (mkOperator "John")) Route.JohnOnly (Ok Response.JohnOnly)
+    testAuthentication (Authenticated(mkOperator "John")) Route.JohnOnly (Ok Response.JohnOnly)

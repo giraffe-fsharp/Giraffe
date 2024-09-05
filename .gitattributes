@@ -1,2 +1,7 @@
 * text=auto
 *.sh text eol=lf
+
+# Always use lf for F# files
+*.fs text eol=lf
+*.fsx text eol=lf
+*.fsi text eol=lf
