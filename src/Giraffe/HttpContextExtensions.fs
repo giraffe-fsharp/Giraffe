@@ -203,7 +203,7 @@ type HttpContextExtensions() =
     [<Extension>]
     static member ReadBodyFromRequestAsync(ctx: HttpContext) =
         task {
-            use reader = new StreamReader(ctx.Request.Body, Encoding.UTF8)
+            use reader = new StreamReader(ctx.Request.Body, Encoding.UTF8, leaveOpen = true)
             return! reader.ReadToEndAsync()
         }
 
