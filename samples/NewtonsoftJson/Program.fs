@@ -71,7 +71,8 @@ let configureServices (services: IServiceCollection) =
                 JsonSerializerSettings(),
                 serviceProvider.GetService<Microsoft.IO.RecyclableMemoryStreamManager>()
             )
-            :> Json.ISerializer)
+            :> Json.ISerializer
+        )
         .AddRouting()
         .AddResponseCaching()
         .AddGiraffe()

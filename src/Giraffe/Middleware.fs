@@ -15,20 +15,20 @@ open Microsoft.IO
 // Default middleware
 // ---------------------------
 
-type GiraffeMiddleware (next          : RequestDelegate,
-                        handler       : HttpHandler,
-                        loggerFactory : ILoggerFactory) =
+type GiraffeMiddleware(next: RequestDelegate, handler: HttpHandler, loggerFactory: ILoggerFactory) =
 
-    do if isNull next then raise (ArgumentNullException("next"))
+    do
+        if isNull next then
+            raise (ArgumentNullException("next"))
 
     let logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
 
     // pre-compile the handler pipeline
-    let func : HttpFunc = handler earlyReturn
+    let func: HttpFunc = handler earlyReturn
 
-    member __.Invoke (ctx : HttpContext) =
+    member __.Invoke(ctx: HttpContext) =
         task {
-            let start = System.Diagnostics.Stopwatch.GetTimestamp();
+            let start = System.Diagnostics.Stopwatch.GetTimestamp()
 
             let! result = func ctx
 
@@ -43,7 +43,8 @@ type GiraffeMiddleware (next          : RequestDelegate,
                     ctx.Request.Protocol,
                     ctx.Request.Method,
                     ctx.Request.Path.ToString(),
-                    elapsedMs)
+                    elapsedMs
+                )
 
             if (result.IsNone) then
                 return! next.Invoke ctx
@@ -53,24 +54,31 @@ type GiraffeMiddleware (next          : RequestDelegate,
 // Error Handling middleware
 // ---------------------------
 
-type GiraffeErrorHandlerMiddleware (next          : RequestDelegate,
-                                    errorHandler  : ErrorHandler,
-                                    loggerFactory : ILoggerFactory) =
+type GiraffeErrorHandlerMiddleware(next: RequestDelegate, errorHandler: ErrorHandler, loggerFactory: ILoggerFactory) =
 
-    do if isNull next then raise (ArgumentNullException("next"))
+    do
+        if isNull next then
+            raise (ArgumentNullException("next"))
 
-    member __.Invoke (ctx : HttpContext) =
+    member __.Invoke(ctx: HttpContext) =
         task {
-            try return! next.Invoke ctx
+            try
+                return! next.Invoke ctx
             with ex ->
                 let logger = loggerFactory.CreateLogger<GiraffeErrorHandlerMiddleware>()
+
                 try
                     let func = (Some >> Task.FromResult)
                     let! _ = errorHandler ex logger func ctx
                     return ()
                 with ex2 ->
-                    logger.LogError(EventId(0), ex,  "An unhandled exception has occurred while executing the request.")
-                    logger.LogError(EventId(0), ex2, "An exception was thrown attempting to handle the original exception.")
+                    logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
+
+                    logger.LogError(
+                        EventId(0),
+                        ex2,
+                        "An exception was thrown attempting to handle the original exception."
+                    )
         }
 
 // ---------------------------
@@ -88,10 +96,8 @@ type ApplicationBuilderExtensions() =
     /// <param name="handler">The Giraffe <see cref="HttpHandler" /> pipeline. The handler can be anything from a single handler to an entire web application which has been composed from many smaller handlers.</param>
     /// <returns><see cref="Microsoft.FSharp.Core.Unit"/></returns>
     [<Extension>]
-    static member UseGiraffe
-        (builder : IApplicationBuilder, handler : HttpHandler) =
-        builder.UseMiddleware<GiraffeMiddleware> handler
-        |> ignore
+    static member UseGiraffe(builder: IApplicationBuilder, handler: HttpHandler) =
+        builder.UseMiddleware<GiraffeMiddleware> handler |> ignore
 
     /// <summary>
     /// Adds the <see cref="GiraffeErrorHandlerMiddleware" /> into the ASP.NET Core pipeline. The <see cref="GiraffeErrorHandlerMiddleware" /> has been configured in such a way that it only invokes the <see cref="ErrorHandler" /> when an unhandled exception bubbles up to the middleware. It therefore is recommended to add the <see cref="GiraffeErrorHandlerMiddleware" /> as the very first middleware above everything else.
@@ -100,8 +106,7 @@ type ApplicationBuilderExtensions() =
     /// <param name="handler">The Giraffe <see cref="ErrorHandler" /> pipeline. The handler can be anything from a single handler to a bigger error application which has been composed from many smaller handlers.</param>
     /// <returns>Returns an <see cref="Microsoft.AspNetCore.Builder.IApplicationBuilder"/> builder object.</returns>
     [<Extension>]
-    static member UseGiraffeErrorHandler
-        (builder : IApplicationBuilder, handler : ErrorHandler) =
+    static member UseGiraffeErrorHandler(builder: IApplicationBuilder, handler: ErrorHandler) =
         builder.UseMiddleware<GiraffeErrorHandlerMiddleware> handler
 
 [<Extension>]
@@ -113,11 +118,17 @@ type ServiceCollectionExtensions() =
     /// </summary>
     /// <returns>Returns an <see cref="Microsoft.Extensions.DependencyInjection.IServiceCollection"/> builder object.</returns>
     [<Extension>]
-    static member AddGiraffe(svc : IServiceCollection) =
+    static member AddGiraffe(svc: IServiceCollection) =
         svc.TryAddSingleton<RecyclableMemoryStreamManager>(fun _ -> RecyclableMemoryStreamManager())
+
         svc.TryAddSingleton<Json.ISerializer>(fun _ ->
-            Json.Serializer(Json.Serializer.DefaultOptions) :> Json.ISerializer)
+            Json.Serializer(Json.Serializer.DefaultOptions) :> Json.ISerializer
+        )
+
         svc.TryAddSingleton<Xml.ISerializer>(fun sp ->
-            SystemXml.Serializer(SystemXml.Serializer.DefaultSettings, sp.GetService<RecyclableMemoryStreamManager>()) :> Xml.ISerializer)
+            SystemXml.Serializer(SystemXml.Serializer.DefaultSettings, sp.GetService<RecyclableMemoryStreamManager>())
+            :> Xml.ISerializer
+        )
+
         svc.TryAddSingleton<INegotiationConfig, DefaultNegotiationConfig>()
         svc
