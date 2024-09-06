@@ -1,6 +1,18 @@
 Release Notes
 =============
 
+## 7.0.2-alpha-001 - 2024-09-06
+
+- [Moar fantomas](https://github.com/giraffe-fsharp/Giraffe/pull/614) - Credits @nojaf
+    - Format all F# source code using [fantomas](https://github.com/fsprojects/fantomas).
+    - Started checking the `samples/`, `tests/` and `src/` contents to know if they are complying with fantomas format.
+- [HandleOptionGracefullyAnalyzer for ETag and Last-Modified at Preconditional.fs](https://github.com/giraffe-fsharp/Giraffe/pull/613) - Credits @64J0
+- [feat: add request limits on accept, content-type, and content-length headers](https://github.com/giraffe-fsharp/Giraffe/pull/502) - Credits @stijnmoreels
+    - Add request guards/limitation on:
+        - `Accept` header
+        - `Content-Type` header
+        - `Content-Length` header
+
 ## 7.0.1 - 2024-08-27
 
 - [Add F# Analyzers](https://github.com/giraffe-fsharp/Giraffe/pull/603) - Credits @1eyewonder
