@@ -9,8 +9,10 @@ open Microsoft.AspNetCore.Http
 /// handlers that changes the status code to 406 (not acceptable) and responds with a piece of text.
 /// </summary>
 type OptionalErrorHandlers =
-    { InvalidHeaderValue: HttpHandler option
-      HeaderNotFound: HttpHandler option }
+    {
+        InvalidHeaderValue: HttpHandler option
+        HeaderNotFound: HttpHandler option
+    }
 
 /// <summary>
 /// Filters an incoming HTTP request based on the accepted mime types of the client (Accept HTTP header).
@@ -43,12 +45,9 @@ let mustAcceptAny (mimeTypes: string list) (optionalErrorHandler: OptionalErrorH
 
         match Option.ofObj (headers.Accept :> _ seq) with
         | Some xs when Seq.map (_.ToString()) xs |> Seq.exists (fun x -> Seq.contains x mimeTypes) -> next ctx
-        | Some xs when Seq.isEmpty xs ->
-            headerNotFoundHandler earlyReturn ctx
-        | Some _ ->
-            invalidHeaderValueHandler earlyReturn ctx
-        | None ->
-            headerNotFoundHandler earlyReturn ctx
+        | Some xs when Seq.isEmpty xs -> headerNotFoundHandler earlyReturn ctx
+        | Some _ -> invalidHeaderValueHandler earlyReturn ctx
+        | None -> headerNotFoundHandler earlyReturn ctx
 
 /// <summary>
 /// Limits to only requests with one of the specified `Content-Type` headers,
@@ -77,12 +76,9 @@ let hasAnyContentTypes (contentTypes: string list) (optionalErrorHandler: Option
 
         match Option.ofObj ctx.Request.ContentType with
         | Some header when Seq.contains header contentTypes -> next ctx
-        | Some header when String.IsNullOrEmpty header -> 
-            headerNotFoundHandler earlyReturn ctx
-        | Some _ ->
-            invalidHeaderValueHandler earlyReturn ctx
-        | None ->
-            headerNotFoundHandler earlyReturn ctx
+        | Some header when String.IsNullOrEmpty header -> headerNotFoundHandler earlyReturn ctx
+        | Some _ -> invalidHeaderValueHandler earlyReturn ctx
+        | None -> headerNotFoundHandler earlyReturn ctx
 
 
 /// <summary>
@@ -94,7 +90,7 @@ let hasAnyContentTypes (contentTypes: string list) (optionalErrorHandler: Option
 /// response either if the header does not exist or has an invalid value. If both are `Option.None`, we use default
 /// handlers.</param>
 /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-let hasContentType (contentType: string) (optionalErrorHandler: OptionalErrorHandlers) = 
+let hasContentType (contentType: string) (optionalErrorHandler: OptionalErrorHandlers) =
     hasAnyContentTypes [ contentType ] (optionalErrorHandler: OptionalErrorHandlers)
 
 /// <summary>
@@ -124,7 +120,5 @@ let maxContentLength (maxLength: int64) (optionalErrorHandler: OptionalErrorHand
 
         match Option.ofNullable header with
         | Some v when v <= maxLength -> next ctx
-        | Some _ ->
-            invalidHeaderValueHandler earlyReturn ctx
-        | None ->
-            headerNotFoundHandler earlyReturn ctx
+        | Some _ -> invalidHeaderValueHandler earlyReturn ctx
+        | None -> headerNotFoundHandler earlyReturn ctx
