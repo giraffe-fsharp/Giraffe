@@ -31,6 +31,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [File Uploads](#file-uploads)
     - [Authentication and Authorization](#authentication-and-authorization)
     - [Conditional Requests](#conditional-requests)
+    - [Request Limitation](#request-limitation)
     - [Response Writing](#response-writing)
     - [Content Negotiation](#content-negotiation)
     - [Streaming](#streaming)
@@ -2375,6 +2376,74 @@ let webApp =
         route "/"    >=> text "Hello World"
         route "/foo" >=> someHttpHandler
     ]
+```
+
+### Request Limitation
+
+With this feature, we can add guards or limitations to the kind of requests that reach the server. Requests with a certain value for the `Accept`, `Content-Type` or `Content-Length` headers can be checked for acceptable values and a configurable user-friendly error message is send back to the consumer automatically when the conditions are not met.
+
+In order to configure this response, you must use a [record](https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/records) type named `OptionalErrorHandlers`:
+
+```fsharp
+// the type definition
+type OptionalErrorHandlers =
+    { InvalidHeaderValue: HttpHandler option
+      HeaderNotFound: HttpHandler option }
+
+// to use the default handlers
+let optionalErrorHandlers =
+    { InvalidHeaderValue = None; HeaderNotFound = None }
+```
+
+As shown at the previous code block, you can simply use `None` for the record and use our default handlers, which will change the response status code to 406 (not acceptable), and return a piece of text to the client explaining what happened.
+
+For now, the helper middlewares we offer are:
+
+**Accept**
+Guards http request based on its `Accept` header:
+
+```fsharp
+// Only allow http requests with an `Accept` header equals `application/json`.
+let webApp =
+  GET >=> mustAcceptAny [ "application/json" ] optionalErrorHandlers >=> text "Hello World"
+
+// Http request with `Accept` = `application/json`    -> Pass through
+// Http request without `Accept` = `application/json  -> Error status code 406.
+//  If you define your custom error handler, we use them, otherwise will return one of the following text messages:
+//  1) Request rejected because 'Accept' header was not found
+//  2) Request rejected because 'Accept' header hasn't got expected MIME type
+```
+
+**Content-Type**
+Guards http request based on its `Content-Type` header:
+
+```fsharp
+// Only allow http request with a `Content-Type` header `equals `application/json`.
+let webApp =
+  GET >=> hasAnyContentTypes "application/json" optionalErrorHandlers >=> text "Hello World"
+
+// Http request with    `Content-Type` = `application/json` -> Pass through
+// Http request without `Content-Type` = `application/json` -> Error status code 406.
+//   If you define your custom error handler, we use them, otherwise will return one of the following text messages:
+//   1) Request rejected because 'Content-Type' header was not found
+//   2) Request rejected because 'Content-Type' header hasn't got expected value
+```
+
+* Note: with `hasAnyContentTypes` multiple `Content-Type` headers can be passed to verify if the http request has any of the provided header values.
+
+**Content-Length**
+Guards http request based on its `Content-Length` header:
+
+```fsharp
+// Only allow http request with a `Content-Length` header less than or equal than provided maximum bytes.
+let webApp =
+  GET >=> maxContentLength 100L >=> text "Hello World"
+
+// Http request with    `Content-Length` = `45`   -> Pass through
+// Http request without `Content-Length` = `3042` -> Error status code 406.
+//   If you define your custom error handler, we use them, otherwise will return one of the following text messages:
+//   1) Request rejected because there is no 'Content-Length' header
+//   2) Request rejected because 'Content-Length' header is too large
 ```
 
 ### Response Writing
