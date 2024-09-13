@@ -1,18 +1,13 @@
 ![Giraffe](https://raw.githubusercontent.com/giraffe-fsharp/Giraffe/develop/giraffe.png)
 
+[![NuGet Info](https://img.shields.io/nuget/vpre/Giraffe?style=flat-square)](https://www.nuget.org/packages/Giraffe/)
+![GitHub Workflow Status (event)](https://img.shields.io/github/actions/workflow/status/giraffe-fsharp/Giraffe/build-and-test.yml?branch=master&label=Build%20master&style=flat-square)
+
 # Giraffe
 
 A functional ASP.NET Core micro web framework for building rich web applications.
 
 Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) for more information.
-
-[![NuGet Info](https://buildstats.info/nuget/Giraffe?includePreReleases=true)](https://www.nuget.org/packages/Giraffe/)
-
-### Linux, macOS and Windows Build Status
-
-![.NET Core](https://github.com/giraffe-fsharp/Giraffe/workflows/.NET%20Core/badge.svg?branch=develop)
-
-[![Windows Build history](https://buildstats.info/github/chart/giraffe-fsharp/giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://github.com/giraffe-fsharp/Giraffe/actions?query=branch%3Adevelop++)
 
 ## Table of contents
 
@@ -171,10 +166,6 @@ There is a few sample applications which can be found in the [`samples`](https:/
 
 ### Live apps
 
-#### buildstats.info
-
-The web service [https://buildstats.info](https://buildstats.info) uses Giraffe to build rich SVG widgets for Git repositories. The application runs as a Docker container in the Google Container Engine (see [CI-BuiltStats on GitHub](https://github.com/dustinmoris/CI-BuildStats) for more information).
-
 #### dusted.codes
 
 My personal blog [https://dusted.codes](https://dusted.codes) is also built with Giraffe and ASP.NET Core and all of the [source code is published on GitHub](https://github.com/dustinmoris/DustedCodes) for further reference.
@@ -298,9 +289,15 @@ If you have blogged about Giraffe, demonstrating a useful topic or some other ti
 
 [Apache 2.0](https://raw.githubusercontent.com/giraffe-fsharp/Giraffe/master/LICENSE)
 
-## Contact and Slack Channel
+## Current maintainers
 
-If you have any further questions feel free to reach out to me via any of the mentioned social media on [https://dusted.codes/about](https://dusted.codes/about) or join the `#giraffe` Slack channel in the [Functional Programming Slack Team](https://functionalprogramming.slack.com/). Please use [this link](https://fpslack.com/) to request an invitation to the Functional Programming Slack Team if you don't have an account registered yet.
+- [@64J0](https://github.com/64J0)
+- [@dbrattli](https://github.com/dbrattli)
+- [@mrtz-j](https://github.com/mrtz-j)
+
+## Contact
+
+If you have any further questions feel free to reach out to me via any of the mentioned social media on [https://dusted.codes/about](https://dusted.codes/about)
 
 ## Support
 
