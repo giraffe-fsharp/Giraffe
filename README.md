@@ -1,18 +1,13 @@
 ![Giraffe](https://raw.githubusercontent.com/giraffe-fsharp/Giraffe/develop/giraffe.png)
 
+[![NuGet Info](https://img.shields.io/nuget/vpre/Giraffe?style=flat-square)](https://www.nuget.org/packages/Giraffe/)
+![GitHub Workflow Status (event)](https://img.shields.io/github/actions/workflow/status/giraffe-fsharp/Giraffe/build-and-test.yml?branch=master&label=Build%20master&style=flat-square)
+
 # Giraffe
 
 A functional ASP.NET Core micro web framework for building rich web applications.
 
 Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) for more information.
-
-[![NuGet Info](https://buildstats.info/nuget/Giraffe?includePreReleases=true)](https://www.nuget.org/packages/Giraffe/)
-
-### Linux, macOS and Windows Build Status
-
-![.NET Core](https://github.com/giraffe-fsharp/Giraffe/workflows/.NET%20Core/badge.svg?branch=develop)
-
-[![Windows Build history](https://buildstats.info/github/chart/giraffe-fsharp/giraffe?branch=develop&includeBuildsFromPullRequest=false)](https://github.com/giraffe-fsharp/Giraffe/actions?query=branch%3Adevelop++)
 
 ## Table of contents
 
@@ -297,6 +292,12 @@ If you have blogged about Giraffe, demonstrating a useful topic or some other ti
 ## License
 
 [Apache 2.0](https://raw.githubusercontent.com/giraffe-fsharp/Giraffe/master/LICENSE)
+
+## Current maintainers
+
+- [@64J0](https://github.com/64J0)
+- [@dbrattli](https://github.com/dbrattli)
+- [@mrtz-j](https://github.com/mrtz-j)
 
 ## Contact and Slack Channel
 
