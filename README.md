@@ -166,10 +166,6 @@ There is a few sample applications which can be found in the [`samples`](https:/
 
 ### Live apps
 
-#### buildstats.info
-
-The web service [https://buildstats.info](https://buildstats.info) uses Giraffe to build rich SVG widgets for Git repositories. The application runs as a Docker container in the Google Container Engine (see [CI-BuiltStats on GitHub](https://github.com/dustinmoris/CI-BuildStats) for more information).
-
 #### dusted.codes
 
 My personal blog [https://dusted.codes](https://dusted.codes) is also built with Giraffe and ASP.NET Core and all of the [source code is published on GitHub](https://github.com/dustinmoris/DustedCodes) for further reference.
