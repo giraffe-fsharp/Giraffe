@@ -203,7 +203,22 @@ type HttpContextExtensions() =
     [<Extension>]
     static member ReadBodyFromRequestAsync(ctx: HttpContext) =
         task {
-            use reader = new StreamReader(ctx.Request.Body, Encoding.UTF8)
+            use reader = new StreamReader(ctx.Request.Body, Encoding.UTF8, leaveOpen = true)
+            return! reader.ReadToEndAsync()
+        }
+
+    /// <summary>
+    /// Reads the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously and returns it as a <see cref="System.String"/> value. This function let's you decide if you want to leave the ctx.Request.Body element open or not.
+    /// </summary>
+    /// <param name="ctx">The current http context object.</param>
+    /// <param name="leaveOpen">`true` to leave the stream open after the StreamReader object is disposed; otherwise, `false`.</param>
+    /// <returns>Returns the contents of the request body as a <see cref="System.Threading.Tasks.Task{System.String}"/>.</returns>
+    [<Extension>]
+    static member ReadBodyFromRequestAsync(ctx: HttpContext, leaveOpen: bool) =
+        task {
+            use reader =
+                new StreamReader(ctx.Request.Body, Encoding.UTF8, leaveOpen = leaveOpen)
+
             return! reader.ReadToEndAsync()
         }
 

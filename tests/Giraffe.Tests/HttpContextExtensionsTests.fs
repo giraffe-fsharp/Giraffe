@@ -289,3 +289,112 @@ let ``WriteHtmlViewAsync should add html to the context`` () =
         | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
+
+[<Fact>]
+let ``ReadBodyFromRequestAsync is not incorrectly disposing the request body`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let bodyStr = "Hello world!"
+    let mutable reqBodyDisposed = false
+
+    let testHandler: HttpHandler =
+        fun (_: HttpFunc) (ctx: HttpContext) ->
+            task {
+                let! bodyFstRead = ctx.ReadBodyFromRequestAsync()
+                Assert.Equal(bodyStr, bodyFstRead)
+                Assert.False reqBodyDisposed
+
+                // By the second time, the request body was read, so the position will be at the end of
+                // the stream. Due to it, we need to get back to the beginning of the stream:
+                ctx.Request.Body.Position <- 0L
+                let! bodySndRead = ctx.ReadBodyFromRequestAsync()
+                Assert.Equal(bodyStr, bodySndRead)
+                Assert.False reqBodyDisposed
+
+                // If we don't change the position, it will simply return an empty string.
+                let! bodyThirdRead = ctx.ReadBodyFromRequestAsync()
+                Assert.Equal("", bodyThirdRead)
+                Assert.False reqBodyDisposed
+
+                return! Encoding.UTF8.GetBytes bodyFstRead |> ctx.WriteBytesAsync
+            }
+
+    let app = route "/" >=> testHandler
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/")) |> ignore
+
+    ctx.Request.Body <-
+        { new MemoryStream(buffer = Encoding.UTF8.GetBytes(bodyStr)) with
+            member this.Dispose(disposing: bool) : unit =
+                reqBodyDisposed <- true
+                base.Dispose(disposing: bool)
+        }
+
+    ctx.Response.Body <- new MemoryStream()
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None -> assertFail "Result was expected to be Option.Some"
+        | Some ctx ->
+            let ctxReqBody = getReqBody ctx
+            Assert.Equal(bodyStr, ctxReqBody)
+            Assert.False reqBodyDisposed // not disposed yet
+
+        do ctx.Request.Body.Dispose() // "manually" disposed
+        Assert.True reqBodyDisposed // now it's disposed
+    }
+
+[<Fact>]
+let ``Old ReadBodyFromRequestAsync implementation was incorrectly disposing the request body`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let bodyStr = "Hello world!"
+    let mutable reqBodyDisposed = false
+    let leaveOpen = false // the old default
+
+    let testHandler: HttpHandler =
+        fun (_: HttpFunc) (ctx: HttpContext) ->
+            task {
+                Assert.False reqBodyDisposed
+
+                let! bodyFstRead = ctx.ReadBodyFromRequestAsync(leaveOpen)
+                Assert.Equal(bodyStr, bodyFstRead)
+                Assert.True reqBodyDisposed
+
+                let! capturedException =
+                    Assert.ThrowsAsync<ArgumentException>(fun () -> ctx.ReadBodyFromRequestAsync(leaveOpen))
+
+                Assert.Equal("Stream was not readable.", capturedException.Message)
+
+                return! Encoding.UTF8.GetBytes bodyFstRead |> ctx.WriteBytesAsync
+            }
+
+    let app = route "/" >=> testHandler
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/")) |> ignore
+
+    ctx.Request.Body <-
+        { new MemoryStream(buffer = Encoding.UTF8.GetBytes(bodyStr)) with
+            member this.Dispose(disposing: bool) : unit =
+                reqBodyDisposed <- true
+                base.Dispose(disposing: bool)
+        }
+
+    ctx.Response.Body <- new MemoryStream()
+
+    task {
+        let! result = app (Some >> Task.FromResult) ctx
+
+        match result with
+        | None -> assertFail "Result was expected to be Option.Some"
+        | Some ctx ->
+            let capturedException =
+                Assert.Throws<ObjectDisposedException>(fun () -> getReqBody ctx |> ignore)
+
+            Assert.Equal("Cannot access a closed Stream.", capturedException.Message)
+            Assert.True reqBodyDisposed
+    }
