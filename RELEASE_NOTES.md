@@ -1,6 +1,11 @@
 Release Notes
 =============
 
+## 7.0.2-alpha-002 - 2024-09-20
+
+- [Add maintainers info](https://github.com/giraffe-fsharp/Giraffe/pull/616) - Credits @nojaf
+- [Fix ReadBodyFromRequestAsync disposing ctx.Request.Body](https://github.com/giraffe-fsharp/Giraffe/pull/615) - Credits @64J0
+
 ## 7.0.2-alpha-001 - 2024-09-06
 
 - [Moar fantomas](https://github.com/giraffe-fsharp/Giraffe/pull/614) - Credits @nojaf
