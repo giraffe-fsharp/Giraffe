@@ -196,9 +196,14 @@ let hasLastModified (lastModified: DateTimeOffset) (response: HttpResponseMessag
     Assert.Equal(lastModified, response.Content.Headers.LastModified.Value)
     response
 
+let getReqBody (ctx: HttpContext) =
+    ctx.Request.Body.Position <- 0L
+    use reader = new StreamReader(ctx.Request.Body, Encoding.UTF8, leaveOpen = true)
+    reader.ReadToEnd()
+
 let getBody (ctx: HttpContext) =
     ctx.Response.Body.Position <- 0L
-    use reader = new StreamReader(ctx.Response.Body, Encoding.UTF8)
+    use reader = new StreamReader(ctx.Response.Body, Encoding.UTF8, leaveOpen = true)
     reader.ReadToEnd()
 
 let readText (response: HttpResponseMessage) = response.Content.ReadAsStringAsync()
