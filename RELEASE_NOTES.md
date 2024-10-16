@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+## 7.0.2 - 2024-10-16
+
+Combination of the tags:
+
+- [7.0.2-alpha-001](https://github.com/giraffe-fsharp/Giraffe/releases/tag/v7.0.2-alpha-001)
+- [7.0.2-alpha-002](https://github.com/giraffe-fsharp/Giraffe/releases/tag/v7.0.2-alpha-002)
+
 ## 7.0.2-alpha-002 - 2024-09-20
 
 - [Add maintainers info](https://github.com/giraffe-fsharp/Giraffe/pull/616) - Credits @nojaf
