@@ -33,10 +33,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            6.x
-            7.x
-            8.x
+          dotnet-version: 8.x
       - name: Restore
         run: dotnet restore
       - name: Build
@@ -53,10 +50,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            6.x
-            7.x
-            8.x
+          dotnet-version: 8.x
       - name: Create Release NuGet package
         run: |
           arrTag=(${GITHUB_REF//\// })
