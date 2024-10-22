@@ -14,7 +14,4 @@ dotnet run .
 # then, you can use this script to test the server, and confirm that the rate-limiting
 # middleware is really working
 dotnet fsi rate-limiting-test.fsx
-
-# to run with the DEBUG flag active
-dotnet fsi --define:DEBUG rate-limiting-test.fsx
 ```

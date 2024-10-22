@@ -8,6 +8,7 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Routing
 open Microsoft.FSharp.Reflection
+open Microsoft.Extensions.DependencyInjection
 open FSharp.Core
 open Giraffe
 
@@ -156,41 +157,69 @@ module Routers =
             | CONNECT -> "CONNECT"
             | _ -> ""
 
+    [<RequireQualifiedAccess>]
+    type AspNetExtension =
+        /// <summary>
+        /// Use this discriminated union value to configure the ASP.NET rate limiting mechanism.
+        /// </summary>
+        /// <seealso href="https://learn.microsoft.com/en-us/aspnet/core/performance/rate-limit">
+        /// Rate limiting docs
+        /// </seealso>
+        | RateLimiting of string
+        /// <summary>
+        /// Use this discriminated union value to configure the ASP.NET output cache mechanism.
+        /// </summary>
+        /// <seealso href="https://learn.microsoft.com/en-us/aspnet/core/performance/caching/output">
+        /// Outuput caching docs
+        /// </seealso>
+        | CacheOutput of string
+
     type RouteTemplate = string
     type RouteTemplateMappings = list<string * char>
     type ConfigureEndpoint = IEndpointConventionBuilder -> IEndpointConventionBuilder
 
     type Endpoint =
-        | SimpleEndpoint of HttpVerb * RouteTemplate * HttpHandler * ConfigureEndpoint
+        | SimpleEndpoint of HttpVerb * RouteTemplate * HttpHandler * ConfigureEndpoint * AspNetExtension list
         | TemplateEndpoint of
             HttpVerb *
             RouteTemplate *
             RouteTemplateMappings *
             (obj -> HttpHandler) *
-            ConfigureEndpoint
-        | NestedEndpoint of RouteTemplate * Endpoint list * ConfigureEndpoint
+            ConfigureEndpoint *
+            AspNetExtension list
+        | NestedEndpoint of RouteTemplate * Endpoint list * ConfigureEndpoint * AspNetExtension list
         | MultiEndpoint of Endpoint list
 
     let rec private applyHttpVerbToEndpoint (verb: HttpVerb) (endpoint: Endpoint) : Endpoint =
         match endpoint with
-        | SimpleEndpoint(_, routeTemplate, requestDelegate, metadata) ->
-            SimpleEndpoint(verb, routeTemplate, requestDelegate, metadata)
-        | TemplateEndpoint(_, routeTemplate, mappings, requestDelegate, metadata) ->
-            TemplateEndpoint(verb, routeTemplate, mappings, requestDelegate, metadata)
-        | NestedEndpoint(routeTemplate, endpoints, metadata) ->
-            NestedEndpoint(routeTemplate, endpoints |> List.map (applyHttpVerbToEndpoint verb), metadata)
+        | SimpleEndpoint(_, routeTemplate, requestDelegate, metadata, aspNetExtensions) ->
+            SimpleEndpoint(verb, routeTemplate, requestDelegate, metadata, aspNetExtensions)
+        | TemplateEndpoint(_, routeTemplate, mappings, requestDelegate, metadata, aspNetExtensions) ->
+            TemplateEndpoint(verb, routeTemplate, mappings, requestDelegate, metadata, aspNetExtensions)
+        | NestedEndpoint(routeTemplate, endpoints, metadata, aspNetExtensions) ->
+            NestedEndpoint(
+                routeTemplate,
+                endpoints |> List.map (applyHttpVerbToEndpoint verb),
+                metadata,
+                aspNetExtensions
+            )
         | MultiEndpoint endpoints -> endpoints |> List.map (applyHttpVerbToEndpoint verb) |> MultiEndpoint
 
     let rec private applyHttpVerbToEndpoints (verb: HttpVerb) (endpoints: Endpoint list) : Endpoint =
         endpoints
         |> List.map (fun endpoint ->
             match endpoint with
-            | SimpleEndpoint(_, routeTemplate, requestDelegate, metadata) ->
-                SimpleEndpoint(verb, routeTemplate, requestDelegate, metadata)
-            | TemplateEndpoint(_, routeTemplate, mappings, requestDelegate, metadata) ->
-                TemplateEndpoint(verb, routeTemplate, mappings, requestDelegate, metadata)
-            | NestedEndpoint(routeTemplate, endpoints, metadata) ->
-                NestedEndpoint(routeTemplate, endpoints |> List.map (applyHttpVerbToEndpoint verb), metadata)
+            | SimpleEndpoint(_, routeTemplate, requestDelegate, metadata, aspNetExtensions) ->
+                SimpleEndpoint(verb, routeTemplate, requestDelegate, metadata, aspNetExtensions)
+            | TemplateEndpoint(_, routeTemplate, mappings, requestDelegate, metadata, aspNetExtensions) ->
+                TemplateEndpoint(verb, routeTemplate, mappings, requestDelegate, metadata, aspNetExtensions)
+            | NestedEndpoint(routeTemplate, endpoints, metadata, aspNetExtensions) ->
+                NestedEndpoint(
+                    routeTemplate,
+                    endpoints |> List.map (applyHttpVerbToEndpoint verb),
+                    metadata,
+                    aspNetExtensions
+                )
             | MultiEndpoint endpoints -> applyHttpVerbToEndpoints verb endpoints
         )
         |> MultiEndpoint
@@ -199,18 +228,27 @@ module Routers =
         endpoints
         |> List.map (fun endpoint ->
             match endpoint with
-            | SimpleEndpoint(_, routeTemplate, requestDelegate, metadata) ->
-                verbs
-                |> List.map (fun verb -> SimpleEndpoint(verb, routeTemplate, requestDelegate, metadata))
-                |> MultiEndpoint
-            | TemplateEndpoint(_, routeTemplate, mappings, requestDelegate, metadata) ->
-                verbs
-                |> List.map (fun verb -> TemplateEndpoint(verb, routeTemplate, mappings, requestDelegate, metadata))
-                |> MultiEndpoint
-            | NestedEndpoint(routeTemplate, endpoints, metadata) ->
+            | SimpleEndpoint(_, routeTemplate, requestDelegate, metadata, aspNetExtensions) ->
                 verbs
                 |> List.map (fun verb ->
-                    NestedEndpoint(routeTemplate, endpoints |> List.map (applyHttpVerbToEndpoint verb), metadata)
+                    SimpleEndpoint(verb, routeTemplate, requestDelegate, metadata, aspNetExtensions)
+                )
+                |> MultiEndpoint
+            | TemplateEndpoint(_, routeTemplate, mappings, requestDelegate, metadata, aspNetExtensions) ->
+                verbs
+                |> List.map (fun verb ->
+                    TemplateEndpoint(verb, routeTemplate, mappings, requestDelegate, metadata, aspNetExtensions)
+                )
+                |> MultiEndpoint
+            | NestedEndpoint(routeTemplate, endpoints, metadata, aspNetExtensions) ->
+                verbs
+                |> List.map (fun verb ->
+                    NestedEndpoint(
+                        routeTemplate,
+                        endpoints |> List.map (applyHttpVerbToEndpoint verb),
+                        metadata,
+                        aspNetExtensions
+                    )
                 )
                 |> MultiEndpoint
             | MultiEndpoint endpoints ->
@@ -232,39 +270,48 @@ module Routers =
     let TRACE = applyHttpVerbToEndpoints TRACE
     let CONNECT = applyHttpVerbToEndpoints CONNECT
 
-    let route (path: string) (handler: HttpHandler) : Endpoint =
-        SimpleEndpoint(HttpVerb.NotSpecified, path, handler, id)
+    let route (path: string) (aspNetExtensions: AspNetExtension list) (handler: HttpHandler) : Endpoint =
+        SimpleEndpoint(HttpVerb.NotSpecified, path, handler, id, aspNetExtensions)
 
-    let routef (path: PrintfFormat<_, _, _, _, 'T>) (routeHandler: 'T -> HttpHandler) : Endpoint =
+    let routef
+        (path: PrintfFormat<_, _, _, _, 'T>)
+        (aspNetExtensions: AspNetExtension list)
+        (routeHandler: 'T -> HttpHandler)
+        : Endpoint =
         let template, mappings = RouteTemplateBuilder.convertToRouteTemplate path
 
         let boxedHandler (o: obj) =
             let t = o :?> 'T
             routeHandler t
 
-        TemplateEndpoint(HttpVerb.NotSpecified, template, mappings, boxedHandler, id)
+        TemplateEndpoint(HttpVerb.NotSpecified, template, mappings, boxedHandler, id, aspNetExtensions)
 
-    let subRoute (path: string) (endpoints: Endpoint list) : Endpoint = NestedEndpoint(path, endpoints, id)
+    let subRoute (path: string) (aspNetExtensions: AspNetExtension list) (endpoints: Endpoint list) : Endpoint =
+        NestedEndpoint(path, endpoints, id, aspNetExtensions)
 
     let rec applyBefore (httpHandler: HttpHandler) (endpoint: Endpoint) =
         match endpoint with
-        | SimpleEndpoint(v, p, h, ce) -> SimpleEndpoint(v, p, httpHandler >=> h, ce)
-        | TemplateEndpoint(v, p, m, h, ce) -> TemplateEndpoint(v, p, m, (fun (o: obj) -> httpHandler >=> h o), ce)
-        | NestedEndpoint(t, lst, ce) -> NestedEndpoint(t, List.map (applyBefore httpHandler) lst, ce)
+        | SimpleEndpoint(v, p, h, ce, aspNetExtensions) -> SimpleEndpoint(v, p, httpHandler >=> h, ce, aspNetExtensions)
+        | TemplateEndpoint(v, p, m, h, ce, aspNetExtensions) ->
+            TemplateEndpoint(v, p, m, (fun (o: obj) -> httpHandler >=> h o), ce, aspNetExtensions)
+        | NestedEndpoint(t, lst, ce, aspNetExtensions) ->
+            NestedEndpoint(t, List.map (applyBefore httpHandler) lst, ce, aspNetExtensions)
         | MultiEndpoint(lst) -> MultiEndpoint(List.map (applyBefore httpHandler) lst)
 
     let rec applyAfter (httpHandler: HttpHandler) (endpoint: Endpoint) =
         match endpoint with
-        | SimpleEndpoint(v, p, h, ce) -> SimpleEndpoint(v, p, h >=> httpHandler, ce)
-        | TemplateEndpoint(v, p, m, h, ce) -> TemplateEndpoint(v, p, m, (fun (o: obj) -> h o >=> httpHandler), ce)
-        | NestedEndpoint(t, lst, ce) -> NestedEndpoint(t, List.map (applyAfter httpHandler) lst, ce)
+        | SimpleEndpoint(v, p, h, ce, aspNetExtensions) -> SimpleEndpoint(v, p, h >=> httpHandler, ce, aspNetExtensions)
+        | TemplateEndpoint(v, p, m, h, ce, aspNetExtensions) ->
+            TemplateEndpoint(v, p, m, (fun (o: obj) -> h o >=> httpHandler), ce, aspNetExtensions)
+        | NestedEndpoint(t, lst, ce, aspNetExtensions) ->
+            NestedEndpoint(t, List.map (applyAfter httpHandler) lst, ce, aspNetExtensions)
         | MultiEndpoint(lst) -> MultiEndpoint(List.map (applyAfter httpHandler) lst)
 
     let rec configureEndpoint (f: ConfigureEndpoint) (endpoint: Endpoint) =
         match endpoint with
-        | SimpleEndpoint(v, p, h, ce) -> SimpleEndpoint(v, p, h, ce >> f)
-        | TemplateEndpoint(v, p, m, h, ce) -> TemplateEndpoint(v, p, m, h, ce >> f)
-        | NestedEndpoint(t, lst, ce) -> NestedEndpoint(t, lst, ce >> f)
+        | SimpleEndpoint(v, p, h, ce, aspNetExtensions) -> SimpleEndpoint(v, p, h, ce >> f, aspNetExtensions)
+        | TemplateEndpoint(v, p, m, h, ce, aspNetExtensions) -> TemplateEndpoint(v, p, m, h, ce >> f, aspNetExtensions)
+        | NestedEndpoint(t, lst, ce, aspNetExtensions) -> NestedEndpoint(t, lst, ce >> f, aspNetExtensions)
         | MultiEndpoint(lst) -> MultiEndpoint(List.map (configureEndpoint f) lst)
 
     let addMetadata (metadata: obj) (endpoint: Endpoint) =
@@ -279,14 +326,33 @@ type EndpointRouteBuilderExtensions() =
 
     [<Extension>]
     static member private MapSingleEndpoint
-        (builder: IEndpointRouteBuilder, singleEndpoint: HttpVerb * RouteTemplate * RequestDelegate * ConfigureEndpoint) =
+        (
+            builder: IEndpointRouteBuilder,
+            singleEndpoint: HttpVerb * RouteTemplate * RequestDelegate * ConfigureEndpoint,
+            aspNetExtensions: AspNetExtension list
+        ) =
+
+        let rec applyExtensions (aspNetExtensions: AspNetExtension list) (builder: IEndpointConventionBuilder) =
+            match aspNetExtensions with
+            | [] -> builder
+            | x :: xs ->
+                let newBuilder =
+                    match x with
+                    | AspNetExtension.RateLimiting policyName -> builder.RequireRateLimiting(policyName)
+                    | AspNetExtension.CacheOutput policyName -> builder.CacheOutput(policyName)
+
+                applyExtensions xs newBuilder
 
         let verb, routeTemplate, requestDelegate, configureEndpoint = singleEndpoint
 
         match verb with
-        | NotSpecified -> builder.Map(routeTemplate, requestDelegate) |> configureEndpoint
+        | NotSpecified ->
+            builder.Map(routeTemplate, requestDelegate)
+            |> applyExtensions aspNetExtensions
+            |> configureEndpoint
         | _ ->
             builder.MapMethods(routeTemplate, [ verb.ToString() ], requestDelegate)
+            |> applyExtensions aspNetExtensions
             |> configureEndpoint
         |> ignore
 
@@ -302,20 +368,24 @@ type EndpointRouteBuilderExtensions() =
         endpoints
         |> List.iter (fun endpoint ->
             match endpoint with
-            | SimpleEndpoint(v, t, h, ce) ->
+            | SimpleEndpoint(v, t, h, ce, aspNetExtensions) ->
                 let d = RequestDelegateBuilder.createRequestDelegate h
-                builder.MapSingleEndpoint(v, routeTemplate t, d, configureEndpoint >> ce)
-            | TemplateEndpoint(v, t, m, h, ce) ->
+                builder.MapSingleEndpoint((v, routeTemplate t, d, configureEndpoint >> ce), aspNetExtensions)
+            | TemplateEndpoint(v, t, m, h, ce, aspNetExtensions) ->
                 let d = RequestDelegateBuilder.createTokenizedRequestDelegate m h
-                builder.MapSingleEndpoint(v, routeTemplate t, d, configureEndpoint >> ce)
-            | NestedEndpoint(t, e, ce) -> builder.MapNestedEndpoint(routeTemplate t, e, configureEndpoint >> ce)
+                builder.MapSingleEndpoint((v, routeTemplate t, d, configureEndpoint >> ce), aspNetExtensions)
+            | NestedEndpoint(t, e, ce, aspNetExtensions) ->
+                builder.MapNestedEndpoint((routeTemplate t, e, configureEndpoint >> ce), aspNetExtensions)
             | MultiEndpoint(el) -> builder.MapMultiEndpoint(subRouteTemplate, el, configureEndpoint)
         )
 
     [<Extension>]
     static member private MapNestedEndpoint
-        (builder: IEndpointRouteBuilder, nestedEndpoint: RouteTemplate * Endpoint list * ConfigureEndpoint)
-        =
+        (
+            builder: IEndpointRouteBuilder,
+            nestedEndpoint: RouteTemplate * Endpoint list * ConfigureEndpoint,
+            aspNetExtensions: AspNetExtension list
+        ) =
 
         let subRouteTemplate, endpoints, parentConfigureEndpoint = nestedEndpoint
         let routeTemplate = sprintf "%s%s" subRouteTemplate
@@ -323,13 +393,14 @@ type EndpointRouteBuilderExtensions() =
         endpoints
         |> List.iter (fun endpoint ->
             match endpoint with
-            | SimpleEndpoint(v, t, h, ce) ->
+            | SimpleEndpoint(v, t, h, ce, aspNetExtensions) ->
                 let d = RequestDelegateBuilder.createRequestDelegate h
-                builder.MapSingleEndpoint(v, routeTemplate t, d, parentConfigureEndpoint >> ce)
-            | TemplateEndpoint(v, t, m, h, ce) ->
+                builder.MapSingleEndpoint((v, routeTemplate t, d, parentConfigureEndpoint >> ce), aspNetExtensions)
+            | TemplateEndpoint(v, t, m, h, ce, aspNetExtensions) ->
                 let d = RequestDelegateBuilder.createTokenizedRequestDelegate m h
-                builder.MapSingleEndpoint(v, routeTemplate t, d, parentConfigureEndpoint >> ce)
-            | NestedEndpoint(t, e, ce) -> builder.MapNestedEndpoint(routeTemplate t, e, parentConfigureEndpoint >> ce)
+                builder.MapSingleEndpoint((v, routeTemplate t, d, parentConfigureEndpoint >> ce), aspNetExtensions)
+            | NestedEndpoint(t, e, ce, aspNetExtensions) ->
+                builder.MapNestedEndpoint((routeTemplate t, e, parentConfigureEndpoint >> ce), aspNetExtensions)
             | MultiEndpoint(el) -> builder.MapMultiEndpoint(subRouteTemplate, el, parentConfigureEndpoint)
         )
 
@@ -337,15 +408,15 @@ type EndpointRouteBuilderExtensions() =
     static member MapGiraffeEndpoints(builder: IEndpointRouteBuilder, endpoints: Endpoint list) =
 
         endpoints
-        |> List.iter (fun endpoint ->
+        |> List.iter (fun (endpoint: Endpoint) ->
             match endpoint with
-            | SimpleEndpoint(v, t, h, ce) ->
+            | SimpleEndpoint(v, t, h, ce, aspNetExtensions) ->
                 let d = RequestDelegateBuilder.createRequestDelegate h
-                builder.MapSingleEndpoint(v, t, d, ce)
-            | TemplateEndpoint(v, t, m, h, ce) ->
+                builder.MapSingleEndpoint((v, t, d, ce), aspNetExtensions)
+            | TemplateEndpoint(v, t, m, h, ce, aspNetExtensions) ->
                 let d = RequestDelegateBuilder.createTokenizedRequestDelegate m h
-                builder.MapSingleEndpoint(v, t, d, ce)
-            | NestedEndpoint(t, e, ce) -> builder.MapNestedEndpoint(t, e, ce)
+                builder.MapSingleEndpoint((v, t, d, ce), aspNetExtensions)
+            | NestedEndpoint(t, e, ce, aspNetExtensions) -> builder.MapNestedEndpoint((t, e, ce), aspNetExtensions)
             | MultiEndpoint(el) -> builder.MapMultiEndpoint("", el, id)
         )
 

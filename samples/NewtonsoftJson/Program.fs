@@ -60,7 +60,7 @@ module NewtonsoftJson =
 type JsonResponse = { Foo: string; Bar: string; Age: int }
 
 let endpoints: Endpoint list =
-    [ GET [ route "/json" (json { Foo = "john"; Bar = "doe"; Age = 30 }) ] ]
+    [ GET [ route "/json" [] (json { Foo = "john"; Bar = "doe"; Age = 30 }) ] ]
 
 let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
 

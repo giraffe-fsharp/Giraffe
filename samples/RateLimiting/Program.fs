@@ -8,7 +8,15 @@ open Giraffe.EndpointRouting
 open Microsoft.AspNetCore.RateLimiting
 open System.Threading.RateLimiting
 
-let endpoints: list<Endpoint> = [ GET [ route "/" (text "Hello World") ] ]
+let MY_RATE_LIMITER = "fixed"
+
+let endpoints: list<Endpoint> =
+    [
+        GET [
+            route "/rate-limit" [ AspNetExtension.RateLimiting MY_RATE_LIMITER ] (text "Hello World")
+            route "/no-rate-limit" [] (text "Hello World: No Rate Limit!")
+        ]
+    ]
 
 let notFoundHandler = text "Not Found" |> RequestErrors.notFound
 
@@ -20,25 +28,21 @@ let configureApp (appBuilder: IApplicationBuilder) =
         .UseGiraffe(notFoundHandler)
 
 let configureServices (services: IServiceCollection) =
-    // From https://blog.maartenballiauw.be/post/2022/09/26/aspnet-core-rate-limiting-middleware.html
-    let configureRateLimiter (options: RateLimiterOptions) =
-        options.RejectionStatusCode <- StatusCodes.Status429TooManyRequests
+    // From https://learn.microsoft.com/en-us/aspnet/core/performance/rate-limit?view=aspnetcore-8.0#fixed-window-limiter
+    let configureRateLimiter (rateLimiterOptions: RateLimiterOptions) =
+        rateLimiterOptions.RejectionStatusCode <- StatusCodes.Status429TooManyRequests
 
-        options.GlobalLimiter <-
-            PartitionedRateLimiter.Create<HttpContext, string>(fun httpContext ->
-                RateLimitPartition.GetFixedWindowLimiter(
-                    partitionKey = httpContext.Request.Headers.Host.ToString(),
-                    factory =
-                        (fun _partition ->
-                            new FixedWindowRateLimiterOptions(
-                                AutoReplenishment = true,
-                                PermitLimit = 10,
-                                QueueLimit = 0,
-                                Window = TimeSpan.FromSeconds(1)
-                            )
-                        )
+        rateLimiterOptions.AddFixedWindowLimiter(
+            policyName = MY_RATE_LIMITER,
+            configureOptions =
+                (fun (options: FixedWindowRateLimiterOptions) ->
+                    options.PermitLimit <- 10
+                    options.Window <- TimeSpan.FromSeconds 12
+                    options.QueueProcessingOrder <- QueueProcessingOrder.OldestFirst
+                    options.QueueLimit <- 1
                 )
-            )
+        )
+        |> ignore
 
     services.AddRateLimiter(configureRateLimiter).AddRouting().AddGiraffe()
     |> ignore

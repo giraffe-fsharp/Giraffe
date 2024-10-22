@@ -28,9 +28,9 @@ let ``routef: GET "/try-a-guid/%O" returns "Success: ..." or "Not Found"`` (pote
         let endpoints: Endpoint list =
             [
                 GET [
-                    route "/" (text "Hello World")
-                    route "/foo" (text "bar")
-                    routef "/try-a-guid/%O" (fun (guid: Guid) -> text $"Success: {guid}")
+                    route "/" [] (text "Hello World")
+                    route "/foo" [] (text "bar")
+                    routef "/try-a-guid/%O" [] (fun (guid: Guid) -> text $"Success: {guid}")
                 ]
             ]
 

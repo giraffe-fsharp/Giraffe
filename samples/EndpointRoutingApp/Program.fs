@@ -20,20 +20,20 @@ let handler3 (a: string, b: string, c: string, d: int) : HttpHandler =
 
 let endpoints =
     [
-        subRoute "/foo" [ GET [ route "/bar" (text "Aloha!") ] ]
+        subRoute "/foo" [] [ GET [ route "/bar" [] (text "Aloha!") ] ]
         GET [
-            route "/" (text "Hello World")
-            routef "/%s/%i" handler2
-            routef "/%s/%s/%s/%i" handler3
+            route "/" [] (text "Hello World")
+            routef "/%s/%i" [] handler2
+            routef "/%s/%s/%s/%i" [] handler3
         ]
         GET_HEAD [
-            route "/foo" (text "Bar")
-            route "/x" (text "y")
-            route "/abc" (text "def")
-            route "/123" (text "456")
+            route "/foo" [] (text "Bar")
+            route "/x" [] (text "y")
+            route "/abc" [] (text "def")
+            route "/123" [] (text "456")
         ]
         // Not specifying a http verb means it will listen to all verbs
-        subRoute "/sub" [ route "/test" handler1 ]
+        subRoute "/sub" [] [ route "/test" [] handler1 ]
     ]
 
 let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound

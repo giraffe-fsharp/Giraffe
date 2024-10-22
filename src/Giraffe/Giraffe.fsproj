@@ -8,7 +8,7 @@
     <NeutralLanguage>en-GB</NeutralLanguage>
 
     <!-- Build settings -->
-    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
     <DebugType>portable</DebugType>
     <OutputType>Library</OutputType>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -38,9 +38,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)../../giraffe-64x64.png" Pack="true" PackagePath="$(PackageIconUrl)"/>
-    <None Include="$(MSBuildThisFileDirectory)../../README.md" Pack="true" PackagePath="/"/>    
-    <None Include="$(MSBuildThisFileDirectory)../../LICENSE" Pack="true" PackagePath="/"/>   
+    <None Include="$(MSBuildThisFileDirectory)../../giraffe-64x64.png" Pack="true" PackagePath="$(PackageIconUrl)" />
+    <None Include="$(MSBuildThisFileDirectory)../../README.md" Pack="true" PackagePath="/" />    
+    <None Include="$(MSBuildThisFileDirectory)../../LICENSE" Pack="true" PackagePath="/" />   
 
   </ItemGroup>
 
@@ -54,16 +54,16 @@
     <IncludeAssets>build</IncludeAssets>
     <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="G-Research.FSharp.Analyzers" Version="0.10.0">
+    <PackageReference Include="G-Research.FSharp.Analyzers" Version="0.11.0">
     <IncludeAssets>analyzers</IncludeAssets>
     <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Ionide.Analyzers" Version="0.11.0">
+    <PackageReference Include="Ionide.Analyzers" Version="0.12.0">
     <IncludeAssets>analyzers</IncludeAssets>
     <PrivateAssets>all</PrivateAssets>
     </PackageReference>
 
-    <PackageReference Include="FSharp.Core" Version="6.0.0" />
+    <PackageReference Include="FSharp.Core" Version="8.0.401" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.*" />
     <PackageReference Include="System.Text.Json" Version="8.0.*" />
     <PackageReference Include="FSharp.SystemTextJson" Version="1.3.*" />
