@@ -31,13 +31,13 @@ let responseCachingMiddleware: HttpHandler =
 
 let endpoints: Endpoint list =
     [
-        subRoute "/cached" [
+        subRoute "/cached" [] [
             GET [
-                route "/public" (publicResponseCaching 30 None >=> dateTimeHandler)
-                route "/private" (privateResponseCaching 30 None >=> dateTimeHandler)
-                route "/not" (noResponseCaching >=> dateTimeHandler)
-                route "/vary/not" (publicResponseCaching 30 None >=> dateTimeHandler)
-                route "/vary/yes" (responseCachingMiddleware >=> dateTimeHandler)
+                route "/public" [] (publicResponseCaching 30 None >=> dateTimeHandler)
+                route "/private" [] (privateResponseCaching 30 None >=> dateTimeHandler)
+                route "/not" [] (noResponseCaching >=> dateTimeHandler)
+                route "/vary/not" [] (publicResponseCaching 30 None >=> dateTimeHandler)
+                route "/vary/yes" [] (responseCachingMiddleware >=> dateTimeHandler)
             ]
         ]
     ]
