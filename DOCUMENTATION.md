@@ -52,6 +52,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [TokenRouter](#tokenrouter)
     - [Razor](#razor)
     - [DotLiquid](#dotliquid)
+    - [OpenApi](#openapi)
 - [Special Mentions](#special-mentions)
 - [Appendix](#appendix)
 
@@ -3543,6 +3544,12 @@ For more information please visit the official [Giraffe Razor](https://github.co
 The `Giraffe.DotLiquid` NuGet package adds [DotLiquid](http://dotliquidmarkup.org/) support to Giraffe web applications.
 
 For more information please visit the official [Giraffe DotLiquid](https://github.com/giraffe-fsharp/Giraffe.DotLiquid) GitHub repository.
+
+### OpenApi
+
+The `Giraffe.OpenApi` NuGet package, inspired by [Oxpecker's code](https://github.com/Lanayx/Oxpecker), adds [OpenAPI](https://swagger.io/specification/) support to Giraffe, helping to improve the documentation of the project.
+
+For more information please visit the official [Giraffe OpenApi](https://github.com/giraffe-fsharp/Giraffe.OpenApi) GitHub repository.
 
 ## Special Mentions
 
