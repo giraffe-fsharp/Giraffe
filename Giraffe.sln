@@ -34,6 +34,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ResponseCachingApp", "sampl
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "NewtonsoftJson", "samples\NewtonsoftJson\NewtonsoftJson.fsproj", "{A08230F1-DA24-4059-A7F9-4743B36DD3E9}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "GlobalRateLimiting", "samples\GlobalRateLimiting\GlobalRateLimiting.fsproj", "{C5E71E00-4DD0-4ED8-B781-7DB63B7565E4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -104,6 +106,18 @@ Global
 		{A08230F1-DA24-4059-A7F9-4743B36DD3E9}.Release|x64.Build.0 = Release|Any CPU
 		{A08230F1-DA24-4059-A7F9-4743B36DD3E9}.Release|x86.ActiveCfg = Release|Any CPU
 		{A08230F1-DA24-4059-A7F9-4743B36DD3E9}.Release|x86.Build.0 = Release|Any CPU
+		{C5E71E00-4DD0-4ED8-B781-7DB63B7565E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5E71E00-4DD0-4ED8-B781-7DB63B7565E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5E71E00-4DD0-4ED8-B781-7DB63B7565E4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C5E71E00-4DD0-4ED8-B781-7DB63B7565E4}.Debug|x64.Build.0 = Debug|Any CPU
+		{C5E71E00-4DD0-4ED8-B781-7DB63B7565E4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C5E71E00-4DD0-4ED8-B781-7DB63B7565E4}.Debug|x86.Build.0 = Debug|Any CPU
+		{C5E71E00-4DD0-4ED8-B781-7DB63B7565E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5E71E00-4DD0-4ED8-B781-7DB63B7565E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5E71E00-4DD0-4ED8-B781-7DB63B7565E4}.Release|x64.ActiveCfg = Release|Any CPU
+		{C5E71E00-4DD0-4ED8-B781-7DB63B7565E4}.Release|x64.Build.0 = Release|Any CPU
+		{C5E71E00-4DD0-4ED8-B781-7DB63B7565E4}.Release|x86.ActiveCfg = Release|Any CPU
+		{C5E71E00-4DD0-4ED8-B781-7DB63B7565E4}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -118,5 +132,6 @@ Global
 		{0E15F922-7A44-4116-9DAB-FAEB94392FEC} = {B9B26DDC-608C-42FE-9AB9-6CF0EE4920CD}
 		{FA102AC4-4608-42F9-86C1-1472B416A76E} = {9E6451FB-26E0-4AE4-A469-847F9602E999}
 		{A08230F1-DA24-4059-A7F9-4743B36DD3E9} = {9E6451FB-26E0-4AE4-A469-847F9602E999}
+		{C5E71E00-4DD0-4ED8-B781-7DB63B7565E4} = {9E6451FB-26E0-4AE4-A469-847F9602E999}
 	EndGlobalSection
 EndGlobal
