@@ -24,7 +24,7 @@ This documentation must be used as a guide for maintainers and developers for bu
     4. This will trigger a github action to build and publish the nuget package
 8. Do any additional testing or tell certain people to try it out
 9. Once satisfied repeat the process but without any alpha/beta/rc suffixes.
-    1. Run through steps 2-6, creating a **release** instead of a pre-release
+    1. Run through steps 2-7, creating a **release** instead of a pre-release
 10. Tell the internet about it
     1. Tweet about it
     2. Post in F# Slack
