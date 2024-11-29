@@ -4,6 +4,8 @@ The purpose of this sample is to show how one can configure the Giraffe server t
 
 You can find their documentation here: [Giraffe Docs - Response Caching](https://giraffe.wiki/docs#response-caching).
 
++ Update november/2024: Adding a [file server](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/static-files#usefileserver-for-default-documents) feature. You can use it checking the endpoint `http://localhost:5000/assets/main.css` after starting the web server.
+
 ## How to test
 
 First, start the server at the terminal using:

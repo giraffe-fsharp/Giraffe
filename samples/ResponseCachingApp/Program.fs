@@ -3,11 +3,14 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
+open Microsoft.Extensions.FileProviders
 open Giraffe
 open Giraffe.EndpointRouting
 
+let STATIC_ASSETS_PATH = IO.Path.Combine(__SOURCE_DIRECTORY__, "assets")
+
 let expensiveOperation () : DateTime =
-    let fiveSeconds = 5000 // ms
+    let fiveSeconds = 5_000 // ms
     Threading.Thread.Sleep fiveSeconds
     DateTime.Now
 
@@ -48,9 +51,17 @@ let configureServices (services: IServiceCollection) =
     services.AddRouting().AddResponseCaching().AddGiraffe() |> ignore
 
 let configureApp (appBuilder: IApplicationBuilder) =
+    let fileServerOptions =
+        new FileServerOptions(
+            FileProvider = new PhysicalFileProvider(STATIC_ASSETS_PATH),
+            RequestPath = "/assets",
+            EnableDirectoryBrowsing = false
+        )
+
     appBuilder
         .UseRouting()
         .UseResponseCaching()
+        .UseFileServer(options = fileServerOptions)
         .UseEndpoints(fun e -> e.MapGiraffeEndpoints(endpoints))
         .UseGiraffe(notFoundHandler)
 

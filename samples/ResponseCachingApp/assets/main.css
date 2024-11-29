@@ -1,0 +1,15 @@
+.tippy-box[data-animation=shift-away-subtle][data-state=hidden] {
+    opacity: 0
+}
+
+.tippy-box[data-animation=shift-away-subtle][data-state=hidden][data-placement^=top] {
+    transform: translateY(5px)
+}
+
+.tippy-box[data-animation=shift-away-subtle][data-state=hidden][data-placement^=bottom] {
+    transform: translateY(-5px)
+}
+
+.tippy-box[data-animation=shift-away-subtle][data-state=hidden][data-placement^=left] {
+    transform: translate(5px)
+}
