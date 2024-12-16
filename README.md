@@ -275,6 +275,7 @@ Builds triggered by pull requests produce a NuGet package which can be downloade
 - [Integrate Azure AD in your Giraffe web app](https://www.devprotocol.com/2018/08/14/integrate-azure-ad-in-your-giraffe-web-app.html) (by Jan Tourlamain)
 - [Web development in F#: Getting started](https://samueleresca.net/2018/04/web-development-in-f-getting-started/) (by Samuele Resca)
 - [Build web service using F# and ASP.NET Core](https://samueleresca.net/2018/04/build-web-service-using-f-and-asp-net-core/) (by Samuele Resca)
+- [Build a Simple Markdown Blog with F# / Giraffe](https://hamy.xyz/labs/2023-12-fsharp-giraffe-markdown-blog) (by Hamilton)
 - [Deserialising JSON in Giraffe](https://www.compositional-it.com/news-blog/deserialising-json-in-giraffe/) (by Joost Kaptein)
 - [How to Build a Fullstack Webapp with F#](https://hamy.xyz/labs/2024-06_build-fsharp-webapp) (by Hamilton)
 - [Build a Simple F# WebAPI with a Data Repository (F# + Giraffe)](https://hamy.xyz/labs/2024-10_simple-fsharp-webapi-data-repo) (by Hamilton)
@@ -288,6 +289,8 @@ If you have blogged about Giraffe, demonstrating a useful topic or some other ti
 - [Build a Simple Web API with F# + Giraffe](https://www.youtube.com/watch?v=yDBpd07SdHE) (by HAMY LABS)
 - [Pipeline-oriented programming - Scott Wlaschin - NDC Porto 2023](https://www.youtube.com/watch?v=ipceTuJlw-M) (by Scott Wlaschin)
 - [Build a Simple F# WebAPI with a Data Repository (F# + Giraffe)](https://www.youtube.com/watch?v=ZrQtz566xCM) (by HAMY LABS)
+- [Build a Simple Single-File Web API with F# / Giraffe](https://www.youtube.com/watch?v=Q-ogJk1AMgA) (by HAMY LABS)
+- [Build a Simple Markdown blog with F# / Giraffe](https://www.youtube.com/watch?v=XdPiDfVZ6dk) (by HAMY LABS)
 
 ## License
 
