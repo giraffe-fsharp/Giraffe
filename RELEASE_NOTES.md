@@ -1,6 +1,17 @@
 Release Notes
 =============
 
+## 8.0.0 - 202x-xx-xx
+
+With this release, we're deprecating support for .NET 6 and 7. Other than that, we're starting to support .NET 9. Some packages were updated due to this SDK pump.
+
+- [Add GitHub dependabot configuration](https://github.com/giraffe-fsharp/Giraffe/pull/621) - Credits @64J0
+- [Add global rate limiting sample](https://github.com/giraffe-fsharp/Giraffe/pull/622) - Credits @64J0
+- [Add OpenApi section to the documentation](https://github.com/giraffe-fsharp/Giraffe/pull/624) - Credits @64J0
+- [Add AssemblyVersion attribute](https://github.com/giraffe-fsharp/Giraffe/pull/629) - Credits @64J0
+- [Add more links](https://github.com/giraffe-fsharp/Giraffe/pull/633) - Credits @64J0
+- [[Alpha] Add Endpoint routing functions ...WithExtensions](https://github.com/giraffe-fsharp/Giraffe/pull/634) - Credits @64J0
+
 ## 7.0.2 - 2024-10-16
 
 Combination of the tags:
