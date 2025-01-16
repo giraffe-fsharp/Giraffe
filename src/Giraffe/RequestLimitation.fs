@@ -44,7 +44,7 @@ let mustAcceptAny (mimeTypes: string list) (optionalErrorHandler: OptionalErrorH
             )
 
         match Option.ofObj (headers.Accept :> _ seq) with
-        | Some xs when Seq.map (_.ToString()) xs |> Seq.exists (fun x -> Seq.contains x mimeTypes) -> next ctx
+        | Some xs when Seq.map (_.ToString()) xs |> Seq.exists (fun x -> List.contains x mimeTypes) -> next ctx
         | Some xs when Seq.isEmpty xs -> headerNotFoundHandler earlyReturn ctx
         | Some _ -> invalidHeaderValueHandler earlyReturn ctx
         | None -> headerNotFoundHandler earlyReturn ctx
@@ -75,7 +75,7 @@ let hasAnyContentTypes (contentTypes: string list) (optionalErrorHandler: Option
             )
 
         match Option.ofObj ctx.Request.ContentType with
-        | Some header when Seq.contains header contentTypes -> next ctx
+        | Some header when List.contains header contentTypes -> next ctx
         | Some header when String.IsNullOrEmpty header -> headerNotFoundHandler earlyReturn ctx
         | Some _ -> invalidHeaderValueHandler earlyReturn ctx
         | None -> headerNotFoundHandler earlyReturn ctx
