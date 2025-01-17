@@ -10,8 +10,11 @@ updates:
     schedule:
       interval: "weekly"
 
-  # Maintain dependencies for nuget
+  # https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference#directories-or-directory--
   - package-ecosystem: "nuget"
-    directory: "/"
+    directories:
+      - "/"
+      - "/src/Giraffe/"
+      - "/tests/Giraffe.Tests/"
     schedule:
       interval: "weekly"
