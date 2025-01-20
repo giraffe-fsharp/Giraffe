@@ -13,11 +13,7 @@ let endpoints: list<Endpoint> = [ GET [ route "/" (text "Hello World") ] ]
 let notFoundHandler = text "Not Found" |> RequestErrors.notFound
 
 let configureApp (appBuilder: IApplicationBuilder) =
-    appBuilder
-        .UseRouting()
-        .UseRateLimiter()
-        .UseGiraffe(endpoints)
-        .UseGiraffe(notFoundHandler)
+    appBuilder.UseRouting().UseRateLimiter().UseGiraffe(endpoints).UseGiraffe(notFoundHandler)
 
 let configureServices (services: IServiceCollection) =
     // From https://blog.maartenballiauw.be/post/2022/09/26/aspnet-core-rate-limiting-middleware.html
