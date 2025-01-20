@@ -2,6 +2,8 @@ name: Build and test
 
 on:
   push:
+    branches:
+      - master
   pull_request:
 
 env:
@@ -33,6 +35,7 @@ jobs:
             6.x
             7.x
             8.x
+            9.x
       - name: Restore
         run: dotnet restore
       - name: Build
@@ -48,7 +51,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.x
+          dotnet-version: 9.x
       - name: Restore tools
         run: dotnet tool restore
       - name: Build solution
