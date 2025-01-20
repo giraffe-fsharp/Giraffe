@@ -279,7 +279,8 @@ type EndpointRouteBuilderExtensions() =
 
     [<Extension>]
     static member private MapSingleEndpoint
-        (builder: IEndpointRouteBuilder, singleEndpoint: HttpVerb * RouteTemplate * RequestDelegate * ConfigureEndpoint) =
+        (builder: IEndpointRouteBuilder, singleEndpoint: HttpVerb * RouteTemplate * RequestDelegate * ConfigureEndpoint)
+        =
 
         let verb, routeTemplate, requestDelegate, configureEndpoint = singleEndpoint
 

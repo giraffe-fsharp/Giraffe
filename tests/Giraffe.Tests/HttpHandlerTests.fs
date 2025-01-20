@@ -80,9 +80,7 @@ and JsonUnionCaseDummy =
 let ``GET "/json" returns json object with fsharp type (JsonUnionCaseDummyA)`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    ctx.RequestServices
-        .GetService(typeof<Json.ISerializer>)
-        .Returns(Json.FsharpFriendlySerializer())
+    ctx.RequestServices.GetService(typeof<Json.ISerializer>).Returns(Json.FsharpFriendlySerializer())
     |> ignore
 
     let app =
@@ -120,9 +118,7 @@ let ``GET "/json" returns json object with fsharp type (JsonUnionCaseDummyA)`` (
 let ``GET "/json" returns json object with fsharp type (JsonUnionCaseDummyB)`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    ctx.RequestServices
-        .GetService(typeof<Json.ISerializer>)
-        .Returns(Json.FsharpFriendlySerializer())
+    ctx.RequestServices.GetService(typeof<Json.ISerializer>).Returns(Json.FsharpFriendlySerializer())
     |> ignore
 
     let app =

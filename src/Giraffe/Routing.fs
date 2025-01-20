@@ -253,10 +253,7 @@ module Routing =
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
     let routeStartsWithCi (subPath: string) : HttpHandler =
         fun (next: HttpFunc) (ctx: HttpContext) ->
-            if
-                (SubRouting.getNextPartOfPath ctx)
-                    .StartsWith(subPath, StringComparison.OrdinalIgnoreCase)
-            then
+            if (SubRouting.getNextPartOfPath ctx).StartsWith(subPath, StringComparison.OrdinalIgnoreCase) then
                 next ctx
             else
                 skipPipeline

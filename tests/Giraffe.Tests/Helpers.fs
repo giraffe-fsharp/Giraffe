@@ -71,10 +71,7 @@ module XmlAssert =
                     .Attributes()
                     .Where(fun a -> a.Name.Namespace = XNamespace.Xmlns)
                     .OrderBy(fun a -> a.Name.ToString()),
-                element
-                    .Elements()
-                    .OrderBy(fun a -> a.Name.ToString())
-                    .Select(fun e -> normalize (e))
+                element.Elements().OrderBy(fun a -> a.Name.ToString()).Select(fun e -> normalize (e))
             )
         elif element.IsEmpty then
             XElement(element.Name, element.Attributes().OrderBy(fun a -> a.Name.ToString()))
@@ -104,9 +101,7 @@ let createHost
 
 let mockJson (ctx: HttpContext) =
 
-    ctx.RequestServices
-        .GetService(typeof<Json.ISerializer>)
-        .Returns(Json.Serializer(Json.Serializer.DefaultOptions))
+    ctx.RequestServices.GetService(typeof<Json.ISerializer>).Returns(Json.Serializer(Json.Serializer.DefaultOptions))
     |> ignore
 
 type NegotiationConfigWithExpectedResult =
@@ -123,9 +118,7 @@ let mockXml (ctx: HttpContext) =
     |> ignore
 
 let mockNegotiation (ctx: HttpContext) (negotiationConfig: INegotiationConfig) =
-    ctx.RequestServices
-        .GetService(typeof<INegotiationConfig>)
-        .Returns(negotiationConfig)
+    ctx.RequestServices.GetService(typeof<INegotiationConfig>).Returns(negotiationConfig)
     |> ignore
 
 // ---------------------------------
