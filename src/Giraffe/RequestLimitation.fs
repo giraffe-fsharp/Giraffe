@@ -43,8 +43,16 @@ let mustAcceptAny (mimeTypes: string list) (optionalErrorHandler: OptionalErrorH
                 )
             )
 
+        let mimeTypesSet = Set.ofList mimeTypes
+
         match Option.ofObj (headers.Accept :> _ seq) with
-        | Some xs when Seq.map (_.ToString()) xs |> Seq.exists (fun x -> List.contains x mimeTypes) -> next ctx
+        | Some xs when
+            Seq.map (_.ToString()) xs
+            |> Set.ofSeq
+            |> Set.intersect mimeTypesSet
+            |> (Set.isEmpty >> not)
+            ->
+            next ctx
         | Some xs when Seq.isEmpty xs -> headerNotFoundHandler earlyReturn ctx
         | Some _ -> invalidHeaderValueHandler earlyReturn ctx
         | None -> headerNotFoundHandler earlyReturn ctx
