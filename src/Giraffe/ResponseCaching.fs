@@ -55,14 +55,16 @@ module ResponseCaching =
             | Public duration -> tHeaders.CacheControl <- cacheHeader true duration
             | Private duration -> tHeaders.CacheControl <- cacheHeader false duration
 
-            if vary.IsSome then
-                headers.[HeaderNames.Vary] <- StringValues [| vary.Value |]
+            vary
+            |> Option.iter (fun value -> headers.[HeaderNames.Vary] <- StringValues [| value |])
 
-            if varyByQueryKeys.IsSome then
+            varyByQueryKeys
+            |> Option.iter (fun value ->
                 let responseCachingFeature = ctx.Features.Get<IResponseCachingFeature>()
 
                 if isNotNull responseCachingFeature then
-                    responseCachingFeature.VaryByQueryKeys <- varyByQueryKeys.Value
+                    responseCachingFeature.VaryByQueryKeys <- value
+            )
 
             next ctx
 

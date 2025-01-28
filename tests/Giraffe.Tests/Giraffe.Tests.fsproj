@@ -12,6 +12,7 @@
     <Compile Include="HttpHandlerTests.fs" />
     <Compile Include="RoutingTests.fs" />
     <Compile Include="RequestLimitationTests.fs" />
+    <Compile Include="ResponseCachingTests.fs" />
     <Compile Include="EndpointRoutingTests.fs" />
     <Compile Include="AuthTests.fs" />
     <Compile Include="ModelBindingTests.fs" />
