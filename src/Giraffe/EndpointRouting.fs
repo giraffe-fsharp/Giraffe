@@ -232,19 +232,37 @@ module Routers =
     let TRACE = applyHttpVerbToEndpoints TRACE
     let CONNECT = applyHttpVerbToEndpoints CONNECT
 
-    let route (path: string) (handler: HttpHandler) : Endpoint =
-        SimpleEndpoint(HttpVerb.NotSpecified, path, handler, id)
+    let routeWithExtensions (configureEndpoint: ConfigureEndpoint) (path: string) (handler: HttpHandler) : Endpoint =
+        SimpleEndpoint(HttpVerb.NotSpecified, path, handler, configureEndpoint)
 
-    let routef (path: PrintfFormat<_, _, _, _, 'T>) (routeHandler: 'T -> HttpHandler) : Endpoint =
+    let route (path: string) (handler: HttpHandler) : Endpoint =
+        routeWithExtensions (id) (path) (handler)
+
+    let routefWithExtensions
+        (configureEndpoint: ConfigureEndpoint)
+        (path: PrintfFormat<_, _, _, _, 'T>)
+        (routeHandler: 'T -> HttpHandler)
+        : Endpoint =
         let template, mappings = RouteTemplateBuilder.convertToRouteTemplate path
 
         let boxedHandler (o: obj) =
             let t = o :?> 'T
             routeHandler t
 
-        TemplateEndpoint(HttpVerb.NotSpecified, template, mappings, boxedHandler, id)
+        TemplateEndpoint(HttpVerb.NotSpecified, template, mappings, boxedHandler, configureEndpoint)
 
-    let subRoute (path: string) (endpoints: Endpoint list) : Endpoint = NestedEndpoint(path, endpoints, id)
+    let routef (path: PrintfFormat<_, _, _, _, 'T>) (routeHandler: 'T -> HttpHandler) : Endpoint =
+        routefWithExtensions (id) (path) (routeHandler)
+
+    let subRouteWithExtensions
+        (configureEndpoint: ConfigureEndpoint)
+        (path: string)
+        (endpoints: Endpoint list)
+        : Endpoint =
+        NestedEndpoint(path, endpoints, configureEndpoint)
+
+    let subRoute (path: string) (endpoints: Endpoint list) : Endpoint =
+        subRouteWithExtensions (id) (path) (endpoints)
 
     let rec applyBefore (httpHandler: HttpHandler) (endpoint: Endpoint) =
         match endpoint with
@@ -267,6 +285,7 @@ module Routers =
         | NestedEndpoint(t, lst, ce) -> NestedEndpoint(t, lst, ce >> f)
         | MultiEndpoint(lst) -> MultiEndpoint(List.map (configureEndpoint f) lst)
 
+    // XXX should we keep this?
     let addMetadata (metadata: obj) (endpoint: Endpoint) =
         endpoint |> configureEndpoint _.WithMetadata(metadata)
 
