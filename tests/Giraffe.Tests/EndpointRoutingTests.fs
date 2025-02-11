@@ -50,3 +50,104 @@ let ``routef: GET "/try-a-guid/%O" returns "Success: ..." or "Not Found"`` (pote
 
         content |> shouldEqual expected
     }
+
+[<Theory>]
+[<InlineData("/", "Hello World")>]
+[<InlineData("/foo", "bar")>]
+[<InlineData("/bar", "baz")>]
+[<InlineData("/NOT-EXIST", "Not Found")>]
+let ``routeWithExtensions: GET request returns expected result`` (path: string, expected: string) =
+    let endpoints =
+        [
+            GET [
+                routeWithExtensions (id) "/" (text "Hello World")
+                route "/foo" (text "bar")
+                routeWithExtensions (fun eb -> eb.RequireRateLimiting("nothing")) "/bar" (text "baz")
+            ]
+        ]
+
+    let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
+
+    let configureApp (app: IApplicationBuilder) =
+        app.UseRouting().UseGiraffe(endpoints).UseGiraffe(notFoundHandler)
+
+    let configureServices (services: IServiceCollection) =
+        services.AddRouting().AddGiraffe() |> ignore
+
+    task {
+        let request = createRequest HttpMethod.Get path
+
+        let! response = makeRequest (fun () -> configureApp) configureServices () request
+
+        let! content = response |> readText
+
+        content |> shouldEqual expected
+    }
+
+[<Theory>]
+[<InlineData("/empty/5", "/empty i = 5")>]
+[<InlineData("/normal/10", "/normal i = 10")>]
+[<InlineData("/cache/25", "/cache i = 25")>]
+[<InlineData("/NOT-EXIST", "Not Found")>]
+let ``routefWithExtensions: GET request returns expected result`` (path: string, expected: string) =
+    let endpoints =
+        [
+            GET [
+                routefWithExtensions (id) "/empty/%i" (fun i -> text $"/empty i = {i}")
+                routef "/normal/%i" (fun i -> text $"/normal i = {i}")
+                routefWithExtensions (fun eb -> eb.CacheOutput("nothing")) "/cache/%i" (fun i -> text $"/cache i = {i}")
+            ]
+        ]
+
+    let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
+
+    let configureApp (app: IApplicationBuilder) =
+        app.UseRouting().UseGiraffe(endpoints).UseGiraffe(notFoundHandler)
+
+    let configureServices (services: IServiceCollection) =
+        services.AddRouting().AddGiraffe() |> ignore
+
+    task {
+        let request = createRequest HttpMethod.Get path
+
+        let! response = makeRequest (fun () -> configureApp) configureServices () request
+
+        let! content = response |> readText
+
+        content |> shouldEqual expected
+    }
+
+[<Theory>]
+[<InlineData("/api/foo/5", "/foo i = 5")>]
+[<InlineData("/api/bar/10", "/bar i = 10")>]
+[<InlineData("/api/baz/25", "/baz i = 25")>]
+[<InlineData("/NOT-EXIST", "Not Found")>]
+let ``subRouteWithExtensions: GET request returns expected result`` (path: string, expected: string) =
+    let endpoints =
+        [
+            subRouteWithExtensions (id) "/api" [
+                GET [
+                    routefWithExtensions (id) "/foo/%i" (fun i -> text $"/foo i = {i}")
+                    routef "/bar/%i" (fun i -> text $"/bar i = {i}")
+                    routefWithExtensions (fun eb -> eb.CacheOutput("nothing")) "/baz/%i" (fun i -> text $"/baz i = {i}")
+                ]
+            ]
+        ]
+
+    let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
+
+    let configureApp (app: IApplicationBuilder) =
+        app.UseRouting().UseGiraffe(endpoints).UseGiraffe(notFoundHandler)
+
+    let configureServices (services: IServiceCollection) =
+        services.AddRouting().AddGiraffe() |> ignore
+
+    task {
+        let request = createRequest HttpMethod.Get path
+
+        let! response = makeRequest (fun () -> configureApp) configureServices () request
+
+        let! content = response |> readText
+
+        content |> shouldEqual expected
+    }

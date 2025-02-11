@@ -3490,8 +3490,11 @@ The following routing functions are available as part of the `Giraffe.EndpointRo
 
 - `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`, `TRACE`, `CONNECT`
 - `route`
+- `routeWithExtensions` (*alpha*)
 - `routef`
+- `routefWithExtensions` (*alpha*)
 - `subRoute`
+- `subRouteWithExtensions` (*alpha*)
 
 The `route`, `routef` and `subRoute` handlers are all case-insensitive. Other handlers such as `routex`, `subRoutef` or `choose` are not supported by the `Giraffe.EndpointRouting` module.
 
@@ -3524,6 +3527,39 @@ let myHandler (foo : int, bar : string) : HttpHandler =
 ```
 
 For more information about ASP.NET Core Endpoint Routing please refer to the [official documentation](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0).
+
+##### ALPHA :: Endpoint Routing Functions with Extensions
+
++ Note that this feature is currently in **alpha**, and major changes are expected.
+
+ASP.NET Core provides several "extension" functions which can be used to fine-tune the HTTP handler behaviour. For example, there's the [Rate limiting](https://learn.microsoft.com/en-us/aspnet/core/performance/rate-limit) and [Output caching](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/output) middlewares.
+
+By using the Endpoint Routing module we can leverage this along with the `...WithExtensions` routing functions: `routeWithExtensions`, `routefWithExtensions` and `subRouteWithExtensions`.
+
+Basically, whenever you decide to use a routing function variant with `...WithExtensions` you're required to provide as the first parameter a function that obbeys the `ConfigureEndpoint` type definition:
+
+```fsharp
+// Note: IEndpointConventionBuilder is a shorter version of Microsoft.AspNetCore.Builder.IEndpointConventionBuilder
+type ConfigureEndpoint = IEndpointConventionBuilder -> IEndpointConventionBuilder
+```
+
+And you can use it like this:
+
+```fsharp
+let MY_RATE_LIMITER = "fixed"
+
+let endpoints: list<Endpoint> =
+    [
+        GET [
+            routeWithExtensions (fun eb -> eb.RequireRateLimiting MY_RATE_LIMITER) "/rate-limit" (text "Hello World")
+            route "/no-rate-limit" (text "Hello World: No Rate Limit!")
+        ]
+    ]
+```
+
+In this example, we're using the ASP.NET [Rate limiting](https://learn.microsoft.com/en-us/aspnet/core/performance/rate-limit) middleware for the path `/rate-limit`, and not using it for `/no-rate-limit`. If you'd like to test it, check the sample at the [official repository](https://github.com/giraffe-fsharp/Giraffe) under the path *samples/RateLimiting/*. There's a `README.md` file with instructions on how to run it locally.
+
+Note that for those extensions to work properly, you'll probably need to make additional changes to the server. Please check the official extension documentation page to know more about this.
 
 ### TokenRouter
 

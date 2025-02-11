@@ -1,6 +1,27 @@
 Release Notes
 =============
 
+## 8.0.0-alpha-001 - 2025-02-11
+
+With this release, we're improving the codebase a bit by fixing warnings triggered by Ionide.Analyzers, and adding .NET 9 as a target framework to the project.
+
+Other than that, we're adding new router functions for the `EndpointRouting` module which will let the user interact with Giraffe's `ConfigureEndpoint` directly. This will let you use Asp.Net extensions directly, like rate limiting, response caching, etc. Just remember its type definition:
+
+```fsharp
+type ConfigureEndpoint = IEndpointConventionBuilder -> IEndpointConventionBuilder
+```
+
+And here we have the list of PRs related to this release:
+
+- [Add GitHub dependabot configuration](https://github.com/giraffe-fsharp/Giraffe/pull/621) - Credits @64J0
+- [Add global rate limiting sample](https://github.com/giraffe-fsharp/Giraffe/pull/622) - Credits @64J0
+- [Add OpenApi section to the documentation](https://github.com/giraffe-fsharp/Giraffe/pull/624) - Credits @64J0
+- [Add AssemblyVersion attribute](https://github.com/giraffe-fsharp/Giraffe/pull/629) - Credits @64J0
+- [Add more links](https://github.com/giraffe-fsharp/Giraffe/pull/633) - Credits @64J0
+- [Code scanning fix patches](https://github.com/giraffe-fsharp/Giraffe/pull/638) - Credits @64J0
+- [Add .NET 9 as target framework, fine-tune dependabot, update CI and clean tests removing .NET 6/7 from target frameworks](https://github.com/giraffe-fsharp/Giraffe/pull/639) - Credits @64J0
+- [[Alpha] Add Endpoint routing functions ...WithExtensions](https://github.com/giraffe-fsharp/Giraffe/pull/634) - Credits @64J0
+
 ## 7.0.2 - 2024-10-16
 
 Combination of the tags:
