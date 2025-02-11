@@ -285,8 +285,7 @@ module Routers =
         | NestedEndpoint(t, lst, ce) -> NestedEndpoint(t, lst, ce >> f)
         | MultiEndpoint(lst) -> MultiEndpoint(List.map (configureEndpoint f) lst)
 
-    // XXX should we keep this?
-    let addMetadata (metadata: obj) (endpoint: Endpoint) =
+    let addMetadata (metadata: obj) (endpoint: Endpoint) : Endpoint =
         endpoint |> configureEndpoint _.WithMetadata(metadata)
 
 // ---------------------------

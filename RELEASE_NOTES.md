@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-## 8.0.0 - 202x-xx-xx
+## 8.0.0-alpha-001 - 2025-02-11
 
 With this release, we're improving the codebase a bit by fixing warnings triggered by Ionide.Analyzers, and adding .NET 9 as a target framework to the project.
 
