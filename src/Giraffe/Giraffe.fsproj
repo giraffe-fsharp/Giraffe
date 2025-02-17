@@ -52,16 +52,16 @@
   <ItemGroup>
     <!-- Analyzers -->
     <PackageReference Include="FSharp.Analyzers.Build" Version="0.3.0">
-    <IncludeAssets>build</IncludeAssets>
-    <PrivateAssets>all</PrivateAssets>
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>build</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="G-Research.FSharp.Analyzers" Version="0.12.1">
-    <IncludeAssets>analyzers</IncludeAssets>
-    <PrivateAssets>all</PrivateAssets>
+    <PackageReference Include="G-Research.FSharp.Analyzers" Version="0.13.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Ionide.Analyzers" Version="0.13.0">
-    <IncludeAssets>analyzers</IncludeAssets>
-    <PrivateAssets>all</PrivateAssets>
+    <PackageReference Include="Ionide.Analyzers" Version="0.14.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>analyzers</IncludeAssets>
     </PackageReference>
 
     <PackageReference Include="FSharp.Core" Version="6.0.0" />
