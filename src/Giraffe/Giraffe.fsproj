@@ -48,7 +48,6 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.2.*" />
-    <PackageReference Include="System.Text.Json" Version="6.0.*" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.*" />
     <PackageReference Include="Utf8Json" Version="1.3.*" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.*" PrivateAssets="All" />
