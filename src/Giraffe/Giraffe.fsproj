@@ -64,7 +64,7 @@
       <IncludeAssets>analyzers</IncludeAssets>
     </PackageReference>
 
-    <PackageReference Include="FSharp.Core" Version="6.0.0" />
+    <PackageReference Include="FSharp.Core" Version="9.0.201" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.*" />
     <PackageReference Include="System.Text.Json" Version="8.0.*" />
     <PackageReference Include="FSharp.SystemTextJson" Version="1.3.*" />
