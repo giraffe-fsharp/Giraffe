@@ -55,7 +55,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>build</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="G-Research.FSharp.Analyzers" Version="0.13.0">
+    <PackageReference Include="G-Research.FSharp.Analyzers" Version="0.14.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>analyzers</IncludeAssets>
     </PackageReference>
