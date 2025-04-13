@@ -8,7 +8,7 @@ This documentation must be used as a guide for maintainers and developers for bu
     1. `git checkout master`
 2. Add a new entry at the top of the RELEASE_NOTES.md with a version and a date.
     1. If possible link to the relevant issues and PRs and credit the author of the PRs
-3. Update the **AssemblyVersion** attribute at *src/Giraffe.fsproj*, using the same version defined at the RELEASE_NOTES.md.
+3. Update the **Version** attribute at *src/Giraffe.fsproj*, using the same version defined at the RELEASE_NOTES.md.
     1. Notice that this can be automated in the future with [ionide/KeepAChangelog](https://github.com/ionide/KeepAChangelog).
 4. Create a new commit
     1. `git add RELEASE_NOTES.md`
