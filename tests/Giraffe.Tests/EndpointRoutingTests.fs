@@ -151,3 +151,29 @@ let ``subRouteWithExtensions: GET request returns expected result`` (path: strin
 
         content |> shouldEqual expected
     }
+
+[<Theory>]
+[<InlineData("/pet/42", "PetId: 42")>]
+let ``routef: GET "/pet/%i:petId" returns named parameter`` (path: string, expected: string) =
+    task {
+        let endpoints: Endpoint list =
+            [
+                GET [
+                    routef "/pet/%i:petId" (fun (petId: int) -> text ($"PetId: {petId}"))
+                ]
+            ]
+
+        let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
+
+        let configureApp (app: IApplicationBuilder) =
+            app.UseRouting().UseGiraffe(endpoints).UseGiraffe(notFoundHandler)
+
+        let configureServices (services: IServiceCollection) =
+            services.AddRouting().AddGiraffe() |> ignore
+
+        let request = createRequest HttpMethod.Get path
+
+        let! response = makeRequest (fun () -> configureApp) configureServices () request
+        let! content = response |> readText
+        content |> shouldEqual expected
+    }
