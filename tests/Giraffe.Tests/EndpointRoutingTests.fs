@@ -158,9 +158,7 @@ let ``routef: GET "/pet/%i:petId" returns named parameter`` (path: string, expec
     task {
         let endpoints: Endpoint list =
             [
-                GET [
-                    routef "/pet/%i:petId" (fun (petId: int) -> text ($"PetId: {petId}"))
-                ]
+                GET [ routef "/pet/%i:petId" (fun (petId: int) -> text ($"PetId: {petId}")) ]
             ]
 
         let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound

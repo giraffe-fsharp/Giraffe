@@ -19,8 +19,7 @@ let handler3 (a: string, b: string, c: string, d: int) : HttpHandler =
     fun (_: HttpFunc) (ctx: HttpContext) -> sprintf "Hello %s %s %s %i" a b c d |> ctx.WriteTextAsync
 
 let handlerNamed (petId: int) : HttpHandler =
-    fun (_: HttpFunc) (ctx: HttpContext) ->
-        sprintf "PetId: %i" petId |> ctx.WriteTextAsync
+    fun (_: HttpFunc) (ctx: HttpContext) -> sprintf "PetId: %i" petId |> ctx.WriteTextAsync
 
 let endpoints =
     [

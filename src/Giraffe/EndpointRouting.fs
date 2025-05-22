@@ -23,6 +23,7 @@ module RouteTemplateBuilder =
 
     let private getConstraint (i: int) (c: char) (name: string option) =
         let name = Option.defaultValue (sprintf "%c%i" c i) name
+
         match c with
         | 'b' -> name, sprintf "{%s:bool}" name // bool
         | 'c' -> name, sprintf "{%s:length(1)}" name // char
@@ -44,14 +45,20 @@ module RouteTemplateBuilder =
                 match tail with
                 | ':' :: stail ->
                     let splitIndex = stail |> List.tryFindIndex (fun c -> c = '/')
+
                     match splitIndex with
                     | Some splitIndex ->
                         let name, newTail = stail |> List.splitAt splitIndex
-                        let placeholderName, placeholderTemplate = getConstraint i c (Some (System.String.Concat(Array.ofList(name))))
+
+                        let placeholderName, placeholderTemplate =
+                            getConstraint i c (Some(System.String.Concat(Array.ofList (name))))
+
                         let template, mappings = convert (i + 1) newTail
                         placeholderTemplate + template, (placeholderName, c) :: mappings
                     | None ->
-                        let placeholderName, placeholderTemplate = getConstraint i c (Some (System.String.Concat(Array.ofList(stail))))
+                        let placeholderName, placeholderTemplate =
+                            getConstraint i c (Some(System.String.Concat(Array.ofList (stail))))
+
                         let template, mappings = convert (i + 1) []
                         placeholderTemplate + template, (placeholderName, c) :: mappings
                 | _ ->
