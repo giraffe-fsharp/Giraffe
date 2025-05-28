@@ -154,11 +154,48 @@ let ``subRouteWithExtensions: GET request returns expected result`` (path: strin
 
 [<Theory>]
 [<InlineData("/pet/42", "PetId: 42")>]
+[<InlineData("/pet/0", "PetId: 0")>]
+[<InlineData("/pet/123", "PetId: 123")>]
+[<InlineData("/pet/-1", "PetId: -1")>]
+[<InlineData("/pet/abc", "Not Found")>]
+[<InlineData("/pet/123abc", "Not Found")>]
+[<InlineData("/pet/123.456", "Not Found")>]
+[<InlineData("/pet/123-456", "Not Found")>]
 let ``routef: GET "/pet/%i:petId" returns named parameter`` (path: string, expected: string) =
     task {
         let endpoints: Endpoint list =
             [
                 GET [ routef "/pet/%i:petId" (fun (petId: int) -> text ($"PetId: {petId}")) ]
+                GET [ routef "/foo/%i/bar/%i:barId" (fun (fooId: int, barId: int) -> text ($"FooId: {fooId}, BarId: {barId}")) ]
+            ]
+
+        let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
+
+        let configureApp (app: IApplicationBuilder) =
+            app.UseRouting().UseGiraffe(endpoints).UseGiraffe(notFoundHandler)
+
+        let configureServices (services: IServiceCollection) =
+            services.AddRouting().AddGiraffe() |> ignore
+
+        let request = createRequest HttpMethod.Get path
+
+        let! response = makeRequest (fun () -> configureApp) configureServices () request
+        let! content = response |> readText
+        content |> shouldEqual expected
+    }
+
+[<Theory>]
+[<InlineData("/foo/123/bar/abc", "FooId: 123, BarId: abc")>]
+[<InlineData("/foo/999/bar/789", "FooId: 999, BarId: 789")>]
+[<InlineData("/foo/-1/bar/123", "FooId: -1, BarId: 123")>]
+[<InlineData("/foo/abc/bar/def", "Not Found")>]
+let ``routef: GET "/foo/%i:fooId/bar/%i/baz/%s:bazId" returns named and unnamed parameters`` (path: string, expected: string) =
+    task {
+        let endpoints: Endpoint list =
+            [
+                GET [
+                    routef "/foo/%i:fooId/bar/%s:barId" (fun (fooId: int, barId: string) -> text ($"FooId: {fooId}, BarId: {barId}"))
+                ]
             ]
 
         let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
