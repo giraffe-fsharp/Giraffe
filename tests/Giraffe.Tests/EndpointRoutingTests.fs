@@ -166,7 +166,11 @@ let ``routef: GET "/pet/%i:petId" returns named parameter`` (path: string, expec
         let endpoints: Endpoint list =
             [
                 GET [ routef "/pet/%i:petId" (fun (petId: int) -> text ($"PetId: {petId}")) ]
-                GET [ routef "/foo/%i/bar/%i:barId" (fun (fooId: int, barId: int) -> text ($"FooId: {fooId}, BarId: {barId}")) ]
+                GET [
+                    routef
+                        "/foo/%i/bar/%i:barId"
+                        (fun (fooId: int, barId: int) -> text ($"FooId: {fooId}, BarId: {barId}"))
+                ]
             ]
 
         let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
@@ -189,12 +193,16 @@ let ``routef: GET "/pet/%i:petId" returns named parameter`` (path: string, expec
 [<InlineData("/foo/999/bar/789", "FooId: 999, BarId: 789")>]
 [<InlineData("/foo/-1/bar/123", "FooId: -1, BarId: 123")>]
 [<InlineData("/foo/abc/bar/def", "Not Found")>]
-let ``routef: GET "/foo/%i:fooId/bar/%i/baz/%s:bazId" returns named and unnamed parameters`` (path: string, expected: string) =
+let ``routef: GET "/foo/%i:fooId/bar/%i/baz/%s:bazId" returns named and unnamed parameters``
+    (path: string, expected: string)
+    =
     task {
         let endpoints: Endpoint list =
             [
                 GET [
-                    routef "/foo/%i:fooId/bar/%s:barId" (fun (fooId: int, barId: string) -> text ($"FooId: {fooId}, BarId: {barId}"))
+                    routef
+                        "/foo/%i:fooId/bar/%s:barId"
+                        (fun (fooId: int, barId: string) -> text ($"FooId: {fooId}, BarId: {barId}"))
                 ]
             ]
 
