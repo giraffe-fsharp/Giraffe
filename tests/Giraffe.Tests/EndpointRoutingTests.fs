@@ -193,7 +193,7 @@ let ``routef: GET "/pet/%i:petId" returns named parameter`` (path: string, expec
 [<InlineData("/foo/999/bar/789", "FooId: 999, BarId: 789")>]
 [<InlineData("/foo/-1/bar/123", "FooId: -1, BarId: 123")>]
 [<InlineData("/foo/abc/bar/def", "Not Found")>]
-let ``routef: GET "/foo/%i:fooId/bar/%i/baz/%s:bazId" returns named and unnamed parameters``
+let ``routef: GET "/foo/%i:fooId/bar/%i" returns named and unnamed parameters``
     (path: string, expected: string)
     =
     task {
