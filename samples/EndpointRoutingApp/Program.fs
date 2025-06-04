@@ -18,6 +18,9 @@ let handler2 (firstName: string, age: int) : HttpHandler =
 let handler3 (a: string, b: string, c: string, d: int) : HttpHandler =
     fun (_: HttpFunc) (ctx: HttpContext) -> sprintf "Hello %s %s %s %i" a b c d |> ctx.WriteTextAsync
 
+let handlerNamed (petId: int) : HttpHandler =
+    fun (_: HttpFunc) (ctx: HttpContext) -> sprintf "PetId: %i" petId |> ctx.WriteTextAsync
+
 let endpoints =
     [
         subRoute "/foo" [ GET [ route "/bar" (text "Aloha!") ] ]
@@ -25,6 +28,7 @@ let endpoints =
             route "/" (text "Hello World")
             routef "/%s/%i" handler2
             routef "/%s/%s/%s/%i" handler3
+            routef "/pet/%i:petId" handlerNamed
         ]
         GET_HEAD [
             route "/foo" (text "Bar")

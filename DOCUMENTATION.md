@@ -1089,6 +1089,9 @@ let fooHandler (first : string,
 
 let webApp =
     choose [
+        // Named parameter example:
+        routef "/pet/%i:petId" (fun (petId: int) -> text (sprintf "PetId: %i" petId))
+        // Classic usage:
         routef "/foo/%s/%s/%i" fooHandler
         routef "/bar/%O" (fun guid -> text (guid.ToString()))
 
@@ -1099,7 +1102,7 @@ let webApp =
 
 The `routef` http handler takes two parameters - a format string and an `HttpHandler` function.
 
-The format string supports the following format chars:
+The format string supports the following format chars, and now also supports **named parameters** using the syntax `%c:name` (e.g. `%i:petId`):
 
 | Format Char | Type |
 | ----------- | ---- |
@@ -1111,6 +1114,8 @@ The format string supports the following format chars:
 | `%f` | `float`/`double` |
 | `%O` | `Guid` (including short GUIDs*) |
 | `%u` | `uint64` (formatted as a short ID*) |
+
+**Named parameters**: You can use `%c:name` to assign a name to a route parameter, which is especially useful for OpenAPI/Swagger documentation and for clarity. For example, `routef "/pet/%i:petId"` will match `/pet/42` and bind `petId` to `42`.
 
 *) Please note that the `%O` and `%u` format characters also support URL friendly short GUIDs and IDs.
 
