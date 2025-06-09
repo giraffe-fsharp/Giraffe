@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## 8.0.0-alpha-003 - 2025-06-09
+
+- [Enhance routef support for named parameters and improve documentation](https://github.com/giraffe-fsharp/Giraffe/pull/656) - Credits @RJSonnenberg
+
 ## 8.0.0-alpha-002 - 2025-04-14
 
 - [Fix assembly version](https://github.com/giraffe-fsharp/Giraffe/pull/655)
