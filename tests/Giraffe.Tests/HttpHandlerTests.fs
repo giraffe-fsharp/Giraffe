@@ -56,7 +56,7 @@ let private submitCarHandler: HttpHandler =
         }
 
 [<Fact>]
-let ``GET "/car" parses the camelCase input json correctly using the default serializer`` () =
+let ``POST "/car" parses the camelCase input json correctly using the default serializer`` () =
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx
 
@@ -97,7 +97,7 @@ let ``GET "/car" parses the camelCase input json correctly using the default ser
     }
 
 [<Fact>]
-let ``GET "/car" parses the non-camelCase input json incorrectly using the default serializer`` () =
+let ``POST "/car" parses the non-camelCase input json incorrectly using the default serializer`` () =
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx
 
