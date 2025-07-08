@@ -1415,7 +1415,7 @@ let webApp =
         GET >=>
             choose [
                 route "/"    >=> text "index"
-                route "ping" >=> text "pong"
+                route "/ping" >=> text "pong"
             ]
         POST >=> route "/car" >=> submitCar
     ]
@@ -1438,7 +1438,7 @@ let webApp =
         GET >=>
             choose [
                 route "/"    >=> text "index"
-                route "ping" >=> text "pong"
+                route "/ping" >=> text "pong"
             ]
         POST
         >=> route "/car"
@@ -1481,7 +1481,7 @@ let webApp =
         GET >=>
             choose [
                 route "/"    >=> text "index"
-                route "ping" >=> text "pong"
+                route "/ping" >=> text "pong"
             ]
         POST >=> route "/car" >=> submitCar
     ]
@@ -1503,7 +1503,7 @@ let webApp =
         GET >=>
             choose [
                 route "/"    >=> text "index"
-                route "ping" >=> text "pong"
+                route "/ping" >=> text "pong"
             ]
         POST
         >=> route "/car"
@@ -1550,7 +1550,7 @@ let webApp =
         GET >=>
             choose [
                 route "/"    >=> text "index"
-                route "ping" >=> text "pong"
+                route "/ping" >=> text "pong"
             ]
         POST >=> route "/car" >=> submitCar
     ]
@@ -1575,7 +1575,7 @@ let webApp =
         GET >=>
             choose [
                 route "/"    >=> text "index"
-                route "ping" >=> text "pong"
+                route "/ping" >=> text "pong"
             ]
         POST
         >=> route "/car"
@@ -1626,7 +1626,7 @@ let webApp =
         GET >=>
             choose [
                 route "/"    >=> text "index"
-                route "ping" >=> text "pong"
+                route "/ping" >=> text "pong"
             ]
         POST >=> route "/car" >=> submitCar
     ]
@@ -1652,7 +1652,7 @@ let webApp =
         GET >=>
             choose [
                 route "/"    >=> text "index"
-                route "ping" >=> text "pong"
+                route "/ping" >=> text "pong"
             ]
         POST
         >=> route "/car"
@@ -1694,7 +1694,7 @@ let webApp =
         GET >=>
             choose [
                 route "/"    >=> text "index"
-                route "ping" >=> text "pong"
+                route "/ping" >=> text "pong"
                 route "/car" >=> submitCar
             ]
     ]
@@ -1719,7 +1719,7 @@ let webApp =
         GET >=>
             choose [
                 route "/"    >=> text "index"
-                route "ping" >=> text "pong"
+                route "/ping" >=> text "pong"
             ]
         POST
         >=> route "/car"
@@ -1767,7 +1767,7 @@ let webApp =
         GET >=>
             choose [
                 route "/"    >=> text "index"
-                route "ping" >=> text "pong"
+                route "/ping" >=> text "pong"
             ]
         POST >=> route "/car" >=> submitCar
     ]
@@ -1793,7 +1793,7 @@ let webApp =
         GET >=>
             choose [
                 route "/"    >=> text "index"
-                route "ping" >=> text "pong"
+                route "/ping" >=> text "pong"
             ]
         POST
         >=> route "/car"
@@ -1875,7 +1875,7 @@ let webApp =
         GET >=>
             choose [
                 route "/"    >=> text "index"
-                route "ping" >=> text "pong"
+                route "/ping" >=> text "pong"
             ]
         route "/car" >=> submitCar
     ]
@@ -1900,7 +1900,7 @@ let webApp =
         GET >=>
             choose [
                 route "/"    >=> text "index"
-                route "ping" >=> text "pong"
+                route "/ping" >=> text "pong"
             ]
         POST
         >=> route "/car"
@@ -3008,13 +3008,79 @@ Please visit the [Giraffe.ViewEngine](https://github.com/giraffe-fsharp/Giraffe.
 
 ### JSON
 
-By default Giraffe uses `System.Text.Json` for (de-)serializing JSON content. An application can modify the default serializer by registering a new dependency which implements the `Json.ISerializer` interface during application startup.
+By default, Giraffe uses `System.Text.Json` for (de-)serializing JSON content, using [JsonNamingPolicy.CamelCase](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/customize-properties#use-a-built-in-naming-policy) as the *PropertyNamingPolicy*. Then, due to using this option for the *PropertyNamingPolicy*, your application needs to provide the input JSON in a format that conforms to the expectation, otherwise it will not be able to parse the value correctly. For example, consider that you want to interact with the following record:
 
-It's possible to use a serializer compatible with Fsharp types: `Json.FsharpFriendlySerializer` instead of `Json.Serializer` (C#-like). This uses `FSharp.SystemTextJson` to customize `System.Text.Json`.
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name: string
+        Make: string
+        Wheels: int
+        Built: DateTime
+    }
+```
+
+Your client needs to send the data following the naming policy defined, like:
+
+```bash
+curl -X POST http://localhost:5000/json \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Model S",
+    "make": "Tesla",
+    "wheels": 4,
+    "built": "2023-05-01T12:00:00"
+}'
+```
+
+* Notice that the JSON keys start with lowercase letters.
+
+Furthermore, an application can modify the default serializer by registering a new dependency which implements the [Json.ISerializer](https://github.com/giraffe-fsharp/Giraffe/blob/master/src/Giraffe/Json.fs) interface during application startup. Check the next example on how to use the `Json.FsharpFriendlySerializer` instead of `Json.Serializer` (C#-like), that uses the [Tarmil/FSharp.SystemTextJson](https://github.com/Tarmil/FSharp.SystemTextJson) project to customize `System.Text.Json`:
+
+```fsharp
+open System
+open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Http
+open Microsoft.Extensions.DependencyInjection
+open Microsoft.Extensions.Hosting
+open Giraffe
+
+let webApp =
+    choose [
+        // ...
+    ]
+
+let configureServices (services: IServiceCollection) =
+    services
+        .AddGiraffe()
+        // Here we add the custom serializer that uses `Json.FsharpFriendlySerializer'
+        .AddSingleton<Json.ISerializer>(fun _ -> Json.FsharpFriendlySerializer() :> Json.ISerializer)
+    |> ignore
+
+let configureApp (appBuilder: IApplicationBuilder) =
+    appBuilder.UseGiraffe(webApp)
+
+[<EntryPoint>]
+let main args =
+    let builder = WebApplication.CreateBuilder(args)
+    configureServices builder.Services
+
+    let app = builder.Build()
+
+    // ...
+
+    configureApp app
+    app.Run()
+
+    0
+```
+
+* Check Tarmil's repository to learn more about the FSharp.SystemTextJson configuration, and how to tweak it considering your specific demands.
 
 #### Using a different JSON serializer
 
-You can change the entire underlying JSON serializer by creating a new class which implements the `Json.ISerializer` interface:
+Other than the JSON serializers provided by Giraffe, you can change the entire underlying JSON serializer by creating a new class that implements the [Json.ISerializer](https://github.com/giraffe-fsharp/Giraffe/blob/master/src/Giraffe/Json.fs) interface:
 
 ```fsharp
 type CustomJsonSerializer() =
@@ -3029,7 +3095,7 @@ type CustomJsonSerializer() =
         member __.DeserializeAsync<'T> (stream : Stream) = // ...
 ```
 
-For example, one could define a `Newtonsoft.Json` serializer:
+For example, one could define a `Newtonsoft.Json` serializer (inspired by [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json)):
 
 ```fsharp
 [<RequireQualifiedAccess>]

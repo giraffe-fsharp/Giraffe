@@ -35,9 +35,107 @@ type Person =
             this.Height
             this.Piercings
 
+[<CLIMutable>]
+type Car =
+    {
+        Name: string
+        Make: string
+        Wheels: int
+        Built: DateTime
+    }
+
 // ---------------------------------
 // Tests
 // ---------------------------------
+
+let private submitCarHandler: HttpHandler =
+    fun (next: HttpFunc) (ctx: HttpContext) ->
+        task {
+            let! car = ctx.BindJsonAsync<Car>()
+            return! Successful.ok (json car) next ctx
+        }
+
+[<Fact>]
+let ``POST "/car" parses the camelCase input json correctly using the default serializer`` () =
+    let ctx = Substitute.For<HttpContext>()
+    mockJson ctx
+
+    let app =
+        choose [
+            POST >=> route "/car" >=> submitCarHandler
+            setStatusCode 404 >=> text "Not found"
+        ]
+
+    let camelCaseCarPayload =
+        """{
+            "name": "Model S",
+            "make": "Tesla",
+            "wheels": 4,
+            "built": "2023-05-01T12:00:00"
+        }"""
+
+    let stream = new MemoryStream()
+    let writer = new StreamWriter(stream, Text.Encoding.UTF8)
+    writer.Write camelCaseCarPayload
+    writer.Flush()
+    stream.Position <- 0L
+
+    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/car")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    ctx.Request.Body <- stream
+
+    let expected =
+        """{"name":"Model S","make":"Tesla","wheels":4,"built":"2023-05-01T12:00:00"}"""
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
+let ``POST "/car" parses the non-camelCase input json incorrectly using the default serializer`` () =
+    let ctx = Substitute.For<HttpContext>()
+    mockJson ctx
+
+    let app =
+        choose [
+            POST >=> route "/car" >=> submitCarHandler
+            setStatusCode 404 >=> text "Not found"
+        ]
+
+    let carPayload =
+        """{
+            "Name": "Model S",
+            "Make": "Tesla",
+            "Wheels": 4,
+            "Built": "2023-05-01T12:00:00"
+        }"""
+
+    let stream = new MemoryStream()
+    let writer = new StreamWriter(stream, Text.Encoding.UTF8)
+    writer.Write carPayload
+    writer.Flush()
+    stream.Position <- 0L
+
+    ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/car")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    ctx.Request.Body <- stream
+
+    let expected =
+        """{"name":null,"make":null,"wheels":0,"built":"0001-01-01T00:00:00"}"""
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
 
 [<Fact>]
 let ``GET "/json" returns json object`` () =
