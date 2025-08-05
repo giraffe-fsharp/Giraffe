@@ -59,15 +59,15 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Ionide.Analyzers" Version="0.14.6">
+    <PackageReference Include="Ionide.Analyzers" Version="0.14.7">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>analyzers</IncludeAssets>
     </PackageReference>
 
     <PackageReference Include="FSharp.Core" Version="6.0.0" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.*" />
-    <PackageReference Include="System.Text.Json" Version="8.0.*" />
-    <PackageReference Include="FSharp.SystemTextJson" Version="1.3.*" />
+    <PackageReference Include="System.Text.Json" Version="9.0.7" />
+    <PackageReference Include="FSharp.SystemTextJson" Version="1.4.36" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.*" PrivateAssets="All" />
     <PackageReference Include="Giraffe.ViewEngine" Version="1.4.*" />
   </ItemGroup>
