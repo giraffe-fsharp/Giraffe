@@ -7,32 +7,28 @@ assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+## Describe the bug
+<!-- A clear and concise description of what the bug is. -->
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+## Expected behavior
+<!-- A clear and concise description of what you expected to happen. -->
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+## To Reproduce
+<!-- Steps to reproduce the behavior, or 
+    point us to a minimalistic project which reproduces this issue hosted in a public GitHub repo. -->
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+## Exceptions
+<!-- Include the exception you get when facing this issue. -->
 
-**Desktop (please complete the following information):**
- - OS: [e.g. Windows 10, macOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+```shell
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+```
 
-**Additional context**
-Add any other context about the problem here.
+## Environment:
+<!-- Please complete the following information -->
+
+- OS: [e.g. Windows 10, macOS, Linux (distro)]
+- .NET version: [e.g. 9.0.101]
+
+## Additional context
+<!-- Add any other context about the problem here, like the Giraffe version your project is using. -->
