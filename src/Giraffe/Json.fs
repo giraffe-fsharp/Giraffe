@@ -12,7 +12,6 @@ module Json =
     /// Interface defining JSON serialization methods.
     /// Use this interface to customize JSON serialization in Giraffe.
     /// </summary>
-    [<AllowNullLiteral>]
     type ISerializer =
         abstract member SerializeToString<'T> : 'T -> string
         abstract member SerializeToBytes<'T> : 'T -> byte array
