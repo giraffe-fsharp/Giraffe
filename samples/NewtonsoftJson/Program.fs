@@ -40,21 +40,30 @@ module NewtonsoftJson =
                 }
                 :> Task
 
-            member __.Deserialize<'T>(json: string) =
-                JsonConvert.DeserializeObject<'T>(json, settings)
+            member __.Deserialize<'T>(json: string) : 'T =
+                match JsonConvert.DeserializeObject<'T>(json, settings) with
+                | null -> failwith "Deserialized object is null"
+                | (notNull: 'T) -> notNull
 
-            member __.Deserialize<'T>(bytes: byte array) =
+            member __.Deserialize<'T>(bytes: byte array) : 'T =
                 let json = Encoding.UTF8.GetString bytes
-                JsonConvert.DeserializeObject<'T>(json, settings)
 
-            member __.DeserializeAsync<'T>(stream: Stream) =
+                match JsonConvert.DeserializeObject<'T>(json, settings) with
+                | null -> failwith "Deserialized object is null"
+                | (notNull: 'T) -> notNull
+
+            member __.DeserializeAsync<'T>(stream: Stream) : Task<'T> =
                 task {
                     use memoryStream = rmsManager.GetStream("giraffe-json-deserialize")
                     do! stream.CopyToAsync(memoryStream)
                     memoryStream.Seek(0L, SeekOrigin.Begin) |> ignore
                     use streamReader = new StreamReader(memoryStream)
                     use jsonTextReader = new JsonTextReader(streamReader)
-                    return serializer.Deserialize<'T>(jsonTextReader)
+
+                    return
+                        match serializer.Deserialize<'T>(jsonTextReader) with
+                        | null -> failwith "Deserialized object is null"
+                        | (notNull: 'T) -> notNull
                 }
 
 type JsonResponse = { Foo: string; Bar: string; Age: int }
@@ -67,11 +76,13 @@ let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
 let configureServices (services: IServiceCollection) =
     services
         .AddSingleton<Json.ISerializer>(fun serviceProvider ->
-            NewtonsoftJson.Serializer(
-                JsonSerializerSettings(),
+            let rmsManager =
                 serviceProvider.GetService<Microsoft.IO.RecyclableMemoryStreamManager>()
-            )
-            :> Json.ISerializer
+                |> function
+                    | null -> Microsoft.IO.RecyclableMemoryStreamManager()
+                    | notNull -> notNull
+
+            NewtonsoftJson.Serializer(JsonSerializerSettings(), rmsManager) :> Json.ISerializer
         )
         .AddRouting()
         .AddResponseCaching()
@@ -79,11 +90,8 @@ let configureServices (services: IServiceCollection) =
     |> ignore
 
 let configureApp (appBuilder: IApplicationBuilder) =
-    appBuilder
-        .UseRouting()
-        .UseResponseCaching()
-        .UseEndpoints(fun e -> e.MapGiraffeEndpoints(endpoints))
-        .UseGiraffe(notFoundHandler)
+    appBuilder.UseRouting().UseResponseCaching().UseEndpoints(_.MapGiraffeEndpoints(endpoints)).UseGiraffe
+        notFoundHandler
 
 [<EntryPoint>]
 let main (args: string array) : int =
