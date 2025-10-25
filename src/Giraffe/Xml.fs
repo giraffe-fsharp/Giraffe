@@ -6,7 +6,6 @@ module Xml =
     /// Interface defining XML serialization methods.
     /// Use this interface to customize XML serialization in Giraffe.
     /// </summary>
-    [<AllowNullLiteral>]
     type ISerializer =
         abstract member Serialize: obj -> byte array
         abstract member Deserialize<'T> : string -> 'T

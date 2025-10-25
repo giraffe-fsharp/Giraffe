@@ -8,6 +8,13 @@ open Microsoft.Extensions.Hosting
 open Giraffe
 open Giraffe.EndpointRouting
 
+type Car =
+    {
+        Brand: string
+        Color: string
+        ReleaseYear: int
+    }
+
 let handler1: HttpHandler =
     fun (_: HttpFunc) (ctx: HttpContext) -> ctx.WriteTextAsync "Hello World"
 
@@ -20,6 +27,23 @@ let handler3 (a: string, b: string, c: string, d: int) : HttpHandler =
 
 let handlerNamed (petId: int) : HttpHandler =
     fun (_: HttpFunc) (ctx: HttpContext) -> sprintf "PetId: %i" petId |> ctx.WriteTextAsync
+
+/// Example request:
+///
+/// ```bash
+/// curl -v localhost:5000/json -X Post -d '{"brand":"Ford", "color":"Black", "releaseYear":2015}'
+/// ```
+let jsonHandler: HttpHandler =
+    fun (next: HttpFunc) (ctx: HttpContext) ->
+        task {
+            match! ctx.BindJsonAsync<Car>() with
+            | {
+                  Brand = _brand
+                  Color = _color
+                  ReleaseYear = releaseYear
+              } when releaseYear >= 1990 -> return! json {| Message = "Valid car" |} next ctx
+            | _ -> return! (setStatusCode 400 >=> json {| Message = "Invalid car year" |}) next ctx
+        }
 
 let endpoints =
     [
@@ -38,6 +62,7 @@ let endpoints =
         ]
         // Not specifying a http verb means it will listen to all verbs
         subRoute "/sub" [ route "/test" handler1 ]
+        POST [ route "/json" jsonHandler ]
     ]
 
 let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
