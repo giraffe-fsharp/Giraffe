@@ -1,6 +1,23 @@
 Release Notes
 =============
 
+## 8.1.0-alpha-001 - 2025-10-25
+
+#### Breaking changes
+
+- [Remove [\<AllowNullLiteral\>] attribute from Json.ISerializer and Xml.ISerializer](https://github.com/giraffe-fsharp/Giraffe/pull/685) - Credits @64J0
+    - With the release of .NET 9 we have [nullable reference types](https://devblogs.microsoft.com/dotnet/nullable-reference-types-in-fsharp-9/).
+    - When this feature is enabled (`<Nullable>enable</Nullable>`), our users started running into problems that boils down to `Json.ISerializer` having the `AllowNullLiteral` attribute.
+    - Due to it, we decided to remove this attribute from both the `Json.ISerializer` and the `Xml.ISerializer`. 
+        - New automated tests were added to assert that the serializers are still working properly.
+        - We also updated some sample projects to use this feature.
+
+#### Other updates
+
+- [Update fsharp-analyzers and the analyzer packages](https://github.com/giraffe-fsharp/Giraffe/pull/662) - Credits @Numpsy
+- [Improve JSON docs](https://github.com/giraffe-fsharp/Giraffe/pull/665) - Credits @64J0
+- [Add issue templates](https://github.com/giraffe-fsharp/Giraffe/pull/671) - Credits @64J0
+
 ## 8.0.0-alpha-003 - 2025-06-09
 
 - [Enhance routef support for named parameters and improve documentation](https://github.com/giraffe-fsharp/Giraffe/pull/656) - Credits @RJSonnenberg

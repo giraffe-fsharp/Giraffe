@@ -2,7 +2,7 @@
   <PropertyGroup>
     <!-- General -->
     <AssemblyName>Giraffe</AssemblyName>
-    <Version>8.0.0-alpha-002</Version>
+    <Version>8.1.0-alpha-001</Version>
     <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
     <Copyright>Copyright 2020 Dustin Moris Gorski</Copyright>
     <Authors>Dustin Moris Gorski and contributors</Authors>
@@ -39,10 +39,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)../../giraffe-64x64.png" Pack="true" PackagePath="$(PackageIconUrl)"/>
-    <None Include="$(MSBuildThisFileDirectory)../../README.md" Pack="true" PackagePath="/"/>    
-    <None Include="$(MSBuildThisFileDirectory)../../LICENSE" Pack="true" PackagePath="/"/>   
-
+    <None Include="$(MSBuildThisFileDirectory)../../giraffe-64x64.png" Pack="true" PackagePath="$(PackageIconUrl)" />
+    <None Include="$(MSBuildThisFileDirectory)../../README.md" Pack="true" PackagePath="/" />
+    <None Include="$(MSBuildThisFileDirectory)../../LICENSE" Pack="true" PackagePath="/" />
   </ItemGroup>
 
   <ItemGroup>
