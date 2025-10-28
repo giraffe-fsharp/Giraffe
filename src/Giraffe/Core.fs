@@ -2,6 +2,7 @@ namespace Giraffe
 
 [<AutoOpen>]
 module Core =
+    open System
     open System.Text
     open System.Threading.Tasks
     open System.Globalization
@@ -252,8 +253,32 @@ module Core =
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
     let redirectTo (permanent: bool) (location: string) : HttpHandler =
         fun (next: HttpFunc) (ctx: HttpContext) ->
-            ctx.Response.Redirect(location, permanent)
-            Task.FromResult(Some ctx)
+            // Validate redirect URL to prevent open redirect vulnerabilities
+            // Allow only relative URLs or URLs with the same host
+            let isValidRedirect (url: string) =
+                if String.IsNullOrWhiteSpace(url) then
+                    false
+                elif url.StartsWith("/") then
+                    true // Relative URL
+                elif url.StartsWith("~/") then
+                    true // App-relative URL
+                else
+                    match Uri.TryCreate(url, UriKind.Absolute) with
+                    | true, uri ->
+                        // Only allow redirects to the same host
+                        let requestHost = ctx.Request.Host
+                        uri.Host = requestHost.Host
+                    | false, _ -> false
+
+            if isValidRedirect location then
+                ctx.Response.Redirect(location, permanent)
+                Task.FromResult(Some ctx)
+            else
+                // Log suspicious redirect attempt
+                let logger = ctx.GetLogger("Giraffe.Core")
+                logger.LogWarning("Blocked potential open redirect to: {Location}", location)
+                ctx.Response.StatusCode <- 400
+                Task.FromResult(Some ctx)
 
     // ---------------------------
     // Model binding functions

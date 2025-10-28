@@ -44,5 +44,14 @@ module SystemXml =
 
             member __.Deserialize<'T>(xml: string) =
                 let serializer = XmlSerializer(typeof<'T>)
-                use reader = new StringReader(xml)
-                serializer.Deserialize reader :?> 'T
+                use stringReader = new StringReader(xml)
+                // Secure XML parsing: disable DTD processing and external entities to prevent XXE attacks
+                let xmlReaderSettings =
+                    new XmlReaderSettings(
+                        DtdProcessing = DtdProcessing.Prohibit,
+                        XmlResolver = null,
+                        MaxCharactersFromEntities = 1024L * 1024L
+                    ) // 1MB limit
+
+                use xmlReader = XmlReader.Create(stringReader, xmlReaderSettings)
+                serializer.Deserialize xmlReader :?> 'T
