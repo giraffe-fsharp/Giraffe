@@ -244,41 +244,64 @@ module Core =
                 | false -> skipPipeline
 
     /// <summary>
+    /// Validates if a redirect URL is safe (prevents open redirect vulnerabilities).
+    /// Allows only relative URLs or URLs with the same host.
+    /// </summary>
+    /// <param name="ctx">The HttpContext to get the request host from.</param>
+    /// <param name="url">The URL to validate.</param>
+    /// <returns>True if the URL is safe to redirect to, false otherwise.</returns>
+    let isValidRedirectUrl (ctx: HttpContext) (url: string) =
+        if String.IsNullOrWhiteSpace url then
+            false
+        elif url.StartsWith '/' then
+            true // Relative URL
+        elif url.StartsWith "~/" then
+            true // App-relative URL
+        else
+            match Uri.TryCreate(url, UriKind.Absolute) with
+            | true, uri ->
+                // Only allow redirects to the same host
+                let requestHost = ctx.Request.Host
+                uri.Host = requestHost.Host
+            | false, _ -> false
+
+    /// <summary>
     /// Redirects to a different location with a `302` or `301` (when permanent) HTTP status code.
+    /// Validates the redirect URL to prevent open redirect vulnerabilities.
+    /// </summary>
+    /// <param name="permanent">If true the redirect is permanent (301), otherwise temporary (302).</param>
+    /// <param name="location">The URL to redirect the client to.</param>
+    /// <param name="invalidRedirectHandler">Optional custom handler for invalid redirects. If None, returns 400 Bad Request with logged warning.</param>
+    /// <param name="next"></param>
+    /// <param name="ctx"></param>
+    /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
+    let redirectToExt (permanent: bool) (location: string) (invalidRedirectHandler: HttpHandler option) : HttpHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
+            if isValidRedirectUrl ctx location then
+                ctx.Response.Redirect(location, permanent)
+                Task.FromResult(Some ctx)
+            else
+                let defaultHandler =
+                    fun (next: HttpFunc) (ctx: HttpContext) ->
+                        let logger = ctx.GetLogger("Giraffe.Core")
+                        logger.LogWarning("Blocked potential open redirect to: {Location}", location)
+                        ctx.Response.StatusCode <- 400
+                        Task.FromResult(Some ctx)
+
+                let handler = invalidRedirectHandler |> Option.defaultValue defaultHandler
+                handler earlyReturn ctx
+
+    /// <summary>
+    /// Redirects to a different location with a `302` or `301` (when permanent) HTTP status code.
+    /// Validates the redirect URL to prevent open redirect vulnerabilities.
+    /// Uses default error handling (400 Bad Request) for invalid redirects.
     /// </summary>
     /// <param name="permanent">If true the redirect is permanent (301), otherwise temporary (302).</param>
     /// <param name="location">The URL to redirect the client to.</param>
     /// <param name="next"></param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let redirectTo (permanent: bool) (location: string) : HttpHandler =
-        fun (next: HttpFunc) (ctx: HttpContext) ->
-            // Validate redirect URL to prevent open redirect vulnerabilities
-            // Allow only relative URLs or URLs with the same host
-            let isValidRedirect (url: string) =
-                if String.IsNullOrWhiteSpace(url) then
-                    false
-                elif url.StartsWith("/") then
-                    true // Relative URL
-                elif url.StartsWith("~/") then
-                    true // App-relative URL
-                else
-                    match Uri.TryCreate(url, UriKind.Absolute) with
-                    | true, uri ->
-                        // Only allow redirects to the same host
-                        let requestHost = ctx.Request.Host
-                        uri.Host = requestHost.Host
-                    | false, _ -> false
-
-            if isValidRedirect location then
-                ctx.Response.Redirect(location, permanent)
-                Task.FromResult(Some ctx)
-            else
-                // Log suspicious redirect attempt
-                let logger = ctx.GetLogger("Giraffe.Core")
-                logger.LogWarning("Blocked potential open redirect to: {Location}", location)
-                ctx.Response.StatusCode <- 400
-                Task.FromResult(Some ctx)
+    let redirectTo (permanent: bool) (location: string) : HttpHandler = redirectToExt permanent location None
 
     // ---------------------------
     // Model binding functions

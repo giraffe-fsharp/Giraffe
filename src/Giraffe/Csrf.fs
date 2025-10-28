@@ -9,9 +9,12 @@ module Csrf =
     open System
     open System.Security.Cryptography
     open System.Text
+    open System.Threading.Tasks
     open Microsoft.AspNetCore.Http
     open Microsoft.Extensions.Logging
     open Microsoft.AspNetCore.Antiforgery
+
+    // Defaults are selected to what developers would expect from ASP.NET Core application.
 
     /// <summary>
     /// Default CSRF token header name
@@ -29,35 +32,66 @@ module Csrf =
     /// Validates the CSRF token from the request.
     /// Checks for token in header (X-CSRF-TOKEN) or form field (__RequestVerificationToken).
     /// </summary>
+    /// <param name="invalidTokenHandler">Optional custom handler for invalid tokens. If None, returns 403 Forbidden with logged warning.</param>
     /// <param name="next">The next HttpFunc</param>
     /// <param name="ctx">The HttpContext</param>
     /// <returns>HttpFuncResult</returns>
-    let validateCsrfToken: HttpHandler =
+    let validateCsrfTokenExt (invalidTokenHandler: HttpHandler option) : HttpHandler =
         fun (next: HttpFunc) (ctx: HttpContext) ->
             task {
                 let antiforgery = ctx.GetService<IAntiforgery>()
 
                 try
-                    let! isValid = antiforgery.IsRequestValidAsync(ctx)
+                    let! isValid = antiforgery.IsRequestValidAsync ctx
 
                     if isValid then
                         return! next ctx
                     else
-                        let logger = ctx.GetLogger("Giraffe.Csrf")
-                        logger.LogWarning("CSRF token validation failed for request to {Path}", ctx.Request.Path)
-                        ctx.Response.StatusCode <- 403
-                        return Some ctx
+                        let defaultHandler =
+                            fun (next: HttpFunc) (ctx: HttpContext) ->
+                                let logger = ctx.GetLogger("Giraffe.Csrf")
+
+                                logger.LogWarning(
+                                    "CSRF token validation failed for request to {Path}",
+                                    ctx.Request.Path
+                                )
+
+                                ctx.Response.StatusCode <- 403
+                                Task.FromResult(Some ctx)
+
+                        let handler = invalidTokenHandler |> Option.defaultValue defaultHandler
+                        return! handler earlyReturn ctx
                 with ex ->
-                    let logger = ctx.GetLogger("Giraffe.Csrf")
-                    logger.LogWarning(ex, "CSRF token validation error for request to {Path}", ctx.Request.Path)
-                    ctx.Response.StatusCode <- 403
-                    return Some ctx
+                    let defaultHandler =
+                        fun (next: HttpFunc) (ctx: HttpContext) ->
+                            let logger = ctx.GetLogger("Giraffe.Csrf")
+                            logger.LogWarning(ex, "CSRF token validation error for request to {Path}", ctx.Request.Path)
+                            ctx.Response.StatusCode <- 403
+                            Task.FromResult(Some ctx)
+
+                    let handler = invalidTokenHandler |> Option.defaultValue defaultHandler
+                    return! handler earlyReturn ctx
             }
+
+    /// <summary>
+    /// Validates the CSRF token from the request with default error handling.
+    /// Checks for token in header (X-CSRF-TOKEN) or form field (__RequestVerificationToken).
+    /// Uses default error handling (403 Forbidden) for invalid tokens.
+    /// </summary>
+    /// <param name="next">The next HttpFunc</param>
+    /// <param name="ctx">The HttpContext</param>
+    /// <returns>HttpFuncResult</returns>
+    let validateCsrfToken: HttpHandler = validateCsrfTokenExt None
 
     /// <summary>
     /// Alias for validateCsrfToken - validates anti-forgery tokens from requests.
     /// </summary>
     let requireAntiforgeryToken = validateCsrfToken
+
+    /// <summary>
+    /// Alias for validateCsrfTokenExt - validates anti-forgery tokens from requests with custom error handler.
+    /// </summary>
+    let requireAntiforgeryTokenExt = validateCsrfTokenExt
 
     /// <summary>
     /// Generates a CSRF token and adds it to the HttpContext items for use in views.
@@ -70,7 +104,7 @@ module Csrf =
         fun (next: HttpFunc) (ctx: HttpContext) ->
             task {
                 let antiforgery = ctx.GetService<IAntiforgery>()
-                let tokens = antiforgery.GetAndStoreTokens(ctx)
+                let tokens = antiforgery.GetAndStoreTokens ctx
 
                 // Store token for view rendering
                 ctx.Items.["CsrfToken"] <- tokens.RequestToken
@@ -90,7 +124,7 @@ module Csrf =
         fun (next: HttpFunc) (ctx: HttpContext) ->
             task {
                 let antiforgery = ctx.GetService<IAntiforgery>()
-                let tokens = antiforgery.GetAndStoreTokens(ctx)
+                let tokens = antiforgery.GetAndStoreTokens ctx
 
                 let response =
                     {|
