@@ -67,10 +67,17 @@ let ``redirectTo allows absolute URLs to same host`` () =
 [<Fact>]
 let ``redirectTo blocks open redirect to external domain`` () =
     let ctx = Substitute.For<HttpContext>()
+    let loggerFactory = Substitute.For<ILoggerFactory>()
     let logger = Substitute.For<ILogger>()
+    loggerFactory.CreateLogger(Arg.Any<string>()).Returns logger |> ignore
+    let serviceProvider = Substitute.For<IServiceProvider>()
+
+    serviceProvider.GetService(typeof<ILoggerFactory>).Returns loggerFactory
+    |> ignore
+
+    ctx.RequestServices.Returns serviceProvider |> ignore
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Host <- HostString "example.com"
-    ctx.GetLogger(Arg.Any<string>()).Returns(logger) |> ignore
 
     let app = redirectTo false "https://evil.com/phishing"
 
@@ -97,10 +104,17 @@ let ``redirectTo blocks open redirect to external domain`` () =
 [<Fact>]
 let ``redirectTo blocks javascript protocol XSS attempt`` () =
     let ctx = Substitute.For<HttpContext>()
+    let loggerFactory = Substitute.For<ILoggerFactory>()
     let logger = Substitute.For<ILogger>()
+    loggerFactory.CreateLogger(Arg.Any<string>()).Returns logger |> ignore
+    let serviceProvider = Substitute.For<IServiceProvider>()
+
+    serviceProvider.GetService(typeof<ILoggerFactory>).Returns loggerFactory
+    |> ignore
+
+    ctx.RequestServices.Returns serviceProvider |> ignore
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Host <- HostString "example.com"
-    ctx.GetLogger(Arg.Any<string>()).Returns(logger) |> ignore
 
     let app = redirectTo false "javascript:alert('xss')"
 
@@ -115,10 +129,17 @@ let ``redirectTo blocks javascript protocol XSS attempt`` () =
 [<Fact>]
 let ``redirectTo blocks empty or whitespace URLs`` () =
     let ctx = Substitute.For<HttpContext>()
+    let loggerFactory = Substitute.For<ILoggerFactory>()
     let logger = Substitute.For<ILogger>()
+    loggerFactory.CreateLogger(Arg.Any<string>()).Returns logger |> ignore
+    let serviceProvider = Substitute.For<IServiceProvider>()
+
+    serviceProvider.GetService(typeof<ILoggerFactory>).Returns loggerFactory
+    |> ignore
+
+    ctx.RequestServices.Returns serviceProvider |> ignore
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Host <- HostString "example.com"
-    ctx.GetLogger(Arg.Any<string>()).Returns(logger) |> ignore
 
     let app = redirectTo false "   "
 
@@ -154,8 +175,10 @@ let ``redirectTo with permanent flag calls Redirect with true`` () =
 let ``validateCsrfToken succeeds with valid token`` () =
     let ctx = Substitute.For<HttpContext>()
     let antiforgery = Substitute.For<IAntiforgery>()
+    let serviceProvider = Substitute.For<IServiceProvider>()
+    serviceProvider.GetService(typeof<IAntiforgery>).Returns antiforgery |> ignore
+    ctx.RequestServices.Returns serviceProvider |> ignore
     ctx.Response.Body <- new MemoryStream()
-    ctx.GetService<IAntiforgery>().Returns antiforgery |> ignore
 
     antiforgery.IsRequestValidAsync(ctx).Returns(System.Threading.Tasks.Task.FromResult(true))
     |> ignore
@@ -181,11 +204,18 @@ let ``validateCsrfToken succeeds with valid token`` () =
 let ``validateCsrfToken fails with invalid token`` () =
     let ctx = Substitute.For<HttpContext>()
     let antiforgery = Substitute.For<IAntiforgery>()
+    let loggerFactory = Substitute.For<ILoggerFactory>()
     let logger = Substitute.For<ILogger>()
+    loggerFactory.CreateLogger(Arg.Any<string>()).Returns logger |> ignore
+    let serviceProvider = Substitute.For<IServiceProvider>()
+    serviceProvider.GetService(typeof<IAntiforgery>).Returns antiforgery |> ignore
+
+    serviceProvider.GetService(typeof<ILoggerFactory>).Returns loggerFactory
+    |> ignore
+
+    ctx.RequestServices.Returns serviceProvider |> ignore
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Path <- PathString("/test")
-    ctx.GetService<IAntiforgery>().Returns antiforgery |> ignore
-    ctx.GetLogger(Arg.Any<string>()).Returns logger |> ignore
 
     antiforgery.IsRequestValidAsync(ctx).Returns(System.Threading.Tasks.Task.FromResult false)
     |> ignore
@@ -211,11 +241,18 @@ let ``validateCsrfToken fails with invalid token`` () =
 let ``validateCsrfToken fails on exception`` () =
     let ctx = Substitute.For<HttpContext>()
     let antiforgery = Substitute.For<IAntiforgery>()
+    let loggerFactory = Substitute.For<ILoggerFactory>()
     let logger = Substitute.For<ILogger>()
+    loggerFactory.CreateLogger(Arg.Any<string>()).Returns logger |> ignore
+    let serviceProvider = Substitute.For<IServiceProvider>()
+    serviceProvider.GetService(typeof<IAntiforgery>).Returns antiforgery |> ignore
+
+    serviceProvider.GetService(typeof<ILoggerFactory>).Returns loggerFactory
+    |> ignore
+
+    ctx.RequestServices.Returns serviceProvider |> ignore
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Path <- PathString "/test"
-    ctx.GetService<IAntiforgery>().Returns antiforgery |> ignore
-    ctx.GetLogger(Arg.Any<string>()).Returns logger |> ignore
 
     antiforgery
         .IsRequestValidAsync(ctx)
@@ -247,9 +284,11 @@ let ``generateCsrfToken stores token in context items`` () =
     let tokens =
         AntiforgeryTokenSet("test-request-token", "test-cookie-token", "form-field", "X-CSRF-TOKEN")
 
+    let serviceProvider = Substitute.For<IServiceProvider>()
+    serviceProvider.GetService(typeof<IAntiforgery>).Returns antiforgery |> ignore
+    ctx.RequestServices.Returns serviceProvider |> ignore
     ctx.Response.Body <- new MemoryStream()
     ctx.Items <- Dictionary<obj, obj>() :> IDictionary<obj, obj>
-    ctx.GetService<IAntiforgery>().Returns antiforgery |> ignore
     antiforgery.GetAndStoreTokens(ctx).Returns tokens |> ignore
 
     let mutable nextCalled = false
@@ -280,9 +319,15 @@ let ``csrfTokenJson returns token as JSON`` () =
     let tokens =
         AntiforgeryTokenSet("test-token-value", "cookie-value", "form-field", "X-CSRF-TOKEN")
 
-    mockJson ctx
+    let serviceProvider = Substitute.For<IServiceProvider>()
+    serviceProvider.GetService(typeof<IAntiforgery>).Returns antiforgery |> ignore
+    let jsonSerializer = Json.Serializer(Json.Serializer.DefaultOptions)
+
+    serviceProvider.GetService(typeof<Json.ISerializer>).Returns jsonSerializer
+    |> ignore
+
+    ctx.RequestServices.Returns serviceProvider |> ignore
     ctx.Response.Body <- new MemoryStream()
-    ctx.GetService<IAntiforgery>().Returns antiforgery |> ignore
     antiforgery.GetAndStoreTokens(ctx).Returns tokens |> ignore
 
     task {
@@ -305,8 +350,10 @@ let ``csrfTokenHtml returns token as hidden input`` () =
     let tokens =
         AntiforgeryTokenSet("test-token-value", "cookie-value", "form-field", "X-CSRF-TOKEN")
 
+    let serviceProvider = Substitute.For<IServiceProvider>()
+    serviceProvider.GetService(typeof<IAntiforgery>).Returns antiforgery |> ignore
+    ctx.RequestServices.Returns serviceProvider |> ignore
     ctx.Response.Body <- new MemoryStream()
-    ctx.GetService<IAntiforgery>().Returns antiforgery |> ignore
     antiforgery.GetAndStoreTokens(ctx).Returns tokens |> ignore
 
     task {
@@ -473,10 +520,17 @@ let ``redirectToExt allows custom error handler for invalid redirects`` () =
 [<Fact>]
 let ``redirectToExt with None handler uses default behavior`` () =
     let ctx = Substitute.For<HttpContext>()
+    let loggerFactory = Substitute.For<ILoggerFactory>()
     let logger = Substitute.For<ILogger>()
+    loggerFactory.CreateLogger(Arg.Any<string>()).Returns logger |> ignore
+    let serviceProvider = Substitute.For<IServiceProvider>()
+
+    serviceProvider.GetService(typeof<ILoggerFactory>).Returns loggerFactory
+    |> ignore
+
+    ctx.RequestServices.Returns serviceProvider |> ignore
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Host <- HostString("example.com")
-    ctx.GetLogger(Arg.Any<string>()).Returns logger |> ignore
 
     let app = redirectToExt false "https://evil.com/phishing" None
 
@@ -505,9 +559,11 @@ let ``isValidRedirectUrl correctly validates safe URLs`` () =
 let ``validateCsrfTokenExt allows custom error handler for invalid tokens`` () =
     let ctx = Substitute.For<HttpContext>()
     let antiforgery = Substitute.For<IAntiforgery>()
+    let serviceProvider = Substitute.For<IServiceProvider>()
+    serviceProvider.GetService(typeof<IAntiforgery>).Returns antiforgery |> ignore
+    ctx.RequestServices.Returns serviceProvider |> ignore
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Path <- PathString "/test"
-    ctx.GetService<IAntiforgery>().Returns antiforgery |> ignore
 
     antiforgery.IsRequestValidAsync(ctx).Returns(System.Threading.Tasks.Task.FromResult false)
     |> ignore
@@ -538,11 +594,18 @@ let ``validateCsrfTokenExt allows custom error handler for invalid tokens`` () =
 let ``validateCsrfTokenExt with None handler uses default behavior`` () =
     let ctx = Substitute.For<HttpContext>()
     let antiforgery = Substitute.For<IAntiforgery>()
+    let loggerFactory = Substitute.For<ILoggerFactory>()
     let logger = Substitute.For<ILogger>()
+    loggerFactory.CreateLogger(Arg.Any<string>()).Returns logger |> ignore
+    let serviceProvider = Substitute.For<IServiceProvider>()
+    serviceProvider.GetService(typeof<IAntiforgery>).Returns antiforgery |> ignore
+
+    serviceProvider.GetService(typeof<ILoggerFactory>).Returns loggerFactory
+    |> ignore
+
+    ctx.RequestServices.Returns serviceProvider |> ignore
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Path <- PathString "/test"
-    ctx.GetService<IAntiforgery>().Returns antiforgery |> ignore
-    ctx.GetLogger(Arg.Any<string>()).Returns logger |> ignore
 
     antiforgery.IsRequestValidAsync(ctx).Returns(System.Threading.Tasks.Task.FromResult false)
     |> ignore
@@ -568,8 +631,10 @@ let ``validateCsrfTokenExt with None handler uses default behavior`` () =
 let ``requireAntiforgeryTokenExt is alias for validateCsrfTokenExt`` () =
     let ctx = Substitute.For<HttpContext>()
     let antiforgery = Substitute.For<IAntiforgery>()
+    let serviceProvider = Substitute.For<IServiceProvider>()
+    serviceProvider.GetService(typeof<IAntiforgery>).Returns antiforgery |> ignore
+    ctx.RequestServices.Returns serviceProvider |> ignore
     ctx.Response.Body <- new MemoryStream()
-    ctx.GetService<IAntiforgery>().Returns antiforgery |> ignore
 
     antiforgery.IsRequestValidAsync(ctx).Returns(System.Threading.Tasks.Task.FromResult true)
     |> ignore
