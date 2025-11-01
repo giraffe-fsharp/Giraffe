@@ -22,6 +22,7 @@
     <Compile Include="PreconditionalTests.fs" />
     <Compile Include="JsonTests.fs" />
     <Compile Include="XmlTests.fs" />
+    <Compile Include="SecurityTests.fs" />
   </ItemGroup>
 
   <ItemGroup>
