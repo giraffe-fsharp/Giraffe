@@ -503,8 +503,7 @@ module Core =
     /// <param name="str">The string value to be send back to the client.</param>
     /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
     let setBodyFromString (str: string) : HttpHandler =
-        let bytes = Encoding.UTF8.GetBytes str
-        fun (_: HttpFunc) (ctx: HttpContext) -> ctx.WriteBytesAsync bytes
+        fun (_: HttpFunc) (ctx: HttpContext) -> ctx.WriteStringAsync str
 
     /// <summary>
     /// Writes an UTF-8 encoded string to the body of the HTTP response and sets the HTTP Content-Length header accordingly, as well as the Content-Type header to text/plain.
