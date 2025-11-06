@@ -48,6 +48,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [Short GUIDs and Short IDs](#short-guids-and-short-ids)
     - [Common Helper Functions](#common-helper-functions)
     - [Computation Expressions](#computation-expressions)
+    - [CSRF Protection Helpers](#csrf-protection-helpers)
 - [Additional Features](#additional-features)
     - [Endpoint Routing](#endpoint-routing)
     - [TokenRouter](#tokenrouter)
@@ -3497,6 +3498,24 @@ let someHttpHandler : HttpHandler =
             |> ctx.WriteTextAsync
         | Error msg -> RequestErrors.BAD_REQUEST msg next ctx
 ```
+
+### CSRF Protection Helpers
+
+CSRF stands for Cross-Site Request Forgery, and according to the OWASP website can be defined as:
+
+> Cross-Site Request Forgery (CSRF) is an attack that forces an end user to execute unwanted actions on a web application in which they’re currently authenticated. With a little help of social engineering (such as sending a link via email or chat), an attacker may trick the users of a web application into executing actions of the attacker’s choosing. If the victim is a normal user, a successful CSRF attack can force the user to perform state changing requests like transferring funds, changing their email address, and so forth. If the victim is an administrative account, CSRF can compromise the entire web application.
+>
+> -- Reference [link](https://owasp.org/www-community/attacks/csrf).
+
+The ASP.NET documentation gives us a tutorial on how to deal with it ([link](https://learn.microsoft.com/en-us/aspnet/core/security/anti-request-forgery)), but you can also leverage the Giraffe's `HttpHandler` helpers from the `Csrf` module:
+
+- `validateCsrfTokenExt (invalidTokenHandler: HttpHandler option)`: Validates the CSRF token from the request. Checks for token in header (`X-CSRF-TOKEN`) or form field (`__RequestVerificationToken`).
+- `requireAntiforgeryTokenExt`: Alias for `validateCsrfTokenExt` - validates anti-forgery tokens from requests with custom error handler.
+- `validateCsrfToken`: Validates the CSRF token from the request with default error handling. Checks for token in header (`X-CSRF-TOKEN`) or form field (`__RequestVerificationToken`). Uses default error handling (403 Forbidden) for invalid tokens.
+- `requireAntiforgeryToken`: Alias for `validateCsrfToken` - validates anti-forgery tokens from requests.
+- `generateCsrfToken`: Generates a CSRF token and adds it to the `HttpContext` items for use in views. The token can be accessed via `ctx.Items["CsrfToken"]` and `ctx.Items["CsrfTokenHeaderName"]`.
+- `csrfTokenJson`: Returns the CSRF token as JSON for AJAX requests. Response format: `{ "token": "...", "headerName": "X-CSRF-TOKEN" }`.
+- `csrfTokenHtml`: Returns the CSRF token as an HTML hidden input field. Can be included directly in forms.
 
 ## Additional Features
 
