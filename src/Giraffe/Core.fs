@@ -275,8 +275,8 @@ module Core =
     /// <param name="next"></param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let redirectToExt (permanent: bool) (location: string) (invalidRedirectHandler: HttpHandler option) : HttpHandler =
-        fun (next: HttpFunc) (ctx: HttpContext) ->
+    let safeRedirectToExt (permanent: bool) (location: string) (invalidRedirectHandler: HttpHandler option) : HttpHandler =
+        fun (_next: HttpFunc) (ctx: HttpContext) ->
             if isValidRedirectUrl ctx location then
                 ctx.Response.Redirect(location, permanent)
                 Task.FromResult(Some ctx)
@@ -293,7 +293,7 @@ module Core =
 
     /// <summary>
     /// Redirects to a different location with a `302` or `301` (when permanent) HTTP status code.
-    /// Validates the redirect URL to prevent open redirect vulnerabilities.
+    /// Validates the redirect URL to prevent **open redirect** vulnerabilities.
     /// Uses default error handling (400 Bad Request) for invalid redirects.
     /// </summary>
     /// <param name="permanent">If true the redirect is permanent (301), otherwise temporary (302).</param>
@@ -301,7 +301,20 @@ module Core =
     /// <param name="next"></param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let redirectTo (permanent: bool) (location: string) : HttpHandler = redirectToExt permanent location None
+    let safeRedirectTo (permanent: bool) (location: string) : HttpHandler = safeRedirectToExt permanent location None
+
+    /// <summary>
+    /// Redirects to a different location with a `302` or `301` (when permanent) HTTP status code.
+    /// </summary>
+    /// <param name="permanent">If true the redirect is permanent (301), otherwise temporary (302).</param>
+    /// <param name="location">The URL to redirect the client to.</param>
+    /// <param name="next"></param>
+    /// <param name="ctx"></param>
+    /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
+    let redirectTo (permanent: bool) (location: string) : HttpHandler =
+        fun (_next: HttpFunc) (ctx: HttpContext) ->
+            ctx.Response.Redirect(location, permanent)
+            Task.FromResult(Some ctx)
 
     // ---------------------------
     // Model binding functions

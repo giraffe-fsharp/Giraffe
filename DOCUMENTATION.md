@@ -36,6 +36,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [Content Negotiation](#content-negotiation)
     - [Streaming](#streaming)
     - [Redirection](#redirection)
+        - [Safe Redirection](#safe-redirection)
     - [Response Caching](#response-caching)
     - [Response Compression](#response-compression)
 - [Giraffe View Engine](#giraffe-view-engine)
@@ -2891,6 +2892,14 @@ let webApp =
 ```
 
 Please note that if the `permanent` flag is set to `true` then the Giraffe web application will send a `301` HTTP status code to browsers which will tell them that the redirection is permanent. This often leads to browsers cache the information and not hit the deprecated URL a second time any more. If this is not desired then please set `permanent` to `false` in order to guarantee that browsers will continue hitting the old URL before redirecting to the (temporary) new one.
+
+#### Safe Redirection
+
+The `redirectTo` http handler, although giving you more freedom when specifying the redirection logic, does not validate for a common security problem named [open redirect](https://learn.snyk.io/lesson/open-redirect).
+
+In order to deal with this threat you can either implement your own logic (example from Microsoft docs [Prevent open redirect attacks in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/preventing-open-redirects)), or you can leverage the `safeRedirectTo (permanent: bool) (location: string)` http handler, which provides a handler with the necessary validation and a default error handler.
+
+Furthermore, if you want to use Giraffe's own open redirect validation, although with a different error handler, you can use the `safeRedirectToExt (permanent: bool) (location: string) (invalidRedirectHandler: HttpHandler option)` http handler, which as the signature suggests, accepts a custom `invalidRedirectHandler` that will be executed if the validation fails.
 
 ### Response Caching
 

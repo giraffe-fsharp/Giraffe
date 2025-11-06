@@ -17,12 +17,12 @@ open Giraffe
 // ---------------------------------
 
 [<Fact>]
-let ``redirectTo allows relative URLs starting with /`` () =
+let ``safeRedirectTo allows relative URLs starting with /`` () =
     let ctx = Substitute.For<HttpContext>()
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Host <- HostString "example.com"
 
-    let app = redirectTo false "/safe-path"
+    let app = safeRedirectTo false "/safe-path"
 
     task {
         let! result = app next ctx
@@ -33,12 +33,12 @@ let ``redirectTo allows relative URLs starting with /`` () =
     }
 
 [<Fact>]
-let ``redirectTo allows app-relative URLs starting with ~/`` () =
+let ``safeRedirectTo allows app-relative URLs starting with ~/`` () =
     let ctx = Substitute.For<HttpContext>()
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Host <- HostString "example.com"
 
-    let app = redirectTo false "~/app-path"
+    let app = safeRedirectTo false "~/app-path"
 
     task {
         let! result = app next ctx
@@ -49,12 +49,12 @@ let ``redirectTo allows app-relative URLs starting with ~/`` () =
     }
 
 [<Fact>]
-let ``redirectTo allows absolute URLs to same host`` () =
+let ``safeRedirectTo allows absolute URLs to same host`` () =
     let ctx = Substitute.For<HttpContext>()
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Host <- HostString "example.com"
 
-    let app = redirectTo false "https://example.com/path"
+    let app = safeRedirectTo false "https://example.com/path"
 
     task {
         let! result = app next ctx
@@ -65,7 +65,7 @@ let ``redirectTo allows absolute URLs to same host`` () =
     }
 
 [<Fact>]
-let ``redirectTo blocks open redirect to external domain`` () =
+let ``safeRedirectTo blocks open redirect to external domain`` () =
     let ctx = Substitute.For<HttpContext>()
     let loggerFactory = Substitute.For<ILoggerFactory>()
     let logger = Substitute.For<ILogger>()
@@ -79,7 +79,7 @@ let ``redirectTo blocks open redirect to external domain`` () =
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Host <- HostString "example.com"
 
-    let app = redirectTo false "https://evil.com/phishing"
+    let app = safeRedirectTo false "https://evil.com/phishing"
 
     task {
         let! result = app next ctx
@@ -102,7 +102,7 @@ let ``redirectTo blocks open redirect to external domain`` () =
     }
 
 [<Fact>]
-let ``redirectTo blocks javascript protocol XSS attempt`` () =
+let ``safeRedirectTo blocks javascript protocol XSS attempt`` () =
     let ctx = Substitute.For<HttpContext>()
     let loggerFactory = Substitute.For<ILoggerFactory>()
     let logger = Substitute.For<ILogger>()
@@ -116,7 +116,7 @@ let ``redirectTo blocks javascript protocol XSS attempt`` () =
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Host <- HostString "example.com"
 
-    let app = redirectTo false "javascript:alert('xss')"
+    let app = safeRedirectTo false "javascript:alert('xss')"
 
     task {
         let! result = app next ctx
@@ -127,7 +127,7 @@ let ``redirectTo blocks javascript protocol XSS attempt`` () =
     }
 
 [<Fact>]
-let ``redirectTo blocks empty or whitespace URLs`` () =
+let ``safeRedirectTo blocks empty or whitespace URLs`` () =
     let ctx = Substitute.For<HttpContext>()
     let loggerFactory = Substitute.For<ILoggerFactory>()
     let logger = Substitute.For<ILogger>()
@@ -141,7 +141,7 @@ let ``redirectTo blocks empty or whitespace URLs`` () =
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Host <- HostString "example.com"
 
-    let app = redirectTo false "   "
+    let app = safeRedirectTo false "   "
 
     task {
         let! result = app next ctx
@@ -152,12 +152,12 @@ let ``redirectTo blocks empty or whitespace URLs`` () =
     }
 
 [<Fact>]
-let ``redirectTo with permanent flag calls Redirect with true`` () =
+let ``safeRedirectTo with permanent flag calls Redirect with true`` () =
     let ctx = Substitute.For<HttpContext>()
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Host <- HostString "example.com"
 
-    let app = redirectTo true "/permanent-redirect"
+    let app = safeRedirectTo true "/permanent-redirect"
 
     task {
         let! result = app next ctx
@@ -497,7 +497,7 @@ let ``XML deserialization through HTTP context allows normal XML`` () =
 // ---------------------------------
 
 [<Fact>]
-let ``redirectToExt allows custom error handler for invalid redirects`` () =
+let ``safeRedirectToExt allows custom error handler for invalid redirects`` () =
     let ctx = Substitute.For<HttpContext>()
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Host <- HostString("example.com")
@@ -507,7 +507,7 @@ let ``redirectToExt allows custom error handler for invalid redirects`` () =
             ctx.Response.StatusCode <- 418 // I'm a teapot
             System.Threading.Tasks.Task.FromResult(Some ctx)
 
-    let app = redirectToExt false "https://evil.com/phishing" (Some customHandler)
+    let app = safeRedirectToExt false "https://evil.com/phishing" (Some customHandler)
 
     task {
         let! result = app next ctx
@@ -518,7 +518,7 @@ let ``redirectToExt allows custom error handler for invalid redirects`` () =
     }
 
 [<Fact>]
-let ``redirectToExt with None handler uses default behavior`` () =
+let ``safeRedirectToExt with None handler uses default behavior`` () =
     let ctx = Substitute.For<HttpContext>()
     let loggerFactory = Substitute.For<ILoggerFactory>()
     let logger = Substitute.For<ILogger>()
@@ -532,7 +532,7 @@ let ``redirectToExt with None handler uses default behavior`` () =
     ctx.Response.Body <- new MemoryStream()
     ctx.Request.Host <- HostString("example.com")
 
-    let app = redirectToExt false "https://evil.com/phishing" None
+    let app = safeRedirectToExt false "https://evil.com/phishing" None
 
     task {
         let! result = app next ctx
