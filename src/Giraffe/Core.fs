@@ -310,6 +310,7 @@ module Core =
 
     /// <summary>
     /// Redirects to a different location with a `302` or `301` (when permanent) HTTP status code.
+    /// Does not validate redirection. Consider alternative: safeRedirectTo
     /// </summary>
     /// <param name="permanent">If true the redirect is permanent (301), otherwise temporary (302).</param>
     /// <param name="location">The URL to redirect the client to.</param>
