@@ -275,7 +275,11 @@ module Core =
     /// <param name="next"></param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let safeRedirectToExt (permanent: bool) (location: string) (invalidRedirectHandler: HttpHandler option) : HttpHandler =
+    let safeRedirectToExt
+        (permanent: bool)
+        (location: string)
+        (invalidRedirectHandler: HttpHandler option)
+        : HttpHandler =
         fun (_next: HttpFunc) (ctx: HttpContext) ->
             if isValidRedirectUrl ctx location then
                 ctx.Response.Redirect(location, permanent)
@@ -301,7 +305,8 @@ module Core =
     /// <param name="next"></param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    let safeRedirectTo (permanent: bool) (location: string) : HttpHandler = safeRedirectToExt permanent location None
+    let safeRedirectTo (permanent: bool) (location: string) : HttpHandler =
+        safeRedirectToExt permanent location None
 
     /// <summary>
     /// Redirects to a different location with a `302` or `301` (when permanent) HTTP status code.
