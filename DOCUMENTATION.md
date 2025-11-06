@@ -3231,6 +3231,8 @@ By default Giraffe uses the `System.Xml.Serialization.XmlSerializer` for (de-)se
 
 Customizing Giraffe's XML serialization can either happen via providing a custom object of `XmlWriterSettings` when instantiating the default `SystemXml.Serializer` or swap in an entire different XML library by creating a new class which implements the `Xml.ISerializer` interface.
 
+Notice that Giraffe does secure XML parsing, i.e., when using the `Deserialize<'T>(xml: string)` method, both DTD (Document Type Definition) processing and external entities are disabled to prevent [XXE attacks](https://learn.snyk.io/lesson/xxe).
+
 #### Customizing XmlWriterSettings
 
 You can change the default `XmlWriterSettings` of the `SystemXml.Serializer` by registering a new instance of `SystemXml.Serializer` during application startup:
