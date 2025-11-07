@@ -317,6 +317,7 @@ module Core =
     /// <param name="next"></param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
+    [<Obsolete("Use safeRedirectTo to prevent open redirect vulnerabilities.")>]
     let redirectTo (permanent: bool) (location: string) : HttpHandler =
         fun (_next: HttpFunc) (ctx: HttpContext) ->
             ctx.Response.Redirect(location, permanent)
