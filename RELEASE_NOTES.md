@@ -1,6 +1,21 @@
 Release Notes
 =============
 
+## 8.2.0-alpha-001 - 2025-11-10
+
+#### Breaking changes
+
+- [Some security fixes for Giraffe](https://github.com/giraffe-fsharp/Giraffe/pull/691) - Credits @Thorium
+    - New handlers added to improve security aspects, like `safeRedirectTo`, `safeRedirectToExt`, `validateCsrfTokenExt` and more. Those deal with:
+        - URL validation in `redirectTo` to prevent cross-site scripting (XSS)
+        - Cross-Site Request Forgery (CSRF) token validation helpers
+    - XML serializer's `Deserialize<'T>(xml: string)` method now uses a configuration to prevent XXE attacks.
+    - `redirectTo` handler now marked as Obsolete.
+
+#### Other updates
+
+- [Could we avoid allocation of UTF8 byte array?](https://github.com/giraffe-fsharp/Giraffe/pull/692) - Credits @Thorium
+
 ## 8.1.0-alpha-001 - 2025-10-25
 
 #### Breaking changes
