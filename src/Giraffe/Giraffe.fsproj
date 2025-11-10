@@ -82,6 +82,7 @@
     <Compile Include="ModelParser.fs" />
     <Compile Include="HttpContextExtensions.fs" />
     <Compile Include="Core.fs" />
+    <Compile Include="Csrf.fs" />
     <Compile Include="ResponseCaching.fs" />
     <Compile Include="ModelValidation.fs" />
     <Compile Include="Auth.fs" />

@@ -36,6 +36,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [Content Negotiation](#content-negotiation)
     - [Streaming](#streaming)
     - [Redirection](#redirection)
+        - [Safe Redirection](#safe-redirection)
     - [Response Caching](#response-caching)
     - [Response Compression](#response-compression)
 - [Giraffe View Engine](#giraffe-view-engine)
@@ -47,6 +48,7 @@ An in depth functional reference to all of Giraffe's default features.
     - [Short GUIDs and Short IDs](#short-guids-and-short-ids)
     - [Common Helper Functions](#common-helper-functions)
     - [Computation Expressions](#computation-expressions)
+    - [CSRF Protection Helpers](#csrf-protection-helpers)
 - [Additional Features](#additional-features)
     - [Endpoint Routing](#endpoint-routing)
     - [TokenRouter](#tokenrouter)
@@ -2892,6 +2894,14 @@ let webApp =
 
 Please note that if the `permanent` flag is set to `true` then the Giraffe web application will send a `301` HTTP status code to browsers which will tell them that the redirection is permanent. This often leads to browsers cache the information and not hit the deprecated URL a second time any more. If this is not desired then please set `permanent` to `false` in order to guarantee that browsers will continue hitting the old URL before redirecting to the (temporary) new one.
 
+#### Safe Redirection
+
+The `redirectTo` http handler, although giving you more freedom when specifying the redirection logic, does not validate for a common security problem named [open redirect](https://learn.snyk.io/lesson/open-redirect).
+
+In order to deal with this threat you can either implement your own logic (example from Microsoft docs [Prevent open redirect attacks in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/preventing-open-redirects)), or you can leverage the `safeRedirectTo (permanent: bool) (location: string)` http handler, which provides a handler with the necessary validation and a default error handler.
+
+Furthermore, if you want to use Giraffe's own open redirect validation, although with a different error handler, you can use the `safeRedirectToExt (permanent: bool) (location: string) (invalidRedirectHandler: HttpHandler option)` http handler, which as the signature suggests, accepts a custom `invalidRedirectHandler` that will be executed if the validation fails.
+
 ### Response Caching
 
 ASP.NET Core comes with a standard [Response Caching Middleware](https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-2.1) which works out of the box with Giraffe.
@@ -3221,6 +3231,8 @@ By default Giraffe uses the `System.Xml.Serialization.XmlSerializer` for (de-)se
 
 Customizing Giraffe's XML serialization can either happen via providing a custom object of `XmlWriterSettings` when instantiating the default `SystemXml.Serializer` or swap in an entire different XML library by creating a new class which implements the `Xml.ISerializer` interface.
 
+Notice that Giraffe does secure XML parsing, i.e., when using the `Deserialize<'T>(xml: string)` method, both DTD (Document Type Definition) processing and external entities are disabled to prevent [XXE attacks](https://learn.snyk.io/lesson/xxe).
+
 #### Customizing XmlWriterSettings
 
 You can change the default `XmlWriterSettings` of the `SystemXml.Serializer` by registering a new instance of `SystemXml.Serializer` during application startup:
@@ -3488,6 +3500,24 @@ let someHttpHandler : HttpHandler =
             |> ctx.WriteTextAsync
         | Error msg -> RequestErrors.BAD_REQUEST msg next ctx
 ```
+
+### CSRF Protection Helpers
+
+CSRF stands for Cross-Site Request Forgery, and according to the OWASP website can be defined as:
+
+> Cross-Site Request Forgery (CSRF) is an attack that forces an end user to execute unwanted actions on a web application in which they’re currently authenticated. With a little help of social engineering (such as sending a link via email or chat), an attacker may trick the users of a web application into executing actions of the attacker’s choosing. If the victim is a normal user, a successful CSRF attack can force the user to perform state changing requests like transferring funds, changing their email address, and so forth. If the victim is an administrative account, CSRF can compromise the entire web application.
+>
+> -- Reference [link](https://owasp.org/www-community/attacks/csrf).
+
+The ASP.NET documentation gives us a tutorial on how to deal with it ([link](https://learn.microsoft.com/en-us/aspnet/core/security/anti-request-forgery)), but you can also leverage the Giraffe's `HttpHandler` helpers from the `Csrf` module:
+
+- `validateCsrfTokenExt (invalidTokenHandler: HttpHandler option)`: Validates the CSRF token from the request. Checks for token in header (`X-CSRF-TOKEN`) or form field (`__RequestVerificationToken`).
+- `requireAntiforgeryTokenExt`: Alias for `validateCsrfTokenExt` - validates anti-forgery tokens from requests with custom error handler.
+- `validateCsrfToken`: Validates the CSRF token from the request with default error handling. Checks for token in header (`X-CSRF-TOKEN`) or form field (`__RequestVerificationToken`). Uses default error handling (403 Forbidden) for invalid tokens.
+- `requireAntiforgeryToken`: Alias for `validateCsrfToken` - validates anti-forgery tokens from requests.
+- `generateCsrfToken`: Generates a CSRF token and adds it to the `HttpContext` items for use in views. The token can be accessed via `ctx.Items["CsrfToken"]` and `ctx.Items["CsrfTokenHeaderName"]`.
+- `csrfTokenJson`: Returns the CSRF token as JSON for AJAX requests. Response format: `{ "token": "...", "headerName": "X-CSRF-TOKEN" }`.
+- `csrfTokenHtml`: Returns the CSRF token as an HTML hidden input field. Can be included directly in forms.
 
 ## Additional Features
 
