@@ -310,14 +310,13 @@ module Core =
 
     /// <summary>
     /// Redirects to a different location with a `302` or `301` (when permanent) HTTP status code.
-    /// Does not validate redirection. Consider alternative: safeRedirectTo
+    /// Does not validate redirection. Consider alternative: <see cref="safeRedirectTo"/>
     /// </summary>
     /// <param name="permanent">If true the redirect is permanent (301), otherwise temporary (302).</param>
     /// <param name="location">The URL to redirect the client to.</param>
     /// <param name="next"></param>
     /// <param name="ctx"></param>
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
-    [<Obsolete("Use safeRedirectTo to prevent open redirect vulnerabilities.")>]
     let redirectTo (permanent: bool) (location: string) : HttpHandler =
         fun (_next: HttpFunc) (ctx: HttpContext) ->
             ctx.Response.Redirect(location, permanent)
