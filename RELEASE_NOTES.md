@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## 8.2.0-alpha-002 - 2025-11-11
+
+- [Remove Obsolete from redirectTo](https://github.com/giraffe-fsharp/Giraffe/pull/695) - Credits @kerams
+
 ## 8.2.0-alpha-001 - 2025-11-10
 
 #### Breaking changes
