@@ -1,6 +1,40 @@
 Release Notes
 =============
 
+## 8.2.0 - 2025-11-12
+
+#### Breaking changes
+
+- [Some security fixes for Giraffe](https://github.com/giraffe-fsharp/Giraffe/pull/691) - Credits @Thorium
+    - New handlers added to improve security aspects, like `safeRedirectTo`, `safeRedirectToExt`, `validateCsrfTokenExt` and more. Those deal with:
+        - URL validation in `redirectTo` to prevent cross-site scripting (XSS)
+        - Cross-Site Request Forgery (CSRF) token validation helpers
+    - XML serializer's `Deserialize<'T>(xml: string)` method now uses a configuration to prevent XXE attacks.
+- [Remove [\<AllowNullLiteral\>] attribute from Json.ISerializer and Xml.ISerializer](https://github.com/giraffe-fsharp/Giraffe/pull/685) - Credits @64J0
+    - With the release of .NET 9 we have [nullable reference types](https://devblogs.microsoft.com/dotnet/nullable-reference-types-in-fsharp-9/).
+    - When this feature is enabled (`<Nullable>enable</Nullable>`), our users started running into problems that boils down to `Json.ISerializer` having the `AllowNullLiteral` attribute.
+    - Due to it, we decided to remove this attribute from both the `Json.ISerializer` and the `Xml.ISerializer`. 
+        - New automated tests were added to assert that the serializers are still working properly.
+        - We also updated some sample projects to use this feature.
+
+#### Other updates
+
+- [Remove Obsolete from redirectTo](https://github.com/giraffe-fsharp/Giraffe/pull/695) - Credits @kerams
+- [Could we avoid allocation of UTF8 byte array?](https://github.com/giraffe-fsharp/Giraffe/pull/692) - Credits @Thorium
+- [Update fsharp-analyzers and the analyzer packages](https://github.com/giraffe-fsharp/Giraffe/pull/662) - Credits @Numpsy
+- [Improve JSON docs](https://github.com/giraffe-fsharp/Giraffe/pull/665) - Credits @64J0
+- [Add issue templates](https://github.com/giraffe-fsharp/Giraffe/pull/671) - Credits @64J0
+- [Enhance routef support for named parameters and improve documentation](https://github.com/giraffe-fsharp/Giraffe/pull/656) - Credits @RJSonnenberg
+- [Fix assembly version](https://github.com/giraffe-fsharp/Giraffe/pull/655)
+- [Add GitHub dependabot configuration](https://github.com/giraffe-fsharp/Giraffe/pull/621) - Credits @64J0
+- [Add global rate limiting sample](https://github.com/giraffe-fsharp/Giraffe/pull/622) - Credits @64J0
+- [Add OpenApi section to the documentation](https://github.com/giraffe-fsharp/Giraffe/pull/624) - Credits @64J0
+- [Add AssemblyVersion attribute](https://github.com/giraffe-fsharp/Giraffe/pull/629) - Credits @64J0
+- [Add more links](https://github.com/giraffe-fsharp/Giraffe/pull/633) - Credits @64J0
+- [Code scanning fix patches](https://github.com/giraffe-fsharp/Giraffe/pull/638) - Credits @64J0
+- [Add .NET 9 as target framework, fine-tune dependabot, update CI and clean tests removing .NET 6/7 from target frameworks](https://github.com/giraffe-fsharp/Giraffe/pull/639) - Credits @64J0
+- [[Alpha] Add Endpoint routing functions ...WithExtensions](https://github.com/giraffe-fsharp/Giraffe/pull/634) - Credits @64J0
+
 ## 8.2.0-alpha-002 - 2025-11-11
 
 - [Remove Obsolete from redirectTo](https://github.com/giraffe-fsharp/Giraffe/pull/695) - Credits @kerams
