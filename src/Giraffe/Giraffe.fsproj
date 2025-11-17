@@ -58,7 +58,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Ionide.Analyzers" Version="0.14.9">
+    <PackageReference Include="Ionide.Analyzers" Version="0.14.10">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>analyzers</IncludeAssets>
     </PackageReference>
