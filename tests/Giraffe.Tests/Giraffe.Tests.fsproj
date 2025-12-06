@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <AssemblyName>Giraffe.Tests</AssemblyName>
   </PropertyGroup>
 
@@ -44,6 +44,10 @@
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net9.0'">
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="9.0.*" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.*" />
   </ItemGroup>
 
   <ItemGroup>
