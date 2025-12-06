@@ -146,7 +146,7 @@ let makeRequest configureApp configureServices args (request: HttpRequestMessage
     task {
 #if NET10_0_OR_GREATER
         // https://github.com/aspnet/Announcements/issues/526
-        let host = createHost configureApp configureServices args |> _.Build()
+        use host = createHost configureApp configureServices args |> _.Build()
 
         let! _ = host.StartAsync()
         use server = host.GetTestServer()
