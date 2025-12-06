@@ -38,6 +38,7 @@ jobs:
             7.x
             8.x
             9.x
+            10.x
       - name: Restore
         run: dotnet restore
       - name: Build
@@ -59,6 +60,7 @@ jobs:
             7.x
             8.x
             9.x
+            10.x
       - name: Create Release NuGet package
         run: |
           arrTag=(${GITHUB_REF//\// })
