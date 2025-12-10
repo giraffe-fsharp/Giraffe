@@ -43,8 +43,8 @@ let private formatStringMap =
             'd', ("(-?\d+)", int64 >> box) // int64
             'f', ("(-?\d+\.{1}\d+)", float >> box) // float
             'O', (guidPattern, parseGuid >> box) // Guid
-            'u', (shortIdPattern, ShortId.toUInt64 >> box)
-        ] // uint64
+            'u', (shortIdPattern, ShortId.toUInt64 >> box) // uint64
+        ]
 
 type MatchMode =
     | Exact // Will try to match entire string from start to end.
@@ -72,6 +72,13 @@ let private convertToRegexPatternAndFormatChars (mode: MatchMode) (formatString:
         | '%' :: '%' :: tail ->
             let pattern, formatChars = convert tail
             "%" + pattern, formatChars
+        | '%' :: c :: ':' :: tail ->
+            // Skip until next '/' or end of string
+            let tailWithoutParamName = tail |> List.skipWhile (fun ch -> ch <> '/')
+
+            let pattern, formatChars = convert tailWithoutParamName
+            let regex, _ = formatStringMap.[c]
+            regex + pattern, c :: formatChars
         | '%' :: c :: tail ->
             let pattern, formatChars = convert tail
             let regex, _ = formatStringMap.[c]
@@ -187,8 +194,8 @@ let validateFormat (format: PrintfFormat<_, _, _, _, 'T>) =
             'd', typeof<int64> // int64
             'f', typeof<float> // float
             'O', typeof<System.Guid> // guid
-            'u', typeof<uint64>
-        ] // guid
+            'u', typeof<uint64> // uint64
+        ]
 
     let tuplePrint pos last name =
         let mutable result = "("
@@ -216,6 +223,7 @@ let validateFormat (format: PrintfFormat<_, _, _, _, 'T>) =
     let mutable parseChars = []
     let mutable matchNext = false
     let mutable matches = 0
+    let mutable isNamedParameter = false
 
     let rec charTypeMatch ls mChar =
         match ls with
@@ -239,7 +247,15 @@ let validateFormat (format: PrintfFormat<_, _, _, _, 'T>) =
     for i in 0 .. path.Length - 1 do
         let mChar = path.[i]
 
-        if matchNext then
+        if mChar = ':' then
+            isNamedParameter <- true
+        else if isNamedParameter then
+            // Skip until next '/' or end of string
+            if mChar = '/' then
+                isNamedParameter <- false
+
+            ()
+        else if matchNext then
             charTypeMatch mapping mChar
             matchNext <- false
         else if mChar = '%' then
