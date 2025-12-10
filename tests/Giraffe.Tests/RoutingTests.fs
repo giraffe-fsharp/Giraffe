@@ -429,6 +429,50 @@ let ``routeStartsWith(f|Cif)`` (uri: string, expected: string) =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
+[<Theory>]
+[<InlineData("/pet/123", "PetId: 123")>]
+[<InlineData("/name/Fluffy", "Name: Fluffy")>]
+[<InlineData("/weight/45.5", "Weight: 45.500000")>]
+[<InlineData("/guid/550e8400-e29b-41d4-a716-446655440000", "Guid: 550e8400-e29b-41d4-a716-446655440000")>]
+[<InlineData("/combined/pet/123/name/Fluffy", "PetId: 123, Name: Fluffy")>]
+[<InlineData("/combined/pet/123/weight/45.5", "PetId: 123, Weight: 45.500000")>]
+[<InlineData("/combined/name/Fluffy/guid/550e8400-e29b-41d4-a716-446655440000",
+             "Name: Fluffy, Guid: 550e8400-e29b-41d4-a716-446655440000")>]
+[<InlineData("/invalid-route", "Not Found")>]
+let ``routef works with named parameters`` (uri: string, expected: string) =
+    let app =
+        choose [
+            routef "/pet/%i:petId" (fun (petId: int) -> text (sprintf "PetId: %i" petId))
+            routef "/name/%s:name" (fun (name: string) -> text (sprintf "Name: %s" name))
+            routef "/weight/%f:weight" (fun (weight: float) -> text (sprintf "Weight: %f" weight))
+            routef "/guid/%O" (fun (id: System.Guid) -> text (sprintf "Guid: %O" id))
+            routef
+                "/combined/pet/%i:petId/name/%s:name"
+                (fun (petId: int, name: string) -> text (sprintf "PetId: %i, Name: %s" petId name))
+            routef
+                "/combined/pet/%i:petId/weight/%f:weight"
+                (fun (petId: int, weight: float) -> text (sprintf "PetId: %i, Weight: %f" petId weight))
+            routef
+                "/combined/name/%s/guid/%O"
+                (fun (name: string, id: System.Guid) -> text (sprintf "Name: %s, Guid: %O" name id))
+
+            // If none of the routes matched then return a 404
+            RequestErrors.notFound (text "Not Found")
+        ]
+
+    let ctx = Substitute.For<HttpContext>()
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString(uri)) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
 [<Fact>]
 let ``routef: GET "/foo/%O/bar/%O" returns "Guid1: ..., Guid2: ..."`` () =
     let ctx = Substitute.For<HttpContext>()
