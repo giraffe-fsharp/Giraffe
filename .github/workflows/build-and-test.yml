@@ -31,7 +31,10 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.x
+          dotnet-version: |
+            8.x
+            9.x
+            10.x
       - name: Restore
         run: dotnet restore
       - name: Build
@@ -47,7 +50,10 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.x
+          dotnet-version: |
+            8.x
+            9.x
+            10.x
       - name: Restore tools
         run: dotnet tool restore
       - name: Build solution
