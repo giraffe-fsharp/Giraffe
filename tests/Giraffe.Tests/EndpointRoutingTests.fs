@@ -7,6 +7,7 @@ open Xunit
 open Giraffe
 open Giraffe.EndpointRouting
 open System.Net.Http
+open System.Net
 
 // ---------------------------------
 // routef Tests
@@ -252,4 +253,55 @@ let ``routef: GET "/foo/%i:fooId/bar/%i/baz/%s" returns named and unnamed parame
         let! response = makeRequest (fun () -> configureApp) configureServices () request
         let! content = response |> readText
         content |> shouldEqual expected
+    }
+
+[<CLIMutable>]
+type Name = { First: string; Last: string }
+
+[<CLIMutable>]
+type Person = { Name: Name; Age: int }
+
+[<Theory>]
+[<InlineData("/p/John/Doe/32", HttpStatusCode.OK, "Name.First: John, Name.Last: Doe, Age: 32")>]
+[<InlineData("/p/John%20Paul/Doe/32", HttpStatusCode.OK, "Name.First: John Paul, Name.Last: Doe, Age: 32")>]
+[<InlineData("/p/John%20Paul/Doe/32/", HttpStatusCode.OK, "Name.First: John Paul, Name.Last: Doe, Age: 32")>]
+[<InlineData("/p/John/Doe/9111222333", HttpStatusCode.UnprocessableEntity, "")>]
+[<InlineData("/p/John/Doe/not-a-number", HttpStatusCode.UnprocessableEntity, "")>]
+[<InlineData("/p/John/Doe//", HttpStatusCode.NotFound, "Not Found")>]
+let ``routebind: GET "/p/{Name.First}/{Name.Last}/{Age}" returns person object``
+    (path: string, expectedStatus: HttpStatusCode, expectedContent: string)
+    =
+    task {
+        let endpoints: Endpoint list =
+            [
+                GET [
+                    routeBindWithExtensions<Person>
+                        (fun eb -> eb.WithOrder 1)
+                        "/p/{Name.First}/{Name.Last}/{Age}"
+                        (fun (person: Person) ->
+                            text ($"Name.First: {person.Name.First}, Name.Last: {person.Name.Last}, Age: {person.Age}")
+                        )
+                    routefWithExtensions
+                        (fun eb -> eb.WithOrder 2)
+                        "/p/%s:firstName/%s:lastName/%d:age"
+                        (fun (firstName: string, lastName: string, age: int64) ->
+                            text ($"firstName: {firstName}, lastName: {lastName}, age: {age}")
+                        )
+                ]
+            ]
+
+        let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
+
+        let configureApp (app: IApplicationBuilder) =
+            app.UseRouting().UseGiraffe(endpoints).UseGiraffe(notFoundHandler)
+
+        let configureServices (services: IServiceCollection) =
+            services.AddRouting().AddGiraffe() |> ignore
+
+        let request = createRequest HttpMethod.Get path
+
+        let! response = makeRequest (fun () -> configureApp) configureServices () request
+        let! content = response |> isStatus expectedStatus |> readText
+
+        content |> shouldEqual expectedContent
     }

@@ -1175,7 +1175,7 @@ let webApp =
     ]
 ```
 
-The `routeBind<'T>` http handler can also contain valid `Regex` code to match a variety of different routes.
+The `routeBind<'T>` http handler from the `Giraffe.Routing` module can also contain valid `Regex` code to match a variety of different routes.
 
 For example by definition (according to the spec) a route with a trailing slash **is not** the same as the equivalent route without a trailing slash. Therefore it is perfectly valid if a web server doesn't serve (or serves a different response) for the following two routes:
 
@@ -1213,6 +1213,8 @@ routeBind<Blah> "/p/{foo}/{bar}(/*)" blahHandler
 ```
 
 For a complete list of valid `Regex` codes please visit the official [Regular Expression Language Reference](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference).
+
+In case you are using `Giraffe.EndpointRouting`, the request path is handled by ASP.NET Core’s Endpoint Routing infrastructure. We therefore recommend reviewing the following sections of the official documentation: [url matching](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-10.0#url-matching) and [route constraints](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-10.0#route-constraints).
 
 #### routeStartsWith
 

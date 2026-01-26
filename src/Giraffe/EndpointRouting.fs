@@ -150,6 +150,8 @@ module private RequestDelegateBuilder =
 
 [<AutoOpen>]
 module Routers =
+    open System.Collections.Generic
+    open Microsoft.Extensions.Primitives
 
     type HttpVerb =
         | GET
@@ -273,6 +275,30 @@ module Routers =
 
     let routef (path: PrintfFormat<_, _, _, _, 'T>) (routeHandler: 'T -> HttpHandler) : Endpoint =
         routefWithExtensions (id) (path) (routeHandler)
+
+    let routeBindWithExtensions<'T>
+        (configureEndpoint: ConfigureEndpoint)
+        (path: string)
+        (routeHandler: 'T -> HttpHandler)
+        : Endpoint =
+
+        let bindRouteHandler (handler: 'T -> HttpHandler) : HttpHandler =
+            fun next ctx ->
+                let routeData =
+                    ctx.GetRouteData().Values
+                    |> Seq.map (fun kvp -> KeyValuePair(kvp.Key, StringValues(kvp.Value :?> string)))
+                    |> Dictionary<string, StringValues>
+
+                match ModelParser.tryParse<'T> None routeData with
+                | Ok model -> handler model next ctx
+                | Error _ -> skipPipeline
+
+        let newHandler = (bindRouteHandler routeHandler)
+
+        SimpleEndpoint(HttpVerb.NotSpecified, path, newHandler, configureEndpoint)
+
+    let routeBind<'T> (path: string) (routeHandler: 'T -> HttpHandler) : Endpoint =
+        routeBindWithExtensions<'T> (id) (path) (routeHandler)
 
     let subRouteWithExtensions
         (configureEndpoint: ConfigureEndpoint)
