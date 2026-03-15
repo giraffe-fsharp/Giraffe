@@ -281,18 +281,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- Added an overload for `UseGiraffe` to pass in an `Endpoint list`:
-  - Before:
-
-        ```fsharp
-        app.UseEndpoints(fun e -> e.MapGiraffeEndpoints(endpoints))
-        ```
-
-  - Now:
-
-        ```fsharp
-        app.UseGiraffe(endpoints)
-        ```
+- Added an overload for `UseGiraffe` to pass in an `Endpoint list`.
 
 ### Fixed
 
@@ -321,15 +310,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Converted all `HttpContext` extension methods into C# compatible extension methods, meaning that function arguments had to be merged into tuples
 - Changed the `GET`, `POST`, `PUT`, `HEAD`, etc. functions to accept an `Endpoint list` instead of an `Endpoint`
   - Before: `GET => route "/foo" (text "bar")`, After: `GET [ route "/foo" (text "bar") ]`
-  - One can now compose routes easier:
-
-        ```fsharp
-        GET [
-            route "/a" (text "A")
-            route "/b" (text "B")
-            route "/c" (text "C")
-        ]
-        ```
 
 ### Removed
 
@@ -352,7 +332,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Upgraded to .NET 5. The 5.x version of Giraffe is targeting `net5.0` and dropping support for all other target frameworks.
 - Only supported target framework is .NET 5
-
 - Added `Giraffe.EndpointRouting` namespace with a version of a few routing handlers which integrate with ASP.NET Core's endpoint routing API
   - Currently supported are: `route`, `routef`, `subRoute` and HTTP verb handlers such as `GET`, `POST`, `PUT`, etc.
   - Check the [Endpoint Routing](https://github.com/giraffe-fsharp/Giraffe/blob/v5.0.0-rc-1/DOCUMENTATION.md#edpoint-routing) documentation for more details
@@ -427,17 +406,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Support for array of `'T` as a child in form binding.
 - Added a new `DateTime` extension method `ToIsoString` which produces a RFC3339 formatted string, and corrected the docs on the existing `ToHtmlString` extension method which actually produces a RFC822 formatted string.
-- Added new version of `tryMatchInput` which accepts `MatchSettings` record:
-
-    ```fsharp
-    type MatchMode =
-        | Exact                // Will try to match entire string from start to end.
-        | StartsWith           // Will try to match a substring. Subject string should start with test case.
-        | EndsWith             // Will try to match a substring. Subject string should end with test case.
-        | Contains             // Will try to match a substring. Subject string should contain test case.
-
-    type MatchOptions = { IgnoreCase: bool; MatchMode: MatchMode; }
-    ```
+- Added new version of `tryMatchInput` which accepts `MatchSettings` record.
 
 ### Changed
 
@@ -507,15 +476,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- Added a new http handler called `validatePreconditions` to help with conditional requests:
-
-    ```fsharp
-    let someHandler (eTag : string) (content : string) =
-        let eTagHeader = Some (EntityTagHeaderValue.FromString true eTag)
-        validatePreconditions eTagHeader None
-        >=> setBodyFromString content
-    ```
-
+- Added a new http handler called `validatePreconditions` to help with conditional requests.
 - Made previously internal functionality for sub routing available through the `SubRouting` module:
   - `SubRouting.getSavedPartialPath`: Returns the currently partially resolved path.
   - `SubRouting.getNextPartOfPath`: Returns the yet unresolved part of the path.
@@ -536,24 +497,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - Changed the type `XmlNode` by removing the `RawText` and `EncodedText` union case and replaced both by a single `Text` union case. The HTML encoding (or not) is being done now when calling one of the two helper functions `rawText` and `encodedText`.
-
   - This change - even though theoretically a breaking change - should not affect the vast majority of Giraffe users unless you were constructing your own `XmlNode` elements which were of type `RawText` or `EncodedText` (which is extremely unlikely given that there's not much room for more nodes of these two types).
-
 - Changed the members of the `IJsonSerializer` interface to accommodate new (de-)serialize methods for chunked encoding transfer.
-
-    The new interface is the following:
-
-    ```fsharp
-    type IJsonSerializer =
-        abstract member SerializeToString<'T>      : 'T -> string
-        abstract member SerializeToBytes<'T>       : 'T -> byte array
-        abstract member SerializeToStreamAsync<'T> : 'T -> Stream -> Task
-
-        abstract member Deserialize<'T>      : string -> 'T
-        abstract member Deserialize<'T>      : byte[] -> 'T
-        abstract member DeserializeAsync<'T> : Stream -> Task<'T>
-    ```
-
 - Significant performance improvements in the `GiraffeViewEngine` by changing the underlying composition of views from simple string concatenation to using a `StringBuilder` object.
 
 ### Removed
@@ -667,11 +612,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - `routef` and `routeCif` both support `%O` for matching `System.Guid` values now
-- Added HTML attributes helper functions to the `GiraffeViewEngine`:
-
-  ```fsharp
-  let html = p [ _class "someCssClass"; _id "greetingsText" ] [ encodedText "Hello World" ]
-  ```
+- Added HTML attributes helper functions to the `GiraffeViewEngine`.
 
 ## [0.1.0-beta-600] - 2017-12-20
 
@@ -840,26 +781,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - [Continuations over binding](https://github.com/dustinmoris/Giraffe/pull/71)
 - [Tasks instead of Async](https://github.com/dustinmoris/Giraffe/pull/75)
 
-The `HttpHandler` has slightly [changed](https://github.com/dustinmoris/Giraffe#httphandler).
-
-Blog post with more info is coming shortly!
-
 ## [0.1.0-alpha025] - 2017-07-22
 
 ### Changed
 
-Changed the type `XmlAttribute` from the `XmlViewEngine` to accept either a `string * string` key value pair or a boolean attribute of type `string`. This was a missing to enable script tags such as `<script src="..." async></script>`.
+- Changed the type `XmlAttribute` from the `XmlViewEngine` to accept either a `string * string` key value pair or a boolean attribute of type `string`. This was a missing to enable script tags such as `<script src="..." async></script>`.
 
 ### Added
 
-Added two helper functions (`attr` and `flag`) to simplify the creation of those attributes:
-
-```fsharp
-script [
-    attr "src" "http://example.org/example.js"
-    attr "lang" "javascript"
-    flag "async" ] []
-```
+- Added two helper functions (`attr` and `flag`) to simplify the creation of those attributes.
 
 ## [0.1.0-alpha024] - 2017-07-16
 
@@ -880,51 +810,11 @@ script [
 - Added two more methods which accept a `XmlNode list`: `renderXmlNodes` and `renderHtmlNodes`
 - Changed the return value of `encodedText` and `rawText` to return a single `XmlNode` instead of `XmlNode list`. This has the advantage that it can be used from within another list, which was not possible before.
 
-Before:
-
-```
-let view =
-    html [] [
-        head [] [
-            title []  (rawText "Giraffe")
-        ]
-        body [] (encodedText "Hello World")
-    ]
-```
-
-Now:
-
-```
-let view =
-    html [] [
-        head [] [
-            title []  [ rawText "Giraffe" ]
-        ]
-        body [] [ encodedText "Hello World" ]
-    ]
-```
-
-This has the advantage that you can also do this, which wasn't possible before:
-
-```
-let view =
-    html [] [
-        head [] [
-            title []  [ rawText "Giraffe" ]
-        ]
-        body [] [
-            encodedText "Hello World"
-            p [] [ rawText "Hello" ]
-        ]
-    ]
-```
-
 ## [0.1.0-alpha022] - 2017-07-01
 
 ### Changed
 
-A few modifications to the former `HtmlEngine` so that it can be used for correct XML rendering as well:
-
+- A few modifications to the former `HtmlEngine` so that it can be used for correct XML rendering as well.
 - Renamed the `Giraffe.HtmlEngine` module to `Giraffe.XmlViewEngine`
 - Renamed `HtmlAttribute` to `XmlAttribute`, `HtmlElement` to `XmlElement` and `HtmlNode` to `XmlNode`
 - Renamed and make the function `nodeToHtmlString` private
@@ -946,22 +836,17 @@ A few modifications to the former `HtmlEngine` so that it can be used for correc
 
 ### Changed
 
-Split out the Razor view engine and the DotLiquid templating engine into separate NuGet packages:
-
-- `Giraffe.Razor`
-- `Giraffe.DotLiquid`
-
-Please reference the additional packages if you were using any of the view or templating handlers.
-
-Also updated the `giraffe-template` NuGet package with the new changes and adapted the `build.ps1` PowerShell script to successfully build on Linux environments too.
-
-Additionally TravisCI builds are run as part of every commit as well now.
+- Split out the Razor view engine and the DotLiquid templating engine into separate NuGet packages:
+  - `Giraffe.Razor`
+  - `Giraffe.DotLiquid`
+- Also updated the `giraffe-template` NuGet package with the new changes and adapted the `build.ps1` PowerShell script to successfully build on Linux environments too.
+- Additionally TravisCI builds are run as part of every commit as well now.
 
 ## [0.1.0-alpha019] - 2017-05-31
 
 ### Added
 
-Adds [support for the `Option<'T>` type when model binding from a query string](https://github.com/dustinmoris/Giraffe/issues/51).
+- Adds [support for the `Option<'T>` type when model binding from a query string](https://github.com/dustinmoris/Giraffe/issues/51).
 
 ## [0.1.0-alpha018] - 2017-05-17
 
