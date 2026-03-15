@@ -2,7 +2,6 @@
   <PropertyGroup>
     <!-- General -->
     <AssemblyName>Giraffe</AssemblyName>
-    <Version>8.2.0</Version>
     <Description>A native functional ASP.NET Core web framework for F# developers.</Description>
     <Copyright>Copyright 2020 Dustin Moris Gorski</Copyright>
     <Authors>Dustin Moris Gorski and contributors</Authors>
@@ -44,6 +43,11 @@
     <None Include="$(MSBuildThisFileDirectory)../../LICENSE" Pack="true" PackagePath="/" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <!-- Configuration for Ionide.KeepAChangelog.Tasks -->
+    <ChangelogFile>$(MSBuildThisFileDirectory)../../CHANGELOG.md</ChangelogFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
@@ -64,6 +68,12 @@
     </PackageReference>
 
     <PackageReference Include="FSharp.Core" Version="6.0.0" />
+
+    <PackageReference Include="Ionide.KeepAChangelog.Tasks" Version="0.3.3">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.*" />
     <PackageReference Include="System.Text.Json" Version="8.0.*" />
     <PackageReference Include="FSharp.SystemTextJson" Version="1.3.*" />
