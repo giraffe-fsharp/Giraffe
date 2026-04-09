@@ -103,20 +103,21 @@ type Startup() =
         services.AddGiraffe() |> ignore
 
     member __.Configure (app : IApplicationBuilder)
-                        (env : IHostEnvironment) =
+                        (env : IHostEnvironment)
+                        (loggerFactory : ILoggerFactory) =
         // Add Giraffe to the ASP.NET Core pipeline
         app.UseGiraffe webApp
 
 [<EntryPoint>]
 let main args =
-    let builder =
-        Host.CreateDefaultBuilder(args)
-            .ConfigureWebHostDefaults(fun webBuilder ->
-                webBuilder.UseStartup<Startup>() |> ignore
-            )
-
-    builder.Build().Run()
-
+    Host.CreateDefaultBuilder(args)
+        .ConfigureWebHostDefaults(
+            fun webHostBuilder ->
+                webHostBuilder
+                    .UseStartup<Startup>()
+                    |> ignore)
+        .Build()
+        .Run()
     0
 ```
 

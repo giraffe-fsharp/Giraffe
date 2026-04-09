@@ -398,19 +398,20 @@ type Startup() =
         services.AddGiraffe() |> ignore
 
     member __.Configure (app : IApplicationBuilder)
-                        (env : IHostingEnvironment) =
+                        (env : IHostingEnvironment)
+                        (loggerFactory : ILoggerFactory) =
         // Add Giraffe to the ASP.NET Core pipeline
         app.UseGiraffe webApp
 
 [<EntryPoint>]
 let main args =
-    let builder =
-        Host.CreateDefaultBuilder(args)
-            .ConfigureWebHostDefaults(fun webBuilder ->
-                webBuilder.UseStartup<Startup>() |> ignore
-            )
-
-    builder.Build().Run()
+    Host.CreateDefaultBuilder(args)
+        .ConfigureWebHostDefaults(
+            fun webHostBuilder ->
+                webHostBuilder
+                    .UseStartup<Startup>()
+                    |> ignore)
+        .Build()
 
     0
 ```
@@ -661,20 +662,20 @@ type Startup() =
 
     member __.Configure (app : IApplicationBuilder)
                         (env : IHostingEnvironment)
-                        (logger : ILogger) =
+                        (loggerFactory : ILoggerFactory) =
         app.UseGiraffeErrorHandler errorHandler
            .UseGiraffe webApp
 
 [<EntryPoint>]
 let main args =
-    let builder =
-        Host.CreateDefaultBuilder(args)
-            .ConfigureWebHostDefaults(fun webBuilder ->
-                webBuilder.UseStartup<Startup>() |> ignore
-            )
-
-    builder.Build().Run()
-
+    Host.CreateDefaultBuilder(args)
+        .ConfigureWebHostDefaults(
+            fun webHostBuilder ->
+                webHostBuilder
+                    .UseStartup<Startup>()
+                    |> ignore)
+        .Build()
+        .Run()
     0
 ```
 
@@ -2780,9 +2781,11 @@ let configureServices (services : IServiceCollection) =
     ) |> ignore
 
 [<EntryPoint>]
-let main _ =
-    WebHost.CreateDefaultBuilder()
-        .Configure(Action<IApplicationBuilder> configureApp)
+let main args =
+    Host.CreateDefaultBuilder(args)
+        .ConfigureWebHostDefaults(fun webBuilder ->
+            webBuilder.Configure(Action<IApplicationBuilder> configureApp) 
+            |> ignore)
         .ConfigureServices(configureServices)
         .ConfigureLogging(configureLogging)
         .Build()
@@ -3179,8 +3182,8 @@ let configureServices (services : IServiceCollection) =
             NewtonsoftJson.Serializer(JsonSerializerSettings(), serviceProvider.GetService<Microsoft.IO.RecyclableMemoryStreamManager>()) :> Json.ISerializer) |> ignore
 
 [<EntryPoint>]
-let main _ =
-    WebHost.CreateDefaultBuilder()
+let main args =
+    Host.CreateDefaultBuilder(args)
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(configureServices)
         .ConfigureLogging(configureLogging)
@@ -3208,8 +3211,8 @@ You can change the default `JsonSerializerSettings` of a JSON serializer by regi
          NewtonsoftJson.Serializer(customSettings)) |> ignore
 
  [<EntryPoint>]
- let main _ =
-     WebHost.CreateDefaultBuilder()
+ let main args =
+     Host.CreateDefaultBuilder(args)
          .Configure(Action<IApplicationBuilder> configureApp)
          .ConfigureServices(configureServices)
          .ConfigureLogging(configureLogging)
@@ -3259,8 +3262,8 @@ let configureServices (services : IServiceCollection) =
         SystemXml.Serializer(customSettings)) |> ignore
 
 [<EntryPoint>]
-let main _ =
-    WebHost.CreateDefaultBuilder()
+let main args =
+    Host.CreateDefaultBuilder(args)
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(configureServices)
         .ConfigureLogging(configureLogging)
@@ -3292,8 +3295,8 @@ let configureServices (services : IServiceCollection) =
     services.AddSingleton<Xml.ISerializer, CustomXmlSerializer>() |> ignore
 
 [<EntryPoint>]
-let main _ =
-    WebHost.CreateDefaultBuilder()
+let main args =
+    Host.CreateDefaultBuilder(args)
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(configureServices)
         .ConfigureLogging(configureLogging)
