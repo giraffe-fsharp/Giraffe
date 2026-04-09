@@ -412,7 +412,7 @@ let main args =
                     .UseStartup<Startup>()
                     |> ignore)
         .Build()
-
+        .Run()
     0
 ```
 
