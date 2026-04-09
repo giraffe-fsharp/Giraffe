@@ -32,7 +32,7 @@ Read [this blog post on functional ASP.NET Core](https://dusted.codes/functional
 If you'd like to learn more about the motivation of this project please read my [blog post on functional ASP.NET Core](https://dusted.codes/functional-aspnet-core) (some code samples in this blog post might be outdated today).
 
 > [!TIP]
-> Check the [release notes](./RELEASE_NOTES.md) document to know how the system is evolving, and to get more information about breaking changes.
+> Check the [release notes](https://github.com/giraffe-fsharp/RELEASE_NOTES.md) document to know how the system is evolving, and to get more information about breaking changes.
 
 ### Who is it for?
 
@@ -95,27 +95,28 @@ let webApp =
         route "/ping"   >=> text "pong"
         route "/"       >=> htmlFile "/pages/index.html" ]
 
+// More information about the Startup class:
+// https://learn.microsoft.com/en-us/aspnet/core/migration/50-to-60?view=aspnetcore-10.0&tabs=visual-studio#use-startup-with-the-new-minimal-hosting-model
 type Startup() =
     member __.ConfigureServices (services : IServiceCollection) =
         // Register default Giraffe dependencies
         services.AddGiraffe() |> ignore
 
     member __.Configure (app : IApplicationBuilder)
-                        (env : IHostEnvironment)
-                        (loggerFactory : ILoggerFactory) =
+                        (env : IHostEnvironment) =
         // Add Giraffe to the ASP.NET Core pipeline
         app.UseGiraffe webApp
 
 [<EntryPoint>]
-let main _ =
-    Host.CreateDefaultBuilder()
-        .ConfigureWebHostDefaults(
-            fun webHostBuilder ->
-                webHostBuilder
-                    .UseStartup<Startup>()
-                    |> ignore)
-        .Build()
-        .Run()
+let main args =
+    let builder =
+        Host.CreateDefaultBuilder(args)
+            .ConfigureWebHostDefaults(fun webBuilder ->
+                webBuilder.UseStartup<Startup>() |> ignore
+            )
+
+    builder.Build().Run()
+
     0
 ```
 
@@ -143,16 +144,15 @@ let configureServices (services : IServiceCollection) =
     services.AddGiraffe() |> ignore
 
 [<EntryPoint>]
-let main _ =
-    Host.CreateDefaultBuilder()
-        .ConfigureWebHostDefaults(
-            fun webHostBuilder ->
-                webHostBuilder
-                    .Configure(configureApp)
-                    .ConfigureServices(configureServices)
-                    |> ignore)
-        .Build()
-        .Run()
+let main args =
+    let builder = WebApplication.CreateBuilder(args)
+    configureServices builder.Services
+
+    let app = builder.Build()
+
+    configureApp app
+    app.Run()
+
     0
 ```
 
@@ -202,7 +202,7 @@ Running `dotnet test` from the root of the project will execute all test project
 
 ```
 dotnet test
-``` 
+```
 
 ## Contributing
 
