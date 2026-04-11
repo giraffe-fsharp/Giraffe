@@ -5,56 +5,56 @@ An in depth functional reference to all of Giraffe's default features.
 ## Table of contents
 
 - [Fundamentals](#fundamentals)
-    - [HttpHandler](#httphandler)
-    - [Giraffe pipeline vs. ASP.NET Core pipeline](#giraffe-pipeline-vs-aspnet-core-pipeline)
-    - [Combinators](#combinators)
-        - [compose (>=>)](#compose-)
-        - [choose](#choose)
-    - [Warbler](#warbler)
-    - [Tasks](#tasks)
-    - [Ways of creating a new HttpHandler](#ways-of-creating-a-new-httphandler)
-    - [Continue vs. Return vs. Skip](#continue-vs-return-vs-skip)
+  - [HttpHandler](#httphandler)
+  - [Giraffe pipeline vs. ASP.NET Core pipeline](#giraffe-pipeline-vs-aspnet-core-pipeline)
+  - [Combinators](#combinators)
+    - [compose (>=>)](#compose-)
+    - [choose](#choose)
+  - [Warbler](#warbler)
+  - [Tasks](#tasks)
+  - [Ways of creating a new HttpHandler](#ways-of-creating-a-new-httphandler)
+  - [Continue vs. Return vs. Skip](#continue-vs-return-vs-skip)
 - [Basics](#basics)
-    - [Plugging Giraffe into ASP.NET Core](#plugging-giraffe-into-aspnet-core)
-    - [Dependency Management](#dependency-management)
-    - [Multiple Environments and Configuration](#multiple-environments-and-configuration)
-    - [Logging](#logging)
-    - [Error Handling](#error-handling)
+  - [Plugging Giraffe into ASP.NET Core](#plugging-giraffe-into-aspnet-core)
+  - [Dependency Management](#dependency-management)
+  - [Multiple Environments and Configuration](#multiple-environments-and-configuration)
+  - [Logging](#logging)
+  - [Error Handling](#error-handling)
 - [Web Request Processing](#web-request-processing)
-    - [HTTP Headers](#http-headers)
-    - [HTTP Verbs](#http-verbs)
-    - [HTTP Status Codes](#http-status-codes)
-    - [Routing](#routing)
-    - [Query Strings](#query-strings)
-    - [Model Binding](#model-binding)
-    - [Model Validation](#model-validation)
-    - [File Uploads](#file-uploads)
-    - [Authentication and Authorization](#authentication-and-authorization)
-    - [Conditional Requests](#conditional-requests)
-    - [Request Limitation](#request-limitation)
-    - [Response Writing](#response-writing)
-    - [Content Negotiation](#content-negotiation)
-    - [Streaming](#streaming)
-    - [Redirection](#redirection)
-        - [Safe Redirection](#safe-redirection)
-    - [Response Caching](#response-caching)
-    - [Response Compression](#response-compression)
+  - [HTTP Headers](#http-headers)
+  - [HTTP Verbs](#http-verbs)
+  - [HTTP Status Codes](#http-status-codes)
+  - [Routing](#routing)
+  - [Query Strings](#query-strings)
+  - [Model Binding](#model-binding)
+  - [Model Validation](#model-validation)
+  - [File Uploads](#file-uploads)
+  - [Authentication and Authorization](#authentication-and-authorization)
+  - [Conditional Requests](#conditional-requests)
+  - [Request Limitation](#request-limitation)
+  - [Response Writing](#response-writing)
+  - [Content Negotiation](#content-negotiation)
+  - [Streaming](#streaming)
+  - [Redirection](#redirection)
+    - [Safe Redirection](#safe-redirection)
+  - [Response Caching](#response-caching)
+  - [Response Compression](#response-compression)
 - [Giraffe View Engine](#giraffe-view-engine)
 - [Serialization](#serialization)
-    - [JSON](#json)
-    - [XML](#xml)
+  - [JSON](#json)
+  - [XML](#xml)
 - [Testing](#testing)
 - [Miscellaneous](#miscellaneous)
-    - [Short GUIDs and Short IDs](#short-guids-and-short-ids)
-    - [Common Helper Functions](#common-helper-functions)
-    - [Computation Expressions](#computation-expressions)
-    - [CSRF Protection Helpers](#csrf-protection-helpers)
+  - [Short GUIDs and Short IDs](#short-guids-and-short-ids)
+  - [Common Helper Functions](#common-helper-functions)
+  - [Computation Expressions](#computation-expressions)
+  - [CSRF Protection Helpers](#csrf-protection-helpers)
 - [Additional Features](#additional-features)
-    - [Endpoint Routing](#endpoint-routing)
-    - [TokenRouter](#tokenrouter)
-    - [Razor](#razor)
-    - [DotLiquid](#dotliquid)
-    - [OpenApi](#openapi)
+  - [Endpoint Routing](#endpoint-routing)
+  - [TokenRouter](#tokenrouter)
+  - [Razor](#razor)
+  - [DotLiquid](#dotliquid)
+  - [OpenApi](#openapi)
 - [Special Mentions](#special-mentions)
 - [Appendix](#appendix)
 
@@ -154,14 +154,17 @@ let webApp =
 ```
 
 ### Tasks
+
 Another important aspect of Giraffe is that it natively works with .NET's `Task` and `Task<'T>` objects instead of relying on F#'s historic `async {}` workflows. The main benefit of this is that it removes the necessity of converting back and forth between tasks and async workflows when building a Giraffe web application (because ASP.NET Core only works with tasks out of the box).
 
 ### Tasks - Giraffe 6 and later
+
 Giraffe 6 targets .NET 6 and uses [F# 6's built-in task support](https://docs.microsoft.com/en-us/dotnet/fsharp/whats-new/fsharp-6#task-) without any additional dependencies.
 
 When building web apps using Giraffe, we recommend you use this built-in support too.
 
 ### Tasks - Giraffe 5
+
 In Giraffe 5, we use the `task {}` computation expression from the [Ply](https://www.nuget.org/packages/Ply/) NuGet package. Syntactically it works identical to F#'s async workflows (after opening the `FSharp.Control.Tasks` module):
 
 ```fsharp
@@ -387,6 +390,8 @@ let webApp =
         route "/ping"   >=> text "pong"
         route "/"       >=> htmlFile "/pages/index.html" ]
 
+// More information about the Startup class:
+// https://learn.microsoft.com/en-us/aspnet/core/migration/50-to-60?view=aspnetcore-10.0&tabs=visual-studio#use-startup-with-the-new-minimal-hosting-model
 type Startup() =
     member __.ConfigureServices (services : IServiceCollection) =
         // Register default Giraffe dependencies
@@ -399,8 +404,8 @@ type Startup() =
         app.UseGiraffe webApp
 
 [<EntryPoint>]
-let main _ =
-    Host.CreateDefaultBuilder()
+let main args =
+    Host.CreateDefaultBuilder(args)
         .ConfigureWebHostDefaults(
             fun webHostBuilder ->
                 webHostBuilder
@@ -430,16 +435,15 @@ let configureServices (services : IServiceCollection) =
     services.AddGiraffe() |> ignore
 
 [<EntryPoint>]
-let main _ =
-    Host.CreateDefaultBuilder()
-        .ConfigureWebHostDefaults(
-            fun webHostBuilder ->
-                webHostBuilder
-                    .Configure(configureApp)
-                    .ConfigureServices(configureServices)
-                    |> ignore)
-        .Build()
-        .Run()
+let main args =
+    let builder = WebApplication.CreateBuilder(args)
+    configureServices builder.Services
+
+    let app = builder.Build()
+
+    configureApp app
+    app.Run()
+
     0
 ```
 
@@ -460,18 +464,17 @@ let configureServices (services : IServiceCollection) =
     // ...
 
 [<EntryPoint>]
-let main _ =
-    Host.CreateDefaultBuilder()
-        .ConfigureWebHostDefaults(
-            fun webHostBuilder ->
-                webHostBuilder
-                    .Configure(configureApp)
-                    // Calling ConfigureServices to set up dependencies
-                    .ConfigureServices(configureServices)
-                    .ConfigureLogging(configureLogging)
-                    |> ignore)
-        .Build()
-        .Run()
+let main args =
+    let builder = WebApplication.CreateBuilder(args)
+    // Calling ConfigureServices to set up dependencies
+    configureServices builder.Services
+    configureLogging builder.Logging
+
+    let app = builder.Build()
+
+    configureApp app
+    app.Run()
+
     0
 ```
 
@@ -557,18 +560,17 @@ let configureLogging (builder : ILoggingBuilder) =
     |> ignore
 
 [<EntryPoint>]
-let main _ =
-    Host.CreateDefaultBuilder()
-        .ConfigureWebHostDefaults(
-            fun webHostBuilder ->
-                webHostBuilder
-                    .Configure(configureApp)
-                    .ConfigureServices(configureServices)
-                    // Calling ConfigureLogging to set up logging providers
-                    .ConfigureLogging(configureLogging)
-                    |> ignore)
-        .Build()
-        .Run()
+let main args =
+    let builder = WebApplication.CreateBuilder(args)
+    configureServices builder.Services
+    // Calling ConfigureLogging to set up logging providers
+    configureLogging builder.Logging
+
+    let app = builder.Build()
+
+    configureApp app
+    app.Run()
+
     0
 ```
 
@@ -634,24 +636,25 @@ let configureApp (app : IApplicationBuilder) =
        .UseGiraffe webApp
 
 [<EntryPoint>]
-let main _ =
-    Host.CreateDefaultBuilder()
-        .ConfigureWebHostDefaults(
-            fun webHostBuilder ->
-                webHostBuilder
-                    // Calling Configure to set up all middleware
-                    .Configure(configureApp)
-                    .ConfigureServices(configureServices)
-                    .ConfigureLogging(configureLogging)
-                    |> ignore)
-        .Build()
-        .Run()
+let main args =
+    let builder = WebApplication.CreateBuilder(args)
+    configureServices builder.Services
+    configureLogging builder.Logging
+
+    let app = builder.Build()
+
+    // Calling Configure to set up all middleware
+    configureApp app
+    app.Run()
+
     0
 ```
 
 ... or the equivalent by using a `Startup` class:
 
 ```fsharp
+// More information about the Startup class:
+// https://learn.microsoft.com/en-us/aspnet/core/migration/50-to-60?view=aspnetcore-10.0&tabs=visual-studio#use-startup-with-the-new-minimal-hosting-model
 type Startup() =
     member __.ConfigureServices (services : IServiceCollection) =
         // Register default Giraffe dependencies
@@ -664,8 +667,8 @@ type Startup() =
            .UseGiraffe webApp
 
 [<EntryPoint>]
-let main _ =
-    Host.CreateDefaultBuilder()
+let main args =
+    Host.CreateDefaultBuilder(args)
         .ConfigureWebHostDefaults(
             fun webHostBuilder ->
                 webHostBuilder
@@ -847,7 +850,6 @@ setStatusCode 200 >=> text "Hello World"
 ```
 
 On the other hand the upper case version can be used to send an object directly to the client:
-
 
 ```fsharp
 [<CLIMutable>]
@@ -1115,9 +1117,9 @@ The format string supports the following format chars:
 | `%O` | `Guid` (including short GUIDs*) |
 | `%u` | `uint64` (formatted as a short ID*) |
 
-**Named parameters**: When using ASP.NET Core’s [Endpoint Routing](#endpoint-routing) with Giraffe, you can use `%<type>:<name>` (e.g., `%i:petId`) to assign a name to a route parameter, which is especially useful for OpenAPI/Swagger documentation and for clarity. 
+**Named parameters**: When using ASP.NET Core’s [Endpoint Routing](#endpoint-routing) with Giraffe, you can use `%<type>:<name>` (e.g., `%i:petId`) to assign a name to a route parameter, which is especially useful for OpenAPI/Swagger documentation and for clarity.
 
-For example, the route `routef "/pet/%i:petId"` will match `/pet/42` and bind `42` to `petId`. 
+For example, the route `routef "/pet/%i:petId"` will match `/pet/42` and bind `42` to `petId`.
 
 If you'd like to see an example, check the [EndpointRoutingApp sample](https://github.com/giraffe-fsharp/Giraffe/blob/master/samples/EndpointRoutingApp/Program.fs) at the official repository.
 
@@ -1492,6 +1494,7 @@ let webApp =
         POST >=> route "/car" >=> submitCar
     ]
 ```
+
 Alternatively you can also use the `bindXml<'T>` http handler:
 
 ```fsharp
@@ -2441,7 +2444,7 @@ let webApp =
 //   2) Request rejected because 'Content-Type' header hasn't got expected value
 ```
 
-* Note: with `hasAnyContentTypes` multiple `Content-Type` headers can be passed to verify if the http request has any of the provided header values.
+- Note: with `hasAnyContentTypes` multiple `Content-Type` headers can be passed to verify if the http request has any of the provided header values.
 
 **Content-Length**
 Guards http request based on its `Content-Length` header:
@@ -2710,7 +2713,6 @@ The `INegotiationConfig` has two members which must be implemented:
 - `Rules` of type `IDictionary<string, obj -> HttpHandler>`
 - `UnacceptableHandler` of type `HttpHandler`
 
-
 The `Rules` property is of type `IDictionary<string, obj -> HttpHandler>` and represents a key/value dictionary, where the key denotes a supported `Content-Type` and the value represents a function which turns a given `obj` into an `HttpHandler`.
 
 For example the rules of the `DefaultNegotiationConfig` are as following:
@@ -2779,9 +2781,11 @@ let configureServices (services : IServiceCollection) =
     ) |> ignore
 
 [<EntryPoint>]
-let main _ =
-    WebHost.CreateDefaultBuilder()
-        .Configure(Action<IApplicationBuilder> configureApp)
+let main args =
+    Host.CreateDefaultBuilder(args)
+        .ConfigureWebHostDefaults(fun webBuilder ->
+            webBuilder.Configure(Action<IApplicationBuilder> configureApp) 
+            |> ignore)
         .ConfigureServices(configureServices)
         .ConfigureLogging(configureLogging)
         .Build()
@@ -3048,7 +3052,7 @@ curl -X POST http://localhost:5000/json \
 }'
 ```
 
-* Notice that the JSON keys start with lowercase letters.
+- Notice that the JSON keys start with lowercase letters.
 
 Furthermore, an application can modify the default serializer by registering a new dependency which implements the [Json.ISerializer](https://github.com/giraffe-fsharp/Giraffe/blob/master/src/Giraffe/Json.fs) interface during application startup. Check the next example on how to use the `Json.FsharpFriendlySerializer` instead of `Json.Serializer` (C#-like), that uses the [Tarmil/FSharp.SystemTextJson](https://github.com/Tarmil/FSharp.SystemTextJson) project to customize `System.Text.Json`:
 
@@ -3090,7 +3094,7 @@ let main args =
     0
 ```
 
-* Check Tarmil's repository to learn more about the FSharp.SystemTextJson configuration, and how to tweak it considering your specific demands.
+- Check Tarmil's repository to learn more about the FSharp.SystemTextJson configuration, and how to tweak it considering your specific demands.
 
 #### Using a different JSON serializer
 
@@ -3178,8 +3182,8 @@ let configureServices (services : IServiceCollection) =
             NewtonsoftJson.Serializer(JsonSerializerSettings(), serviceProvider.GetService<Microsoft.IO.RecyclableMemoryStreamManager>()) :> Json.ISerializer) |> ignore
 
 [<EntryPoint>]
-let main _ =
-    WebHost.CreateDefaultBuilder()
+let main args =
+    Host.CreateDefaultBuilder(args)
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(configureServices)
         .ConfigureLogging(configureLogging)
@@ -3207,8 +3211,8 @@ You can change the default `JsonSerializerSettings` of a JSON serializer by regi
          NewtonsoftJson.Serializer(customSettings)) |> ignore
 
  [<EntryPoint>]
- let main _ =
-     WebHost.CreateDefaultBuilder()
+ let main args =
+     Host.CreateDefaultBuilder(args)
          .Configure(Action<IApplicationBuilder> configureApp)
          .ConfigureServices(configureServices)
          .ConfigureLogging(configureLogging)
@@ -3258,8 +3262,8 @@ let configureServices (services : IServiceCollection) =
         SystemXml.Serializer(customSettings)) |> ignore
 
 [<EntryPoint>]
-let main _ =
-    WebHost.CreateDefaultBuilder()
+let main args =
+    Host.CreateDefaultBuilder(args)
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(configureServices)
         .ConfigureLogging(configureLogging)
@@ -3268,7 +3272,7 @@ let main _ =
     0
 ```
 
-####  Using a different XML serializer
+#### Using a different XML serializer
 
 You can change the entire underlying XML serializer by creating a new class which implements the `Xml.ISerializer` interface:
 
@@ -3291,8 +3295,8 @@ let configureServices (services : IServiceCollection) =
     services.AddSingleton<Xml.ISerializer, CustomXmlSerializer>() |> ignore
 
 [<EntryPoint>]
-let main _ =
-    WebHost.CreateDefaultBuilder()
+let main args =
+    Host.CreateDefaultBuilder(args)
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(configureServices)
         .ConfigureLogging(configureLogging)
@@ -3317,7 +3321,7 @@ let customHandler (dataObj : obj) : HttpHandler =
 
 Testing a Giraffe application follows the concept of [ASP.NET Core testing](https://docs.microsoft.com/en-us/aspnet/core/test/middleware?view=aspnetcore-3.1).
 
-### Necessary imports:
+### Necessary imports
 
 ```fsharp
 open Microsoft.AspNetCore.Builder
@@ -3326,7 +3330,7 @@ open Microsoft.AspNetCore.Hosting
 open System.Net.Http
 ```
 
-### Build a test host:
+### Build a test host
 
 ```fsharp
 let getTestHost() =
@@ -3338,7 +3342,7 @@ let getTestHost() =
         .UseUrls([YourUrl])
 ```
 
-### Create a helper function to issue test requests:
+### Create a helper function to issue test requests
 
 ```fsharp
 let testRequest (request : HttpRequestMessage) =
@@ -3351,7 +3355,7 @@ let testRequest (request : HttpRequestMessage) =
     resp.Result
 ```
 
-### Examples (using Xunit):
+### Examples (using Xunit)
 
 ```fsharp
 // Import needed for the code below:
@@ -3440,6 +3444,7 @@ Giraffe automatically adds two extensions methods to the `DateTime` and `DateTim
 let now = DateTimeOffset.UtcNow
 let isoFormattedTimestamp = now.ToIsoString()
 ```
+
 ```fsharp
 let now = DateTimeOffset.UtcNow
 let htmlFormattedTimestamp = now.ToHtmlString()
@@ -3482,7 +3487,6 @@ let someFunction =
 ### Computation Expressions
 
 Giraffe provides two additional computation expressions which can be used with `Option<'T>` and `Result<'T, 'TError>` objects.
-
 
 The `opt {}` computation expression can be used to bind options and the `res {}` computation expression can be used to bind result objects:
 
@@ -3635,7 +3639,7 @@ For more information about ASP.NET Core Endpoint Routing please refer to the [of
 
 ##### ALPHA :: Endpoint Routing Functions with Extensions
 
-+ Note that this feature is currently in **alpha**, and major changes are expected.
+- Note that this feature is currently in **alpha**, and major changes are expected.
 
 ASP.NET Core provides several "extension" functions which can be used to fine-tune the HTTP handler behaviour. For example, there's the [Rate limiting](https://learn.microsoft.com/en-us/aspnet/core/performance/rate-limit) and [Output caching](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/output) middlewares.
 
