@@ -1,0 +1,31 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/samples/">
+    <Project Path="samples/GlobalRateLimiting/GlobalRateLimiting.fsproj" />
+    <Project Path="samples/NewtonsoftJson/NewtonsoftJson.fsproj" />
+    <Project Path="samples/RateLimiting/RateLimiting.fsproj" />
+    <Project Path="samples/ResponseCachingApp/ResponseCachingApp.fsproj" />
+    <Project Path="samples/EndpointRoutingApp/EndpointRoutingApp.fsproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Giraffe/Giraffe.fsproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Giraffe.Tests/Giraffe.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/_root/">
+    <File Path="CODE_OF_CONDUCT.md" />
+    <File Path="DOCUMENTATION.md" />
+    <File Path="giraffe-64x64.png" />
+    <File Path="giraffe.png" />
+    <File Path="LICENSE" />
+    <File Path="NuGet.config" />
+    <File Path="README.md" />
+    <File Path="RELEASE_NOTES.md" />
+    <File Path="SECURITY.md" />
+  </Folder>
+</Solution>

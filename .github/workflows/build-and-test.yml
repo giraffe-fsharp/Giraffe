@@ -57,7 +57,7 @@ jobs:
       - name: Restore tools
         run: dotnet tool restore
       - name: Build solution
-        run: dotnet build -c Release Giraffe.sln
+        run: dotnet build -c Release Giraffe.slnx
       
       - name: Run Analyzers
         run: dotnet msbuild /t:AnalyzeFSharpProject src/Giraffe/Giraffe.fsproj
