@@ -3599,11 +3599,11 @@ The following routing functions are available as part of the `Giraffe.EndpointRo
 
 - `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`, `TRACE`, `CONNECT`
 - `route`
-- `routeWithExtensions` (*alpha*)
+- `routeWithExtensions`
 - `routef`
-- `routefWithExtensions` (*alpha*)
+- `routefWithExtensions`
 - `subRoute`
-- `subRouteWithExtensions` (*alpha*)
+- `subRouteWithExtensions`
 
 The `route`, `routef` and `subRoute` handlers are all case-insensitive. Other handlers such as `routex`, `subRoutef` or `choose` are not supported by the `Giraffe.EndpointRouting` module.
 
@@ -3637,9 +3637,7 @@ let myHandler (foo : int, bar : string) : HttpHandler =
 
 For more information about ASP.NET Core Endpoint Routing please refer to the [official documentation](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-5.0).
 
-##### ALPHA :: Endpoint Routing Functions with Extensions
-
-- Note that this feature is currently in **alpha**, and major changes are expected.
+##### Endpoint Routing Functions with Extensions
 
 ASP.NET Core provides several "extension" functions which can be used to fine-tune the HTTP handler behaviour. For example, there's the [Rate limiting](https://learn.microsoft.com/en-us/aspnet/core/performance/rate-limit) and [Output caching](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/output) middlewares.
 
