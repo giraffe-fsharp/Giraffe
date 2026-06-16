@@ -553,3 +553,106 @@ let ``json parsing works with different HTTP methods`` (httpMethod: string) =
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode)
     }
+
+// ------------------------------------------------------------------
+// tryBindJson tests
+
+let private tryBindJsonHandler (expected: MyRecord) : HttpHandler =
+    let parsingErrorHandler (msg: string) : HttpHandler =
+        setStatusCode 400 >=> json {| Error = msg |}
+
+    let successHandler (model: MyRecord) : HttpHandler =
+        match model with
+        | m when m.Foo = expected.Foo && m.Bar = expected.Bar && m.Baz = expected.Baz ->
+            setStatusCode 201 >=> json model
+        | _ ->
+            setStatusCode 422
+            >=> json
+                    {|
+                        Error = "Expected is different from actual"
+                    |}
+
+    tryBindJson<MyRecord> parsingErrorHandler successHandler
+
+[<Theory>]
+[<InlineData("""{"foo":"hello", "bar": "world", "baz": 12.5}""", 0)>]
+[<InlineData("""{"foo":"hello", "bar": null, "baz": 12.5}""", 1)>]
+[<InlineData("""{"foo":"hello", "baz": 12.5}""", 2)>]
+[<InlineData("""{"foo":"hello", "bar": "world"}""", 3)>]
+[<InlineData("""{"foo":"hello"}""", 4)>]
+[<InlineData("""{}""", 5)>]
+let ``tryBindJson invokes the success handler when parsing succeeds`` (reqBody: string, expectedDictKey: int) =
+    task {
+        let expected = dictForDefaultSerializer[expectedDictKey]
+
+        let endpoints: Endpoint list =
+            [ POST [ route "/try-bind-json" (tryBindJsonHandler expected) ] ]
+
+        let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
+
+        let configureApp (app: IApplicationBuilder) =
+            app.UseRouting().UseGiraffe(endpoints).UseGiraffe notFoundHandler
+
+        let configureServices (services: IServiceCollection) =
+            services.AddRouting().AddGiraffe() |> ignore
+
+        let request = createRequest HttpMethod.Post "/try-bind-json"
+        request.Content <- new StringContent(reqBody, Encoding.UTF8, "application/json")
+
+        let! response = makeRequest (fun () -> configureApp) configureServices () request
+
+        Assert.Equal(System.Net.HttpStatusCode.Created, response.StatusCode)
+    }
+
+[<Theory>]
+[<InlineData("""{"foo":"hello", "bar": "world", "baz": "not a number"}""")>] // Invalid type
+[<InlineData("""{"foo":"hello", "bar": "world", "baz": 12.5""")>] // Missing closing brace
+[<InlineData("""{"foo":"hello", "bar": "world", "baz": 12.5,}""")>] // Trailing comma
+[<InlineData("""not json at all""")>] // Not JSON
+[<InlineData("""{"foo":}""")>] // Invalid syntax
+let ``tryBindJson invokes the parsing error handler when parsing fails`` (malformedJson: string) =
+    task {
+        let endpoints: Endpoint list =
+            [ POST [ route "/try-bind-json" (tryBindJsonHandler MyRecord.Empty) ] ]
+
+        let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
+
+        let configureApp (app: IApplicationBuilder) =
+            app.UseRouting().UseGiraffe(endpoints).UseGiraffe(notFoundHandler)
+
+        let configureServices (services: IServiceCollection) =
+            services.AddRouting().AddGiraffe() |> ignore
+
+        let request = createRequest HttpMethod.Post "/try-bind-json"
+        request.Content <- new StringContent(malformedJson, Encoding.UTF8, "application/json")
+
+        let! response = makeRequest (fun () -> configureApp) configureServices () request
+
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode)
+    }
+
+[<Fact>]
+let ``tryBindJson passes the parsing error message to the error handler`` () =
+    task {
+        let endpoints: Endpoint list =
+            [ POST [ route "/try-bind-json" (tryBindJsonHandler MyRecord.Empty) ] ]
+
+        let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
+
+        let configureApp (app: IApplicationBuilder) =
+            app.UseRouting().UseGiraffe(endpoints).UseGiraffe(notFoundHandler)
+
+        let configureServices (services: IServiceCollection) =
+            services.AddRouting().AddGiraffe() |> ignore
+
+        let request = createRequest HttpMethod.Post "/try-bind-json"
+        request.Content <- new StringContent("not json at all", Encoding.UTF8, "application/json")
+
+        let! response = makeRequest (fun () -> configureApp) configureServices () request
+
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode)
+
+        let! responseBody = response.Content.ReadAsStringAsync()
+        Assert.Contains("\"error\":", responseBody)
+        Assert.False(String.IsNullOrWhiteSpace responseBody)
+    }

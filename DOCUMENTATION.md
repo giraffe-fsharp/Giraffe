@@ -1460,6 +1460,73 @@ Please note that in order for the model binding to work the record type must be 
 
 The underlying JSON serializer can be configured as a dependency during application startup (see [JSON](#json)).
 
+For a more stricter (and more functional) JSON model binding you can use the `TryBindJsonAsync<'T>` extension method or the `tryBindJson<'T>` http handler function.
+
+The `TryBindJsonAsync<'T>` method returns an object of type `Result<'T, string>`. If the model binding was successful then the result will contain an instance of type `'T`, otherwise a `string` value containing the parsing error message:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let submitCar : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            // Tries to bind a JSON payload to a Car object
+            let! result = ctx.TryBindJsonAsync<Car>()
+
+            return!
+                (match result with
+                 | Ok car  -> Successful.OK car
+                 | Error err -> RequestErrors.BAD_REQUEST err) next ctx
+        }
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "/ping" >=> text "pong"
+            ]
+        POST >=> route "/car" >=> submitCar
+    ]
+```
+
+The `tryBindJson<'T>` http handler is very similar, but instead of returning a `Result<'T, string>` object it will invoke an error handler function if the model binding does not succeed:
+
+```fsharp
+[<CLIMutable>]
+type Car =
+    {
+        Name   : string
+        Make   : string
+        Wheels : int
+        Built  : DateTime
+    }
+
+let parsingError (err : string) = RequestErrors.BAD_REQUEST err
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/"    >=> text "index"
+                route "/ping" >=> text "pong"
+            ]
+        POST
+        >=> route "/car"
+        >=> tryBindJson<Car> parsingError (fun car -> Successful.OK car)
+        RequestErrors.NOT_FOUND "Not found"
+    ]
+```
+
+In this example if a `Car` object could not be successfully created then the `parsingError` handler will get invoked which will return an `Http Bad Request` response with the parsing error message.
+
 #### Binding XML
 
 The `BindXmlAsync<'T>()` extension method binds an XML payload to an object of type `'T`:
