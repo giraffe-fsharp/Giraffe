@@ -342,6 +342,28 @@ module Core =
             }
 
     /// <summary>
+    /// Tries to parse a JSON payload into an instance of type 'T.
+    /// </summary>
+    /// <param name="parsingErrorHandler">A <see cref="System.String"/> -> <see cref="HttpHandler"/> function which will get invoked when the model parsing fails. The <see cref="System.String"/> parameter holds the parsing error message.</param>
+    /// <param name="successHandler">A function which accepts an object of type 'T and returns a <see cref="HttpHandler"/> function.</param>
+    /// <param name="next"></param>
+    /// <param name="ctx"></param>
+    /// <typeparam name="'T"></typeparam>
+    /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
+    let tryBindJson<'T> (parsingErrorHandler: string -> HttpHandler) (successHandler: 'T -> HttpHandler) : HttpHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
+            task {
+                let! result = ctx.TryBindJsonAsync<'T>()
+
+                return!
+                    (match result with
+                     | Error msg -> parsingErrorHandler msg
+                     | Ok model -> successHandler model)
+                        next
+                        ctx
+            }
+
+    /// <summary>
     /// Parses a XML payload into an instance of type 'T.
     /// </summary>
     /// <param name="f">A function which accepts an object of type 'T and returns a <see cref="HttpHandler"/> function.</param>
