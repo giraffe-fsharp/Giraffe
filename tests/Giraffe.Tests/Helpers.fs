@@ -23,7 +23,7 @@ open Giraffe
 // Common functions
 // ---------------------------------
 
-let toTheoryData xs =
+let toTheoryData (xs: 'a seq) =
     let data = new TheoryData<_>()
 
     for x in xs do
