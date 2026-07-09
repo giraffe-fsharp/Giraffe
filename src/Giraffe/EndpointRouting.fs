@@ -158,6 +158,7 @@ module Routers =
         | POST
         | PUT
         | PATCH
+        | QUERY
         | DELETE
         | HEAD
         | OPTIONS
@@ -171,6 +172,7 @@ module Routers =
             | POST -> "POST"
             | PUT -> "PUT"
             | PATCH -> "PATCH"
+            | QUERY -> "QUERY"
             | DELETE -> "DELETE"
             | HEAD -> "HEAD"
             | OPTIONS -> "OPTIONS"
@@ -248,6 +250,7 @@ module Routers =
     let POST = applyHttpVerbToEndpoints POST
     let PUT = applyHttpVerbToEndpoints PUT
     let PATCH = applyHttpVerbToEndpoints PATCH
+    let QUERY = applyHttpVerbToEndpoints QUERY
     let DELETE = applyHttpVerbToEndpoints DELETE
     let HEAD = applyHttpVerbToEndpoints HEAD
     let OPTIONS = applyHttpVerbToEndpoints OPTIONS
