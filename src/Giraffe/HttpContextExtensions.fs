@@ -352,6 +352,7 @@ type HttpContextExtensions() =
                 method.Equals "POST"
                 || method.Equals "PUT"
                 || method.Equals "PATCH"
+                || method.Equals "QUERY"
                 || method.Equals "DELETE"
             then
                 let original = StringSegment(ctx.Request.ContentType)

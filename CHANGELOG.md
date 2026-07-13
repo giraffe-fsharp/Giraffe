@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Add first-class support for the HTTP `QUERY` method.
 - [feat: add routeBind support to Giraffe.EndpointRouting](https://github.com/giraffe-fsharp/Giraffe/pull/709) - Credits @AugustoRengel
 - [Add KeepAChangelog](https://github.com/giraffe-fsharp/Giraffe/pull/717) - Credits @64J0
 

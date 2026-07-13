@@ -85,6 +85,28 @@ let ``routeWithExtensions: GET request returns expected result`` (path: string, 
         content |> shouldEqual expected
     }
 
+[<Fact>]
+let ``route: QUERY request returns expected result`` () =
+    let endpoints: Endpoint list = [ QUERY [ route "/query" (text "query") ] ]
+
+    let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
+
+    let configureApp (app: IApplicationBuilder) =
+        app.UseRouting().UseGiraffe(endpoints).UseGiraffe(notFoundHandler)
+
+    let configureServices (services: IServiceCollection) =
+        services.AddRouting().AddGiraffe() |> ignore
+
+    task {
+        let request = createRequest (HttpMethod("QUERY")) "/query"
+
+        let! response = makeRequest (fun () -> configureApp) configureServices () request
+
+        let! content = response |> readText
+
+        content |> shouldEqual "query"
+    }
+
 [<Theory>]
 [<InlineData("/empty/5", "/empty i = 5")>]
 [<InlineData("/normal/10", "/normal i = 10")>]

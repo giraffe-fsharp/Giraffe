@@ -165,6 +165,10 @@ module Core =
     let POST: HttpHandler = httpVerb HttpMethods.IsPost
     let PUT: HttpHandler = httpVerb HttpMethods.IsPut
     let PATCH: HttpHandler = httpVerb HttpMethods.IsPatch
+
+    let QUERY: HttpHandler =
+        httpVerb (fun method -> method.Equals("QUERY", StringComparison.OrdinalIgnoreCase))
+
     let DELETE: HttpHandler = httpVerb HttpMethods.IsDelete
     let HEAD: HttpHandler = httpVerb HttpMethods.IsHead
     let OPTIONS: HttpHandler = httpVerb HttpMethods.IsOptions

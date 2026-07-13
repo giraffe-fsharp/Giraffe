@@ -753,6 +753,7 @@ Giraffe exposes a set of `HttpHandler` functions which can filter a request base
 - `POST`
 - `PUT`
 - `PATCH`
+- `QUERY`
 - `DELETE`
 - `HEAD`
 - `OPTIONS`
@@ -1853,7 +1854,7 @@ If you prefer this API you can either copy paste [Aleksander](https://github.com
 
 #### Binding Models (catch all)
 
-The `BindModelAsync<'T> (?cultureInfo : CultureInfo)` method is a generic model binding function which will try to pick the right model parsing function based on a request's HTTP verb and `Content-Type` header. With the help of `BindModelAsync<'T>` it is possible to create a single endpoint which can bind JSON, XML, form and query string data:
+The `BindModelAsync<'T> (?cultureInfo : CultureInfo)` method is a generic model binding function which will try to pick the right model parsing function based on a request's HTTP verb and `Content-Type` header. The `QUERY` method is treated as a body-bearing method alongside `POST`, `PUT`, `PATCH` and `DELETE`. With the help of `BindModelAsync<'T>` it is possible to create a single endpoint which can bind JSON, XML, form and query string data:
 
 ```fsharp
 [<CLIMutable>]
@@ -3597,7 +3598,7 @@ The `MapGiraffeEndpoints` extension method translates those functions into the f
 
 The following routing functions are available as part of the `Giraffe.EndpointRouting` module:
 
-- `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`, `TRACE`, `CONNECT`
+- `GET`, `POST`, `PUT`, `PATCH`, `QUERY`, `DELETE`, `HEAD`, `OPTIONS`, `TRACE`, `CONNECT`
 - `route`
 - `routeWithExtensions`
 - `routef`

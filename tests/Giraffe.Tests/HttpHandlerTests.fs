@@ -393,6 +393,29 @@ let ``POST "/post/2" returns "2"`` () =
     }
 
 [<Fact>]
+let ``QUERY "/query" returns "query"`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let app =
+        choose [
+            QUERY >=> route "/query" >=> text "query"
+            setStatusCode 404 >=> text "Not found"
+        ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "QUERY" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/query")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+    let expected = "query"
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx -> Assert.Equal(expected, getBody ctx)
+    }
+
+[<Fact>]
 let ``PUT "/post/2" returns 404 "Not found"`` () =
     let ctx = Substitute.For<HttpContext>()
 
