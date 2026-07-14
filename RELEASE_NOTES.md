@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## 8.3.0 - 2026-06-16
+
+- [Add TryBindJsonAsync<'T> extension method and tryBindJson<'T> HTTP handler](https://github.com/giraffe-fsharp/Giraffe/pull/733)
+
 ## 8.2.0 - 2025-11-12
 
 #### Breaking changes

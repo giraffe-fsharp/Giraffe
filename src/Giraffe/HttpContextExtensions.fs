@@ -258,6 +258,22 @@ type HttpContextExtensions() =
         }
 
     /// <summary>
+    /// Tries to use the <see cref="Json.ISerializer"/> to deserialize the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously into an object of type 'T.
+    /// </summary>
+    /// <typeparam name="'T"></typeparam>
+    /// <returns>Returns <c>Ok</c> with an object of type 'T if model binding succeeded, otherwise <c>Error</c> with a <see cref="System.String"/> message describing the parsing error.</returns>
+    [<Extension>]
+    static member TryBindJsonAsync<'T>(ctx: HttpContext) =
+        task {
+            try
+                let serializer = ctx.GetJsonSerializer()
+                let! model = serializer.DeserializeAsync<'T> ctx.Request.Body
+                return Ok model
+            with exn ->
+                return Error exn.Message
+        }
+
+    /// <summary>
     /// Uses the <see cref="Xml.ISerializer"/> to deserialize the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously into an object of type 'T.
     /// </summary>
     /// <typeparam name="'T"></typeparam>
