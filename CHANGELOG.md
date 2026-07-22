@@ -4,11 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [8.3.0] - 2026-07-21
 
 ### Added
 
-- Add first-class support for the HTTP `QUERY` method.
+- [feat: add QUERY method support](https://github.com/giraffe-fsharp/Giraffe/pull/742) - Credits @bizprat
 - [feat: add routeBind support to Giraffe.EndpointRouting](https://github.com/giraffe-fsharp/Giraffe/pull/709) - Credits @AugustoRengel
 - [Add KeepAChangelog](https://github.com/giraffe-fsharp/Giraffe/pull/717) - Credits @64J0
 
@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - [Add .NET 10 to the list of test TFMs and update CI](https://github.com/giraffe-fsharp/Giraffe/pull/702) - Credits @64J0
 - [docs: fix named parameters docs for endpoint routing](https://github.com/giraffe-fsharp/Giraffe/pull/707) - Credits @AugustoRengel
 - [[DOCS] Update code examples that deal with ASP.NET host configuration](https://github.com/giraffe-fsharp/Giraffe/pull/723) - Credits @64J0
+- [.sln -> .slnx](https://github.com/giraffe-fsharp/Giraffe/pull/725) - Credits @64J0
+- [Promote router *WithExtensions to stable](https://github.com/giraffe-fsharp/Giraffe/pull/732) - Credits @64J0
 
 ## [8.2.0] - 2025-11-12
 

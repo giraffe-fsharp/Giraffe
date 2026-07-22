@@ -1,6 +1,16 @@
 Release Notes
 =============
 
+## 8.3.0 - 2026-07-21
+
+- [feat: add QUERY method support](https://github.com/giraffe-fsharp/Giraffe/pull/742) - Credits @bizprat
+- [Promote router *WithExtensions to stable](https://github.com/giraffe-fsharp/Giraffe/pull/732) - Credits @64J0
+- [.sln -> .slnx](https://github.com/giraffe-fsharp/Giraffe/pull/725) - Credits @64J0
+- [Add KeepAChangelog](https://github.com/giraffe-fsharp/Giraffe/pull/717) - Credits @64J0
+- [[DOCS] Update code examples that deal with ASP.NET host configuration](https://github.com/giraffe-fsharp/Giraffe/pull/723) - Credits @64J0
+- [feat: add routeBind support to Giraffe.EndpointRouting](https://github.com/giraffe-fsharp/Giraffe/pull/709) - Credits @AugustoRengel
+- [Add .NET 10 to the list of test TFMs and update CI](https://github.com/giraffe-fsharp/Giraffe/pull/702) - Credits @64J0
+
 ## 8.2.0 - 2025-11-12
 
 #### Breaking changes
