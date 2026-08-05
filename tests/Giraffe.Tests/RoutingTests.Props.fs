@@ -12,10 +12,6 @@ open FsCheck.Xunit
 
 module Utils =
 
-    type GiraffeGuid =
-        static member Guid() =
-            ArbMap.defaults |> ArbMap.arbitrary<Guid>
-
     type GiraffeShortGuid =
         static member ShortGuid() =
             ArbMap.defaults
@@ -166,7 +162,7 @@ let ``routef: GET "/price/%f" works`` (x: float) =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-[<Property(Arbitrary = [| typeof<Utils.GiraffeGuid> |])>]
+[<Property>]
 let ``routef: GET "/guid/%O" works`` (x: Guid) =
     let ctx = Substitute.For<HttpContext>()
 
@@ -302,11 +298,11 @@ let ``routef: GET on an unmatched path always falls through to 404`` (suffix: st
 
 module ShortGuidProps =
 
-    [<Property(Arbitrary = [| typeof<Utils.GiraffeGuid> |])>]
+    [<Property>]
     let ``ShortGuid: fromGuid >> toGuid roundtrips`` (guid: Guid) =
         guid |> ShortGuid.fromGuid |> ShortGuid.toGuid = guid
 
-    [<Property(Arbitrary = [| typeof<Utils.GiraffeGuid> |])>]
+    [<Property>]
     let ``ShortGuid: fromGuid always produces a 22 character string`` (guid: Guid) =
         (ShortGuid.fromGuid guid).Length = 22
 
