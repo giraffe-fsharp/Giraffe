@@ -15,3 +15,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      fsharp-analyzers-group:
+        patterns:
+          - "fsharp-analyzers"
+          - "Ionide.Analyzers"
