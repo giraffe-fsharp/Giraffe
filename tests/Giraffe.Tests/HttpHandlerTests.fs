@@ -713,6 +713,66 @@ let ``GET "/person" returns rendered HTML view`` () =
     }
 
 [<Fact>]
+let ``GET "/readme" returns rendered Markdown string`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let app =
+        GET
+        >=> choose [
+            route "/" >=> text "Hello World"
+            route "/readme" >=> markdownString "# Giraffe\n\nA *functional* web framework."
+        ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/readme")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let expected = "# Giraffe\n\nA *functional* web framework."
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal("text/markdown; charset=utf-8", ctx.Response |> getContentType)
+    }
+
+[<Fact>]
+let ``GET "/readme" composed with setStatusCode and setHttpHeader returns Markdown string`` () =
+    let ctx = Substitute.For<HttpContext>()
+
+    let readmeHandler: HttpHandler =
+        setStatusCode 200
+        >=> setHttpHeader "Cache-Control" "public, max-age=3600"
+        >=> markdownString "# Giraffe\n\nA *functional* web framework."
+
+    let app =
+        GET
+        >=> choose [ route "/" >=> text "Hello World"; route "/readme" >=> readmeHandler ]
+
+    ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/readme")) |> ignore
+    ctx.Response.Body <- new MemoryStream()
+
+    let expected = "# Giraffe\n\nA *functional* web framework."
+
+    task {
+        let! result = app next ctx
+
+        match result with
+        | None -> assertFailf "Result was expected to be %s" expected
+        | Some ctx ->
+            let body = getBody ctx
+            Assert.Equal(expected, body)
+            Assert.Equal(200, ctx.Response.StatusCode)
+            Assert.Equal("text/markdown; charset=utf-8", ctx.Response |> getContentType)
+            Assert.Equal("public, max-age=3600", ctx.Response.Headers["Cache-Control"].ToString())
+    }
+
+[<Fact>]
 let ``Warbler function should execute inner function each time`` () =
     let ctx = Substitute.For<HttpContext>()
     let inner () = Guid.NewGuid().ToString()
