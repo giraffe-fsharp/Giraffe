@@ -52,7 +52,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
     <PackageReference Include="FsCheck" Version="3.3.4" />
     <PackageReference Include="FsCheck.Xunit.v3" Version="3.3.4" />
     <PackageReference Include="xunit.v3" Version="3.2.2" />
