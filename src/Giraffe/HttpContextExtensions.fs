@@ -515,7 +515,7 @@ type HttpContextExtensions() =
     /// It also sets the HTTP header Content-Type to text/markdown and sets the Content-Length header accordingly.
     /// </summary>
     /// <param name="ctx">The current http context object.</param>
-    /// <param name="markdown">The Markdown string to be send back to the client.</param>
+    /// <param name="markdown">The Markdown string to be sent back to the client.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
     [<Extension>]
     static member WriteMarkdownStringAsync(ctx: HttpContext, markdown: string) =
