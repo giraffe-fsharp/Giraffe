@@ -583,7 +583,7 @@ module Core =
     /// </summary>
     /// <param name="markdown">The Markdown string to be sent back to the client.</param>
     /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
-    let markdownString (markdown: string) : HttpHandler =
+    let markdown (markdown: string) : HttpHandler =
         let bytes = Encoding.UTF8.GetBytes markdown
 
 #if NET8_0_OR_GREATER

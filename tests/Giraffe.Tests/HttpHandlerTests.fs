@@ -720,7 +720,7 @@ let ``GET "/readme" returns rendered Markdown string`` () =
         GET
         >=> choose [
             route "/" >=> text "Hello World"
-            route "/readme" >=> markdownString "# Giraffe\n\nA *functional* web framework."
+            route "/readme" >=> markdown "# Giraffe\n\nA *functional* web framework."
         ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
@@ -747,7 +747,7 @@ let ``GET "/readme" composed with setStatusCode and setHttpHeader returns Markdo
     let readmeHandler: HttpHandler =
         setStatusCode 200
         >=> setHttpHeader "Cache-Control" "public, max-age=3600"
-        >=> markdownString "# Giraffe\n\nA *functional* web framework."
+        >=> markdown "# Giraffe\n\nA *functional* web framework."
 
     let app =
         GET

@@ -518,7 +518,7 @@ type HttpContextExtensions() =
     /// <param name="markdown">The Markdown string to be sent back to the client.</param>
     /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
     [<Extension>]
-    static member WriteMarkdownStringAsync(ctx: HttpContext, markdown: string) =
+    static member WriteMarkdownAsync(ctx: HttpContext, markdown: string) =
 #if NET8_0_OR_GREATER
         ctx.SetContentType(System.Net.Mime.MediaTypeNames.Text.Markdown + "; charset=utf-8")
 #else

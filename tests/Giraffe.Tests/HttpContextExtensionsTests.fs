@@ -177,11 +177,11 @@ let ``WriteTextAsync with HTTP HEAD should not return text in body`` () =
     }
 
 [<Fact>]
-let ``WriteMarkdownStringAsync with HTTP GET should return markdown in body`` () =
+let ``WriteMarkdownAsync with HTTP GET should return markdown in body`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
-        fun (_: HttpFunc) (ctx: HttpContext) -> ctx.WriteMarkdownStringAsync "# Hello World Giraffe"
+        fun (_: HttpFunc) (ctx: HttpContext) -> ctx.WriteMarkdownAsync "# Hello World Giraffe"
 
     let app = route "/" >=> testHandler
 
@@ -202,11 +202,11 @@ let ``WriteMarkdownStringAsync with HTTP GET should return markdown in body`` ()
     }
 
 [<Fact>]
-let ``WriteMarkdownStringAsync with HTTP HEAD should not return markdown in body`` () =
+let ``WriteMarkdownAsync with HTTP HEAD should not return markdown in body`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let testHandler =
-        fun (_: HttpFunc) (ctx: HttpContext) -> ctx.WriteMarkdownStringAsync "# Hello World Giraffe"
+        fun (_: HttpFunc) (ctx: HttpContext) -> ctx.WriteMarkdownAsync "# Hello World Giraffe"
 
     let app = route "/" >=> testHandler
 

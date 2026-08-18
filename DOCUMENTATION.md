@@ -2669,21 +2669,21 @@ let someHandler : HttpHandler =
 
 #### Writing Markdown
 
-The `WriteMarkdownStringAsync (markdown : string)` extension method and the `markdownString (markdown : string)` http handler are both equivalent to [writing strings](#writing-strings) except that they will also set the `Content-Type` header to `text/markdown`, using the official [`System.Net.Mime.MediaTypeNames.Text.Markdown`](https://learn.microsoft.com/en-us/dotnet/api/system.net.mime.mediatypenames.text.markdown) constant (available from .NET 8 onwards; earlier target frameworks fall back to the equivalent `"text/markdown"` literal):
+The `WriteMarkdownAsync (markdown : string)` extension method and the `markdown (markdown : string)` http handler are both equivalent to [writing strings](#writing-strings) except that they will also set the `Content-Type` header to `text/markdown`, using the official [`System.Net.Mime.MediaTypeNames.Text.Markdown`](https://learn.microsoft.com/en-us/dotnet/api/system.net.mime.mediatypenames.text.markdown) constant (available from .NET 8 onwards; earlier target frameworks fall back to the equivalent `"text/markdown"` literal):
 
 ```fsharp
 let someHandler (dataObj : obj) : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
             // Do stuff
-            return! ctx.WriteMarkdownStringAsync "# Giraffe\n\nA *functional* web framework."
+            return! ctx.WriteMarkdownAsync "# Giraffe\n\nA *functional* web framework."
         }
 
 // or...
 
 let someHandler (dataObj : obj) : HttpHandler =
     // Do stuff
-    markdownString "# Giraffe\n\nA *functional* web framework."
+    markdown "# Giraffe\n\nA *functional* web framework."
 ```
 
 A request to a route configured with the handler above will receive:
@@ -2698,13 +2698,13 @@ Content-Length: 40
 A *functional* web framework.
 ```
 
-Like every other Giraffe response writer, `markdownString` is just an `HttpHandler` and can be composed with other handlers via the [`>=>`](#compose-) (fish) operator, for example to set the status code and an additional response header before writing the body:
+Like every other Giraffe response writer, `markdown` is just an `HttpHandler` and can be composed with other handlers via the [`>=>`](#compose-) (fish) operator, for example to set the status code and an additional response header before writing the body:
 
 ```fsharp
 let readmeHandler : HttpHandler =
     setStatusCode 200
     >=> setHttpHeader "Cache-Control" "public, max-age=3600"
-    >=> markdownString "# Giraffe\n\nA *functional* web framework."
+    >=> markdown "# Giraffe\n\nA *functional* web framework."
 
 let webApp =
     choose [
