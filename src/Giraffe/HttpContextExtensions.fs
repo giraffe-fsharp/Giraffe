@@ -511,6 +511,22 @@ type HttpContextExtensions() =
         ctx.WriteStringAsync html
 
     /// <summary>
+    /// Writes a Markdown string to the body of the HTTP response.
+    /// It also sets the HTTP header Content-Type to text/markdown and sets the Content-Length header accordingly.
+    /// </summary>
+    /// <param name="ctx">The current http context object.</param>
+    /// <param name="markdown">The Markdown string to be sent back to the client.</param>
+    /// <returns>Task of Some HttpContext after writing to the body of the response.</returns>
+    [<Extension>]
+    static member WriteMarkdownAsync(ctx: HttpContext, markdown: string) =
+#if NET8_0_OR_GREATER
+        ctx.SetContentType(System.Net.Mime.MediaTypeNames.Text.Markdown + "; charset=utf-8")
+#else
+        ctx.SetContentType "text/markdown; charset=utf-8"
+#endif
+        ctx.WriteStringAsync markdown
+
+    /// <summary>
     /// <para>Compiles a `Giraffe.GiraffeViewEngine.XmlNode` object to a HTML view and writes the output to the body of the HTTP response.</para>
     /// <para>It also sets the HTTP header `Content-Type` to `text/html` and sets the `Content-Length` header accordingly.</para>
     /// </summary>
