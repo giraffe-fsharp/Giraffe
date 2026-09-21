@@ -76,7 +76,8 @@ let makeRequest = makeRequest WebApp.configureApp WebApp.configureServices ()
 [<Fact>]
 let ``HTTP GET entire file with range processing disabled`` () =
     task {
-        let! response = createRequest HttpMethod.Get Urls.rangeProcessingDisabled |> makeRequest
+        let! response =
+            createRequest HttpMethod.Get Urls.rangeProcessingDisabled |> makeRequest
 
         let! content =
             response
@@ -93,7 +94,8 @@ let ``HTTP GET entire file with range processing disabled`` () =
 [<Fact>]
 let ``HTTP GET entire file with range processing enabled`` () =
     task {
-        let! response = createRequest HttpMethod.Get Urls.rangeProcessingEnabled |> makeRequest
+        let! response =
+            createRequest HttpMethod.Get Urls.rangeProcessingEnabled |> makeRequest
 
         let! content =
             response
@@ -110,7 +112,8 @@ let ``HTTP GET entire file with range processing enabled`` () =
 [<Fact>]
 let ``HTTP HEAD entire file with range processing disabled`` () =
     task {
-        let! response = createRequest HttpMethod.Head Urls.rangeProcessingDisabled |> makeRequest
+        let! response =
+            createRequest HttpMethod.Head Urls.rangeProcessingDisabled |> makeRequest
 
         let! content =
             response
@@ -126,7 +129,8 @@ let ``HTTP HEAD entire file with range processing disabled`` () =
 [<Fact>]
 let ``HTTP HEAD entire file with range processing enabled`` () =
     task {
-        let! response = createRequest HttpMethod.Head Urls.rangeProcessingEnabled |> makeRequest
+        let! response =
+            createRequest HttpMethod.Head Urls.rangeProcessingEnabled |> makeRequest
 
         let! content =
             response
