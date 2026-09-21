@@ -47,7 +47,7 @@ module Json =
                 JsonSerializer.Deserialize<'T>(json, options)
 
             member __.Deserialize<'T>(bytes: byte array) : 'T =
-                JsonSerializer.Deserialize<'T>(Span<_>.op_Implicit (bytes.AsSpan()), options)
+                JsonSerializer.Deserialize<'T>(Span<_>.op_Implicit(bytes.AsSpan()), options)
 
             member __.DeserializeAsync<'T>(stream: Stream) : Task<'T> =
                 JsonSerializer.DeserializeAsync<'T>(stream, options).AsTask()

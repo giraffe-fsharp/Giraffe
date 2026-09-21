@@ -106,7 +106,8 @@ let ``HTTP GET with If-Match and matching ETag`` () =
             |> addHeader "If-Match" "\"111\", \"222\", \"333\""
             |> makeRequest (createETag "222", None)
 
-        let! content = response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
+        let! content =
+            response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
 
         content
         |> printBytes
@@ -122,7 +123,8 @@ let ``HTTP GET with If-Unmodified-Since and no lastModified`` () =
             |> addHeader "If-Unmodified-Since" (DateTimeOffset.UtcNow.ToHtmlString())
             |> makeRequest (None, None)
 
-        let! content = response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
+        let! content =
+            response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
 
         content
         |> printBytes
@@ -138,7 +140,8 @@ let ``HTTP GET with If-Unmodified-Since in the future`` () =
             |> addHeader "If-Unmodified-Since" (DateTimeOffset.UtcNow.AddDays(1.0).ToHtmlString())
             |> makeRequest (None, Some DateTimeOffset.UtcNow)
 
-        let! content = response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
+        let! content =
+            response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
 
         content
         |> printBytes
@@ -154,7 +157,8 @@ let ``HTTP GET with If-Unmodified-Since not in the future but greater than lastM
             |> addHeader "If-Unmodified-Since" (DateTimeOffset.UtcNow.AddDays(-10.0).ToHtmlString())
             |> makeRequest (None, Some(DateTimeOffset.UtcNow.AddDays(-11.0)))
 
-        let! content = response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
+        let! content =
+            response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
 
         content
         |> printBytes
@@ -184,7 +188,8 @@ let ``HTTP GET with If-Unmodified-Since not in the future and equal to lastModif
             |> addHeader "If-Unmodified-Since" (lastModified.ToHtmlString())
             |> makeRequest (None, Some lastModified)
 
-        let! content = response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
+        let! content =
+            response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
 
         content
         |> printBytes
@@ -212,7 +217,8 @@ let ``HTTP GET with If-None-Match without ETag`` () =
             |> addHeader "If-None-Match" "\"111\", \"222\", \"333\""
             |> makeRequest (None, None)
 
-        let! content = response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
+        let! content =
+            response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
 
         content
         |> printBytes
@@ -228,7 +234,8 @@ let ``HTTP GET with If-None-Match with non-matching ETag`` () =
             |> addHeader "If-None-Match" "\"111\", \"222\", \"333\""
             |> makeRequest (createETag "444", None)
 
-        let! content = response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
+        let! content =
+            response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
 
         content
         |> printBytes
@@ -280,7 +287,8 @@ let ``HTTP GET with If-Modified-Since witout lastModified`` () =
             |> addHeader "If-Modified-Since" (DateTimeOffset.UtcNow.AddDays(-4.0).ToHtmlString())
             |> makeRequest (None, None)
 
-        let! content = response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
+        let! content =
+            response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
 
         content
         |> printBytes
@@ -308,7 +316,8 @@ let ``HTTP GET with If-Modified-Since not in the future and with greater lastMod
             |> addHeader "If-Modified-Since" (DateTimeOffset.UtcNow.AddDays(-10.0).ToHtmlString())
             |> makeRequest (None, Some(DateTimeOffset.UtcNow.AddDays(-5.0)))
 
-        let! content = response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
+        let! content =
+            response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
 
         content
         |> printBytes
@@ -350,7 +359,8 @@ let ``HTTP POST with If-Modified-Since not in the future and with smaller lastMo
             |> addHeader "If-Modified-Since" (DateTimeOffset.UtcNow.AddDays(-10.0).ToHtmlString())
             |> makeRequest (None, Some(DateTimeOffset.UtcNow.AddDays(-11.0)))
 
-        let! content = response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
+        let! content =
+            response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
 
         content
         |> printBytes
@@ -432,7 +442,8 @@ let ``HTTP GET with matching If-Match ignores non-matching If-Unmodified-Since``
             |> addHeader "If-Unmodified-Since" ifUnmodifiedSince
             |> makeRequest (createETag "abc", Some lastModified)
 
-        let! content = response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
+        let! content =
+            response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
 
         content
         |> printBytes
@@ -453,7 +464,8 @@ let ``HTTP GET with non-matching If-None-Match ignores not matching If-Modified-
             |> addHeader "If-Modified-Since" ifModifiedSince
             |> makeRequest (createETag "abc", Some lastModified)
 
-        let! content = response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
+        let! content =
+            response |> isStatus HttpStatusCode.OK |> hasContentLength 62L |> readBytes
 
         content
         |> printBytes
