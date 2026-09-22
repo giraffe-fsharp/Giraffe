@@ -69,7 +69,7 @@
 
     <PackageReference Include="FSharp.Core" Version="6.0.0" />
 
-    <PackageReference Include="Ionide.KeepAChangelog.Tasks" Version="0.3.3">
+    <PackageReference Include="Ionide.KeepAChangelog.Tasks" Version="0.4.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
