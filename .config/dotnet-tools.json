@@ -3,7 +3,7 @@
   "isRoot": true,
   "tools": {
     "fantomas": {
-      "version": "8.0.10",
+      "version": "8.1.0",
       "commands": [
         "fantomas"
       ]
