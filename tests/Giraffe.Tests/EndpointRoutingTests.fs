@@ -2,6 +2,7 @@ module Giraffe.Tests.EndpointRoutingTests
 
 open System
 open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
 open Xunit
 open Giraffe
@@ -105,6 +106,112 @@ let ``route: QUERY request returns expected result`` () =
         let! content = response |> readText
 
         content |> shouldEqual "query"
+    }
+
+// ---------------------------------
+// forVerbs Tests
+// ---------------------------------
+
+let private echoMethod: HttpHandler =
+    fun next ctx -> text ctx.Request.Method next ctx
+
+[<Theory>]
+[<InlineData("GET", "GET")>]
+[<InlineData("POST", "POST")>]
+[<InlineData("PUT", "PUT")>]
+let ``forVerbs: each listed verb reaches the handler`` (method: string, expected: string) =
+    let endpoints: Endpoint list =
+        [
+            forVerbs [ HttpVerb.GET; HttpVerb.POST; HttpVerb.PUT ] [ route "/todo" echoMethod ]
+        ]
+
+    let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
+
+    let configureApp (app: IApplicationBuilder) =
+        app.UseRouting().UseGiraffe(endpoints).UseGiraffe(notFoundHandler)
+
+    let configureServices (services: IServiceCollection) =
+        services.AddRouting().AddGiraffe() |> ignore
+
+    task {
+        let request = createRequest (HttpMethod method) "/todo"
+
+        let! response = makeRequest (fun () -> configureApp) configureServices () request
+
+        let! content = response |> readText
+
+        content |> shouldEqual expected
+    }
+
+[<Fact>]
+let ``forVerbs: verbs which are not listed are not allowed`` () =
+    let endpoints: Endpoint list =
+        [ forVerbs [ HttpVerb.GET; HttpVerb.HEAD ] [ route "/todo" (text "todo") ] ]
+
+    let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
+
+    let configureApp (app: IApplicationBuilder) =
+        app.UseRouting().UseGiraffe(endpoints).UseGiraffe(notFoundHandler)
+
+    let configureServices (services: IServiceCollection) =
+        services.AddRouting().AddGiraffe() |> ignore
+
+    task {
+        let request = createRequest HttpMethod.Delete "/todo"
+
+        let! response = makeRequest (fun () -> configureApp) configureServices () request
+
+        response |> isStatus HttpStatusCode.MethodNotAllowed |> ignore
+    }
+
+[<Theory>]
+[<InlineData("HEAD")>]
+[<InlineData("OPTIONS")>]
+let ``forVerbs: HEAD and OPTIONS are routed too`` (method: string) =
+    let endpoints: Endpoint list =
+        [
+            forVerbs [ HttpVerb.GET; HttpVerb.HEAD; HttpVerb.OPTIONS ] [ route "/todo" (text "todo") ]
+        ]
+
+    let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
+
+    let configureApp (app: IApplicationBuilder) =
+        app.UseRouting().UseGiraffe(endpoints).UseGiraffe(notFoundHandler)
+
+    let configureServices (services: IServiceCollection) =
+        services.AddRouting().AddGiraffe() |> ignore
+
+    task {
+        let request = createRequest (HttpMethod method) "/todo"
+
+        let! response = makeRequest (fun () -> configureApp) configureServices () request
+
+        response |> isStatus HttpStatusCode.OK |> ignore
+    }
+
+[<Fact>]
+let ``forVerbs: works inside a subRoute`` () =
+    let endpoints: Endpoint list =
+        [
+            subRoute "/api" [ forVerbs [ HttpVerb.GET; HttpVerb.POST ] [ route "/todos" echoMethod ] ]
+        ]
+
+    let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
+
+    let configureApp (app: IApplicationBuilder) =
+        app.UseRouting().UseGiraffe(endpoints).UseGiraffe(notFoundHandler)
+
+    let configureServices (services: IServiceCollection) =
+        services.AddRouting().AddGiraffe() |> ignore
+
+    task {
+        let request = createRequest HttpMethod.Post "/api/todos"
+
+        let! response = makeRequest (fun () -> configureApp) configureServices () request
+
+        let! content = response |> readText
+
+        content |> shouldEqual "POST"
     }
 
 [<Theory>]

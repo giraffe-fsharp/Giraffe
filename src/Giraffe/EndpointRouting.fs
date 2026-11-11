@@ -244,7 +244,12 @@ module Routers =
         )
         |> MultiEndpoint
 
-    let GET_HEAD = applyHttpVerbsToEndpoints [ GET; HEAD ]
+    /// Creates an endpoint which responds to all of the given HTTP verbs with the same handlers.
+    /// Duplicate verbs are ignored.
+    let forVerbs (verbs: HttpVerb list) : Endpoint list -> Endpoint =
+        verbs |> List.distinct |> applyHttpVerbsToEndpoints
+
+    let GET_HEAD = forVerbs [ GET; HEAD ]
 
     let GET = applyHttpVerbToEndpoints GET
     let POST = applyHttpVerbToEndpoints POST
