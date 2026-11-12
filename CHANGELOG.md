@@ -4,11 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [8.3.0] - 2026-07-21
+## [Unreleased]
 
 ### Added
 
 - Add `forVerbs` to `Giraffe.EndpointRouting` to map the same endpoints to multiple HTTP verbs.
+
+## [8.3.0] - 2026-07-21
+
+### Added
+
 - [feat: add QUERY method support](https://github.com/giraffe-fsharp/Giraffe/pull/742) - Credits @bizprat
 - [feat: add routeBind support to Giraffe.EndpointRouting](https://github.com/giraffe-fsharp/Giraffe/pull/709) - Credits @AugustoRengel
 - [Add KeepAChangelog](https://github.com/giraffe-fsharp/Giraffe/pull/717) - Credits @64J0
