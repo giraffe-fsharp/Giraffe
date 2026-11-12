@@ -3664,10 +3664,24 @@ The following routing functions are available as part of the `Giraffe.EndpointRo
 - `routefWithExtensions`
 - `subRoute`
 - `subRouteWithExtensions`
+- `forVerbs`
 
 The `route`, `routef` and `subRoute` handlers are all case-insensitive. Other handlers such as `routex`, `subRoutef` or `choose` are not supported by the `Giraffe.EndpointRouting` module.
 
 The `choose` handler is replaced by composing an `Endpoint list`.
+
+The `forVerbs` function maps the same endpoints to more than one HTTP verb, which is how a route like `choose [ GET_HEAD; OPTIONS ]` from the default router translates to endpoint routing:
+
+```fsharp
+let endpoints: list<Endpoint> =
+    [
+        forVerbs [ HttpVerb.GET; HttpVerb.HEAD; HttpVerb.OPTIONS ] [
+            route "/api/items" handler
+        ]
+    ]
+```
+
+The verbs are qualified with `HttpVerb` because the unqualified `GET`, `HEAD` and other names are already the routing functions which turn an `Endpoint list` into an `Endpoint`.
 
 Other routing handlers couldn't be ported like for like, but the ASP.NET Core Endpoint Routing API allows for greater control and better insight into an endpoint by exposing useful helper functions.
 
