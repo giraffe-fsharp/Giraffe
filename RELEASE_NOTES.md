@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+## 8.4.0 - 2026-11-12
+
+- [feat: add forVerbs to endpoint routing](https://github.com/giraffe-fsharp/Giraffe/pull/795) - Credits @shaktimaan00
+- [Fix Fantomas style due to update to v8](https://github.com/giraffe-fsharp/Giraffe/pull/774) - Credits @64J0
+- [Add a new function that writes a Markdown response](https://github.com/giraffe-fsharp/Giraffe/pull/751) - Credits @64J0
+- [Add PBT (property-based tests) for the Giraffe Routing with FsCheck, and update xUnit to v3](https://github.com/giraffe-fsharp/Giraffe/pull/731) - Credits @64J0
+
 ## 8.3.0 - 2026-07-21
 
 - [feat: add QUERY method support](https://github.com/giraffe-fsharp/Giraffe/pull/742) - Credits @bizprat
