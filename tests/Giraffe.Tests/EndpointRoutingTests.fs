@@ -122,7 +122,7 @@ let private echoMethod: HttpHandler =
 let ``forVerbs: each listed verb reaches the handler`` (method: string, expected: string) =
     let endpoints: Endpoint list =
         [
-            forVerbs [ HttpVerb.GET; HttpVerb.POST; HttpVerb.PUT ] [ route "/todo" echoMethod ]
+            forVerbs [ HttpVerb.GET; HttpVerb.GET; HttpVerb.POST; HttpVerb.PUT ] [ route "/todo" echoMethod ]
         ]
 
     let notFoundHandler = "Not Found" |> text |> RequestErrors.notFound
