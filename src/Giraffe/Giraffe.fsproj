@@ -67,7 +67,7 @@
       <IncludeAssets>analyzers</IncludeAssets>
     </PackageReference>
 
-    <PackageReference Include="FSharp.Core" Version="6.0.0" />
+    <PackageReference Include="FSharp.Core" Version="6.0.1" />
 
     <PackageReference Include="Ionide.KeepAChangelog.Tasks" Version="0.4.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -78,7 +78,7 @@
     <PackageReference Include="System.Text.Json" Version="8.0.*" />
     <PackageReference Include="FSharp.SystemTextJson" Version="1.3.*" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.*" PrivateAssets="All" />
-    <PackageReference Include="Giraffe.ViewEngine" Version="1.4.*" />
+    <PackageReference Include="Giraffe.ViewEngine" Version="2.0.0-alpha-1" />
   </ItemGroup>
 
   <ItemGroup>
