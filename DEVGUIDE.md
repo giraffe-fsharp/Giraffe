@@ -4,6 +4,10 @@ This documentation must be used as a guide for maintainers and developers for bu
 
 ## Release Process
 
+The current dependency baseline uses `Giraffe.ViewEngine` `2.0.0-alpha-1`,
+the latest published version including prereleases. It requires `FSharp.Core`
+`6.0.1` or later; the library's supported target frameworks are unchanged.
+
 1. Checkout `master` branch:
     - Example: `git checkout master`
 2. Add a new entry at the top of the **RELEASE_NOTES.md** and **CHANGELOG.md** with a version and a date.
