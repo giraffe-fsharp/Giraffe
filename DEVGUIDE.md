@@ -4,6 +4,27 @@ This documentation must be used as a guide for maintainers and developers for bu
 
 ## Release Process
 
+### NuGet trusted publishing
+
+The [publish workflow](.github/workflows/publish.yml) uses GitHub OIDC and
+`NuGet/login` as the personal NuGet account `dsyme`, with package permissions
+provided by the `fsprojects` NuGet organization. No long-lived NuGet API key is needed.
+
+Before publishing, configure a [NuGet trusted publishing policy](https://www.nuget.org/account/trustedpublishing):
+
+- Package owner: `fsprojects`
+- GitHub repository owner: `giraffe-fsharp`
+- Repository: `Giraffe`
+- Workflow file: `publish.yml` (filename only)
+- Environment: leave empty
+- Scope: push new versions of the existing package `Giraffe`
+
+Keep `dsyme` an active member of the NuGet organization. After a successful
+trusted-publishing release, remove the obsolete GitHub `NUGET_KEY` secret and
+revoke its long-lived NuGet API key if it is not used elsewhere.
+
+### Publishing a release
+
 1. Checkout `master` branch:
     - Example: `git checkout master`
 2. Add a new entry at the top of the **RELEASE_NOTES.md** and **CHANGELOG.md** with a version and a date.
