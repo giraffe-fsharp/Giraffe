@@ -76,7 +76,7 @@ module private RequestDelegateBuilder =
 
     let private tryGetParser (c: char) =
         let decodeSlashes (s: string) =
-            s.Replace("%2F", "/").Replace("%2f", "/")
+            s.Replace("%2F", "/", StringComparison.OrdinalIgnoreCase)
 
         let parseGuid (s: string) =
             match s.Length with

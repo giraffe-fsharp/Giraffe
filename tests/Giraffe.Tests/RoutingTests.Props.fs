@@ -2,6 +2,7 @@ module Giraffe.Tests.RoutingTestsProp
 
 open System
 open System.IO
+open System.Text.Encodings.Web
 open Microsoft.AspNetCore.Http
 open Xunit
 open NSubstitute
@@ -34,7 +35,11 @@ module Utils =
         static member String() =
             ArbMap.defaults
             |> ArbMap.arbitrary<string>
-            |> Arb.mapFilter _.Replace("/", "-") (String.IsNullOrWhiteSpace >> not)
+            |> Arb.mapFilter
+                (_.Replace("%2F", "/", StringComparison.OrdinalIgnoreCase)
+                 >> _.Replace("/", "-")
+                 >> UrlEncoder.Default.Encode)
+                (String.IsNullOrWhiteSpace >> not)
 
     type GiraffeChar =
         static member Char() =
