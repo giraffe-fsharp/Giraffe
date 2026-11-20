@@ -116,8 +116,7 @@ let ``routef: GET "/char/%c" works`` (x: char) =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-// [<Property(Arbitrary = [| typeof<Utils.GiraffeString> |])>]
-[<Property(Arbitrary = [| typeof<Utils.GiraffeString> |], Replay = "(1181965209621873450,1006046222144397357,93)")>]
+[<Property(Arbitrary = [| typeof<Utils.GiraffeString> |])>]
 let ``routef: GET "/name/%s" works`` (x: string) =
     let ctx = Substitute.For<HttpContext>()
 
