@@ -341,8 +341,10 @@ let ``routef: GET "/foo/johndoe/59" returns "Name: johndoe, Age: 59"`` () =
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
-[<Fact>]
-let ``routef: GET "/foo/b%2Fc/bar" returns "b%2Fc"`` () =
+[<Theory>]
+[<InlineData("/foo/b%2Fc/bar", "b/c")>]
+[<InlineData("/foo/b%2fc/bar", "b/c")>]
+let ``routef: GET "/foo/b%2Fc/bar" and "/foo/b%2fc/bar" returns "b%2fc", i.e. "b/c"`` (path: string, expected: string) =
     let ctx = Substitute.For<HttpContext>()
 
     let app =
@@ -356,9 +358,8 @@ let ``routef: GET "/foo/b%2Fc/bar" returns "b%2Fc"`` () =
         ]
 
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs(PathString("/foo/b%2Fc/bar")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString(path)) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    let expected = "b/c"
 
     task {
         let! result = app next ctx

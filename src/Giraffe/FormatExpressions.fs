@@ -20,7 +20,7 @@ let private formatStringMap =
         //
         // For more information please check:
         // https://github.com/aspnet/Mvc/issues/4599
-        str.Replace("%2F", "/").Replace("%2f", "/")
+        str.Replace("%2F", "/", StringComparison.OrdinalIgnoreCase)
 
     let parseGuid (str: string) =
         match str.Length with
